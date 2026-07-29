@@ -13,47 +13,52 @@ part of 'catalog_models.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$Area {
+mixin _$CatalogNode {
 
- String get id; String get nombre; String get grupo;/// Preguntas que aporta al simulacro de 180 (peso del blueprint).
- int get preguntasBlueprint; List<Subtopic> get subtemas;/// Preguntas del banco que el usuario ya vio en esta área.
- int get preguntasVistas;/// Total de preguntas del banco en esta área.
- int get preguntasTotales;/// Aciertos del usuario en esta área.
- int get respuestasCorrectas;/// Preguntas respondidas por el usuario en esta área.
- int get respuestasTotales;
-/// Create a copy of Area
+ String get id; String get nombre;/// `area`, `bloque`, `sub_area` o `tema`.
+ String get nivel;/// Preguntas que aporta al examen de 180. `null` en temas.
+ int? get peso;/// Solo en nodos de nivel área.
+ String? get grupo; List<CatalogNode> get hijos;/// Preguntas del banco disponibles en este nodo.
+///
+/// Puede ser 0: el banco se carga de forma progresiva, así que durante un
+/// tiempo habrá partes del temario sin preguntas todavía. La UI debe decir
+/// "aún no disponible", no mostrar una lista vacía sin explicación.
+ int get preguntasDisponibles;/// Preguntas de este nodo que el usuario ya vio.
+ int get preguntasVistas;/// Respuestas del usuario en este nodo.
+ int get respuestasTotales; int get respuestasCorrectas;
+/// Create a copy of CatalogNode
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$AreaCopyWith<Area> get copyWith => _$AreaCopyWithImpl<Area>(this as Area, _$identity);
+$CatalogNodeCopyWith<CatalogNode> get copyWith => _$CatalogNodeCopyWithImpl<CatalogNode>(this as CatalogNode, _$identity);
 
-  /// Serializes this Area to a JSON map.
+  /// Serializes this CatalogNode to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Area&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&(identical(other.preguntasBlueprint, preguntasBlueprint) || other.preguntasBlueprint == preguntasBlueprint)&&const DeepCollectionEquality().equals(other.subtemas, subtemas)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotales, preguntasTotales) || other.preguntasTotales == preguntasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CatalogNode&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.nivel, nivel) || other.nivel == nivel)&&(identical(other.peso, peso) || other.peso == peso)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&const DeepCollectionEquality().equals(other.hijos, hijos)&&(identical(other.preguntasDisponibles, preguntasDisponibles) || other.preguntasDisponibles == preguntasDisponibles)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,grupo,preguntasBlueprint,const DeepCollectionEquality().hash(subtemas),preguntasVistas,preguntasTotales,respuestasCorrectas,respuestasTotales);
+int get hashCode => Object.hash(runtimeType,id,nombre,nivel,peso,grupo,const DeepCollectionEquality().hash(hijos),preguntasDisponibles,preguntasVistas,respuestasTotales,respuestasCorrectas);
 
 @override
 String toString() {
-  return 'Area(id: $id, nombre: $nombre, grupo: $grupo, preguntasBlueprint: $preguntasBlueprint, subtemas: $subtemas, preguntasVistas: $preguntasVistas, preguntasTotales: $preguntasTotales, respuestasCorrectas: $respuestasCorrectas, respuestasTotales: $respuestasTotales)';
+  return 'CatalogNode(id: $id, nombre: $nombre, nivel: $nivel, peso: $peso, grupo: $grupo, hijos: $hijos, preguntasDisponibles: $preguntasDisponibles, preguntasVistas: $preguntasVistas, respuestasTotales: $respuestasTotales, respuestasCorrectas: $respuestasCorrectas)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $AreaCopyWith<$Res>  {
-  factory $AreaCopyWith(Area value, $Res Function(Area) _then) = _$AreaCopyWithImpl;
+abstract mixin class $CatalogNodeCopyWith<$Res>  {
+  factory $CatalogNodeCopyWith(CatalogNode value, $Res Function(CatalogNode) _then) = _$CatalogNodeCopyWithImpl;
 @useResult
 $Res call({
- String id, String nombre, String grupo, int preguntasBlueprint, List<Subtopic> subtemas, int preguntasVistas, int preguntasTotales, int respuestasCorrectas, int respuestasTotales
+ String id, String nombre, String nivel, int? peso, String? grupo, List<CatalogNode> hijos, int preguntasDisponibles, int preguntasVistas, int respuestasTotales, int respuestasCorrectas
 });
 
 
@@ -61,26 +66,27 @@ $Res call({
 
 }
 /// @nodoc
-class _$AreaCopyWithImpl<$Res>
-    implements $AreaCopyWith<$Res> {
-  _$AreaCopyWithImpl(this._self, this._then);
+class _$CatalogNodeCopyWithImpl<$Res>
+    implements $CatalogNodeCopyWith<$Res> {
+  _$CatalogNodeCopyWithImpl(this._self, this._then);
 
-  final Area _self;
-  final $Res Function(Area) _then;
+  final CatalogNode _self;
+  final $Res Function(CatalogNode) _then;
 
-/// Create a copy of Area
+/// Create a copy of CatalogNode
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? grupo = null,Object? preguntasBlueprint = null,Object? subtemas = null,Object? preguntasVistas = null,Object? preguntasTotales = null,Object? respuestasCorrectas = null,Object? respuestasTotales = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? nivel = null,Object? peso = freezed,Object? grupo = freezed,Object? hijos = null,Object? preguntasDisponibles = null,Object? preguntasVistas = null,Object? respuestasTotales = null,Object? respuestasCorrectas = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
-as String,grupo: null == grupo ? _self.grupo : grupo // ignore: cast_nullable_to_non_nullable
-as String,preguntasBlueprint: null == preguntasBlueprint ? _self.preguntasBlueprint : preguntasBlueprint // ignore: cast_nullable_to_non_nullable
-as int,subtemas: null == subtemas ? _self.subtemas : subtemas // ignore: cast_nullable_to_non_nullable
-as List<Subtopic>,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
-as int,preguntasTotales: null == preguntasTotales ? _self.preguntasTotales : preguntasTotales // ignore: cast_nullable_to_non_nullable
-as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable
+as String,nivel: null == nivel ? _self.nivel : nivel // ignore: cast_nullable_to_non_nullable
+as String,peso: freezed == peso ? _self.peso : peso // ignore: cast_nullable_to_non_nullable
+as int?,grupo: freezed == grupo ? _self.grupo : grupo // ignore: cast_nullable_to_non_nullable
+as String?,hijos: null == hijos ? _self.hijos : hijos // ignore: cast_nullable_to_non_nullable
+as List<CatalogNode>,preguntasDisponibles: null == preguntasDisponibles ? _self.preguntasDisponibles : preguntasDisponibles // ignore: cast_nullable_to_non_nullable
+as int,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,respuestasTotales: null == respuestasTotales ? _self.respuestasTotales : respuestasTotales // ignore: cast_nullable_to_non_nullable
+as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -88,8 +94,8 @@ as int,
 }
 
 
-/// Adds pattern-matching-related methods to [Area].
-extension AreaPatterns on Area {
+/// Adds pattern-matching-related methods to [CatalogNode].
+extension CatalogNodePatterns on CatalogNode {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -102,10 +108,10 @@ extension AreaPatterns on Area {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Area value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CatalogNode value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _Area() when $default != null:
+case _CatalogNode() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -124,10 +130,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Area value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CatalogNode value)  $default,){
 final _that = this;
 switch (_that) {
-case _Area():
+case _CatalogNode():
 return $default(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -145,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Area value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CatalogNode value)?  $default,){
 final _that = this;
 switch (_that) {
-case _Area() when $default != null:
+case _CatalogNode() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -166,10 +172,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  String grupo,  int preguntasBlueprint,  List<Subtopic> subtemas,  int preguntasVistas,  int preguntasTotales,  int respuestasCorrectas,  int respuestasTotales)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _Area() when $default != null:
-return $default(_that.id,_that.nombre,_that.grupo,_that.preguntasBlueprint,_that.subtemas,_that.preguntasVistas,_that.preguntasTotales,_that.respuestasCorrectas,_that.respuestasTotales);case _:
+case _CatalogNode() when $default != null:
+return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
   return orElse();
 
 }
@@ -187,10 +193,10 @@ return $default(_that.id,_that.nombre,_that.grupo,_that.preguntasBlueprint,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  String grupo,  int preguntasBlueprint,  List<Subtopic> subtemas,  int preguntasVistas,  int preguntasTotales,  int respuestasCorrectas,  int respuestasTotales)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)  $default,) {final _that = this;
 switch (_that) {
-case _Area():
-return $default(_that.id,_that.nombre,_that.grupo,_that.preguntasBlueprint,_that.subtemas,_that.preguntasVistas,_that.preguntasTotales,_that.respuestasCorrectas,_that.respuestasTotales);case _:
+case _CatalogNode():
+return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +213,10 @@ return $default(_that.id,_that.nombre,_that.grupo,_that.preguntasBlueprint,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  String grupo,  int preguntasBlueprint,  List<Subtopic> subtemas,  int preguntasVistas,  int preguntasTotales,  int respuestasCorrectas,  int respuestasTotales)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)?  $default,) {final _that = this;
 switch (_that) {
-case _Area() when $default != null:
-return $default(_that.id,_that.nombre,_that.grupo,_that.preguntasBlueprint,_that.subtemas,_that.preguntasVistas,_that.preguntasTotales,_that.respuestasCorrectas,_that.respuestasTotales);case _:
+case _CatalogNode() when $default != null:
+return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
   return null;
 
 }
@@ -221,65 +227,71 @@ return $default(_that.id,_that.nombre,_that.grupo,_that.preguntasBlueprint,_that
 /// @nodoc
 @JsonSerializable()
 
-class _Area extends Area {
-  const _Area({required this.id, required this.nombre, required this.grupo, required this.preguntasBlueprint, final  List<Subtopic> subtemas = const [], this.preguntasVistas = 0, this.preguntasTotales = 0, this.respuestasCorrectas = 0, this.respuestasTotales = 0}): _subtemas = subtemas,super._();
-  factory _Area.fromJson(Map<String, dynamic> json) => _$AreaFromJson(json);
+class _CatalogNode extends CatalogNode {
+  const _CatalogNode({required this.id, required this.nombre, required this.nivel, this.peso, this.grupo, final  List<CatalogNode> hijos = const [], this.preguntasDisponibles = 0, this.preguntasVistas = 0, this.respuestasTotales = 0, this.respuestasCorrectas = 0}): _hijos = hijos,super._();
+  factory _CatalogNode.fromJson(Map<String, dynamic> json) => _$CatalogNodeFromJson(json);
 
 @override final  String id;
 @override final  String nombre;
-@override final  String grupo;
-/// Preguntas que aporta al simulacro de 180 (peso del blueprint).
-@override final  int preguntasBlueprint;
- final  List<Subtopic> _subtemas;
-@override@JsonKey() List<Subtopic> get subtemas {
-  if (_subtemas is EqualUnmodifiableListView) return _subtemas;
+/// `area`, `bloque`, `sub_area` o `tema`.
+@override final  String nivel;
+/// Preguntas que aporta al examen de 180. `null` en temas.
+@override final  int? peso;
+/// Solo en nodos de nivel área.
+@override final  String? grupo;
+ final  List<CatalogNode> _hijos;
+@override@JsonKey() List<CatalogNode> get hijos {
+  if (_hijos is EqualUnmodifiableListView) return _hijos;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_subtemas);
+  return EqualUnmodifiableListView(_hijos);
 }
 
-/// Preguntas del banco que el usuario ya vio en esta área.
+/// Preguntas del banco disponibles en este nodo.
+///
+/// Puede ser 0: el banco se carga de forma progresiva, así que durante un
+/// tiempo habrá partes del temario sin preguntas todavía. La UI debe decir
+/// "aún no disponible", no mostrar una lista vacía sin explicación.
+@override@JsonKey() final  int preguntasDisponibles;
+/// Preguntas de este nodo que el usuario ya vio.
 @override@JsonKey() final  int preguntasVistas;
-/// Total de preguntas del banco en esta área.
-@override@JsonKey() final  int preguntasTotales;
-/// Aciertos del usuario en esta área.
-@override@JsonKey() final  int respuestasCorrectas;
-/// Preguntas respondidas por el usuario en esta área.
+/// Respuestas del usuario en este nodo.
 @override@JsonKey() final  int respuestasTotales;
+@override@JsonKey() final  int respuestasCorrectas;
 
-/// Create a copy of Area
+/// Create a copy of CatalogNode
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$AreaCopyWith<_Area> get copyWith => __$AreaCopyWithImpl<_Area>(this, _$identity);
+_$CatalogNodeCopyWith<_CatalogNode> get copyWith => __$CatalogNodeCopyWithImpl<_CatalogNode>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$AreaToJson(this, );
+  return _$CatalogNodeToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Area&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&(identical(other.preguntasBlueprint, preguntasBlueprint) || other.preguntasBlueprint == preguntasBlueprint)&&const DeepCollectionEquality().equals(other._subtemas, _subtemas)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotales, preguntasTotales) || other.preguntasTotales == preguntasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CatalogNode&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.nivel, nivel) || other.nivel == nivel)&&(identical(other.peso, peso) || other.peso == peso)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&const DeepCollectionEquality().equals(other._hijos, _hijos)&&(identical(other.preguntasDisponibles, preguntasDisponibles) || other.preguntasDisponibles == preguntasDisponibles)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,grupo,preguntasBlueprint,const DeepCollectionEquality().hash(_subtemas),preguntasVistas,preguntasTotales,respuestasCorrectas,respuestasTotales);
+int get hashCode => Object.hash(runtimeType,id,nombre,nivel,peso,grupo,const DeepCollectionEquality().hash(_hijos),preguntasDisponibles,preguntasVistas,respuestasTotales,respuestasCorrectas);
 
 @override
 String toString() {
-  return 'Area(id: $id, nombre: $nombre, grupo: $grupo, preguntasBlueprint: $preguntasBlueprint, subtemas: $subtemas, preguntasVistas: $preguntasVistas, preguntasTotales: $preguntasTotales, respuestasCorrectas: $respuestasCorrectas, respuestasTotales: $respuestasTotales)';
+  return 'CatalogNode(id: $id, nombre: $nombre, nivel: $nivel, peso: $peso, grupo: $grupo, hijos: $hijos, preguntasDisponibles: $preguntasDisponibles, preguntasVistas: $preguntasVistas, respuestasTotales: $respuestasTotales, respuestasCorrectas: $respuestasCorrectas)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$AreaCopyWith<$Res> implements $AreaCopyWith<$Res> {
-  factory _$AreaCopyWith(_Area value, $Res Function(_Area) _then) = __$AreaCopyWithImpl;
+abstract mixin class _$CatalogNodeCopyWith<$Res> implements $CatalogNodeCopyWith<$Res> {
+  factory _$CatalogNodeCopyWith(_CatalogNode value, $Res Function(_CatalogNode) _then) = __$CatalogNodeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String nombre, String grupo, int preguntasBlueprint, List<Subtopic> subtemas, int preguntasVistas, int preguntasTotales, int respuestasCorrectas, int respuestasTotales
+ String id, String nombre, String nivel, int? peso, String? grupo, List<CatalogNode> hijos, int preguntasDisponibles, int preguntasVistas, int respuestasTotales, int respuestasCorrectas
 });
 
 
@@ -287,310 +299,27 @@ $Res call({
 
 }
 /// @nodoc
-class __$AreaCopyWithImpl<$Res>
-    implements _$AreaCopyWith<$Res> {
-  __$AreaCopyWithImpl(this._self, this._then);
+class __$CatalogNodeCopyWithImpl<$Res>
+    implements _$CatalogNodeCopyWith<$Res> {
+  __$CatalogNodeCopyWithImpl(this._self, this._then);
 
-  final _Area _self;
-  final $Res Function(_Area) _then;
+  final _CatalogNode _self;
+  final $Res Function(_CatalogNode) _then;
 
-/// Create a copy of Area
+/// Create a copy of CatalogNode
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? grupo = null,Object? preguntasBlueprint = null,Object? subtemas = null,Object? preguntasVistas = null,Object? preguntasTotales = null,Object? respuestasCorrectas = null,Object? respuestasTotales = null,}) {
-  return _then(_Area(
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? nivel = null,Object? peso = freezed,Object? grupo = freezed,Object? hijos = null,Object? preguntasDisponibles = null,Object? preguntasVistas = null,Object? respuestasTotales = null,Object? respuestasCorrectas = null,}) {
+  return _then(_CatalogNode(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
-as String,grupo: null == grupo ? _self.grupo : grupo // ignore: cast_nullable_to_non_nullable
-as String,preguntasBlueprint: null == preguntasBlueprint ? _self.preguntasBlueprint : preguntasBlueprint // ignore: cast_nullable_to_non_nullable
-as int,subtemas: null == subtemas ? _self._subtemas : subtemas // ignore: cast_nullable_to_non_nullable
-as List<Subtopic>,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
-as int,preguntasTotales: null == preguntasTotales ? _self.preguntasTotales : preguntasTotales // ignore: cast_nullable_to_non_nullable
-as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable
-as int,respuestasTotales: null == respuestasTotales ? _self.respuestasTotales : respuestasTotales // ignore: cast_nullable_to_non_nullable
-as int,
-  ));
-}
-
-
-}
-
-
-/// @nodoc
-mixin _$Subtopic {
-
- String get id; String get areaId; String get nombre; int get preguntasBlueprint; int get preguntasVistas; int get preguntasTotales; int get respuestasCorrectas; int get respuestasTotales;
-/// Create a copy of Subtopic
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$SubtopicCopyWith<Subtopic> get copyWith => _$SubtopicCopyWithImpl<Subtopic>(this as Subtopic, _$identity);
-
-  /// Serializes this Subtopic to a JSON map.
-  Map<String, dynamic> toJson();
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Subtopic&&(identical(other.id, id) || other.id == id)&&(identical(other.areaId, areaId) || other.areaId == areaId)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.preguntasBlueprint, preguntasBlueprint) || other.preguntasBlueprint == preguntasBlueprint)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotales, preguntasTotales) || other.preguntasTotales == preguntasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,id,areaId,nombre,preguntasBlueprint,preguntasVistas,preguntasTotales,respuestasCorrectas,respuestasTotales);
-
-@override
-String toString() {
-  return 'Subtopic(id: $id, areaId: $areaId, nombre: $nombre, preguntasBlueprint: $preguntasBlueprint, preguntasVistas: $preguntasVistas, preguntasTotales: $preguntasTotales, respuestasCorrectas: $respuestasCorrectas, respuestasTotales: $respuestasTotales)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $SubtopicCopyWith<$Res>  {
-  factory $SubtopicCopyWith(Subtopic value, $Res Function(Subtopic) _then) = _$SubtopicCopyWithImpl;
-@useResult
-$Res call({
- String id, String areaId, String nombre, int preguntasBlueprint, int preguntasVistas, int preguntasTotales, int respuestasCorrectas, int respuestasTotales
-});
-
-
-
-
-}
-/// @nodoc
-class _$SubtopicCopyWithImpl<$Res>
-    implements $SubtopicCopyWith<$Res> {
-  _$SubtopicCopyWithImpl(this._self, this._then);
-
-  final Subtopic _self;
-  final $Res Function(Subtopic) _then;
-
-/// Create a copy of Subtopic
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? areaId = null,Object? nombre = null,Object? preguntasBlueprint = null,Object? preguntasVistas = null,Object? preguntasTotales = null,Object? respuestasCorrectas = null,Object? respuestasTotales = null,}) {
-  return _then(_self.copyWith(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,areaId: null == areaId ? _self.areaId : areaId // ignore: cast_nullable_to_non_nullable
-as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
-as String,preguntasBlueprint: null == preguntasBlueprint ? _self.preguntasBlueprint : preguntasBlueprint // ignore: cast_nullable_to_non_nullable
+as String,nivel: null == nivel ? _self.nivel : nivel // ignore: cast_nullable_to_non_nullable
+as String,peso: freezed == peso ? _self.peso : peso // ignore: cast_nullable_to_non_nullable
+as int?,grupo: freezed == grupo ? _self.grupo : grupo // ignore: cast_nullable_to_non_nullable
+as String?,hijos: null == hijos ? _self._hijos : hijos // ignore: cast_nullable_to_non_nullable
+as List<CatalogNode>,preguntasDisponibles: null == preguntasDisponibles ? _self.preguntasDisponibles : preguntasDisponibles // ignore: cast_nullable_to_non_nullable
 as int,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
-as int,preguntasTotales: null == preguntasTotales ? _self.preguntasTotales : preguntasTotales // ignore: cast_nullable_to_non_nullable
-as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable
 as int,respuestasTotales: null == respuestasTotales ? _self.respuestasTotales : respuestasTotales // ignore: cast_nullable_to_non_nullable
-as int,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [Subtopic].
-extension SubtopicPatterns on Subtopic {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Subtopic value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _Subtopic() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Subtopic value)  $default,){
-final _that = this;
-switch (_that) {
-case _Subtopic():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Subtopic value)?  $default,){
-final _that = this;
-switch (_that) {
-case _Subtopic() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String areaId,  String nombre,  int preguntasBlueprint,  int preguntasVistas,  int preguntasTotales,  int respuestasCorrectas,  int respuestasTotales)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _Subtopic() when $default != null:
-return $default(_that.id,_that.areaId,_that.nombre,_that.preguntasBlueprint,_that.preguntasVistas,_that.preguntasTotales,_that.respuestasCorrectas,_that.respuestasTotales);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String areaId,  String nombre,  int preguntasBlueprint,  int preguntasVistas,  int preguntasTotales,  int respuestasCorrectas,  int respuestasTotales)  $default,) {final _that = this;
-switch (_that) {
-case _Subtopic():
-return $default(_that.id,_that.areaId,_that.nombre,_that.preguntasBlueprint,_that.preguntasVistas,_that.preguntasTotales,_that.respuestasCorrectas,_that.respuestasTotales);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String areaId,  String nombre,  int preguntasBlueprint,  int preguntasVistas,  int preguntasTotales,  int respuestasCorrectas,  int respuestasTotales)?  $default,) {final _that = this;
-switch (_that) {
-case _Subtopic() when $default != null:
-return $default(_that.id,_that.areaId,_that.nombre,_that.preguntasBlueprint,_that.preguntasVistas,_that.preguntasTotales,_that.respuestasCorrectas,_that.respuestasTotales);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-@JsonSerializable()
-
-class _Subtopic extends Subtopic {
-  const _Subtopic({required this.id, required this.areaId, required this.nombre, required this.preguntasBlueprint, this.preguntasVistas = 0, this.preguntasTotales = 0, this.respuestasCorrectas = 0, this.respuestasTotales = 0}): super._();
-  factory _Subtopic.fromJson(Map<String, dynamic> json) => _$SubtopicFromJson(json);
-
-@override final  String id;
-@override final  String areaId;
-@override final  String nombre;
-@override final  int preguntasBlueprint;
-@override@JsonKey() final  int preguntasVistas;
-@override@JsonKey() final  int preguntasTotales;
-@override@JsonKey() final  int respuestasCorrectas;
-@override@JsonKey() final  int respuestasTotales;
-
-/// Create a copy of Subtopic
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$SubtopicCopyWith<_Subtopic> get copyWith => __$SubtopicCopyWithImpl<_Subtopic>(this, _$identity);
-
-@override
-Map<String, dynamic> toJson() {
-  return _$SubtopicToJson(this, );
-}
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Subtopic&&(identical(other.id, id) || other.id == id)&&(identical(other.areaId, areaId) || other.areaId == areaId)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.preguntasBlueprint, preguntasBlueprint) || other.preguntasBlueprint == preguntasBlueprint)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotales, preguntasTotales) || other.preguntasTotales == preguntasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,id,areaId,nombre,preguntasBlueprint,preguntasVistas,preguntasTotales,respuestasCorrectas,respuestasTotales);
-
-@override
-String toString() {
-  return 'Subtopic(id: $id, areaId: $areaId, nombre: $nombre, preguntasBlueprint: $preguntasBlueprint, preguntasVistas: $preguntasVistas, preguntasTotales: $preguntasTotales, respuestasCorrectas: $respuestasCorrectas, respuestasTotales: $respuestasTotales)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$SubtopicCopyWith<$Res> implements $SubtopicCopyWith<$Res> {
-  factory _$SubtopicCopyWith(_Subtopic value, $Res Function(_Subtopic) _then) = __$SubtopicCopyWithImpl;
-@override @useResult
-$Res call({
- String id, String areaId, String nombre, int preguntasBlueprint, int preguntasVistas, int preguntasTotales, int respuestasCorrectas, int respuestasTotales
-});
-
-
-
-
-}
-/// @nodoc
-class __$SubtopicCopyWithImpl<$Res>
-    implements _$SubtopicCopyWith<$Res> {
-  __$SubtopicCopyWithImpl(this._self, this._then);
-
-  final _Subtopic _self;
-  final $Res Function(_Subtopic) _then;
-
-/// Create a copy of Subtopic
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? areaId = null,Object? nombre = null,Object? preguntasBlueprint = null,Object? preguntasVistas = null,Object? preguntasTotales = null,Object? respuestasCorrectas = null,Object? respuestasTotales = null,}) {
-  return _then(_Subtopic(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,areaId: null == areaId ? _self.areaId : areaId // ignore: cast_nullable_to_non_nullable
-as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
-as String,preguntasBlueprint: null == preguntasBlueprint ? _self.preguntasBlueprint : preguntasBlueprint // ignore: cast_nullable_to_non_nullable
-as int,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
-as int,preguntasTotales: null == preguntasTotales ? _self.preguntasTotales : preguntasTotales // ignore: cast_nullable_to_non_nullable
 as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable
-as int,respuestasTotales: null == respuestasTotales ? _self.respuestasTotales : respuestasTotales // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

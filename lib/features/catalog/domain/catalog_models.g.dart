@@ -6,52 +6,33 @@ part of 'catalog_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_Area _$AreaFromJson(Map<String, dynamic> json) => _Area(
+_CatalogNode _$CatalogNodeFromJson(Map<String, dynamic> json) => _CatalogNode(
   id: json['id'] as String,
   nombre: json['nombre'] as String,
-  grupo: json['grupo'] as String,
-  preguntasBlueprint: (json['preguntasBlueprint'] as num).toInt(),
-  subtemas:
-      (json['subtemas'] as List<dynamic>?)
-          ?.map((e) => Subtopic.fromJson(e as Map<String, dynamic>))
+  nivel: json['nivel'] as String,
+  peso: (json['peso'] as num?)?.toInt(),
+  grupo: json['grupo'] as String?,
+  hijos:
+      (json['hijos'] as List<dynamic>?)
+          ?.map((e) => CatalogNode.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  preguntasDisponibles: (json['preguntasDisponibles'] as num?)?.toInt() ?? 0,
   preguntasVistas: (json['preguntasVistas'] as num?)?.toInt() ?? 0,
-  preguntasTotales: (json['preguntasTotales'] as num?)?.toInt() ?? 0,
-  respuestasCorrectas: (json['respuestasCorrectas'] as num?)?.toInt() ?? 0,
   respuestasTotales: (json['respuestasTotales'] as num?)?.toInt() ?? 0,
+  respuestasCorrectas: (json['respuestasCorrectas'] as num?)?.toInt() ?? 0,
 );
 
-Map<String, dynamic> _$AreaToJson(_Area instance) => <String, dynamic>{
-  'id': instance.id,
-  'nombre': instance.nombre,
-  'grupo': instance.grupo,
-  'preguntasBlueprint': instance.preguntasBlueprint,
-  'subtemas': instance.subtemas,
-  'preguntasVistas': instance.preguntasVistas,
-  'preguntasTotales': instance.preguntasTotales,
-  'respuestasCorrectas': instance.respuestasCorrectas,
-  'respuestasTotales': instance.respuestasTotales,
-};
-
-_Subtopic _$SubtopicFromJson(Map<String, dynamic> json) => _Subtopic(
-  id: json['id'] as String,
-  areaId: json['areaId'] as String,
-  nombre: json['nombre'] as String,
-  preguntasBlueprint: (json['preguntasBlueprint'] as num).toInt(),
-  preguntasVistas: (json['preguntasVistas'] as num?)?.toInt() ?? 0,
-  preguntasTotales: (json['preguntasTotales'] as num?)?.toInt() ?? 0,
-  respuestasCorrectas: (json['respuestasCorrectas'] as num?)?.toInt() ?? 0,
-  respuestasTotales: (json['respuestasTotales'] as num?)?.toInt() ?? 0,
-);
-
-Map<String, dynamic> _$SubtopicToJson(_Subtopic instance) => <String, dynamic>{
-  'id': instance.id,
-  'areaId': instance.areaId,
-  'nombre': instance.nombre,
-  'preguntasBlueprint': instance.preguntasBlueprint,
-  'preguntasVistas': instance.preguntasVistas,
-  'preguntasTotales': instance.preguntasTotales,
-  'respuestasCorrectas': instance.respuestasCorrectas,
-  'respuestasTotales': instance.respuestasTotales,
-};
+Map<String, dynamic> _$CatalogNodeToJson(_CatalogNode instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'nombre': instance.nombre,
+      'nivel': instance.nivel,
+      'peso': instance.peso,
+      'grupo': instance.grupo,
+      'hijos': instance.hijos,
+      'preguntasDisponibles': instance.preguntasDisponibles,
+      'preguntasVistas': instance.preguntasVistas,
+      'respuestasTotales': instance.respuestasTotales,
+      'respuestasCorrectas': instance.respuestasCorrectas,
+    };

@@ -127,9 +127,10 @@ final currentUserProvider = Provider<User?>((ref) {
 
 // ==================== CATÁLOGO ====================
 
-/// Áreas con el progreso del usuario. Se cachea mientras alguien la escuche.
-final areasProvider = FutureProvider<List<Area>>((ref) {
-  return ref.watch(catalogRepositoryProvider).areas();
+/// Árbol del temario con el progreso del usuario: 10 áreas como raíces, cada
+/// una con su subárbol. Se cachea mientras alguien lo escuche.
+final catalogProvider = FutureProvider<List<CatalogNode>>((ref) {
+  return ref.watch(catalogRepositoryProvider).tree();
 });
 
 // ==================== TEMA ====================

@@ -3,9 +3,11 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/catalog_models.dart';
 
-/// Taxonomía de áreas y subtemas con el progreso del usuario (`GET /catalog/areas`).
+/// Árbol del temario con el progreso del usuario (`GET /catalog/areas`).
+///
+/// Devuelve las 10 áreas como raíces; cada una trae su subárbol completo.
 abstract interface class CatalogRepository {
-  Future<List<Area>> areas();
+  Future<List<CatalogNode>> tree();
 }
 
 class ApiCatalogRepository implements CatalogRepository {
@@ -14,21 +16,21 @@ class ApiCatalogRepository implements CatalogRepository {
   final ApiClient _client;
 
   @override
-  Future<List<Area>> areas() async {
+  Future<List<CatalogNode>> tree() async {
     final data = await _client.get<List<dynamic>>(ApiEndpoints.catalogAreas);
     return data
-        .map((e) => Area.fromJson(e as Map<String, dynamic>))
+        .map((e) => CatalogNode.fromJson(e as Map<String, dynamic>))
         .toList(growable: false);
   }
 }
 
 class MockCatalogRepository implements CatalogRepository {
-  List<Area>? _cache;
+  List<CatalogNode>? _cache;
 
   @override
-  Future<List<Area>> areas() async {
+  Future<List<CatalogNode>> tree() async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
-    // Se cachea para que el progreso no cambie en cada pantalla.
-    return _cache ??= MockData.areas();
+    // Se cachea para que el progreso no cambie entre pantallas.
+    return _cache ??= MockData.catalog();
   }
 }

@@ -2,116 +2,139 @@ import 'dart:math';
 
 import '../../features/catalog/domain/catalog_models.dart';
 import '../../features/session/domain/session_models.dart';
-import '../domain/blueprint.dart';
+import '../domain/taxonomy.dart';
 
 /// Datos falsos para desarrollar sin backend.
 ///
 /// El contenido médico es **de relleno y no es clínicamente correcto**. Solo
 /// existe para que las pantallas tengan texto realista en longitud y forma: los
-/// enunciados son largos a propósito porque el 90 % del ENAM son casos clínicos
-/// y una UI que se ve bien con "Lorem ipsum" corto miente sobre cómo se verá.
+/// enunciados son largos a propósito porque el 81 % del ENAM son casos clínicos,
+/// y una UI que se ve bien con texto corto miente sobre cómo se verá de verdad.
 abstract final class MockData {
   static final _random = Random(42); // Semilla fija: datos reproducibles.
 
-  /// Subtemas por área, tomados de RF-06.
-  static const Map<String, List<String>> _subtemas = {
-    'medicina': [
-      'Infecciosos',
-      'Respiratorio',
-      'Cardiovascular',
-      'Digestivo',
-      'Nervioso',
-      'Psiquiatría',
-      'Renal',
-      'Endocrino-metabólico',
-      'Articulares',
-      'Piel',
-      'Sangre y coagulación',
-    ],
-    'pediatria': [
-      'Neonatología',
-      'Crecimiento y desarrollo',
-      'Infecciones pediátricas',
-      'Respiratorio pediátrico',
-      'Nutrición',
-    ],
-    'emergencias': [
-      'Trauma',
-      'Shock',
-      'Paro cardiorrespiratorio',
-      'Intoxicaciones',
-    ],
-    'gineco-obstetricia': [
-      'Embarazo normal',
-      'Patología obstétrica',
-      'Ginecología',
-      'Planificación familiar',
-    ],
-    'cirugia': [
-      'Abdomen agudo',
-      'Cirugía general',
-      'Urología',
-      'Traumatología',
-    ],
-    'salud-publica': [
-      'Epidemiología',
-      'Programas nacionales',
-      'Bioestadística',
-      'Atención primaria',
-    ],
-    'ciencias-basicas': ['Anatomía', 'Fisiología', 'Farmacología', 'Patología'],
-    'etica': ['Bioética', 'Consentimiento informado'],
-    'investigacion': ['Diseño de estudios', 'Lectura crítica'],
-    'gestion': ['Gestión de servicios', 'Calidad en salud'],
-  };
+  /// El árbol del catálogo con progreso simulado, a partir de la taxonomía real.
+  ///
+  /// Genera temas falsos bajo las sub áreas que sí desarrollan tercer nivel, y
+  /// deja sin hijos las cuatro áreas que el documento oficial no desarrolla, para
+  /// que la UI tenga que enfrentar ese caso desde el principio.
+  static List<CatalogNode> catalog() =>
+      Taxonomy.areas.map(_nodeFrom).toList(growable: false);
 
-  /// Catálogo completo con progreso simulado del usuario.
-  static List<Area> areas() {
-    return Blueprint.areas.map((blueprintArea) {
-      final subtemasNombres = _subtemas[blueprintArea.id] ?? const [];
-      final totalBanco = blueprintArea.questionCount * 12;
-      final vistas = _random.nextInt(totalBanco);
-      final respondidas = vistas;
-      final correctas = (respondidas * (0.45 + _random.nextDouble() * 0.4))
-          .round();
+  /// Áreas cuyo tercer nivel no existe en el documento oficial.
+  static const _sinTemas = {'emergencias', 'etica', 'investigacion', 'gestion'};
 
-      return Area(
-        id: blueprintArea.id,
-        nombre: blueprintArea.name,
-        grupo: blueprintArea.group.label,
-        preguntasBlueprint: blueprintArea.questionCount,
+  static CatalogNode _nodeFrom(TaxonomyNode node, {String? areaRaiz}) {
+    final raiz = areaRaiz ?? node.id;
+    final generaTemas =
+        node.nivel == TaxonomyLevel.subArea && !_sinTemas.contains(raiz);
+
+    final hijos = <CatalogNode>[
+      for (final hijo in node.hijos) _nodeFrom(hijo, areaRaiz: raiz),
+      if (generaTemas) ..._temasFalsos(node),
+    ];
+
+    // Un nodo con hijos agrega su progreso; una hoja lo genera.
+    if (hijos.isNotEmpty) {
+      final disponibles = hijos.fold(0, (s, h) => s + h.preguntasDisponibles);
+      final vistas = hijos.fold(0, (s, h) => s + h.preguntasVistas);
+      final totales = hijos.fold(0, (s, h) => s + h.respuestasTotales);
+      final correctas = hijos.fold(0, (s, h) => s + h.respuestasCorrectas);
+
+      return CatalogNode(
+        id: node.id,
+        nombre: node.nombre,
+        nivel: _levelName(node.nivel),
+        peso: node.peso,
+        grupo: node.grupo?.label,
+        hijos: hijos,
+        preguntasDisponibles: disponibles,
         preguntasVistas: vistas,
-        preguntasTotales: totalBanco,
+        respuestasTotales: totales,
         respuestasCorrectas: correctas,
-        respuestasTotales: respondidas,
-        subtemas: [
-          for (var i = 0; i < subtemasNombres.length; i++)
-            _subtopic(blueprintArea.id, subtemasNombres[i], i, totalBanco ~/
-                (subtemasNombres.isEmpty ? 1 : subtemasNombres.length)),
-        ],
       );
-    }).toList();
+    }
+
+    return _hoja(node);
   }
 
-  static Subtopic _subtopic(
-    String areaId,
-    String nombre,
-    int index,
-    int totalBanco,
-  ) {
-    final vistas = _random.nextInt(totalBanco + 1);
+  static CatalogNode _hoja(TaxonomyNode node) {
+    final peso = node.peso ?? 1;
+
+    // ~12 preguntas de banco por cada pregunta que cae en el examen. Un 15 % de
+    // los nodos queda sin contenido: el banco se carga progresivamente.
+    final disponibles = _random.nextDouble() < 0.15 ? 0 : peso * 12;
+    final vistas = disponibles == 0 ? 0 : _random.nextInt(disponibles + 1);
     final correctas = (vistas * (0.4 + _random.nextDouble() * 0.45)).round();
-    return Subtopic(
-      id: '$areaId-${index + 1}',
-      areaId: areaId,
-      nombre: nombre,
-      preguntasBlueprint: max(1, totalBanco ~/ 12),
+
+    return CatalogNode(
+      id: node.id,
+      nombre: node.nombre,
+      nivel: _levelName(node.nivel),
+      peso: node.peso,
+      grupo: node.grupo?.label,
+      preguntasDisponibles: disponibles,
       preguntasVistas: vistas,
-      preguntasTotales: totalBanco,
-      respuestasCorrectas: correctas,
       respuestasTotales: vistas,
+      respuestasCorrectas: correctas,
     );
   }
+
+  /// Temas falsos bajo una sub área, para poblar el tercer nivel.
+  static List<CatalogNode> _temasFalsos(TaxonomyNode subArea) {
+    // La densidad real ronda 3 temas por pregunta en las áreas grandes.
+    final cantidad = max(2, ((subArea.peso ?? 1) * 2.5).round());
+
+    return List.generate(cantidad, (i) {
+      final disponibles = _random.nextDouble() < 0.15 ? 0 : 4 + _random.nextInt(9);
+      final vistas = disponibles == 0 ? 0 : _random.nextInt(disponibles + 1);
+      final correctas = (vistas * (0.4 + _random.nextDouble() * 0.45)).round();
+
+      return CatalogNode(
+        id: '${subArea.id}-t${i + 1}',
+        nombre: _nombreTema(subArea, i),
+        nivel: 'tema',
+        preguntasDisponibles: disponibles,
+        preguntasVistas: vistas,
+        respuestasTotales: vistas,
+        respuestasCorrectas: correctas,
+      );
+    });
+  }
+
+  /// Nombres de tema con longitudes realistas.
+  ///
+  /// La mediana real son 20 caracteres, pero hay temas de hasta 107. El primero
+  /// de cada sub área usa el caso largo a propósito, para que ninguna pantalla se
+  /// diseñe asumiendo etiquetas cortas.
+  static String _nombreTema(TaxonomyNode subArea, int i) {
+    if (i == 0) {
+      return 'Hemorragia de la segunda mitad del embarazo: Desprendimiento '
+          'Prematuro de Placenta, Placenta Previa y otros';
+    }
+    const cortos = [
+      'Tuberculosis',
+      'Cefalea',
+      'Hemorroides',
+      'ITU',
+      'Asma bronquial',
+      'Hipertensión arterial',
+      'Diarrea aguda',
+      'Sepsis neonatal',
+      'Glaucoma',
+      'Epistaxis',
+    ];
+    return cortos[i % cortos.length];
+  }
+
+  static String _levelName(TaxonomyLevel nivel) => switch (nivel) {
+    TaxonomyLevel.area => 'area',
+    TaxonomyLevel.bloque => 'bloque',
+    TaxonomyLevel.subArea => 'sub_area',
+    TaxonomyLevel.tema => 'tema',
+  };
+
+  // ==================== PREGUNTAS ====================
 
   /// Enunciados de relleno con la longitud típica de un caso clínico del ENAM.
   static const List<String> _enunciados = [
@@ -143,12 +166,10 @@ abstract final class MockData {
         'anorexia. Al examen: T 37.8 °C, dolor a la palpación en punto de '
         'McBurney con signo de Blumberg positivo. Hemograma: leucocitos '
         '14 500/mm³ con 82 % de neutrófilos. ¿Cuál es la conducta a seguir?',
-    'En un distrito de la sierra sur del Perú se reporta un incremento '
-        'sostenido de casos de enfermedad diarreica aguda en menores de 5 años '
-        'durante las últimas 6 semanas, superando el canal endémico esperado '
-        'para el período. El establecimiento de salud del primer nivel debe '
-        'definir la intervención prioritaria. ¿Cuál es la medida de salud '
-        'pública más apropiada como primera acción?',
+    // Pregunta directa: el 19 % del examen no son casos clínicos.
+    'Según la normativa vigente del Ministerio de Salud del Perú, ¿cuál es la '
+        'medida de salud pública prioritaria ante un brote de enfermedad '
+        'diarreica aguda que supera el canal endémico en un distrito?',
   ];
 
   static const List<List<String>> _alternativas = [
@@ -193,27 +214,32 @@ abstract final class MockData {
     bool conRespuestas = false,
   }) {
     final areas = areaIds.isEmpty
-        ? Blueprint.areas.map((a) => a.id).toList()
+        ? Taxonomy.areas.map((a) => a.id).toList()
         : areaIds;
 
     return List.generate(cantidad, (i) {
       final areaId = areas[i % areas.length];
       final idx = i % _enunciados.length;
       final correctaIdx = _random.nextInt(4);
-      final subtemasArea = _subtemas[areaId] ?? const ['General'];
+
+      final area = Taxonomy.byId(areaId);
+      final subArea = area?.hijos.isNotEmpty ?? false
+          ? area!.hijos[i % area.hijos.length]
+          : null;
 
       return Question(
         id: 'q-${i + 1}',
         enunciado: _enunciados[idx],
         areaId: areaId,
-        subtemaId: '$areaId-1',
+        subtemaId: subArea?.id ?? areaId,
+        // El índice 4 es la única pregunta directa del set.
         tipo: idx == 4 ? QuestionType.directa : QuestionType.casoClinico,
         dificultad: 1 + _random.nextInt(3),
         origenAnio: _random.nextBool() ? 2020 + _random.nextInt(6) : null,
         porcentajeAciertoGlobal: 0.25 + _random.nextDouble() * 0.6,
         explicacion: conRespuestas
-            ? 'Explicación de la clave para ${subtemasArea.first}. Este texto '
-                  'es de relleno y no constituye información clínica válida.'
+            ? 'Explicación de la clave. Texto de relleno, no constituye '
+                  'información clínica válida.'
             : null,
         opciones: [
           for (var j = 0; j < 4; j++)
