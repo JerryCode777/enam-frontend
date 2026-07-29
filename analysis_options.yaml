@@ -1,0 +1,38 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.freezed.dart"
+    - "**/*.g.dart"
+
+  errors:
+    # Un caso de modelo sin cubrir en un switch es un bug esperando a ocurrir.
+    non_exhaustive_switch_statement: error
+    non_exhaustive_switch_expression: error
+
+  language:
+    strict-casts: true
+    strict-raw-types: true
+
+linter:
+  rules:
+    # ---------- Desactivadas a propósito ----------
+
+    # Choca con el patrón campo privado + parámetro público que usamos en toda
+    # la capa de datos (`final ApiClient _client` con `ApiClient client`). Un
+    # initializing formal obligaría a exponer el nombre privado en la API.
+    prefer_initializing_formals: false
+
+    # ---------- Activadas además de flutter_lints ----------
+
+    always_declare_return_types: true
+    avoid_dynamic_calls: true
+    avoid_slow_async_io: true
+    cancel_subscriptions: true
+    close_sinks: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    require_trailing_commas: true
+    unawaited_futures: true
+    use_super_parameters: true

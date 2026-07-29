@@ -1,0 +1,108 @@
+import '../../../core/error/failure.dart';
+import '../domain/auth_models.dart';
+import 'auth_repository.dart';
+
+/// Autenticación falsa, para desarrollar sin backend.
+///
+/// Reglas para probar los caminos de error sin tocar código:
+/// - `nuevo@enam.pe` → login falla con credenciales inválidas
+/// - contraseña `error` → falla con credenciales inválidas
+/// - correo `sinverificar@enam.pe` → usuario con el correo sin verificar
+/// - correo `nuevo2@enam.pe` → usuario con el perfil incompleto (RF-04)
+/// - cualquier otro correo con contraseña válida → entra como usuario completo
+class MockAuthRepository implements AuthRepository {
+  User? _current;
+
+  /// Latencia simulada, para que los estados de carga se vean de verdad.
+  static const _delay = Duration(milliseconds: 600);
+
+  @override
+  Future<void> register({
+    required String email,
+    required String password,
+    required String nombre,
+  }) async {
+    await Future<void>.delayed(_delay);
+    if (email == 'existente@enam.pe') {
+      throw const ValidationFailure(
+        'Ese correo ya está registrado.',
+        code: 'EMAIL_TAKEN',
+        fieldErrors: {'email': 'Ese correo ya está registrado.'},
+      );
+    }
+    _current = User(
+      id: 'mock-user',
+      email: email,
+      nombre: nombre,
+      emailVerificado: false,
+    );
+  }
+
+  @override
+  Future<User> login({required String email, required String password}) async {
+    await Future<void>.delayed(_delay);
+
+    if (email == 'nuevo@enam.pe' || password == 'error') {
+      throw const UnauthorizedFailure(
+        'Correo o contraseña incorrectos.',
+        'INVALID_CREDENTIALS',
+      );
+    }
+
+    return _current = User(
+      id: 'mock-user',
+      email: email,
+      nombre: 'Estudiante de prueba',
+      emailVerificado: email != 'sinverificar@enam.pe',
+      universidad: email == 'nuevo2@enam.pe' ? null : 'UNSA',
+      condicion: email == 'nuevo2@enam.pe' ? null : StudentCondition.interno,
+      fechaObjetivo: email == 'nuevo2@enam.pe'
+          ? null
+          : DateTime.now().add(const Duration(days: 96)),
+    );
+  }
+
+  @override
+  Future<void> logout() async {
+    await Future<void>.delayed(_delay);
+    _current = null;
+  }
+
+  @override
+  Future<User?> currentUser() async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    return _current;
+  }
+
+  @override
+  Future<void> forgotPassword(String email) =>
+      Future<void>.delayed(_delay);
+
+  @override
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) => Future<void>.delayed(_delay);
+
+  @override
+  Future<User> updateProfile({
+    String? nombre,
+    String? universidad,
+    StudentCondition? condicion,
+    DateTime? fechaObjetivo,
+    bool? ocultoEnRanking,
+  }) async {
+    await Future<void>.delayed(_delay);
+    final user = _current;
+    if (user == null) {
+      throw const UnauthorizedFailure();
+    }
+    return _current = user.copyWith(
+      nombre: nombre ?? user.nombre,
+      universidad: universidad ?? user.universidad,
+      condicion: condicion ?? user.condicion,
+      fechaObjetivo: fechaObjetivo ?? user.fechaObjetivo,
+      ocultoEnRanking: ocultoEnRanking ?? user.ocultoEnRanking,
+    );
+  }
+}
