@@ -7,6 +7,8 @@ import '../features/auth/domain/auth_models.dart';
 import '../features/catalog/data/catalog_repository.dart';
 import '../features/catalog/domain/catalog_models.dart';
 import '../features/session/data/session_repository.dart';
+import '../features/stats/data/stats_repository.dart';
+import '../features/stats/domain/stats_models.dart';
 import 'config/app_config.dart';
 import 'network/api_client.dart';
 import 'storage/token_storage.dart';
@@ -63,6 +65,11 @@ final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
 final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
   if (AppConfig.useMocks) return MockSessionRepository();
   return ApiSessionRepository(ref.watch(apiClientProvider));
+});
+
+final statsRepositoryProvider = Provider<StatsRepository>((ref) {
+  if (AppConfig.useMocks) return MockStatsRepository();
+  return ApiStatsRepository(ref.watch(apiClientProvider));
 });
 
 // ==================== ESTADO DE SESIÓN ====================
@@ -132,6 +139,23 @@ final currentUserProvider = Provider<User?>((ref) {
 final catalogProvider = FutureProvider<List<CatalogNode>>((ref) {
   return ref.watch(catalogRepositoryProvider).tree();
 });
+
+// ==================== ESTADÍSTICAS ====================
+
+final dashboardProvider = FutureProvider<DashboardStats>((ref) {
+  return ref.watch(statsRepositoryProvider).dashboard();
+});
+
+// ==================== SESIÓN REANUDABLE ====================
+
+/// Resumen de la sesión interrumpida que el usuario puede retomar (RF-15).
+typedef ResumableSession = ({String sessionId, String titulo, String detalle});
+
+/// `null` cuando no hay ninguna sesión a medias.
+///
+/// Hoy siempre devuelve `null`: el endpoint que lista sesiones abiertas no está
+/// en el contrato todavía. Cuando exista, esto lo consulta y el Home cambia solo.
+final resumableSessionProvider = Provider<ResumableSession?>((ref) => null);
 
 // ==================== TEMA ====================
 

@@ -21,18 +21,39 @@ abstract final class DesignTokens {
   //
   // `success` es verde y NO el teal de marca, a propósito: en una app de
   // exámenes, "correcto" y "elemento de marca" no pueden compartir color.
+  //
+  // Cada estado tiene tres piezas, y hacen falta las tres:
+  //   - base:   el color del icono, el borde o el relleno de un botón
+  //   - onTint: el color del **texto** puesto sobre `tint`
+  //   - tint:   el fondo tenue de un banner o una tarjeta
+  //
+  // El `base` no cumple contraste AA sobre `tint` — por eso existe `onTint`, que
+  // es el mismo tono oscurecido (en claro) o aclarado (en oscuro). Sin esa
+  // tercera pieza, todo banner de estado queda por debajo de 4.5:1.
 
   static const Color success = Color(0xFF10B981);
-  static const Color successSubtle = Color(0xFFD1FAE5);
+  static const Color successOnTintLight = Color(0xFF047857);
+  static const Color successOnTintDark = Color(0xFF34D399);
+  static const Color successTintLight = Color(0xFFECFDF5);
+  static const Color successTintDark = Color(0xFF0B2E22);
 
   static const Color error = Color(0xFFEF4444);
-  static const Color errorSubtle = Color(0xFFFEE2E2);
+  static const Color errorOnTintLight = Color(0xFFB91C1C);
+  static const Color errorOnTintDark = Color(0xFFF87171);
+  static const Color errorTintLight = Color(0xFFFEF2F2);
+  static const Color errorTintDark = Color(0xFF3A1214);
 
   static const Color warning = Color(0xFFF59E0B);
-  static const Color warningSubtle = Color(0xFFFEF3C7);
+  static const Color warningOnTintLight = Color(0xFFB45309);
+  static const Color warningOnTintDark = Color(0xFFFBBF24);
+  static const Color warningTintLight = Color(0xFFFFFBEB);
+  static const Color warningTintDark = Color(0xFF33240A);
 
   static const Color info = brand;
-  static const Color infoSubtle = brandSubtle;
+  static const Color infoOnTintLight = brandDark;
+  static const Color infoOnTintDark = brandLight;
+  static const Color infoTintLight = brandSubtle;
+  static const Color infoTintDark = Color(0xFF0F1A35);
 
   // ==================== SUPERFICIES — TEMA CLARO ====================
 

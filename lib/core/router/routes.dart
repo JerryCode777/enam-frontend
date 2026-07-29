@@ -15,9 +15,24 @@ abstract final class Routes {
   static const resetPassword = '/nueva-contrasena';
   static const completeProfile = '/completar-perfil';
 
-  // ---------- Núcleo ----------
+  // ---------- Núcleo (los 4 destinos de la barra inferior) ----------
   static const home = '/inicio';
-  static const stats = '/estadisticas';
+  static const temario = '/temario';
+  static const stats = '/progreso';
+
+  // ---------- Temario (RF-06) ----------
+  /// Sub áreas de un área. Recibe el id del nodo.
+  static const temarioArea = '/temario/:id';
+  static String temarioAreaOf(String id) => '/temario/$id';
+
+  /// Temas de una sub área.
+  static const temarioSubArea = '/temario/:id/temas';
+  static String temarioSubAreaOf(String id) => '/temario/$id/temas';
+
+  static const temarioSearch = '/temario/buscar';
+
+  /// Dónde invertir el tiempo, según la densidad del temario.
+  static const studyPriority = '/progreso/prioridades';
 
   // ---------- Práctica (Módulo 3) ----------
   static const practiceConfig = '/practica/configurar';

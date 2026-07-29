@@ -27,9 +27,11 @@ abstract final class AppTheme {
       error: DesignTokens.error,
       onError: DesignTokens.onError,
       errorContainer: isLight
-          ? DesignTokens.errorSubtle
-          : DesignTokens.error.withValues(alpha: 0.24),
-      onErrorContainer: isLight ? DesignTokens.error : DesignTokens.errorSubtle,
+          ? DesignTokens.errorTintLight
+          : DesignTokens.errorTintDark,
+      onErrorContainer: isLight
+          ? DesignTokens.errorOnTintLight
+          : DesignTokens.errorOnTintDark,
       surface: isLight ? DesignTokens.surfaceLight : DesignTokens.surfaceDark,
       onSurface:
           isLight ? DesignTokens.textPrimaryLight : DesignTokens.textPrimaryDark,
@@ -82,7 +84,9 @@ abstract final class AppTheme {
 
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(DesignTokens.minTouchTarget),
+          // Ancho mínimo finito: Size.fromHeight daría ancho infinito y
+          // reventaría cualquier botón dentro de un Row.
+          minimumSize: const Size(64, DesignTokens.minTouchTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           ),
@@ -92,7 +96,9 @@ abstract final class AppTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(DesignTokens.minTouchTarget),
+          // Ancho mínimo finito: Size.fromHeight daría ancho infinito y
+          // reventaría cualquier botón dentro de un Row.
+          minimumSize: const Size(64, DesignTokens.minTouchTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           ),
