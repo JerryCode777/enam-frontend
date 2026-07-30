@@ -16,9 +16,15 @@ import '../../features/catalog/presentation/temario_node_screen.dart';
 import '../../features/catalog/presentation/temario_search_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/session/presentation/marked_questions_screen.dart';
+import '../../features/session/presentation/national_mock_screen.dart';
 import '../../features/session/presentation/practice_config_screen.dart';
 import '../../features/session/presentation/question_screen.dart';
+import '../../features/session/presentation/review_screen.dart';
 import '../../features/session/presentation/session_summary_screen.dart';
+import '../../features/session/presentation/simulacro_hub_screen.dart';
+import '../../features/session/presentation/simulacro_instructions_screen.dart';
+import '../../features/session/presentation/simulacro_results_screen.dart';
+import '../../features/session/presentation/simulacro_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../providers.dart';
@@ -218,85 +224,53 @@ final List<RouteBase> _routes = [
         ],
       ),
 
-      // --- Simulacros ---
+      // --- Simulacros (RF-16 a RF-20) ---
       StatefulShellBranch(
         routes: [
-          _stub(
-            Routes.simulacroSelection,
-            titulo: 'Simulacros',
-            descripcion: 'Individual autogenerado o nacional programado.',
-            requisitos: const ['RF-16', 'RF-19'],
-            acciones: const [
-              (label: 'Instrucciones', ruta: Routes.simulacroInstructions),
-              (label: 'Historial', ruta: Routes.simulacroHistory),
-              (label: 'Simulacro nacional', ruta: Routes.nationalMock),
-            ],
-          ),
-          _stub(
-            Routes.simulacroInstructions,
-            titulo: 'Antes de empezar',
-            descripcion:
-                '180 preguntas, 3 horas, sin retroalimentación, sin puntaje '
-                'en contra y envío automático al agotarse el tiempo. No se '
-                'puede pausar.',
-            requisitos: const ['RF-16', 'RN-01'],
-            acciones: const [(label: 'Comenzar', ruta: '/simulacro/sesion/demo')],
-          ),
-          _stub(
-            Routes.simulacroSession,
-            titulo: 'Simulacro en curso',
-            descripcion:
-                'Cronómetro siempre visible, sin feedback. Autoguardado cada '
-                '30 s. No muestra de qué área es la pregunta.',
-            requisitos: const ['RF-16'],
-            acciones: const [
-              (
-                label: 'Grilla de navegación',
-                ruta: '/simulacro/sesion/demo/navegacion',
+          GoRoute(
+            path: Routes.simulacroSelection,
+            pageBuilder: (context, state) =>
+                instantPage(child: const SimulacroHubScreen(), state: state),
+            routes: [
+              GoRoute(
+                path: 'instrucciones',
+                pageBuilder: (context, state) => slidePage(
+                  child: SimulacroInstructionsScreen(
+                    esMuestra: state.uri.queryParameters['muestra'] == '1',
+                  ),
+                  state: state,
+                ),
               ),
-              (label: 'Resultados', ruta: '/simulacro/resultados/demo'),
+              GoRoute(
+                path: 'nacional',
+                pageBuilder: (context, state) =>
+                    slidePage(child: const NationalMockScreen(), state: state),
+              ),
+              GoRoute(
+                path: 'sesion/:id',
+                // Desvanece: entrar al examen no es profundizar en una jerarquía.
+                pageBuilder: (context, state) => fadePage(
+                  child: SimulacroScreen(sessionId: state.pathParameters['id']!),
+                  state: state,
+                ),
+              ),
+              GoRoute(
+                path: 'resultados/:id',
+                pageBuilder: (context, state) => fadePage(
+                  child: SimulacroResultsScreen(
+                    sessionId: state.pathParameters['id']!,
+                  ),
+                  state: state,
+                ),
+              ),
+              GoRoute(
+                path: 'revision/:id',
+                pageBuilder: (context, state) => slidePage(
+                  child: ReviewScreen(sessionId: state.pathParameters['id']!),
+                  state: state,
+                ),
+              ),
             ],
-          ),
-          _stub(
-            Routes.simulacroNavigation,
-            titulo: 'Navegación del examen',
-            descripcion:
-                'Grilla de 180 casillas agrupadas por área: respondida, sin '
-                'responder y marcada. El reto de layout más difícil en 360 px.',
-            requisitos: const ['RF-17'],
-          ),
-          _stub(
-            Routes.simulacroResults,
-            titulo: 'Resultados del simulacro',
-            descripcion:
-                'Nota vigesimal con 2 decimales (aprueba con 11.00), desglose '
-                'por área y tiempo.',
-            requisitos: const ['RF-18', 'RN-01'],
-            acciones: const [
-              (label: 'Revisar preguntas', ruta: '/simulacro/revision/demo'),
-            ],
-          ),
-          _stub(
-            Routes.simulacroReview,
-            titulo: 'Revisión',
-            descripcion:
-                'Pregunta por pregunta con tu respuesta, la correcta y la '
-                'explicación. Filtros por falladas y marcadas.',
-            requisitos: const ['RF-18'],
-          ),
-          _stub(
-            Routes.simulacroHistory,
-            titulo: 'Historial de simulacros',
-            descripcion: 'Lista con la evolución de la nota en el tiempo.',
-            requisitos: const ['RF-20'],
-          ),
-          _stub(
-            Routes.nationalMock,
-            titulo: 'Simulacro nacional',
-            descripcion:
-                'Inscripción, sala de espera con cuenta regresiva y '
-                'resultados con ranking. Requiere conexión.',
-            requisitos: const ['RF-19', 'RF-33'],
           ),
         ],
       ),

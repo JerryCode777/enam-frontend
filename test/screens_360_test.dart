@@ -15,7 +15,10 @@ import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart'
 import 'package:enam_app/features/catalog/presentation/temario_search_screen.dart';
 import 'package:enam_app/features/home/presentation/home_screen.dart';
 import 'package:enam_app/features/session/presentation/marked_questions_screen.dart';
+import 'package:enam_app/features/session/presentation/national_mock_screen.dart';
 import 'package:enam_app/features/session/presentation/practice_config_screen.dart';
+import 'package:enam_app/features/session/presentation/simulacro_hub_screen.dart';
+import 'package:enam_app/features/session/presentation/simulacro_instructions_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +71,12 @@ void main() {
       nodoId: 'gestion-establecimientos',
     ),
     'Práctica · marcadas': const MarkedQuestionsScreen(),
+
+    // Simulacros
+    'Simulacro · hub': const SimulacroHubScreen(),
+    'Simulacro · instrucciones': const SimulacroInstructionsScreen(),
+    'Simulacro · muestra': const SimulacroInstructionsScreen(esMuestra: true),
+    'Simulacro · nacional': const NationalMockScreen(),
   };
 
   for (final entry in pantallas.entries) {
