@@ -82,15 +82,25 @@ class EnamButton extends StatelessWidget {
       child: child,
     );
 
+    // El degradado va en un Material propio y no en un `Ink` suelto.
+    //
+    // `Ink` pinta su decoración sobre el Material más cercano hacia arriba, así
+    // que si el botón vive dentro de un Container con fondo —como las barras de
+    // acción de abajo— ese fondo se dibuja encima y el degradado desaparece: el
+    // botón queda invisible. Con un Material propio, la decoración se pinta en
+    // él y siempre queda por delante.
     final conDegradado = habilitado
-        ? Ink(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: DesignTokens.buttonGradient,
+        ? Material(
+            type: MaterialType.transparency,
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: DesignTokens.buttonGradient,
+                ),
+                borderRadius: radio,
               ),
-              borderRadius: radio,
+              child: button,
             ),
-            child: button,
           )
         : button;
 
