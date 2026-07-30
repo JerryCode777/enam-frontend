@@ -8,9 +8,11 @@ import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/motion.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../features/auth/domain/auth_models.dart';
 import '../../../features/stats/domain/stats_models.dart';
+import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/state_banner.dart';
 
 /// Pantalla 2.1 — inicio.
@@ -147,20 +149,14 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return StaggeredColumn(
+      spacing: DesignTokens.space3 + 2,
       children: [
         _ProjectedGradeCard(stats: stats),
-        const SizedBox(height: DesignTokens.space3 + 2),
         const _ContinueCard(),
-        const SizedBox(height: DesignTokens.space3 + 2),
         _QuickActions(stats: stats),
-        const SizedBox(height: DesignTokens.space3 + 2),
         const _NationalMockCard(),
-        if (stats.esFree) ...[
-          const SizedBox(height: DesignTokens.space3 + 2),
-          _FreeQuotaCard(stats: stats),
-        ],
+        if (stats.esFree) _FreeQuotaCard(stats: stats),
       ],
     );
   }
@@ -265,24 +261,42 @@ class _GradeRing extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           SizedBox.expand(
-            child: CircularProgressIndicator(
+            child: TweenAnimationBuilder<double>(
               // RN-01: la escala es sobre 20.
-              value: nota == null ? 0 : nota / Blueprint.maxGrade,
-              strokeWidth: 6,
-              strokeCap: StrokeCap.round,
-              backgroundColor: context.scheme.outlineVariant,
-              valueColor: AlwaysStoppedAnimation(color),
+              tween: Tween(
+                begin: 0,
+                end: nota == null ? 0 : nota / Blueprint.maxGrade,
+              ),
+              duration: Motion.duration(context, Motion.counter),
+              curve: Motion.enter,
+              builder: (context, v, _) => CircularProgressIndicator(
+                value: v,
+                strokeWidth: 6,
+                strokeCap: StrokeCap.round,
+                backgroundColor: context.scheme.outlineVariant,
+                valueColor: AlwaysStoppedAnimation(color),
+              ),
             ),
           ),
-          Text(
-            // Siempre 2 decimales: la escala vigesimal se lee "12.40", no "12.4".
-            nota == null ? '—' : nota.toStringAsFixed(2),
-            style: context.texts.bodyMedium?.copyWith(
-              fontSize: nota == null ? 20 : 15,
-              fontWeight: FontWeight.w800,
-              color: context.scheme.onSurface,
+          if (nota == null)
+            Text(
+              '—',
+              style: context.texts.bodyMedium?.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: context.scheme.onSurface,
+              ),
+            )
+          else
+            // Siempre 2 decimales: la vigesimal se lee "12.40", no "12.4".
+            AnimatedNumber(
+              value: nota,
+              style: context.texts.bodyMedium?.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: context.scheme.onSurface,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -594,14 +608,10 @@ class _FreeQuotaCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space2),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(
-                value: (restantes / limite).clamp(0.0, 1.0),
-                minHeight: 6,
-                backgroundColor: context.scheme.outlineVariant,
-                valueColor: AlwaysStoppedAnimation(color.base),
-              ),
+            AnimatedBar(
+              value: restantes / limite,
+              color: color.base,
+              height: 6,
             ),
             const SizedBox(height: DesignTokens.space2),
             Row(
@@ -643,12 +653,9 @@ class _LoadingBody extends StatelessWidget {
         for (var i = 0; i < 4; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: DesignTokens.space3 + 2),
-            child: Container(
+            child: SkeletonBox(
               height: i == 0 ? 96 : 72,
-              decoration: BoxDecoration(
-                color: context.scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              ),
+              radius: DesignTokens.radiusLg,
             ),
           ),
       ],
