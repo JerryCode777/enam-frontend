@@ -58,8 +58,14 @@ abstract class Question with _$Question {
     required String id,
     required String enunciado,
     required List<QuestionOption> opciones,
-    required String areaId,
-    required String subtemaId,
+
+    /// Clasificación de la pregunta.
+    ///
+    /// **Van en `null` durante un simulacro en curso (RN-09):** en el examen
+    /// real el postulante no ve de qué área es la pregunta, y saberlo daría una
+    /// pista. Se revelan recién al cerrar la sesión.
+    String? areaId,
+    String? subtemaId,
     @Default(QuestionType.casoClinico) QuestionType tipo,
 
     /// Dificultad de 1 a 3 (RF-07).

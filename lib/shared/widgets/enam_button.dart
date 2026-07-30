@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/design_tokens.dart';
 
-/// Botón principal de la app: 56 px de alto, radio completo (28).
+/// Botón principal de la app: 56 px de alto, radio completo, con degradado.
+///
+/// El degradado es del diseño. Se pinta con un `Ink` bajo el botón en vez de un
+/// `Container` encima, para que el efecto de toque de Material siga viéndose.
 ///
 /// Cuando [loading] es `true` queda deshabilitado y muestra un spinner, para que
 /// no se pueda enviar el mismo formulario dos veces.
@@ -54,20 +57,46 @@ class EnamButton extends StatelessWidget {
             ],
           );
 
+    final habilitado = onPressed != null && !loading;
+    final radio = BorderRadius.circular(DesignTokens.radiusXl + 4);
+
     final button = FilledButton(
       onPressed: loading ? null : onPressed,
       style: FilledButton.styleFrom(
         // El ancho completo lo da el SizedBox de abajo cuando expanded es
         // true; aquí solo se fija la altura, con un mínimo finito.
         minimumSize: const Size(64, 56),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXl + 4),
+        shape: RoundedRectangleBorder(borderRadius: radio),
+        // Transparente para dejar ver el degradado del Ink de abajo. Cuando
+        // está deshabilitado se deja el color del tema, que ya lo atenúa.
+        backgroundColor: habilitado ? Colors.transparent : null,
+        shadowColor: Colors.transparent,
+        foregroundColor: habilitado ? Colors.white : null,
+      ).copyWith(
+        elevation: const WidgetStatePropertyAll(0),
+        // Sin esto, el relleno transparente deja ver el fondo al presionar.
+        overlayColor: WidgetStatePropertyAll(
+          Colors.white.withValues(alpha: 0.12),
         ),
       ),
       child: child,
     );
 
-    return expanded ? SizedBox(width: double.infinity, child: button) : button;
+    final conDegradado = habilitado
+        ? Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: DesignTokens.buttonGradient,
+              ),
+              borderRadius: radio,
+            ),
+            child: button,
+          )
+        : button;
+
+    return expanded
+        ? SizedBox(width: double.infinity, child: conDegradado)
+        : conDegradado;
   }
 }
 

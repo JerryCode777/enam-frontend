@@ -293,7 +293,12 @@ as String?,
 /// @nodoc
 mixin _$Question {
 
- String get id; String get enunciado; List<QuestionOption> get opciones; String get areaId; String get subtemaId; QuestionType get tipo;/// Dificultad de 1 a 3 (RF-07).
+ String get id; String get enunciado; List<QuestionOption> get opciones;/// Clasificación de la pregunta.
+///
+/// **Van en `null` durante un simulacro en curso (RN-09):** en el examen
+/// real el postulante no ve de qué área es la pregunta, y saberlo daría una
+/// pista. Se revelan recién al cerrar la sesión.
+ String? get areaId; String? get subtemaId; QuestionType get tipo;/// Dificultad de 1 a 3 (RF-07).
  int get dificultad;/// Año o edición del ENAM de la que proviene. `null` si es de autoría propia.
  int? get origenAnio;/// Imágenes: radiografías, EKG, tablas (RF-10).
  List<String> get imagenes;/// Explicación de la clave. Llega tras responder.
@@ -331,7 +336,7 @@ abstract mixin class $QuestionCopyWith<$Res>  {
   factory $QuestionCopyWith(Question value, $Res Function(Question) _then) = _$QuestionCopyWithImpl;
 @useResult
 $Res call({
- String id, String enunciado, List<QuestionOption> opciones, String areaId, String subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, String? explicacion, double? porcentajeAciertoGlobal
+ String id, String enunciado, List<QuestionOption> opciones, String? areaId, String? subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, String? explicacion, double? porcentajeAciertoGlobal
 });
 
 
@@ -348,14 +353,14 @@ class _$QuestionCopyWithImpl<$Res>
 
 /// Create a copy of Question
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = null,Object? subtemaId = null,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = freezed,Object? subtemaId = freezed,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,enunciado: null == enunciado ? _self.enunciado : enunciado // ignore: cast_nullable_to_non_nullable
 as String,opciones: null == opciones ? _self.opciones : opciones // ignore: cast_nullable_to_non_nullable
-as List<QuestionOption>,areaId: null == areaId ? _self.areaId : areaId // ignore: cast_nullable_to_non_nullable
-as String,subtemaId: null == subtemaId ? _self.subtemaId : subtemaId // ignore: cast_nullable_to_non_nullable
-as String,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as List<QuestionOption>,areaId: freezed == areaId ? _self.areaId : areaId // ignore: cast_nullable_to_non_nullable
+as String?,subtemaId: freezed == subtemaId ? _self.subtemaId : subtemaId // ignore: cast_nullable_to_non_nullable
+as String?,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
 as QuestionType,dificultad: null == dificultad ? _self.dificultad : dificultad // ignore: cast_nullable_to_non_nullable
 as int,origenAnio: freezed == origenAnio ? _self.origenAnio : origenAnio // ignore: cast_nullable_to_non_nullable
 as int?,imagenes: null == imagenes ? _self.imagenes : imagenes // ignore: cast_nullable_to_non_nullable
@@ -446,7 +451,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String areaId,  String subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Question() when $default != null:
 return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
@@ -467,7 +472,7 @@ return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subte
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String areaId,  String subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)  $default,) {final _that = this;
 switch (_that) {
 case _Question():
 return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
@@ -487,7 +492,7 @@ return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subte
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String enunciado,  List<QuestionOption> opciones,  String areaId,  String subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,) {final _that = this;
 switch (_that) {
 case _Question() when $default != null:
 return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
@@ -502,7 +507,7 @@ return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subte
 @JsonSerializable()
 
 class _Question implements Question {
-  const _Question({required this.id, required this.enunciado, required final  List<QuestionOption> opciones, required this.areaId, required this.subtemaId, this.tipo = QuestionType.casoClinico, this.dificultad = 2, this.origenAnio, final  List<String> imagenes = const [], this.explicacion, this.porcentajeAciertoGlobal}): _opciones = opciones,_imagenes = imagenes;
+  const _Question({required this.id, required this.enunciado, required final  List<QuestionOption> opciones, this.areaId, this.subtemaId, this.tipo = QuestionType.casoClinico, this.dificultad = 2, this.origenAnio, final  List<String> imagenes = const [], this.explicacion, this.porcentajeAciertoGlobal}): _opciones = opciones,_imagenes = imagenes;
   factory _Question.fromJson(Map<String, dynamic> json) => _$QuestionFromJson(json);
 
 @override final  String id;
@@ -514,8 +519,13 @@ class _Question implements Question {
   return EqualUnmodifiableListView(_opciones);
 }
 
-@override final  String areaId;
-@override final  String subtemaId;
+/// Clasificación de la pregunta.
+///
+/// **Van en `null` durante un simulacro en curso (RN-09):** en el examen
+/// real el postulante no ve de qué área es la pregunta, y saberlo daría una
+/// pista. Se revelan recién al cerrar la sesión.
+@override final  String? areaId;
+@override final  String? subtemaId;
 @override@JsonKey() final  QuestionType tipo;
 /// Dificultad de 1 a 3 (RF-07).
 @override@JsonKey() final  int dificultad;
@@ -568,7 +578,7 @@ abstract mixin class _$QuestionCopyWith<$Res> implements $QuestionCopyWith<$Res>
   factory _$QuestionCopyWith(_Question value, $Res Function(_Question) _then) = __$QuestionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String enunciado, List<QuestionOption> opciones, String areaId, String subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, String? explicacion, double? porcentajeAciertoGlobal
+ String id, String enunciado, List<QuestionOption> opciones, String? areaId, String? subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, String? explicacion, double? porcentajeAciertoGlobal
 });
 
 
@@ -585,14 +595,14 @@ class __$QuestionCopyWithImpl<$Res>
 
 /// Create a copy of Question
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = null,Object? subtemaId = null,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = freezed,Object? subtemaId = freezed,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
   return _then(_Question(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,enunciado: null == enunciado ? _self.enunciado : enunciado // ignore: cast_nullable_to_non_nullable
 as String,opciones: null == opciones ? _self._opciones : opciones // ignore: cast_nullable_to_non_nullable
-as List<QuestionOption>,areaId: null == areaId ? _self.areaId : areaId // ignore: cast_nullable_to_non_nullable
-as String,subtemaId: null == subtemaId ? _self.subtemaId : subtemaId // ignore: cast_nullable_to_non_nullable
-as String,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as List<QuestionOption>,areaId: freezed == areaId ? _self.areaId : areaId // ignore: cast_nullable_to_non_nullable
+as String?,subtemaId: freezed == subtemaId ? _self.subtemaId : subtemaId // ignore: cast_nullable_to_non_nullable
+as String?,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
 as QuestionType,dificultad: null == dificultad ? _self.dificultad : dificultad // ignore: cast_nullable_to_non_nullable
 as int,origenAnio: freezed == origenAnio ? _self.origenAnio : origenAnio // ignore: cast_nullable_to_non_nullable
 as int?,imagenes: null == imagenes ? _self._imagenes : imagenes // ignore: cast_nullable_to_non_nullable

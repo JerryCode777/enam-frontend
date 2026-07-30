@@ -53,7 +53,32 @@ abstract final class DesignTokens {
   static const Color infoOnTintLight = brandDark;
   static const Color infoOnTintDark = brandLight;
   static const Color infoTintLight = brandSubtle;
-  static const Color infoTintDark = Color(0xFF0F1A35);
+  static const Color infoTintDark = Color(0xFF2E4A78);
+
+  // ==================== GRADIENTES ====================
+  //
+  // El diseño usa degradado en las cabeceras y en los botones principales. Se
+  // definen como listas de paradas para poder construir el `LinearGradient` con
+  // la geometría que pida cada uso.
+
+  /// Cabeceras de pantalla, en diagonal.
+  static const List<Color> headerGradientLight = [
+    Color(0xFF0A2540),
+    Color(0xFF16548C),
+    Color(0xFF2E9BD0),
+  ];
+  static const List<Color> headerGradientDark = [
+    Color(0xFF14213A),
+    Color(0xFF1B3A66),
+    Color(0xFF2E76B4),
+  ];
+  static const List<double> headerGradientStops = [0.0, 0.55, 1.0];
+
+  /// Botones principales, horizontal. Igual en ambos temas.
+  static const List<Color> buttonGradient = [
+    Color(0xFF1D5E92),
+    Color(0xFF2E9BD0),
+  ];
 
   // ==================== SUPERFICIES — TEMA CLARO ====================
 
@@ -68,13 +93,17 @@ abstract final class DesignTokens {
   static const Color textTertiaryLight = Color(0xFF9CA3AF);
 
   // ==================== SUPERFICIES — TEMA OSCURO ====================
+  //
+  // Azul marino, no casi negro. Es una decisión del diseño: un oscuro con
+  // temperatura se lee mejor de noche en sesiones largas que un gris neutro, y
+  // conserva la identidad de marca en ambos temas.
 
-  static const Color backgroundDark = Color(0xFF0D1117);
-  static const Color backgroundSecondaryDark = Color(0xFF0F1A35);
-  static const Color surfaceDark = Color(0xFF0B0E16);
-  static const Color surfaceElevatedDark = Color(0xFF1B1D2D);
-  static const Color borderDark = Color(0xFF2A3F6B);
-  static const Color borderSubtleDark = Color(0xFF1F2D4A);
+  static const Color backgroundDark = Color(0xFF182742);
+  static const Color backgroundSecondaryDark = Color(0xFF2B3D5C);
+  static const Color surfaceDark = Color(0xFF22334F);
+  static const Color surfaceElevatedDark = Color(0xFF2B3D5C);
+  static const Color borderDark = Color(0xFF4A6693);
+  static const Color borderSubtleDark = Color(0xFF374E75);
 
   static const Color textPrimaryDark = Color(0xFFF3F4F6);
   static const Color textSecondaryDark = Color(0xFFB8C2E0);
@@ -89,7 +118,7 @@ abstract final class DesignTokens {
 
   // ==================== TIPOGRAFÍA ====================
 
-  static const String fontFamily = 'Manrope';
+  static const String fontFamily = 'Nunito';
 
   static const double fontSizeXs = 12;
   static const double fontSizeSm = 14;

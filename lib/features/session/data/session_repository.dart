@@ -103,6 +103,13 @@ class MockSessionRepository implements SessionRepository {
   /// saberla. Es el mismo reparto que hace el servidor real.
   final Map<String, Map<String, String>> _claves = {};
 
+  /// Preguntas completas por sesión, con clave y clasificación.
+  ///
+  /// El cliente recibe una versión recortada durante el simulacro (RF-16 y
+  /// RN-09); estas son las de verdad, y se usan para corregir y para revelar
+  /// todo al cerrar. Es el mismo reparto que hace el servidor.
+  final Map<String, List<Question>> _originales = {};
+
   int _counter = 0;
 
   static const _delay = Duration(milliseconds: 500);
@@ -123,14 +130,19 @@ class MockSessionRepository implements SessionRepository {
       claves[pregunta.id] = correcta.id;
     }
     _claves[sessionId] = claves;
+    _originales[sessionId] = preguntas;
 
     if (revelarClaves) return preguntas;
 
-    // Quitar toda pista de cuál es la correcta antes de entregar al cliente.
+    // Quitar toda pista antes de entregar al cliente: ni la clave (RF-16) ni la
+    // clasificación (RN-09), porque en el examen real tampoco se ve de qué área
+    // es la pregunta y saberlo acota las alternativas.
     return preguntas
         .map(
           (q) => q.copyWith(
             explicacion: null,
+            areaId: null,
+            subtemaId: null,
             opciones: q.opciones
                 .map((o) => o.copyWith(esCorrecta: null, explicacion: null))
                 .toList(),
@@ -237,11 +249,14 @@ class MockSessionRepository implements SessionRepository {
     if (session == null) throw const NotFoundFailure('Sesión no encontrada.');
 
     final claves = _claves[sessionId] ?? const {};
+    // Se corrige y se revela sobre las originales, no sobre las recortadas que
+    // vio el cliente: ahí la clasificación venía en null (RN-09).
+    final originales = _originales[sessionId] ?? session.preguntas;
     final corregidas = <String, Answer>{};
     final reveladas = <Question>[];
     var correctas = 0;
 
-    for (final pregunta in session.preguntas) {
+    for (final pregunta in originales) {
       final respuesta = session.respuestas[pregunta.id];
       final optionId = respuesta?.optionId;
       final claveId = claves[pregunta.id];

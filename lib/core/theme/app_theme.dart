@@ -60,7 +60,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor:
           isLight ? DesignTokens.backgroundLight : DesignTokens.backgroundDark,
       textTheme: textTheme,
-      fontFamily: GoogleFonts.manrope().fontFamily,
+      fontFamily: GoogleFonts.nunito().fontFamily,
 
       appBarTheme: AppBarTheme(
         backgroundColor:
@@ -181,7 +181,7 @@ abstract final class AppTheme {
   }
 
   static TextTheme _textTheme(ColorScheme scheme) {
-    final base = GoogleFonts.manropeTextTheme();
+    final base = GoogleFonts.nunitoTextTheme();
 
     return base.copyWith(
       displaySmall: base.displaySmall?.copyWith(
@@ -243,7 +243,7 @@ abstract final class AppTheme {
   /// decisión tipográfica más importante de la app: no la bajes.
   static TextStyle clinicalCase(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return GoogleFonts.manrope(
+    return GoogleFonts.nunito(
       fontSize: DesignTokens.fontSizeMd,
       height: DesignTokens.lineHeightRelaxed,
       color: scheme.onSurface,

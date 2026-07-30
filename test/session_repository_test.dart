@@ -38,6 +38,33 @@ void main() {
       }
     });
 
+    test('NO revela la clasificación durante el simulacro (RN-09)', () async {
+      // En el examen real el postulante no ve de qué área es la pregunta, y
+      // saberlo acota las alternativas. Se revela recién al cerrar.
+      final session = await repo.startSimulacro(esMuestra: true);
+
+      for (final pregunta in session.preguntas) {
+        expect(pregunta.areaId, isNull, reason: 'El área no debe viajar');
+        expect(pregunta.subtemaId, isNull, reason: 'El subtema no debe viajar');
+      }
+
+      final finalizada = await repo.submit(session.id);
+      for (final pregunta in finalizada.preguntas) {
+        expect(pregunta.areaId, isNotNull, reason: 'Al cerrar sí se revela');
+        expect(pregunta.subtemaId, isNotNull);
+      }
+    });
+
+    test('en práctica la clasificación sí viaja desde el inicio', () async {
+      // En práctica no aplica RN-09: la retroalimentación inmediata la muestra.
+      final session = await repo.startPractice(
+        const PracticeConfig(cantidadPreguntas: 5),
+      );
+      for (final pregunta in session.preguntas) {
+        expect(pregunta.areaId, isNotNull);
+      }
+    });
+
     test('no da feedback inmediato al responder (RF-16)', () async {
       final session = await repo.startSimulacro(esMuestra: true);
       final pregunta = session.preguntas.first;

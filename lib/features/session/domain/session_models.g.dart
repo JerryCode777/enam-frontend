@@ -28,8 +28,8 @@ _Question _$QuestionFromJson(Map<String, dynamic> json) => _Question(
   opciones: (json['opciones'] as List<dynamic>)
       .map((e) => QuestionOption.fromJson(e as Map<String, dynamic>))
       .toList(),
-  areaId: json['areaId'] as String,
-  subtemaId: json['subtemaId'] as String,
+  areaId: json['areaId'] as String?,
+  subtemaId: json['subtemaId'] as String?,
   tipo:
       $enumDecodeNullable(_$QuestionTypeEnumMap, json['tipo']) ??
       QuestionType.casoClinico,
