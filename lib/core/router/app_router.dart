@@ -16,6 +16,11 @@ import '../../features/catalog/presentation/temario_node_screen.dart';
 import '../../features/catalog/presentation/temario_search_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/offline/presentation/downloads_screen.dart';
+import '../../features/profile/presentation/change_password_screen.dart';
+import '../../features/profile/presentation/delete_account_screen.dart';
+import '../../features/profile/presentation/edit_profile_screen.dart';
+import '../../features/profile/presentation/help_screen.dart';
+import '../../features/profile/presentation/legal_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/session/presentation/marked_questions_screen.dart';
 import '../../features/session/presentation/national_mock_screen.dart';
@@ -33,6 +38,7 @@ import '../../features/subscription/presentation/checkout_screen.dart';
 import '../../features/subscription/presentation/my_subscription_screen.dart';
 import '../../features/subscription/presentation/payment_result_screen.dart';
 import '../../features/subscription/presentation/plans_screen.dart';
+import '../../features/system/presentation/system_screens.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../providers.dart';
@@ -380,13 +386,10 @@ final List<RouteBase> _routes = [
     pageBuilder: (context, state) =>
         slidePage(child: const DownloadsScreen(), state: state),
   ),
-  _stub(
-    Routes.offline,
-    titulo: 'Sin conexión',
-    descripcion:
-        'Qué sigue funcionando y qué no. Los simulacros nacionales requieren '
-        'conexión.',
-    requisitos: const ['RF-31', 'RF-33'],
+  GoRoute(
+    path: Routes.offline,
+    pageBuilder: (context, state) =>
+        fadePage(child: const OfflineScreen(), state: state),
   ),
 
   // ==================== PERFIL Y AJUSTES ====================
@@ -395,28 +398,50 @@ final List<RouteBase> _routes = [
     pageBuilder: (context, state) =>
         slidePage(child: const SettingsScreen(), state: state),
   ),
-  _stub(
-    Routes.editProfile,
-    titulo: 'Editar perfil',
-    descripcion: 'Incluye cambiar la fecha objetivo de examen.',
-    requisitos: const ['RF-04'],
+  GoRoute(
+    path: Routes.editProfile,
+    pageBuilder: (context, state) =>
+        slidePage(child: const EditProfileScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.changePassword,
+    pageBuilder: (context, state) =>
+        slidePage(child: const ChangePasswordScreen(), state: state),
+  ),
+
+  GoRoute(
+    path: Routes.deleteAccount,
+    pageBuilder: (context, state) =>
+        slidePage(child: const DeleteAccountScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.help,
+    pageBuilder: (context, state) =>
+        slidePage(child: const HelpScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.terms,
+    pageBuilder: (context, state) =>
+        slidePage(child: const LegalScreen(), state: state),
   ),
   _stub(
-    Routes.changePassword,
-    titulo: 'Cambiar contraseña',
-    descripcion: 'Contraseña actual y nueva.',
+    Routes.reminders,
+    titulo: 'Recordatorios',
+    descripcion: 'Se configuran desde Ajustes; esta ruta queda por deep link.',
+    requisitos: const ['RF-34'],
   ),
 
   // ==================== SISTEMA ====================
-  _stub(
-    Routes.maintenance,
-    titulo: 'Mantenimiento',
-    descripcion: 'El servicio está temporalmente fuera de servicio.',
-    requisitos: const ['RNF-03'],
+  GoRoute(
+    path: Routes.maintenance,
+    pageBuilder: (context, state) => fadePage(
+      child: MaintenanceScreen(hasta: state.uri.queryParameters['hasta']),
+      state: state,
+    ),
   ),
-  _stub(
-    Routes.updateRequired,
-    titulo: 'Actualización requerida',
-    descripcion: 'Esta versión ya no es compatible con el servidor.',
+  GoRoute(
+    path: Routes.updateRequired,
+    pageBuilder: (context, state) =>
+        fadePage(child: const UpdateRequiredScreen(), state: state),
   ),
 ];

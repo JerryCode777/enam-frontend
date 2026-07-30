@@ -24,6 +24,11 @@ import 'package:enam_app/features/session/presentation/national_mock_screen.dart
 import 'package:enam_app/features/session/presentation/practice_config_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_hub_screen.dart';
 import 'package:enam_app/features/offline/presentation/downloads_screen.dart';
+import 'package:enam_app/features/profile/presentation/change_password_screen.dart';
+import 'package:enam_app/features/profile/presentation/delete_account_screen.dart';
+import 'package:enam_app/features/profile/presentation/edit_profile_screen.dart';
+import 'package:enam_app/features/profile/presentation/help_screen.dart';
+import 'package:enam_app/features/profile/presentation/legal_screen.dart';
 import 'package:enam_app/features/profile/presentation/settings_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_instructions_screen.dart';
 import 'package:enam_app/features/stats/presentation/progress_screen.dart';
@@ -32,6 +37,7 @@ import 'package:enam_app/features/subscription/presentation/checkout_screen.dart
 import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
 import 'package:enam_app/features/subscription/presentation/payment_result_screen.dart';
 import 'package:enam_app/features/subscription/presentation/plans_screen.dart';
+import 'package:enam_app/features/system/presentation/system_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -102,6 +108,16 @@ void main() {
     'Mi suscripción': const MySubscriptionScreen(),
     'Descargas': const DownloadsScreen(),
     'Ajustes': const SettingsScreen(),
+
+    // Pantallas que no venían en el diseño
+    'Términos y privacidad': const LegalScreen(),
+    'Eliminar cuenta': const DeleteAccountScreen(),
+    'Ayuda': const HelpScreen(),
+    'Mantenimiento': const MaintenanceScreen(hasta: 'el lunes a las 8 a.m.'),
+    'Actualización requerida': const UpdateRequiredScreen(),
+    'Sin conexión': const OfflineScreen(),
+    'Editar perfil': const EditProfileScreen(),
+    'Cambiar contraseña': const ChangePasswordScreen(),
   };
 
   for (final entry in pantallas.entries) {
