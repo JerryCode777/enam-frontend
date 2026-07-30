@@ -1,4 +1,9 @@
+import 'package:enam_app/core/mock/mock_data.dart';
 import 'package:enam_app/core/providers.dart';
+import 'package:enam_app/features/catalog/data/catalog_repository.dart';
+import 'package:enam_app/features/catalog/domain/catalog_models.dart';
+import 'package:enam_app/features/stats/data/stats_repository.dart';
+import 'package:enam_app/features/stats/domain/stats_models.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
 import 'package:enam_app/features/auth/presentation/complete_profile_screen.dart';
@@ -18,7 +23,15 @@ import 'package:enam_app/features/session/presentation/marked_questions_screen.d
 import 'package:enam_app/features/session/presentation/national_mock_screen.dart';
 import 'package:enam_app/features/session/presentation/practice_config_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_hub_screen.dart';
+import 'package:enam_app/features/offline/presentation/downloads_screen.dart';
+import 'package:enam_app/features/profile/presentation/settings_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_instructions_screen.dart';
+import 'package:enam_app/features/stats/presentation/progress_screen.dart';
+import 'package:enam_app/features/stats/presentation/ranking_screen.dart';
+import 'package:enam_app/features/subscription/presentation/checkout_screen.dart';
+import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
+import 'package:enam_app/features/subscription/presentation/payment_result_screen.dart';
+import 'package:enam_app/features/subscription/presentation/plans_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,6 +90,18 @@ void main() {
     'Simulacro · instrucciones': const SimulacroInstructionsScreen(),
     'Simulacro · muestra': const SimulacroInstructionsScreen(esMuestra: true),
     'Simulacro · nacional': const NationalMockScreen(),
+
+    // Progreso, pagos, offline y ajustes
+    'Progreso': const ProgressScreen(),
+    'Ranking': const RankingScreen(),
+    'Planes': const PlansScreen(),
+    'Checkout': const CheckoutScreen(),
+    'Pago · éxito': const PaymentResultScreen(estado: EstadoPago.exito),
+    'Pago · pendiente': const PaymentResultScreen(estado: EstadoPago.pendiente),
+    'Pago · fallo': const PaymentResultScreen(estado: EstadoPago.fallo),
+    'Mi suscripción': const MySubscriptionScreen(),
+    'Descargas': const DownloadsScreen(),
+    'Ajustes': const SettingsScreen(),
   };
 
   for (final entry in pantallas.entries) {
@@ -124,12 +149,19 @@ void main() {
   });
 }
 
-/// Envuelve la pantalla con lo mínimo para pintarla, con mocks y sesión activa.
+/// Envuelve la pantalla con lo mínimo para pintarla, con datos ya resueltos.
+///
+/// Los repositorios se sustituyen por versiones **instantáneas**: los mocks de
+/// producción simulan latencia con `Future.delayed`, y dentro de `testWidgets` el
+/// tiempo es simulado, así que dejarían temporizadores pendientes al terminar.
+/// Este test mide layout, no latencia.
 Widget _harness(Widget screen, Brightness brightness, {double textScale = 1.0}) {
   return ProviderScope(
     overrides: [
       // Un usuario con perfil completo, para que el Home tenga qué mostrar.
       authControllerProvider.overrideWith(_FakeAuthController.new),
+      catalogRepositoryProvider.overrideWithValue(_InstantCatalog()),
+      statsRepositoryProvider.overrideWithValue(_InstantStats()),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,
@@ -155,4 +187,63 @@ class _FakeAuthController extends AuthController {
       fechaObjetivo: DateTime(2026, 12, 12),
     ),
   );
+}
+
+
+/// Catálogo que responde sin latencia.
+class _InstantCatalog implements CatalogRepository {
+  static final _arbol = MockData.catalog();
+
+  @override
+  Future<List<CatalogNode>> tree() => Future.value(_arbol);
+}
+
+/// Estadísticas que responden sin latencia.
+class _InstantStats implements StatsRepository {
+  static final _dashboard = _construir();
+
+  static DashboardStats _construir() {
+    // Suficientes respuestas para que la nota proyectada se muestre, y no el
+    // estado de "aún no hay datos".
+    final porArea = [
+      for (final area in MockData.catalog())
+        AreaPerformance(
+          areaId: area.id,
+          areaNombre: area.nombre,
+          preguntasBlueprint: area.peso ?? 0,
+          respondidas: 40,
+          correctas: 25,
+        ),
+    ];
+    return DashboardStats(
+      notaProyectada: 12.4,
+      preguntasVistas: 1286,
+      preguntasTotalesBanco: 4500,
+      simulacrosCompletados: 3,
+      porArea: porArea,
+      evolucion: [
+        for (var i = 4; i >= 0; i--)
+          GradePoint(
+            fecha: DateTime(2026, 7, 30 - i * 3),
+            nota: 9.5 + (4 - i) * 0.7,
+          ),
+      ],
+      preguntasRestantesHoy: 13,
+    );
+  }
+
+  @override
+  Future<DashboardStats> dashboard() => Future.value(_dashboard);
+
+  @override
+  Future<List<RankingEntry>> rankingGeneral() => Future.value([
+    for (var i = 1; i <= 10; i++)
+      RankingEntry(
+        posicion: i,
+        usuarioNombre: 'Estudiante $i',
+        universidad: 'UNMSM',
+        promedio: 16.5 - i * 0.3,
+        esUsuarioActual: i == 7,
+      ),
+  ]);
 }

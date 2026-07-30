@@ -73,7 +73,7 @@ abstract final class Routes {
   static const plans = '/planes';
   static const paywall = '/premium';
   static const checkout = '/pago';
-  static const yapePayment = '/pago/yape';
+  static const paymentResult = '/pago/resultado';
   static const mySubscription = '/mi-suscripcion';
 
   // ---------- Offline (Módulo 7) ----------

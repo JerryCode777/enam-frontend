@@ -15,6 +15,8 @@ import '../../features/catalog/presentation/temario_map_screen.dart';
 import '../../features/catalog/presentation/temario_node_screen.dart';
 import '../../features/catalog/presentation/temario_search_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/offline/presentation/downloads_screen.dart';
+import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/session/presentation/marked_questions_screen.dart';
 import '../../features/session/presentation/national_mock_screen.dart';
 import '../../features/session/presentation/practice_config_screen.dart';
@@ -25,6 +27,12 @@ import '../../features/session/presentation/simulacro_hub_screen.dart';
 import '../../features/session/presentation/simulacro_instructions_screen.dart';
 import '../../features/session/presentation/simulacro_results_screen.dart';
 import '../../features/session/presentation/simulacro_screen.dart';
+import '../../features/stats/presentation/progress_screen.dart';
+import '../../features/stats/presentation/ranking_screen.dart';
+import '../../features/subscription/presentation/checkout_screen.dart';
+import '../../features/subscription/presentation/my_subscription_screen.dart';
+import '../../features/subscription/presentation/payment_result_screen.dart';
+import '../../features/subscription/presentation/plans_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../providers.dart';
@@ -275,33 +283,25 @@ final List<RouteBase> _routes = [
         ],
       ),
 
-      // --- Progreso ---
+      // --- Progreso (RF-21, RF-22) ---
       StatefulShellBranch(
         routes: [
-          _stub(
-            Routes.stats,
-            titulo: 'Progreso',
-            descripcion:
-                'Acierto por área contra el peso del blueprint, evolución '
-                'temporal y desglose de la nota proyectada.',
-            requisitos: const ['RF-21', 'RN-04'],
-            acciones: const [
-              (label: 'Dónde invertir tu tiempo', ruta: Routes.studyPriority),
-              (label: 'Ranking', ruta: Routes.ranking),
+          GoRoute(
+            path: Routes.stats,
+            pageBuilder: (context, state) =>
+                instantPage(child: const ProgressScreen(), state: state),
+            routes: [
+              GoRoute(
+                path: 'prioridades',
+                pageBuilder: (context, state) =>
+                    slidePage(child: const StudyPriorityScreen(), state: state),
+              ),
             ],
           ),
           GoRoute(
-            path: Routes.studyPriority,
+            path: Routes.ranking,
             pageBuilder: (context, state) =>
-                slidePage(child: const StudyPriorityScreen(), state: state),
-          ),
-          _stub(
-            Routes.ranking,
-            titulo: 'Ranking',
-            descripcion:
-                'General por promedio y por simulacro nacional, con opción de '
-                'ocultarse del ranking público.',
-            requisitos: const ['RF-22', 'RN-05'],
+                slidePage(child: const RankingScreen(), state: state),
           ),
         ],
       ),
@@ -341,60 +341,44 @@ final List<RouteBase> _routes = [
         slidePage(child: const MarkedQuestionsScreen(), state: state),
   ),
 
-  // ==================== SUSCRIPCIÓN ====================
-  _stub(
-    Routes.plans,
-    titulo: 'Planes',
-    descripcion: 'Free, mensual e intensivo pre-examen, con comparativa.',
-    requisitos: const ['RF-25'],
-    acciones: const [(label: 'Pagar', ruta: Routes.checkout)],
+  // ==================== SUSCRIPCIÓN (Módulo 6) ====================
+  GoRoute(
+    path: Routes.plans,
+    // Sube desde abajo: interrumpe lo que el usuario estaba haciendo.
+    pageBuilder: (context, state) =>
+        modalPage(child: const PlansScreen(), state: state),
   ),
-  _stub(
-    Routes.paywall,
-    titulo: 'Contenido premium',
-    descripcion:
-        'Se muestra al agotar las 20 preguntas del día o al abrir un '
-        'simulacro completo con plan free.',
-    requisitos: const ['RN-03'],
+  GoRoute(
+    path: Routes.checkout,
+    pageBuilder: (context, state) => slidePage(
+      child: CheckoutScreen(planId: state.uri.queryParameters['plan']),
+      state: state,
+    ),
   ),
-  _stub(
-    Routes.checkout,
-    titulo: 'Pago',
-    descripcion: 'Checkout con Culqi: tarjeta y Yape/Plin.',
-    requisitos: const ['RF-26'],
-    acciones: const [(label: 'Pagar con Yape', ruta: Routes.yapePayment)],
+  GoRoute(
+    path: Routes.paymentResult,
+    pageBuilder: (context, state) => fadePage(
+      child: PaymentResultScreen(
+        estado: EstadoPago.values.firstWhere(
+          (e) => e.name == state.uri.queryParameters['estado'],
+          orElse: () => EstadoPago.exito,
+        ),
+        planId: state.uri.queryParameters['plan'],
+      ),
+      state: state,
+    ),
   ),
-  _stub(
-    Routes.yapePayment,
-    titulo: 'Pago con Yape',
-    descripcion:
-        'QR e instrucciones. La activación es manual, con estado "esperando '
-        'verificación".',
-    requisitos: const ['RF-28'],
-  ),
-  _stub(
-    Routes.mySubscription,
-    titulo: 'Mi suscripción',
-    descripcion:
-        'Plan actual, expiración, periodo de gracia de 3 días y cancelación.',
-    requisitos: const ['RF-27', 'RN-07'],
+  GoRoute(
+    path: Routes.mySubscription,
+    pageBuilder: (context, state) =>
+        slidePage(child: const MySubscriptionScreen(), state: state),
   ),
 
-  // ==================== OFFLINE ====================
-  _stub(
-    Routes.downloads,
-    titulo: 'Descargas',
-    descripcion:
-        'Gestor de paquetes por área: tamaño, progreso y disponibles sin '
-        'conexión. Solo premium.',
-    requisitos: const ['RF-30'],
-    acciones: const [(label: 'Sincronización', ruta: Routes.syncStatus)],
-  ),
-  _stub(
-    Routes.syncStatus,
-    titulo: 'Sincronización',
-    descripcion: 'Respuestas encoladas y última sincronización.',
-    requisitos: const ['RF-32'],
+  // ==================== OFFLINE (Módulo 7) ====================
+  GoRoute(
+    path: Routes.downloads,
+    pageBuilder: (context, state) =>
+        slidePage(child: const DownloadsScreen(), state: state),
   ),
   _stub(
     Routes.offline,
@@ -406,16 +390,10 @@ final List<RouteBase> _routes = [
   ),
 
   // ==================== PERFIL Y AJUSTES ====================
-  _stub(
-    Routes.profile,
-    titulo: 'Perfil',
-    descripcion: 'Datos, universidad, condición, fecha objetivo y progreso.',
-    requisitos: const ['RF-04'],
-    acciones: const [
-      (label: 'Editar', ruta: Routes.editProfile),
-      (label: 'Cambiar contraseña', ruta: Routes.changePassword),
-      (label: 'Mi suscripción', ruta: Routes.mySubscription),
-    ],
+  GoRoute(
+    path: Routes.settings,
+    pageBuilder: (context, state) =>
+        slidePage(child: const SettingsScreen(), state: state),
   ),
   _stub(
     Routes.editProfile,
@@ -427,45 +405,6 @@ final List<RouteBase> _routes = [
     Routes.changePassword,
     titulo: 'Cambiar contraseña',
     descripcion: 'Contraseña actual y nueva.',
-  ),
-  _stub(
-    Routes.settings,
-    titulo: 'Ajustes',
-    descripcion: 'Tema, notificaciones, descargas y cuenta.',
-    acciones: const [
-      (label: 'Perfil', ruta: Routes.profile),
-      (label: 'Recordatorios', ruta: Routes.reminders),
-      (label: 'Eliminar cuenta', ruta: Routes.deleteAccount),
-      (label: 'Ayuda', ruta: Routes.help),
-      (label: 'Términos', ruta: Routes.terms),
-    ],
-  ),
-  _stub(
-    Routes.reminders,
-    titulo: 'Recordatorios',
-    descripcion:
-        'Hora del recordatorio diario y avisos de simulacro nacional y '
-        'resultados.',
-    requisitos: const ['RF-34'],
-  ),
-  _stub(
-    Routes.deleteAccount,
-    titulo: 'Eliminar cuenta',
-    descripcion:
-        'Qué se borra y confirmación explícita. Derecho de eliminación de la '
-        'Ley 29733.',
-    requisitos: const ['RNF-06'],
-  ),
-  _stub(
-    Routes.help,
-    titulo: 'Ayuda',
-    descripcion: 'Preguntas frecuentes y contacto de soporte.',
-  ),
-  _stub(
-    Routes.terms,
-    titulo: 'Términos y privacidad',
-    descripcion: 'Términos de uso y política de datos personales.',
-    requisitos: const ['RNF-06'],
   ),
 
   // ==================== SISTEMA ====================
