@@ -555,7 +555,10 @@ class _NationalMockCard extends StatelessWidget {
                   horizontal: DesignTokens.space3 + 2,
                 ),
               ),
-              child: const Text('Inscribirme'),
+              // "Participar" y no "Inscribirme": con un público en época de
+              // trámites, inscribirse a un "Simulacro Nacional" se puede leer
+              // como inscripción al ENAM real.
+              child: const Text('Participar'),
             ),
           ],
         ),
