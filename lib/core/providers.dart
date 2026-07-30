@@ -12,6 +12,7 @@ import '../features/stats/data/stats_repository.dart';
 import '../features/stats/domain/stats_models.dart';
 import 'config/app_config.dart';
 import 'network/api_client.dart';
+import 'storage/app_prefs.dart';
 import 'storage/token_storage.dart';
 
 /// Inyección de dependencias de la app.
@@ -58,6 +59,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+final appPrefsProvider = Provider<AppPrefs>((ref) => AppPrefs());
+
 final googleSignInServiceProvider = Provider<GoogleSignInService>((ref) {
   if (AppConfig.useMocks) return MockGoogleSignInService();
   return GoogleSignInServiceImpl();
@@ -88,6 +91,51 @@ final statsRepositoryProvider = Provider<StatsRepository>((ref) {
   }
   return ApiStatsRepository(ref.watch(apiClientProvider));
 });
+
+// ==================== ARRANQUE ====================
+
+/// Lo que hay que resolver antes de salir del splash.
+typedef Startup = ({bool onboardingVisto});
+
+/// Estado de arranque de la app. `null` mientras no está resuelto.
+///
+/// Dos cosas conviven aquí:
+///
+/// 1. Si el onboarding ya se vio. El router lo necesita de forma **síncrona**
+///    para decidir a dónde mandar al usuario sin sesión, así que no puede ser
+///    un `FutureProvider` que se consulte en el momento de redirigir.
+///
+/// 2. Un tiempo mínimo en el splash. El diseño pide una animación de logo, ECG
+///    y barra; leer el storage tarda ~200 ms, así que sin esto la pantalla
+///    aparecía y desaparecía como un parpadeo y la animación no se veía nunca.
+///    El diseño marca 2.5 s como techo; 1.8 s deja ver la animación sin que
+///    se haga lento.
+class StartupNotifier extends AsyncNotifier<Startup> {
+  static const minimoEnSplash = Duration(milliseconds: 1800);
+
+  @override
+  Future<Startup> build() async {
+    // Las dos se lanzan antes del primer await, así que corren en paralelo: la
+    // espera mínima no se suma a la lectura del storage.
+    final visto = ref.read(appPrefsProvider).onboardingVisto();
+    final espera = Future<void>.delayed(minimoEnSplash);
+
+    final resultado = await visto;
+    await espera;
+    return (onboardingVisto: resultado);
+  }
+
+  /// Marca el onboarding como visto y actualiza el estado en memoria, para que
+  /// el router no vuelva a mandar ahí en la misma sesión.
+  Future<void> marcarOnboardingVisto() async {
+    await ref.read(appPrefsProvider).marcarOnboardingVisto();
+    state = const AsyncData((onboardingVisto: true));
+  }
+}
+
+final startupProvider = AsyncNotifierProvider<StartupNotifier, Startup>(
+  StartupNotifier.new,
+);
 
 // ==================== ESTADO DE SESIÓN ====================
 

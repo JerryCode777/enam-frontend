@@ -61,7 +61,10 @@ import 'transitions.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ValueNotifier(0);
 
+  // Sin escuchar también el arranque, la app se quedaría en el splash para
+  // siempre: al resolverse no habría nada que dispare un nuevo redirect.
   ref.listen(authControllerProvider, (_, _) => notifier.value++);
+  ref.listen(startupProvider, (_, _) => notifier.value++);
   ref.onDispose(notifier.dispose);
 
   return GoRouter(
@@ -101,21 +104,48 @@ const _entryRoutes = {
   Routes.completeProfile,
 };
 
-/// Decide a dónde mandar al usuario. `null` lo deja pasar.
-String? _redirect(Ref ref, GoRouterState state) {
-  final auth = ref.read(authControllerProvider);
-  final here = state.matchedLocation;
+String? _redirect(Ref ref, GoRouterState state) => decidirDestino(
+  auth: ref.read(authControllerProvider),
+  startup: ref.read(startupProvider),
+  here: state.matchedLocation,
+);
 
-  // Aún leyendo el storage: quedarse en splash y no parpadear al login.
-  if (auth.isLoading || !auth.hasValue) {
+/// Decide a dónde mandar al usuario. `null` lo deja pasar.
+///
+/// Función pura sobre los dos estados que importan, en vez de leer del `Ref`
+/// directamente: así el recorrido de arranque —que es donde estaba el fallo del
+/// onboarding inalcanzable— se puede probar sin montar un router.
+@visibleForTesting
+String? decidirDestino({
+  required AsyncValue<AuthState> auth,
+  required AsyncValue<Startup> startup,
+  required String here,
+}) {
+  // Aún leyendo el storage, o el splash no ha cumplido su tiempo mínimo:
+  // quedarse en splash y no parpadear al login.
+  if (auth.isLoading || !auth.hasValue || !startup.hasValue) {
     return here == Routes.splash ? null : Routes.splash;
   }
 
   return switch (auth.requireValue) {
     AuthLoading() => Routes.splash,
 
-    AuthSignedOut() =>
-      _publicRoutes.contains(here) && here != Routes.splash ? null : Routes.login,
+    // Sin sesión: el onboarding la primera vez, el login a partir de ahí.
+    //
+    // Antes esto mandaba siempre al login, así que el onboarding no era
+    // alcanzable por ninguna ruta: existía el archivo y nadie lo veía nunca.
+    AuthSignedOut() => switch (here) {
+      _ when here == Routes.splash =>
+        startup.requireValue.onboardingVisto ? Routes.login : Routes.onboarding,
+
+      // Si ya se vio, volver a entrar por onboarding no tiene sentido.
+      _ when here == Routes.onboarding && startup.requireValue.onboardingVisto =>
+        Routes.login,
+
+      _ when _publicRoutes.contains(here) => null,
+
+      _ => Routes.login,
+    },
 
     AuthSignedIn(:final user) => switch (user) {
       // RF-01: sin correo verificado no se entra a la app.

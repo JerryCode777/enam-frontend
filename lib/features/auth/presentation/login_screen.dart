@@ -10,6 +10,8 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
+import '../../../shared/widgets/auth_scaffold.dart';
+import '../../../shared/widgets/brand_gradient.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/google_button.dart';
@@ -128,133 +130,214 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-    final states = context.states;
-
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space6,
-            DesignTokens.space12,
-            DesignTokens.space6,
-            DesignTokens.space6,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: states.info.tint,
-                      borderRadius: BorderRadius.circular(
-                        DesignTokens.radiusMd + 2,
+      body: BrandGradient(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _CabeceraMarca(),
+                const SizedBox(height: DesignTokens.space3),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space4,
+                    0,
+                    DesignTokens.space4,
+                    DesignTokens.space6,
+                  ),
+                  child: AuthCard(
+                    children: [
+                      EnamTextField(
+                        label: 'Correo',
+                        controller: _email,
+                        error: _emailError,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
+                        enabled: !_ocupado,
+                        onChanged: (_) {
+                          if (_emailError != null) {
+                            setState(() => _emailError = null);
+                          }
+                        },
                       ),
-                    ),
-                    child: Icon(
-                      Symbols.stethoscope,
-                      size: 24,
-                      fill: 1,
-                      color: states.info.onTint,
-                    ),
+                      EnamTextField(
+                        label: 'Contraseña',
+                        controller: _password,
+                        error: _passwordError,
+                        obscure: true,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        enabled: !_ocupado,
+                        onSubmitted: (_) => _submit(),
+                        onChanged: (_) {
+                          if (_passwordError != null) {
+                            setState(() => _passwordError = null);
+                          }
+                        },
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _ocupado
+                              ? null
+                              : () => context.push(Routes.forgotPassword),
+                          child: const Text(
+                            '¿Olvidaste tu contraseña?',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      EnamButton(
+                        label: 'Ingresar',
+                        loading: _loading,
+                        onPressed: _submit,
+                      ),
+                      if (AppConfig.googleSignInHabilitado) ...[
+                        const SeparadorAuth(),
+                        GoogleButton(
+                          loading: _loadingGoogle,
+                          onPressed: _ocupado ? null : _submitGoogle,
+                        ),
+                      ],
+                      AuthFooter(
+                        pregunta: '¿Primera vez?',
+                        accion: 'Crea tu cuenta',
+                        onTap: _ocupado ? null : () => context.go(Routes.register),
+                      ),
+                      // Ayuda para desarrollo: con mocks, estos correos disparan
+                      // cada camino de error sin tocar código.
+                      if (const bool.fromEnvironment('dart.vm.product') == false)
+                        Text(
+                          'Modo desarrollo · cualquier correo entra · '
+                          'contraseña "error" falla · nuevo2@enam.pe entra con '
+                          'perfil incompleto',
+                          textAlign: TextAlign.center,
+                          style: context.texts.bodySmall?.copyWith(
+                            color: context.scheme.onSurfaceVariant.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: DesignTokens.space3),
-                  Text(
-                    'ENAM Prep',
-                    style: context.texts.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: DesignTokens.space6),
-              Text(
-                'Hola de nuevo',
-                style: context.texts.headlineMedium?.copyWith(
-                  fontSize: DesignTokens.fontSize2xl + 2,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space5),
-              EnamTextField(
-                label: 'Correo',
-                controller: _email,
-                error: _emailError,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.email],
-                enabled: !_ocupado,
-                onChanged: (_) {
-                  if (_emailError != null) setState(() => _emailError = null);
-                },
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              EnamTextField(
-                label: 'Contraseña',
-                controller: _password,
-                error: _passwordError,
-                obscure: true,
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.password],
-                enabled: !_ocupado,
-                onSubmitted: (_) => _submit(),
-                onChanged: (_) {
-                  if (_passwordError != null) {
-                    setState(() => _passwordError = null);
-                  }
-                },
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _ocupado
-                      ? null
-                      : () => context.push(Routes.forgotPassword),
-                  child: const Text('¿Olvidaste tu contraseña?'),
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              EnamButton(
-                label: 'Ingresar',
-                loading: _loading,
-                onPressed: _submit,
-              ),
-              if (AppConfig.googleSignInHabilitado) ...[
-                const SizedBox(height: DesignTokens.space5),
-                const SeparadorAuth(),
-                const SizedBox(height: DesignTokens.space4),
-                GoogleButton(
-                  loading: _loadingGoogle,
-                  onPressed: _ocupado ? null : _submitGoogle,
                 ),
               ],
-              const SizedBox(height: DesignTokens.space4),
-              AuthFooter(
-                pregunta: '¿Primera vez?',
-                accion: 'Crea tu cuenta',
-                onTap: _ocupado ? null : () => context.go(Routes.register),
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              // Ayuda para desarrollo: con mocks, estos correos disparan cada
-              // camino de error sin tocar código.
-              if (const bool.fromEnvironment('dart.vm.product') == false)
-                Text(
-                  'Modo desarrollo · cualquier correo entra · '
-                  'contraseña "error" falla · nuevo2@enam.pe entra con perfil '
-                  'incompleto',
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Logo, saludo y el electrocardiograma sobre el degradado.
+class _CabeceraMarca extends StatelessWidget {
+  const _CabeceraMarca();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space5,
+        DesignTokens.space6,
+        DesignTokens.space5,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Symbols.stethoscope,
+                  size: 28,
+                  fill: 1,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space3),
+              const Text(
+                'ENAM Prep',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space5),
+          const Text(
+            'Hola de nuevo',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
+          // El mismo trazo del splash, aquí quieto y más discreto.
+          SizedBox(
+            width: 170,
+            height: 22,
+            child: CustomPaint(painter: _EcgQuieto()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EcgQuieto extends CustomPainter {
+  /// Trazo del diseño, sobre un lienzo de 170 × 22.
+  static const _puntos = <Offset>[
+    Offset(0, 11),
+    Offset(40, 11),
+    Offset(48, 11),
+    Offset(54, 3),
+    Offset(61, 19),
+    Offset(67, 7),
+    Offset(73, 11),
+    Offset(105, 11),
+    Offset(113, 11),
+    Offset(119, 4),
+    Offset(126, 17),
+    Offset(132, 11),
+    Offset(170, 11),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sx = size.width / 170;
+    final sy = size.height / 22;
+
+    final path = Path();
+    for (var i = 0; i < _puntos.length; i++) {
+      final p = Offset(_puntos[i].dx * sx, _puntos[i].dy * sy);
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_EcgQuieto old) => false;
 }

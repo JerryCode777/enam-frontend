@@ -141,6 +141,7 @@ abstract final class DesignTokens {
   static const double space4 = 16;
   static const double space5 = 20;
   static const double space6 = 24;
+  static const double space7 = 28;
   static const double space8 = 32;
   static const double space10 = 40;
   static const double space12 = 48;

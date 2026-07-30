@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primer color del degradado de marca (DesignTokens.headerGradientLight).
+         La pantalla nativa de arranque usa este tono para que el paso al
+         splash de Flutter no sea un destello blanco. -->
+    <color name="marca_arranque">#0A2540</color>
+</resources>

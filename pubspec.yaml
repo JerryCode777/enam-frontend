@@ -34,7 +34,6 @@ dependencies:
   path: ^1.9.1
 
   # ---------- UI ----------
-  google_fonts: ^6.3.2
   cached_network_image: ^3.4.1
 
   # ---------- Utilidades ----------
@@ -61,3 +60,25 @@ flutter:
 
   assets:
     - assets/images/
+
+  # Nunito va empaquetada, no descargada en el primer arranque.
+  #
+  # `google_fonts` la bajaba de la red la primera vez. En una app con modo
+  # offline eso significa que quien abre la app sin señal ve la tipografía del
+  # sistema en vez de la de marca. Además hacía imposibles los tests de
+  # captura, que no tienen red.
+  #
+  # Licencia SIL Open Font 1.1, incluida en assets/fonts/OFL.txt
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-400.ttf
+          weight: 400
+        - asset: assets/fonts/Nunito-600.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-700.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-800.ttf
+          weight: 800
+        - asset: assets/fonts/Nunito-900.ttf
+          weight: 900

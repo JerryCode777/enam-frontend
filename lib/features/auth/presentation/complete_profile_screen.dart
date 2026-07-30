@@ -7,6 +7,7 @@ import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
@@ -87,6 +88,21 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
       _condicion != null &&
       _fechaObjetivo != null;
 
+  /// Días hasta la fecha elegida, o `null` si aún no eligió.
+  ///
+  /// El aviso reacciona a la fecha en el momento, sin esperar a guardar: es lo
+  /// que hace que elegir la fecha se sienta como una decisión y no un trámite.
+  int? get _diasRestantes {
+    final fecha = _fechaObjetivo;
+    if (fecha == null) return null;
+
+    final hoy = DateTime.now();
+    final dias = DateUtils.dateOnly(
+      fecha,
+    ).difference(DateUtils.dateOnly(hoy)).inDays;
+    return dias > 0 ? dias : null;
+  }
+
   Future<void> _submit() async {
     if (_loading) return;
 
@@ -165,106 +181,100 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
-    return Scaffold(
-      body: SafeArea(
-        // Desplazable a propósito: el formulario completo mide ~800 px de
-        // contenido, y con la fuente del sistema ampliada no entra en 844.
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space6,
-            vertical: DesignTokens.space8,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Cuéntanos dónde estás en tu preparación',
-                style: context.texts.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: DesignTokens.lineHeightTight,
-                ),
+    return AuthScaffold(
+      titulo: 'Cuéntanos dónde estás en tu preparación',
+      subtitulo: 'Ajustamos tu plan y la cuenta regresiva.',
+      tamanoTitulo: 26,
+      tarjeta: [
+        EnamTextField(
+          label: 'Nombre',
+          controller: _nombre,
+          error: _nombreError,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.name],
+          enabled: !_loading,
+          onChanged: (_) => setState(() => _nombreError = null),
+        ),
+        _PickerField(
+          label: 'Universidad',
+          value: _universidad ?? 'Elige tu universidad',
+          placeholder: _universidad == null,
+          icon: Symbols.arrow_drop_down,
+          onTap: _loading ? null : _pickUniversidad,
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tu situación',
+              style: context.texts.bodySmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: context.scheme.onSurfaceVariant,
               ),
-              const SizedBox(height: DesignTokens.space3),
-              Text(
-                'Con esto ajustamos tu plan y la cuenta regresiva. Puedes '
-                'cambiarlo cuando quieras.',
-                style: context.texts.bodyMedium,
-              ),
-              const SizedBox(height: DesignTokens.space5),
-              EnamTextField(
-                label: 'Nombre',
-                controller: _nombre,
-                error: _nombreError,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.name],
-                enabled: !_loading,
-                onChanged: (_) {
-                  setState(() => _nombreError = null);
-                },
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              _PickerField(
-                label: 'Universidad',
-                value: _universidad ?? 'Elige tu universidad',
-                placeholder: _universidad == null,
-                icon: Symbols.arrow_drop_down,
-                onTap: _loading ? null : _pickUniversidad,
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              Text(
-                'Tu situación',
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            // Wrap y no Row: "Voy a rendirlo de nuevo" es largo y a 360 px
+            // tiene que poder bajar de línea sin recortarse.
+            Wrap(
+              spacing: DesignTokens.space2,
+              runSpacing: DesignTokens.space2,
+              children: [
+                for (final entry in _labels.entries)
+                  ChoiceChip(
+                    label: Text(entry.value),
+                    selected: _condicion == entry.key,
+                    onSelected: _loading
+                        ? null
+                        : (_) => setState(() => _condicion = entry.key),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        _PickerField(
+          label: 'Fecha objetivo',
+          value: _fechaTexto,
+          placeholder: _fechaObjetivo == null,
+          icon: Symbols.calendar_month,
+          onTap: _loading ? null : _pickFecha,
+        ),
+        if (_diasRestantes != null)
+          AuthTintNote(
+            icono: Symbols.event,
+            iconoRelleno: true,
+            texto: Text.rich(
+              TextSpan(
                 style: context.texts.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.onSurfaceVariant,
+                  color: context.scheme.onSurfaceVariant,
                 ),
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              // Wrap y no Row: "Voy a rendirlo de nuevo" es largo y a 360 px
-              // tiene que poder bajar de línea sin recortarse.
-              Wrap(
-                spacing: DesignTokens.space2,
-                runSpacing: DesignTokens.space2,
                 children: [
-                  for (final entry in _labels.entries)
-                    ChoiceChip(
-                      label: Text(entry.value),
-                      selected: _condicion == entry.key,
-                      onSelected: _loading
-                          ? null
-                          : (_) => setState(() => _condicion = entry.key),
+                  const TextSpan(text: 'Faltan '),
+                  TextSpan(
+                    text: '$_diasRestantes días',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.scheme.onSurface,
                     ),
+                  ),
+                  const TextSpan(text: ' — buen momento para empezar.'),
                 ],
               ),
-              const SizedBox(height: DesignTokens.space4),
-              _PickerField(
-                label: 'Fecha objetivo',
-                value: _fechaTexto,
-                placeholder: _fechaObjetivo == null,
-                icon: Symbols.calendar_month,
-                onTap: _loading ? null : _pickFecha,
-              ),
-              const SizedBox(height: DesignTokens.space6),
-              EnamButton(
-                label: 'Empezar',
-                loading: _loading,
-                onPressed: _completo ? _submit : null,
-              ),
-              if (!_completo) ...[
-                const SizedBox(height: DesignTokens.space3),
-                Text(
-                  'Completa los cuatro datos para continuar.',
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
+        EnamButton(
+          label: 'Empezar',
+          loading: _loading,
+          onPressed: _completo ? _submit : null,
         ),
-      ),
+        if (!_completo)
+          Text(
+            'Completa los cuatro datos para continuar.',
+            textAlign: TextAlign.center,
+            style: context.texts.bodySmall?.copyWith(
+              color: context.scheme.onSurfaceVariant,
+            ),
+          ),
+      ],
     );
   }
 }

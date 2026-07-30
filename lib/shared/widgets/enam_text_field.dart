@@ -106,7 +106,11 @@ class _EnamTextFieldState extends State<EnamTextField> {
             // El error se pinta abajo a mano, para poder mostrar `helper`
             // cuando no hay error sin que Flutter reserve las dos líneas.
             errorStyle: const TextStyle(height: 0, fontSize: 0),
-            constraints: const BoxConstraints(minHeight: 56),
+            constraints: const BoxConstraints(minHeight: 54),
+            // `--surf2` del diseño: el campo va un tono por encima de la
+            // tarjeta que lo contiene, no del mismo color.
+            filled: true,
+            fillColor: scheme.surfaceContainerHighest,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd + 2),
               borderSide: BorderSide(color: borderColor, width: borderWidth),
