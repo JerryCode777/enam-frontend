@@ -14,6 +14,8 @@ import 'package:enam_app/features/catalog/presentation/temario_map_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_search_screen.dart';
 import 'package:enam_app/features/home/presentation/home_screen.dart';
+import 'package:enam_app/features/session/presentation/marked_questions_screen.dart';
+import 'package:enam_app/features/session/presentation/practice_config_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,6 +60,14 @@ void main() {
     'Nueva contraseña': const ResetPasswordScreen(token: 'tok'),
     'Perfil inicial': const CompleteProfileScreen(),
     'Inicio': const HomeScreen(),
+
+    // Práctica
+    'Práctica · configurador': const PracticeConfigScreen(),
+    // Con nodo puesto desde el temario (RF-38), y con el nombre más largo
+    'Práctica · configurador con nodo': const PracticeConfigScreen(
+      nodoId: 'gestion-establecimientos',
+    ),
+    'Práctica · marcadas': const MarkedQuestionsScreen(),
   };
 
   for (final entry in pantallas.entries) {

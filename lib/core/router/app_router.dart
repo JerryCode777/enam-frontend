@@ -15,6 +15,10 @@ import '../../features/catalog/presentation/temario_map_screen.dart';
 import '../../features/catalog/presentation/temario_node_screen.dart';
 import '../../features/catalog/presentation/temario_search_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/session/presentation/marked_questions_screen.dart';
+import '../../features/session/presentation/practice_config_screen.dart';
+import '../../features/session/presentation/question_screen.dart';
+import '../../features/session/presentation/session_summary_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../providers.dart';
@@ -331,36 +335,36 @@ final List<RouteBase> _routes = [
   ),
 
   // ==================== PRÁCTICA (encima de la barra) ====================
-  _stub(
-    Routes.practiceConfig,
-    titulo: 'Configurar práctica',
-    descripcion:
-        'Selección de nodos del árbol a cualquier nivel, cantidad (10-50) y '
-        'origen: todas / no vistas / falladas. Muestra cuántas hay disponibles.',
-    requisitos: const ['RF-12'],
-    acciones: const [(label: 'Sesión de ejemplo', ruta: '/practica/sesion/demo')],
+  GoRoute(
+    path: Routes.practiceConfig,
+    pageBuilder: (context, state) => slidePage(
+      child: PracticeConfigScreen(
+        // Llega desde el temario con el nodo puesto (RF-38).
+        nodoId: state.uri.queryParameters['nodo'],
+        origenInicial: state.uri.queryParameters['origen'],
+      ),
+      state: state,
+    ),
   ),
-  _stub(
-    Routes.practiceSession,
-    titulo: 'Práctica en curso',
-    descripcion:
-        'Enunciado clínico, 4 alternativas, marca de agua si es premium, y '
-        'retroalimentación inmediata al responder. No muestra el área.',
-    requisitos: const ['RF-13', 'RF-14', 'RNF-05'],
-    acciones: const [
-      (label: 'Ver resultados', ruta: '/practica/resultados/demo'),
-    ],
+  GoRoute(
+    path: Routes.practiceSession,
+    // Desvanece: entrar a responder no es profundizar en una jerarquía.
+    pageBuilder: (context, state) => fadePage(
+      child: QuestionScreen(sessionId: state.pathParameters['id']!),
+      state: state,
+    ),
   ),
-  _stub(
-    Routes.practiceResults,
-    titulo: 'Resultados de práctica',
-    descripcion: 'Aciertos, errores, tiempo y desglose por sub área.',
+  GoRoute(
+    path: Routes.practiceResults,
+    pageBuilder: (context, state) => fadePage(
+      child: SessionSummaryScreen(sessionId: state.pathParameters['id']!),
+      state: state,
+    ),
   ),
-  _stub(
-    Routes.markedQuestions,
-    titulo: 'Preguntas marcadas',
-    descripcion: 'Las guardadas para repasar después.',
-    requisitos: const ['RF-14'],
+  GoRoute(
+    path: Routes.markedQuestions,
+    pageBuilder: (context, state) =>
+        slidePage(child: const MarkedQuestionsScreen(), state: state),
   ),
 
   // ==================== SUSCRIPCIÓN ====================
