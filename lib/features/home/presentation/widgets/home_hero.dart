@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/providers.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../shared/widgets/ecg_line.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../auth/domain/auth_models.dart';
@@ -211,14 +212,12 @@ class _CuentaRegresiva extends StatelessWidget {
           ),
         ),
         const SizedBox(width: DesignTokens.space2 + 2),
-        const _EcgAnimado(),
+        const EcgLine(width: 120, height: 30, opacity: 0.75, strokeWidth: 2),
       ],
     );
   }
 }
 
-/// Línea de electrocardiograma que recorre el trazo, como en el diseño.
-///
 /// Se detiene si el sistema pidió reducir el movimiento: es decorativa y no
 /// aporta información, así que es la primera que sobra.
 class _EcgAnimado extends StatefulWidget {

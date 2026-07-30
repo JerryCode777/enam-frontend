@@ -30,6 +30,13 @@ abstract interface class AuthRepository {
   /// cuenta en vez de crear una nueva.
   Future<User> loginConGoogle(String idToken);
 
+  /// Canjea el `identityToken` de Apple por una sesión propia.
+  ///
+  /// [nombre] solo viaja la primera vez que el usuario autoriza la app: Apple
+  /// no lo reenvía después. Si el backend no lo guarda en ese momento, se
+  /// pierde para siempre.
+  Future<User> loginConApple({required String identityToken, String? nombre});
+
   Future<void> logout();
 
   /// El usuario de la sesión guardada, o `null` si no hay sesión válida.
@@ -95,6 +102,25 @@ class ApiAuthRepository implements AuthRepository {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.google,
       data: {'idToken': idToken},
+    );
+
+    final session = AuthSession.fromJson(data);
+    await _tokens.save(
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      expiresAt: session.expiresAt,
+    );
+    return session.user;
+  }
+
+  @override
+  Future<User> loginConApple({
+    required String identityToken,
+    String? nombre,
+  }) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.apple,
+      data: {'identityToken': identityToken, 'nombre': ?nombre},
     );
 
     final session = AuthSession.fromJson(data);

@@ -239,4 +239,13 @@ class _PrefsEnMemoria implements AppPrefs {
 
   @override
   Future<void> marcarOnboardingVisto() async => _visto = true;
+
+  @override
+  Future<Set<String>> nacionalesInscritos() async => _nacionales;
+
+  @override
+  Future<void> marcarInscritoEnNacional(String id) async =>
+      _nacionales.add(id);
+
+  final _nacionales = <String>{};
 }

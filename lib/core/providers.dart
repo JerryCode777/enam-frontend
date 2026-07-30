@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/data/auth_repository.dart';
+import '../features/auth/data/apple_signin_service.dart';
 import '../features/auth/data/google_signin_service.dart';
 import '../features/auth/data/mock_auth_repository.dart';
 import '../features/auth/domain/auth_models.dart';
@@ -64,6 +65,19 @@ final appPrefsProvider = Provider<AppPrefs>((ref) => AppPrefs());
 final googleSignInServiceProvider = Provider<GoogleSignInService>((ref) {
   if (AppConfig.useMocks) return MockGoogleSignInService();
   return GoogleSignInServiceImpl();
+});
+
+final appleSignInServiceProvider = Provider<AppleSignInService>((ref) {
+  if (AppConfig.useMocks) return MockAppleSignInService();
+  return AppleSignInServiceImpl();
+});
+
+/// Si el botón de Apple tiene sentido en este dispositivo.
+///
+/// Fuera de iOS no se muestra: existe un flujo web, pero nadie con un Android
+/// espera entrar con Apple, y es justo en iOS donde App Store lo exige.
+final appleDisponibleProvider = FutureProvider<bool>((ref) {
+  return ref.watch(appleSignInServiceProvider).disponible();
 });
 
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
@@ -199,6 +213,34 @@ class AuthController extends AsyncNotifier<AuthState> {
       final user = await ref
           .read(authRepositoryProvider)
           .loginConGoogle(idToken!);
+      return AuthSignedIn(user);
+    });
+    return !state.hasError;
+  }
+
+  /// Login con Apple. Devuelve `false` si el usuario canceló.
+  Future<bool> signInWithApple() async {
+    // Igual que con Google: el diálogo nativo se abre **antes** de pasar a
+    // cargando, para que cancelar no deje un spinner colgado.
+    final AppleCredential? credencial;
+    try {
+      credencial = await ref
+          .read(appleSignInServiceProvider)
+          .obtenerCredencial();
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+    if (credencial == null) return false;
+
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final user = await ref
+          .read(authRepositoryProvider)
+          .loginConApple(
+            identityToken: credencial!.identityToken,
+            nombre: credencial.nombre,
+          );
       return AuthSignedIn(user);
     });
     return !state.hasError;

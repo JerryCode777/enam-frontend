@@ -78,6 +78,23 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<User> loginConApple({
+    required String identityToken,
+    String? nombre,
+  }) async {
+    await Future<void>.delayed(_delay);
+
+    return _current = User(
+      id: 'mock-user-apple',
+      // Apple deja ocultar el correo real y da uno de reenvío. El backend no
+      // debe tratarlo distinto, pero conviene verlo en desarrollo.
+      email: 'abc123@privaterelay.appleid.com',
+      nombre: nombre ?? 'Estudiante Apple',
+      emailVerificado: true,
+    );
+  }
+
+  @override
   Future<void> logout() async {
     await Future<void>.delayed(_delay);
     _current = null;

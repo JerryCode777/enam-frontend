@@ -7,6 +7,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
+import '../../session/presentation/national_mock_screen.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -539,12 +540,14 @@ class _Acceso extends StatelessWidget {
   }
 }
 
-class _SimulacroNacional extends StatelessWidget {
+class _SimulacroNacional extends ConsumerWidget {
   const _SimulacroNacional();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
+    final evento = ref.watch(nacionalProvider);
+    final inscrito = ref.watch(inscritoEnNacionalProvider);
 
     return Card(
       child: Padding(
@@ -573,7 +576,8 @@ class _SimulacroNacional extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Simulacro Nacional · dom 16 ago',
+                    'Simulacro Nacional · '
+                    '${DateFormat('EEE d MMM', 'es').format(evento.inicio)}',
                     style: context.texts.bodyMedium?.copyWith(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
@@ -581,9 +585,39 @@ class _SimulacroNacional extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '8:00 a.m. · 1,847 participantes',
+                    // Los datos que hacen falta para decidir si puedes: hora,
+                    // cuánto dura y cuánta gente va.
+                    '${DateFormat.jm('es').format(evento.inicio)} · '
+                    '${evento.duracion.inHours} h · '
+                    '${NumberFormat.decimalPattern('es_PE').format(evento.participantes)} '
+                    'participantes',
                     style: context.texts.bodySmall?.copyWith(fontSize: 12),
                   ),
+                  if (inscrito) ...[
+                    const SizedBox(height: DesignTokens.space1 + 2),
+                    // Se dice aquí, antes de entrar: al usuario no le sirve
+                    // descubrir que ya está anotado recién dentro.
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Symbols.check_circle,
+                          size: 15,
+                          fill: 1,
+                          color: states.success.onTint,
+                        ),
+                        const SizedBox(width: DesignTokens.space1),
+                        Text(
+                          'Ya estás participando',
+                          style: context.texts.bodySmall?.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: states.success.onTint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -600,7 +634,7 @@ class _SimulacroNacional extends StatelessWidget {
               // "Participar" y no "Inscribirme": con un público en época de
               // trámites, inscribirse a un "Simulacro Nacional" se puede leer
               // como inscripción al ENAM real.
-              child: const Text('Participar'),
+              child: Text(inscrito ? 'Ver' : 'Participar'),
             ),
           ],
         ),
@@ -636,7 +670,7 @@ class _CuotaDiaria extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Tu práctica gratis de hoy',
+                    'Tu límite de hoy',
                     style: context.texts.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: context.scheme.onSurface,
@@ -658,29 +692,20 @@ class _CuotaDiaria extends StatelessWidget {
               color: color.base,
               height: 6,
             ),
-            const SizedBox(height: DesignTokens.space2),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    agotada
-                        ? 'Vuelve mañana, o pasa a Premium para seguir hoy.'
-                        : 'Con Premium practicas sin límite.',
-                    style: context.texts.bodySmall,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => context.push(Routes.plans),
-                  child: Text(
-                    'Ver planes',
-                    style: context.texts.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: states.info.onTint,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            // Sin mención al plan ni a Premium, ni siquiera al agotarse.
+            //
+            // El diseño lo pide explícito: "los límites del plan free nunca se
+            // anuncian: aparecen recién al toparlos". Una tarjeta que dice
+            // "gratis" y ofrece planes en el Home convierte cada visita en un
+            // recordatorio de lo que no tienes, y el Home es la pantalla que
+            // más se abre.
+            if (agotada) ...[
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                'Vuelve mañana para seguir practicando.',
+                style: context.texts.bodySmall,
+              ),
+            ],
           ],
         ),
       ),

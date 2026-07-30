@@ -9,6 +9,9 @@ abstract final class ApiEndpoints {
 
   /// Canje del `idToken` de Google por una sesión propia.
   static const String google = '/auth/google';
+
+  /// Canje del `identityToken` de Apple por una sesión propia.
+  static const String apple = '/auth/apple';
   static const String refresh = '/auth/refresh';
   static const String forgotPassword = '/auth/forgot';
   static const String resetPassword = '/auth/reset';

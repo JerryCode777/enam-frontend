@@ -122,16 +122,8 @@ class _TarjetaCompleto extends StatelessWidget {
                   'vigesimal y desglose por área.',
                   style: context.texts.bodyMedium?.copyWith(height: 1.55),
                 ),
-                if (esFree) ...[
-                  const SizedBox(height: DesignTokens.space3),
-                  Text(
-                    'Parte de Premium',
-                    style: context.texts.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: states.info.onTint,
-                    ),
-                  ),
-                ],
+                // Sin etiqueta "Parte de Premium": el simulacro se ofrece por
+                // lo que es, y el límite aparece recién al tocarlo.
               ],
             ),
           ),
@@ -173,8 +165,8 @@ class _TarjetaMuestra extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '${Blueprint.sampleExamQuestions} preguntas · incluido '
-                        'en tu plan gratis',
+                        '${Blueprint.sampleExamQuestions} preguntas · para '
+                        'medirte en poco tiempo',
                         style: context.texts.bodySmall,
                       ),
                     ],

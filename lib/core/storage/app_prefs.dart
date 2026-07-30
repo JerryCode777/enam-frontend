@@ -21,4 +21,22 @@ class AppPrefs {
 
   Future<void> marcarOnboardingVisto() async =>
       (await _prefs).setBool(_kOnboardingVisto, true);
+
+  static const _kNacionalesInscritos = 'nacionales_inscritos';
+
+  /// Simulacros nacionales en los que el usuario ya se anotó.
+  ///
+  /// Esto es dato del servidor: cuando exista `GET /mock-exams/next` con el
+  /// campo `inscrito`, esta copia local sobra. Mientras tanto vive aquí para
+  /// que salir de la pantalla y volver no borre la inscripción, que es lo que
+  /// pasaba cuando el estado vivía solo en el widget.
+  Future<Set<String>> nacionalesInscritos() async =>
+      (await _prefs).getStringList(_kNacionalesInscritos)?.toSet() ?? {};
+
+  Future<void> marcarInscritoEnNacional(String id) async {
+    final prefs = await _prefs;
+    final actuales = prefs.getStringList(_kNacionalesInscritos) ?? [];
+    if (actuales.contains(id)) return;
+    await prefs.setStringList(_kNacionalesInscritos, [...actuales, id]);
+  }
 }

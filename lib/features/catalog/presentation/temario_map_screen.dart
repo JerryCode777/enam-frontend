@@ -328,17 +328,22 @@ class _Curiosidad extends ConsumerWidget {
   }
 }
 
-class _GrupoHeader extends StatelessWidget {
+class _GrupoHeader extends ConsumerWidget {
   const _GrupoHeader({required this.grupo});
 
   final AreaGroup grupo;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Las cifras salen del árbol que mandó el servidor, no del enum local: si
+    // cambia un peso en la base de datos, la cabecera cambia con él.
+    final totales = ref.watch(totalesPorGrupoProvider)?[grupo];
+    if (totales == null) return const SizedBox.shrink();
+
     return FadeUp(
       child: Text(
-        '${grupo.label.toUpperCase()} · ${grupo.preguntas} PREGUNTAS · '
-        '${(grupo.porcentaje * 100).round()} %',
+        '${grupo.label.toUpperCase()} · ${totales.preguntas} PREGUNTAS · '
+        '${(totales.porcentaje * 100).round()} %',
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,

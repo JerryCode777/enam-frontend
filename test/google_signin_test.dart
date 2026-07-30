@@ -4,7 +4,7 @@ import 'package:enam_app/features/auth/data/auth_repository.dart';
 import 'package:enam_app/features/auth/data/google_signin_service.dart';
 import 'package:enam_app/features/auth/data/mock_auth_repository.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
-import 'package:enam_app/shared/widgets/google_button.dart';
+import 'package:enam_app/shared/widgets/social_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

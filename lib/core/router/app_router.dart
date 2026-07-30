@@ -211,7 +211,10 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.forgotPassword,
-    builder: (context, state) => const ForgotPasswordScreen(),
+    // El correo viaja desde el login: quien ya lo escribió no debería tener
+    // que volver a escribirlo, y menos si lo que pasó es que no recuerda algo.
+    builder: (context, state) =>
+        ForgotPasswordScreen(email: state.extra as String?),
   ),
   GoRoute(
     path: Routes.resetPassword,

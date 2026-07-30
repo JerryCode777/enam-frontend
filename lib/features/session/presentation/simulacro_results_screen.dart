@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
-import '../../../core/domain/taxonomy.dart';
+import '../../../features/catalog/presentation/catalog_providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -202,20 +202,21 @@ class _Contenido extends StatelessWidget {
 ///
 /// Sin el peso, un 40 % en Ética se ve igual de mal que un 40 % en Medicina, y
 /// no lo es: una son 2 preguntas del examen y la otra 40.
-class _Desglose extends StatelessWidget {
+class _Desglose extends ConsumerWidget {
   const _Desglose({required this.porArea});
 
   final Map<String, ({int correctas, int total})> porArea;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (porArea.isEmpty) return const SizedBox.shrink();
 
-    // Ordenado por peso en el examen: lo que más importa, primero.
+    // Ordenado por peso en el examen: lo que más importa, primero. El peso
+    // sale del catálogo del servidor, no de una tabla en el código.
     final entradas = porArea.entries.toList()
       ..sort((a, b) {
-        final pa = Taxonomy.byId(a.key)?.peso ?? 0;
-        final pb = Taxonomy.byId(b.key)?.peso ?? 0;
+        final pa = ref.watch(areaInfoProvider(a.key))?.peso ?? 0;
+        final pb = ref.watch(areaInfoProvider(b.key))?.peso ?? 0;
         return pb.compareTo(pa);
       });
 
@@ -259,7 +260,7 @@ class _Desglose extends StatelessWidget {
   }
 }
 
-class _FilaArea extends StatelessWidget {
+class _FilaArea extends ConsumerWidget {
   const _FilaArea({
     required this.areaId,
     required this.correctas,
@@ -271,8 +272,8 @@ class _FilaArea extends StatelessWidget {
   final int total;
 
   @override
-  Widget build(BuildContext context) {
-    final area = Taxonomy.byId(areaId);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final area = ref.watch(areaInfoProvider(areaId));
     final color = AreaColors.of(areaId, Theme.of(context).brightness);
     final acierto = total == 0 ? 0.0 : correctas / total;
     final refuerza = acierto < 0.5;

@@ -167,6 +167,14 @@ class _PrefsFalsas implements AppPrefs {
 
   @override
   Future<void> marcarOnboardingVisto() async => visto = true;
+
+  @override
+  Future<Set<String>> nacionalesInscritos() async => nacionales;
+
+  @override
+  Future<void> marcarInscritoEnNacional(String id) async => nacionales.add(id);
+
+  final nacionales = <String>{};
 }
 
 /// Usuario con sesión válida y perfil completo.

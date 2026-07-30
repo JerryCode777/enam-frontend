@@ -18,7 +18,10 @@ import '../../../shared/widgets/state_banner.dart';
 /// **Nunca revela si el correo existe** (RNF-04): el mensaje de confirmación es
 /// el mismo haya cuenta o no. Enumerar correos registrados es una fuga de datos.
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
-  const ForgotPasswordScreen({super.key});
+  const ForgotPasswordScreen({this.email, super.key});
+
+  /// Correo escrito en el login, si venía de ahí.
+  final String? email;
 
   @override
   ConsumerState<ForgotPasswordScreen> createState() =>
@@ -28,7 +31,7 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   static const _cooldown = 60;
 
-  final _email = TextEditingController();
+  late final _email = TextEditingController(text: widget.email ?? '');
   String? _emailError;
   bool _loading = false;
   bool _enviado = false;

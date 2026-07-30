@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
+import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -26,6 +27,34 @@ typedef SimulacroNacional = ({
   Duration duracion,
   int participantes,
   bool inscrito,
+});
+
+/// Inscripciones del usuario en simulacros nacionales.
+///
+/// Vive fuera de la pantalla a propósito: cuando el estado era un `bool` del
+/// widget, salir y volver lo reiniciaba y se podía "participar" otra vez en el
+/// mismo simulacro.
+class InscripcionesNacionales extends AsyncNotifier<Set<String>> {
+  @override
+  Future<Set<String>> build() =>
+      ref.read(appPrefsProvider).nacionalesInscritos();
+
+  Future<void> inscribir(String id) async {
+    await ref.read(appPrefsProvider).marcarInscritoEnNacional(id);
+    state = AsyncData({...?state.value, id});
+  }
+}
+
+final inscripcionesNacionalesProvider =
+    AsyncNotifierProvider<InscripcionesNacionales, Set<String>>(
+      InscripcionesNacionales.new,
+    );
+
+/// Si el usuario ya se anotó en el próximo nacional.
+final inscritoEnNacionalProvider = Provider<bool>((ref) {
+  final evento = ref.watch(nacionalProvider);
+  final inscritos = ref.watch(inscripcionesNacionalesProvider).value ?? {};
+  return evento.inscrito || inscritos.contains(evento.id);
 });
 
 final nacionalProvider = Provider<SimulacroNacional>((ref) {
@@ -58,7 +87,6 @@ class NationalMockScreen extends ConsumerStatefulWidget {
 
 class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
   Timer? _reloj;
-  bool _participando = false;
 
   @override
   void initState() {
@@ -79,6 +107,7 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
   @override
   Widget build(BuildContext context) {
     final evento = ref.watch(nacionalProvider);
+    final inscrito = ref.watch(inscritoEnNacionalProvider);
     final ahora = DateTime.now();
     final falta = evento.inicio.difference(ahora);
     final enCurso =
@@ -151,13 +180,11 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
                 onPressed: () => context.push(Routes.simulacroInstructions),
               ),
               _ => EnamButton(
-                label: evento.inscrito || _participando
-                    ? 'Ya estás participando'
-                    : 'Participar',
-                icon: evento.inscrito || _participando
+                label: inscrito ? 'Ya estás participando' : 'Participar',
+                icon: inscrito
                     ? Symbols.check
                     : Symbols.how_to_reg,
-                onPressed: evento.inscrito || _participando
+                onPressed: inscrito
                     ? null
                     : _participar,
               ),
@@ -168,8 +195,13 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
     );
   }
 
-  void _participar() {
-    setState(() => _participando = true);
+  Future<void> _participar() async {
+    final evento = ref.read(nacionalProvider);
+    await ref
+        .read(inscripcionesNacionalesProvider.notifier)
+        .inscribir(evento.id);
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Listo. Te avisamos antes de que empiece.'),

@@ -54,6 +54,32 @@ final areasPorGrupoProvider = Provider<Map<AreaGroup, List<CatalogNode>>?>((
   return porGrupo;
 });
 
+/// Cuántas preguntas aporta cada grupo, **sumadas desde el árbol del servidor**.
+///
+/// No sale del enum local aunque ahí estén los valores oficiales: si ASPEFAM
+/// cambia un peso y la base de datos se actualiza, la cabecera del grupo tiene
+/// que cambiar con ella. Un total fijo en el código se contradiría en silencio
+/// con las tarjetas que tiene debajo.
+final totalesPorGrupoProvider =
+    Provider<Map<AreaGroup, ({int preguntas, double porcentaje})>?>((ref) {
+      final porGrupo = ref.watch(areasPorGrupoProvider);
+      if (porGrupo == null) return null;
+
+      final total = porGrupo.values
+          .expand((areas) => areas)
+          .fold(0, (suma, a) => suma + (a.peso ?? 0));
+
+      return {
+        for (final entrada in porGrupo.entries)
+          entrada.key: (
+            preguntas: entrada.value.fold(0, (s, a) => s + (a.peso ?? 0)),
+            porcentaje: total == 0
+                ? 0.0
+                : entrada.value.fold(0, (s, a) => s + (a.peso ?? 0)) / total,
+          ),
+      };
+    });
+
 /// Texto de búsqueda del temario.
 class CatalogSearchNotifier extends Notifier<String> {
   @override
@@ -156,3 +182,26 @@ final prioridadEstudioProvider =
       lista.sort((a, b) => b.score.compareTo(a.score));
       return lista;
     });
+
+/// Nombre y peso de un área, resueltos contra el árbol que mandó el servidor.
+///
+/// Existe para que ninguna pantalla tenga que consultar la tabla local: la
+/// taxonomía y los pesos son dato de base de datos, y una copia en el código
+/// se desactualiza en silencio el día que ASPEFAM cambie algo.
+///
+/// Devuelve `null` mientras el catálogo no ha cargado, y para ids que el
+/// servidor no conoce.
+final areaInfoProvider = Provider.family<({String nombre, int peso})?, String>((
+  ref,
+  areaId,
+) {
+  final arbol = ref.watch(catalogProvider).value;
+  if (arbol == null) return null;
+
+  for (final area in arbol) {
+    if (area.id == areaId) {
+      return (nombre: area.nombre, peso: area.peso ?? 0);
+    }
+  }
+  return null;
+});
