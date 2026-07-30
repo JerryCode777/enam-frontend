@@ -87,7 +87,12 @@ class _Explicacion extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Symbols.bolt, size: 22, fill: 1, color: states.info.onTint),
+                Icon(
+                  Symbols.bolt,
+                  size: 22,
+                  fill: 1,
+                  color: states.info.onTint,
+                ),
                 const SizedBox(width: DesignTokens.space2 + 2),
                 Expanded(
                   child: Text(
@@ -215,10 +220,7 @@ class _PrioridadCard extends StatelessWidget {
                   spacing: DesignTokens.space4,
                   runSpacing: DesignTokens.space1,
                   children: [
-                    _Dato(
-                      etiqueta: 'pesa',
-                      valor: '${area.peso} de 180',
-                    ),
+                    _Dato(etiqueta: 'pesa', valor: '${area.peso} de 180'),
                     _Dato(
                       etiqueta: 'tu acierto',
                       valor: acierto == null

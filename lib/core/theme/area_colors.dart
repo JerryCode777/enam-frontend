@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 /// Paleta categórica para las 10 áreas del blueprint.
 ///
@@ -33,6 +34,49 @@ abstract final class AreaColors {
     'investigacion': (light: Color(0xFF4F46E5), dark: Color(0xFF818CF8)), // índigo
     'gestion': (light: Color(0xFF475569), dark: Color(0xFF94A3B8)), // pizarra
   };
+
+  /// Icono de cada área, según el diseño.
+  ///
+  /// Va junto al nombre, nunca solo: el icono ayuda a reconocer el área de un
+  /// vistazo, pero quien no distinga los colores sigue leyendo el nombre.
+  static const Map<String, IconData> _iconos = {
+    'medicina': Symbols.stethoscope,
+    'pediatria': Symbols.pediatrics,
+    'emergencias': Symbols.emergency,
+    'gineco-obstetricia': Symbols.pregnant_woman,
+    'cirugia': Symbols.surgical,
+    'salud-publica': Symbols.vaccines,
+    'ciencias-basicas': Symbols.genetics,
+    'etica': Symbols.balance,
+    'investigacion': Symbols.science,
+    'gestion': Symbols.corporate_fare,
+  };
+
+  /// Icono del área, o uno genérico si el backend manda un área desconocida.
+  static IconData iconOf(String areaId) =>
+      _iconos[areaId] ?? Symbols.folder_open;
+
+  /// Área raíz a la que pertenece un nodo, a partir de su id.
+  ///
+  /// Así el color y el icono del área acompañan a todo su subárbol: un tema de
+  /// Medicina se ve azul igual que su área, y al navegar no se pierde la
+  /// referencia de dónde se está.
+  static String rootOf(String nodeId) {
+    for (final id in _palette.keys) {
+      if (nodeId == id || nodeId.startsWith('$id-')) return id;
+    }
+    // Algunas áreas abrevian el prefijo de sus hijos (`go-parto`).
+    const prefijos = {
+      'go-': 'gineco-obstetricia',
+      'sp-': 'salud-publica',
+      'cb-': 'ciencias-basicas',
+      'inv-': 'investigacion',
+    };
+    for (final entry in prefijos.entries) {
+      if (nodeId.startsWith(entry.key)) return entry.value;
+    }
+    return nodeId;
+  }
 
   /// Color del área para el brillo dado.
   ///

@@ -32,8 +32,9 @@ List<CatalogNode>? _rutaHasta(CatalogNode nodo, String id) {
 }
 
 /// Las áreas agrupadas por grupo del blueprint, en el orden oficial.
-final areasPorGrupoProvider =
-    Provider<Map<AreaGroup, List<CatalogNode>>?>((ref) {
+final areasPorGrupoProvider = Provider<Map<AreaGroup, List<CatalogNode>>?>((
+  ref,
+) {
   final arbol = ref.watch(catalogProvider).value;
   if (arbol == null) return null;
 
@@ -62,8 +63,9 @@ class CatalogSearchNotifier extends Notifier<String> {
   void clear() => state = '';
 }
 
-final catalogSearchProvider =
-    NotifierProvider<CatalogSearchNotifier, String>(CatalogSearchNotifier.new);
+final catalogSearchProvider = NotifierProvider<CatalogSearchNotifier, String>(
+  CatalogSearchNotifier.new,
+);
 
 /// Resultados de búsqueda en los tres niveles (RF-41).
 ///
@@ -128,30 +130,29 @@ String _normalizar(String s) {
 /// Cruza tres cosas: cuánto pesa el área en el examen, cuánto le falta al
 /// usuario para dominarla, y cuánto temario hay que cubrir por pregunta. Un área
 /// grande donde va mal pesa más que una chica donde va peor.
-final prioridadEstudioProvider = Provider<List<({CatalogNode area, double score})>>(
-  (ref) {
-    final arbol = ref.watch(catalogProvider).value;
-    if (arbol == null) return const [];
+final prioridadEstudioProvider =
+    Provider<List<({CatalogNode area, double score})>>((ref) {
+      final arbol = ref.watch(catalogProvider).value;
+      if (arbol == null) return const [];
 
-    final lista = <({CatalogNode area, double score})>[];
+      final lista = <({CatalogNode area, double score})>[];
 
-    for (final area in arbol) {
-      final peso = (area.peso ?? 0) / 180;
-      final acierto = area.porcentajeAcierto;
+      for (final area in arbol) {
+        final peso = (area.peso ?? 0) / 180;
+        final acierto = area.porcentajeAcierto;
 
-      // Sin datos se asume medio: no se puede afirmar que va mal, pero tampoco
-      // conviene mandarla al final de la lista.
-      final brecha = 1 - (acierto ?? 0.5);
+        // Sin datos se asume medio: no se puede afirmar que va mal, pero tampoco
+        // conviene mandarla al final de la lista.
+        final brecha = 1 - (acierto ?? 0.5);
 
-      // La densidad modula: si un área rinde muchas preguntas por tema, el
-      // esfuerzo se paga mejor. Se acota para que no domine el resultado.
-      final densidad = area.temasPorPregunta ?? 2.0;
-      final rendimiento = (2.0 / densidad).clamp(0.5, 2.0);
+        // La densidad modula: si un área rinde muchas preguntas por tema, el
+        // esfuerzo se paga mejor. Se acota para que no domine el resultado.
+        final densidad = area.temasPorPregunta ?? 2.0;
+        final rendimiento = (2.0 / densidad).clamp(0.5, 2.0);
 
-      lista.add((area: area, score: peso * brecha * rendimiento));
-    }
+        lista.add((area: area, score: peso * brecha * rendimiento));
+      }
 
-    lista.sort((a, b) => b.score.compareTo(a.score));
-    return lista;
-  },
-);
+      lista.sort((a, b) => b.score.compareTo(a.score));
+      return lista;
+    });

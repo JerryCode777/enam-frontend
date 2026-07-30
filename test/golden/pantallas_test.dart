@@ -15,6 +15,8 @@ import 'package:enam_app/features/auth/presentation/register_screen.dart';
 import 'package:enam_app/features/auth/presentation/reset_password_screen.dart';
 import 'package:enam_app/features/auth/presentation/splash_screen.dart';
 import 'package:enam_app/features/auth/presentation/verify_email_screen.dart';
+import 'package:enam_app/features/catalog/presentation/temario_map_screen.dart';
+import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,6 +72,12 @@ void main() {
     (nombre: '1.6-recuperar', widget: ForgotPasswordScreen()),
     (nombre: '1.7-perfil', widget: CompleteProfileScreen()),
     (nombre: '1.8-nueva-contrasena', widget: ResetPasswordScreen(token: 'x')),
+    (nombre: '3.1-temario', widget: TemarioMapScreen()),
+    (nombre: '3.2-area-medicina', widget: TemarioNodeScreen(nodeId: 'medicina')),
+    (
+      nombre: '3.3-area-gineco',
+      widget: TemarioNodeScreen(nodeId: 'gineco-obstetricia'),
+    ),
   ];
 
   for (final dispositivo in dispositivos) {
@@ -99,7 +107,16 @@ void main() {
 
             // Las animaciones en bucle nunca se asientan, así que se avanza un
             // tiempo fijo y se captura ahí. `pumpAndSettle` colgaría.
-            await tester.pump(const Duration(milliseconds: 600));
+            //
+            // Hacen falta tres, y cada uno resuelve una etapa distinta:
+            //   1. vence la latencia simulada del repositorio y llegan datos,
+            //   2. vencen los temporizadores del escalonado de entrada,
+            //   3. se pinta el resultado ya asentado.
+            // Con menos, las tarjetas a partir de la segunda salían en blanco:
+            // ocupaban su sitio pero con opacidad 0.
+            for (var i = 0; i < 3; i++) {
+              await tester.pump(const Duration(milliseconds: 600));
+            }
 
             await expectLater(
               find.byType(MaterialApp),
