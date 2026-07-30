@@ -6,6 +6,9 @@ abstract final class ApiEndpoints {
   // ---------- Autenticación (Módulo 1) ----------
   static const String register = '/auth/register';
   static const String login = '/auth/login';
+
+  /// Canje del `idToken` de Google por una sesión propia.
+  static const String google = '/auth/google';
   static const String refresh = '/auth/refresh';
   static const String forgotPassword = '/auth/forgot';
   static const String resetPassword = '/auth/reset';

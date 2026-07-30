@@ -64,6 +64,24 @@ abstract final class AppConfig {
     defaultValue: true,
   );
 
+  /// ID de cliente **web** de OAuth del proyecto de Google Cloud.
+  ///
+  /// En Android no se usa el client ID de Android: se manda el de tipo web como
+  /// `serverClientId`, y así el `idToken` que devuelve Google trae ese `aud`,
+  /// que es el que el backend puede verificar. Con el de Android el token no
+  /// serviría para nada del lado servidor.
+  ///
+  /// Vacío hasta que exista el proyecto en Google Cloud con la huella SHA-1 de
+  /// la firma de la app. Mientras esté vacío, [googleSignInHabilitado] es falso
+  /// y el botón no se muestra, en vez de fallar al tocarlo.
+  static const String googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
+
+  /// Con mocks se muestra el botón igual, para poder recorrer la pantalla.
+  static bool get googleSignInHabilitado =>
+      useMocks || googleServerClientId.isNotEmpty;
+
   /// Registrar peticiones HTTP en consola. Nunca en producción: los logs
   /// llevarían tokens y contenido premium.
   static bool get logHttp => !isProd;

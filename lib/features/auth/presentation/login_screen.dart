@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -11,11 +12,14 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
+import '../../../shared/widgets/google_button.dart';
 import '../../../shared/widgets/state_banner.dart';
 
-/// Pantalla 1.5 — login con correo y contraseña.
+/// Pantalla 1.5 — login con correo y contraseña, y con Google.
 ///
-/// Sin proveedores sociales: RF-01/RF-02 solo contemplan correo y contraseña.
+/// RF-01/RF-02 del SSD solo contemplan correo y contraseña, pero el diseño
+/// incluye "o continúa con Google" y esa fue la decisión del cliente. Queda
+/// anotado en IMPLEMENTACION.md como desviación consciente del SSD.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -30,6 +34,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   bool _loading = false;
+  bool _loadingGoogle = false;
+
+  /// Cualquier login en curso: bloquea el resto de la pantalla, para que no se
+  /// puedan lanzar los dos a la vez.
+  bool get _ocupado => _loading || _loadingGoogle;
 
   @override
   void dispose() {
@@ -56,8 +65,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return _emailError == null && _passwordError == null;
   }
 
+  Future<void> _submitGoogle() async {
+    if (_ocupado) return;
+
+    setState(() => _loadingGoogle = true);
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
+
+      // Igual que en el login normal: el router redirige solo si el estado
+      // pasó a autenticado; si quedó en error, se muestra aquí.
+      //
+      // En snackbar y no bajo los campos: el fallo no viene de lo que el
+      // usuario escribió, así que señalarle la contraseña sería engañoso.
+      final error = ref.read(authControllerProvider).error;
+      if (error != null && mounted) {
+        showErrorSnack(
+          context,
+          error is Failure ? error.message : 'No se pudo continuar con Google.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingGoogle = false);
+    }
+  }
+
   Future<void> _submit() async {
-    if (_loading || !_validate()) return;
+    if (_ocupado || !_validate()) return;
 
     setState(() => _loading = true);
     try {
@@ -153,7 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
-                enabled: !_loading,
+                enabled: !_ocupado,
                 onChanged: (_) {
                   if (_emailError != null) setState(() => _emailError = null);
                 },
@@ -166,7 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 obscure: true,
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.password],
-                enabled: !_loading,
+                enabled: !_ocupado,
                 onSubmitted: (_) => _submit(),
                 onChanged: (_) {
                   if (_passwordError != null) {
@@ -178,7 +211,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: _loading
+                  onPressed: _ocupado
                       ? null
                       : () => context.push(Routes.forgotPassword),
                   child: const Text('¿Olvidaste tu contraseña?'),
@@ -190,11 +223,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 loading: _loading,
                 onPressed: _submit,
               ),
+              if (AppConfig.googleSignInHabilitado) ...[
+                const SizedBox(height: DesignTokens.space5),
+                const SeparadorAuth(),
+                const SizedBox(height: DesignTokens.space4),
+                GoogleButton(
+                  loading: _loadingGoogle,
+                  onPressed: _ocupado ? null : _submitGoogle,
+                ),
+              ],
               const SizedBox(height: DesignTokens.space4),
               AuthFooter(
                 pregunta: '¿Primera vez?',
                 accion: 'Crea tu cuenta',
-                onTap: _loading ? null : () => context.go(Routes.register),
+                onTap: _ocupado ? null : () => context.go(Routes.register),
               ),
               const SizedBox(height: DesignTokens.space4),
               // Ayuda para desarrollo: con mocks, estos correos disparan cada

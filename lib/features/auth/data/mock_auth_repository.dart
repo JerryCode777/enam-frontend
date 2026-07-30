@@ -63,6 +63,21 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<User> loginConGoogle(String idToken) async {
+    await Future<void>.delayed(_delay);
+
+    // Cuenta de Google recién creada: entra sin perfil, así se puede recorrer
+    // el flujo de completar perfil (RF-04) que es el caso real más común.
+    return _current = const User(
+      id: 'mock-user-google',
+      email: 'estudiante@gmail.com',
+      nombre: 'Estudiante Google',
+      // Google ya verificó el correo, así que no se vuelve a pedir.
+      emailVerificado: true,
+    );
+  }
+
+  @override
   Future<void> logout() async {
     await Future<void>.delayed(_delay);
     _current = null;

@@ -20,6 +20,16 @@ abstract interface class AuthRepository {
   /// RF-02. Guarda los tokens y devuelve el usuario.
   Future<User> login({required String email, required String password});
 
+  /// Canjea el `idToken` de Google por una sesión propia.
+  ///
+  /// El token de Google **no** se guarda ni se usa como credencial: solo sirve
+  /// para que el backend verifique la identidad una vez y emita sus propios
+  /// tokens. A partir de ahí la sesión es idéntica a la de correo y contraseña.
+  ///
+  /// Si el correo ya existía registrado con contraseña, el backend vincula la
+  /// cuenta en vez de crear una nueva.
+  Future<User> loginConGoogle(String idToken);
+
   Future<void> logout();
 
   /// El usuario de la sesión guardada, o `null` si no hay sesión válida.
@@ -69,6 +79,22 @@ class ApiAuthRepository implements AuthRepository {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.login,
       data: {'email': email, 'password': password},
+    );
+
+    final session = AuthSession.fromJson(data);
+    await _tokens.save(
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      expiresAt: session.expiresAt,
+    );
+    return session.user;
+  }
+
+  @override
+  Future<User> loginConGoogle(String idToken) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.google,
+      data: {'idToken': idToken},
     );
 
     final session = AuthSession.fromJson(data);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/data/auth_repository.dart';
+import '../features/auth/data/google_signin_service.dart';
 import '../features/auth/data/mock_auth_repository.dart';
 import '../features/auth/domain/auth_models.dart';
 import '../features/catalog/data/catalog_repository.dart';
@@ -57,6 +58,11 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+final googleSignInServiceProvider = Provider<GoogleSignInService>((ref) {
+  if (AppConfig.useMocks) return MockGoogleSignInService();
+  return GoogleSignInServiceImpl();
+});
+
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
   if (AppConfig.useMocks) return MockCatalogRepository();
   return ApiCatalogRepository(ref.watch(apiClientProvider));
@@ -67,8 +73,19 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
   return ApiSessionRepository(ref.watch(apiClientProvider));
 });
 
+/// Correo que, con mocks, entra como usuario Premium.
+///
+/// El plan no viaja en el modelo `User` (lo decide el backend por
+/// suscripción), así que para revisar la app en premium sin backend el atajo
+/// es el correo con el que se inició sesión. Mismo criterio que los correos
+/// especiales de [MockAuthRepository].
+const mockPremiumEmail = 'premium@enam.pe';
+
 final statsRepositoryProvider = Provider<StatsRepository>((ref) {
-  if (AppConfig.useMocks) return MockStatsRepository();
+  if (AppConfig.useMocks) {
+    final email = ref.watch(currentUserProvider)?.email;
+    return MockStatsRepository(esFree: email != mockPremiumEmail);
+  }
   return ApiStatsRepository(ref.watch(apiClientProvider));
 });
 
@@ -113,8 +130,37 @@ class AuthController extends AsyncNotifier<AuthState> {
     });
   }
 
+  /// Login con Google. Devuelve `false` si el usuario canceló el diálogo.
+  ///
+  /// Cancelar deja el estado como estaba y no propaga error: la pantalla no
+  /// debe mostrar nada rojo porque alguien cerró el selector de cuentas.
+  Future<bool> signInWithGoogle() async {
+    // El diálogo nativo se abre **antes** de pasar a cargando: si se pusiera
+    // antes, cancelar dejaría un spinner colgado hasta la siguiente acción.
+    final String? idToken;
+    try {
+      idToken = await ref.read(googleSignInServiceProvider).obtenerIdToken();
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+    if (idToken == null) return false;
+
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final user = await ref
+          .read(authRepositoryProvider)
+          .loginConGoogle(idToken!);
+      return AuthSignedIn(user);
+    });
+    return !state.hasError;
+  }
+
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider).logout();
+    // Sin esto, el selector de cuentas no vuelve a preguntar y quien comparte
+    // el teléfono entraría con la cuenta del anterior de un solo toque.
+    await ref.read(googleSignInServiceProvider).cerrarSesion();
     state = const AsyncData(AuthSignedOut());
   }
 
