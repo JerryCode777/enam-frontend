@@ -9,6 +9,10 @@ import 'package:enam_app/features/auth/presentation/register_screen.dart';
 import 'package:enam_app/features/auth/presentation/reset_password_screen.dart';
 import 'package:enam_app/features/auth/presentation/splash_screen.dart';
 import 'package:enam_app/features/auth/presentation/verify_email_screen.dart';
+import 'package:enam_app/features/catalog/presentation/study_priority_screen.dart';
+import 'package:enam_app/features/catalog/presentation/temario_map_screen.dart';
+import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart';
+import 'package:enam_app/features/catalog/presentation/temario_search_screen.dart';
 import 'package:enam_app/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +34,21 @@ void main() {
   const altoBajo = 640.0;
 
   final pantallas = <String, Widget>{
+    // Temario. Los casos difíciles del árbol irregular:
+    'Temario · mapa': const TemarioMapScreen(),
+    // Medicina: 11 sub áreas, la lista más larga de segundo nivel
+    'Temario · Medicina': const TemarioNodeScreen(nodeId: 'medicina'),
+    // Gineco: la única con capa de bloques
+    'Temario · Gineco': const TemarioNodeScreen(nodeId: 'gineco-obstetricia'),
+    // Emergencias: sin tercer nivel, nombres de sub área largos
+    'Temario · Emergencias': const TemarioNodeScreen(nodeId: 'emergencias'),
+    // Gestión: contiene el nombre de sub área más largo del temario (75 car.)
+    'Temario · Gestión': const TemarioNodeScreen(nodeId: 'gestion'),
+    // Una sub área con su lista de temas, con nombres de hasta 107 caracteres
+    'Temario · temas': const TemarioNodeScreen(nodeId: 'medicina-infecciosos'),
+    'Temario · búsqueda': const TemarioSearchScreen(),
+    'Prioridades de estudio': const StudyPriorityScreen(),
+
     'Splash': const SplashScreen(),
     'Onboarding': const OnboardingScreen(),
     'Login': const LoginScreen(),

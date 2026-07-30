@@ -31,7 +31,9 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final canPop = context.canPop();
+    // Sin GoRouter cae al Navigator: la pantalla debe poder pintarse en tests.
+    final router = GoRouter.maybeOf(context);
+    final canPop = router?.canPop() ?? Navigator.of(context).canPop();
 
     return Scaffold(
       appBar: AppBar(
@@ -39,7 +41,9 @@ class PlaceholderScreen extends StatelessWidget {
         leading: canPop
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: context.pop,
+                onPressed: () => router != null
+                    ? router.pop()
+                    : Navigator.of(context).maybePop(),
                 tooltip: 'Atrás',
               )
             : null,

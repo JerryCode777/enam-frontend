@@ -10,11 +10,16 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/presentation/verify_email_screen.dart';
+import '../../features/catalog/presentation/study_priority_screen.dart';
+import '../../features/catalog/presentation/temario_map_screen.dart';
+import '../../features/catalog/presentation/temario_node_screen.dart';
+import '../../features/catalog/presentation/temario_search_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../providers.dart';
 import 'routes.dart';
+import 'transitions.dart';
 
 /// Router de la app.
 ///
@@ -181,47 +186,30 @@ final List<RouteBase> _routes = [
         ],
       ),
 
-      // --- Temario (RF-06) ---
+      // --- Temario (RF-36 a RF-41) ---
       StatefulShellBranch(
         routes: [
-          _stub(
-            Routes.temario,
-            titulo: 'Temario',
-            descripcion:
-                'Las 10 áreas agrupadas en Clínico Médicas, Clínico '
-                'Quirúrgicas y Transversales, con el peso de cada una visible.',
-            requisitos: const ['RF-06'],
-            acciones: const [
-              (label: 'Buscar en el temario', ruta: Routes.temarioSearch),
-              (label: 'Medicina (11 sub áreas)', ruta: '/temario/medicina'),
+          GoRoute(
+            path: Routes.temario,
+            pageBuilder: (context, state) =>
+                instantPage(child: const TemarioMapScreen(), state: state),
+            routes: [
+              // Anidada bajo /temario para que el botón atrás vuelva al mapa.
+              GoRoute(
+                path: 'buscar',
+                pageBuilder: (context, state) =>
+                    modalPage(child: const TemarioSearchScreen(), state: state),
+              ),
+              GoRoute(
+                path: ':id',
+                pageBuilder: (context, state) => slidePage(
+                  child: TemarioNodeScreen(
+                    nodeId: state.pathParameters['id']!,
+                  ),
+                  state: state,
+                ),
+              ),
             ],
-          ),
-          _stub(
-            Routes.temarioSearch,
-            titulo: 'Buscar en el temario',
-            descripcion:
-                'Cruza los tres niveles. Debe resolver que "glaucoma" vive '
-                'dentro de Cirugía, mostrando la ruta completa.',
-            requisitos: const ['RF-06'],
-          ),
-          _stub(
-            Routes.temarioArea,
-            titulo: 'Sub áreas del área',
-            descripcion:
-                'Funciona con 11 sub áreas (Medicina) y con 2 (Ciencias '
-                'Básicas), y soporta el nivel de bloques de Gineco-Obstetricia.',
-            requisitos: const ['RF-06'],
-            acciones: const [
-              (label: 'Ver temas', ruta: '/temario/medicina-infecciosos/temas'),
-            ],
-          ),
-          _stub(
-            Routes.temarioSubArea,
-            titulo: 'Temas',
-            descripcion:
-                'Hasta 123 temas en una lista, con nombres de hasta 107 '
-                'caracteres. Con estado propio para las áreas sin tercer nivel.',
-            requisitos: const ['RF-06'],
           ),
         ],
       ),
@@ -324,14 +312,10 @@ final List<RouteBase> _routes = [
               (label: 'Ranking', ruta: Routes.ranking),
             ],
           ),
-          _stub(
-            Routes.studyPriority,
-            titulo: 'Dónde invertir tu tiempo',
-            descripcion:
-                'Cruza peso en el examen, cantidad de temario y desempeño. '
-                '7 temas de Ciencias Básicas dan 10 preguntas; 123 de '
-                'Medicina dan 40.',
-            requisitos: const ['RF-21'],
+          GoRoute(
+            path: Routes.studyPriority,
+            pageBuilder: (context, state) =>
+                slidePage(child: const StudyPriorityScreen(), state: state),
           ),
           _stub(
             Routes.ranking,

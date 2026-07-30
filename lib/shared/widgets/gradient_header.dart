@@ -33,7 +33,14 @@ class GradientHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final puedeVolver = mostrarVolver && context.canPop();
+
+    // `maybeOf` y no `context.canPop()`: un widget compartido no debe exigir un
+    // GoRouter en contexto. Sin router cae al Navigator, que es lo correcto en
+    // tests y en cualquier uso fuera del árbol de rutas.
+    final router = GoRouter.maybeOf(context);
+    final puedeVolver =
+        mostrarVolver &&
+        (router?.canPop() ?? Navigator.of(context).canPop());
 
     return Container(
       decoration: BoxDecoration(
@@ -83,7 +90,9 @@ class GradientHeader extends StatelessWidget implements PreferredSizeWidget {
                         _HeaderIconButton(
                           icon: Symbols.arrow_back,
                           tooltip: 'Atrás',
-                          onPressed: context.pop,
+                          onPressed: () => router != null
+                              ? router.pop()
+                              : Navigator.of(context).maybePop(),
                         ),
                         const SizedBox(width: DesignTokens.space3),
                       ],

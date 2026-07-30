@@ -3,6 +3,29 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'catalog_models.freezed.dart';
 part 'catalog_models.g.dart';
 
+/// Estado de un nodo del temario (RF-36, RF-40).
+///
+/// **Se deriva en el cliente, no lo manda el servidor.** Los umbrales de
+/// "dominado" son decisión de producto y van a cambiar; el servidor manda los
+/// números crudos y aquí se interpretan.
+enum NodeState {
+  /// Todavía no hay preguntas cargadas para este nodo (RN-08). No es un error:
+  /// el banco se llena por áreas y de forma progresiva.
+  sinContenido,
+
+  /// Hay preguntas pero el usuario no vio ninguna.
+  sinEmpezar,
+
+  /// En progreso.
+  enCurso,
+
+  /// Buen acierto y buena cobertura.
+  dominado,
+
+  /// Vio todas las preguntas disponibles. Se le ofrece repasar las falladas.
+  agotado,
+}
+
 /// Un nodo del temario tal como lo devuelve el backend (`GET /catalog/areas`),
 /// con el progreso del usuario.
 ///
@@ -90,4 +113,48 @@ abstract class CatalogNode with _$CatalogNode {
 
   /// Temas contabilizados bajo este nodo. Sirve para la densidad de estudio.
   int get totalTemas => descendientes.where((n) => n.esTema).length;
+
+  /// Umbrales de "dominado". Están aquí y no dispersos por la UI para poder
+  /// cambiarlos en un solo sitio cuando el negocio lo decida.
+  static const _aciertoDominado = 0.75;
+  static const _coberturaDominado = 0.6;
+
+  /// Estado del nodo (RF-36, RF-40). Ver [NodeState].
+  NodeState get estado {
+    if (preguntasDisponibles == 0) return NodeState.sinContenido;
+    if (preguntasVistas == 0) return NodeState.sinEmpezar;
+    if (preguntasVistas >= preguntasDisponibles) return NodeState.agotado;
+
+    final acierto = porcentajeAcierto;
+    if (acierto != null &&
+        acierto >= _aciertoDominado &&
+        cobertura >= _coberturaDominado) {
+      return NodeState.dominado;
+    }
+    return NodeState.enCurso;
+  }
+
+  /// Preguntas que le quedan por ver al usuario en este nodo.
+  int get preguntasRestantes =>
+      (preguntasDisponibles - preguntasVistas).clamp(0, preguntasDisponibles);
+
+  /// Densidad de estudio: temas que hay que cubrir por cada pregunta que cae en
+  /// el examen. `null` si el nodo no tiene peso o no tiene temas contabilizados.
+  ///
+  /// Es el dato más accionable del temario: en Ciencias Básicas 7 temas producen
+  /// 10 preguntas, mientras que en Medicina hacen falta 123 para 40.
+  double? get temasPorPregunta {
+    final p = peso;
+    if (p == null || p == 0 || totalTemas == 0) return null;
+    return totalTemas / p;
+  }
+
+  /// Busca un descendiente por id, o `null`.
+  CatalogNode? buscar(String id) {
+    if (this.id == id) return this;
+    for (final nodo in descendientes) {
+      if (nodo.id == id) return nodo;
+    }
+    return null;
+  }
 }
