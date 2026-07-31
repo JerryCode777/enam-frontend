@@ -247,10 +247,17 @@ abstract final class MockData {
               id: 'q-${i + 1}-o${j + 1}',
               texto: _alternativas[idx][j],
               esCorrecta: conRespuestas ? j == correctaIdx : null,
-              explicacion: conRespuestas && j != correctaIdx
-                  ? 'Este distractor es incorrecto porque no corresponde al '
-                        'cuadro descrito.'
-                  : null,
+              // Las CUATRO llevan explicación, también la correcta: así viene
+              // el banco real y es lo que hace que la pregunta enseñe. Cuando
+              // la de la clave faltaba, la pantalla de retroalimentación se
+              // probaba con un hueco que en producción no existe.
+              explicacion: !conRespuestas
+                  ? null
+                  : j == correctaIdx
+                  ? 'Es la correcta porque corresponde al cuadro descrito. '
+                        'Texto de relleno, no es información clínica válida.'
+                  : 'Este distractor es incorrecto porque no corresponde al '
+                        'cuadro descrito.',
             ),
         ],
       );

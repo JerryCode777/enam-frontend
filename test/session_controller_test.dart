@@ -60,16 +60,46 @@ void main() {
         const PracticeConfig(cantidadPreguntas: 5),
       );
       var estado = await cargar(session.id);
-      final clave = estado.pregunta.opciones.firstWhere(
-        (o) => o.esCorrecta == true,
-      );
 
-      control(session.id).seleccionar(clave.id);
+      // La clave no se conoce antes de responder, así que se elige a ciegas,
+      // como hace el estudiante.
+      final elegida = estado.pregunta.opciones.first;
+      control(session.id).seleccionar(elegida.id);
       await control(session.id).responder();
       estado = container.read(sessionControllerProvider(session.id)).value!;
 
       expect(estado.respondida, isTrue);
-      expect(estado.respuesta?.esCorrecta, isTrue);
+      expect(estado.respuesta?.esCorrecta, isNotNull);
+    });
+
+    // El bug que esto fija: responder solo guardaba el resultado y la pantalla
+    // de retroalimentación se quedaba con la pregunta SIN revelar. Sin clave,
+    // la interfaz caía a la primera alternativa y la señalaba como correcta
+    // —enseñando medicina equivocada—, y la explicación salía como "sin
+    // explicación disponible".
+    test('tras responder, la pregunta trae clave y explicaciones', () async {
+      final session = await repo.startPractice(
+        const PracticeConfig(cantidadPreguntas: 5),
+      );
+      var estado = await cargar(session.id);
+
+      expect(estado.pregunta.opciones.every((o) => o.esCorrecta == null), isTrue);
+
+      control(session.id).seleccionar(estado.pregunta.opciones.first.id);
+      await control(session.id).responder();
+      estado = container.read(sessionControllerProvider(session.id)).value!;
+
+      expect(
+        estado.pregunta.opciones.where((o) => o.esCorrecta == true).length,
+        1,
+        reason: 'debe haber exactamente una alternativa marcada como correcta',
+      );
+      expect(estado.pregunta.explicacion, isNotNull);
+      expect(
+        estado.pregunta.opciones.every((o) => o.explicacion != null),
+        isTrue,
+        reason: 'las cuatro explicaciones son lo que hace que la práctica enseñe',
+      );
     });
 
     test('siguiente limpia la selección y el estado de respondida', () async {

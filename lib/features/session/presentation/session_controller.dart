@@ -113,7 +113,9 @@ class SessionController extends AsyncNotifier<SessionState> {
     state = AsyncData(s.copyWith(enviando: true, limpiarError: true));
 
     try {
-      final answer = await ref.read(sessionRepositoryProvider).answer(
+      final repo = ref.read(sessionRepositoryProvider);
+
+      final answer = await repo.answer(
         sessionId: sessionId,
         questionId: s.pregunta.id,
         optionId: s.seleccion,
@@ -121,9 +123,21 @@ class SessionController extends AsyncNotifier<SessionState> {
         marcada: s.marcada,
       );
 
-      final actualizada = s.session.copyWith(
+      var actualizada = s.session.copyWith(
         respuestas: {...s.session.respuestas, s.pregunta.id: answer},
       );
+
+      // En práctica hay que RELEER la sesión: la clave y las explicaciones no
+      // viajan hasta que la pregunta está respondida (RF-13), y la respuesta
+      // del POST solo dice si acertó. Sin esto, la pantalla de
+      // retroalimentación se queda con la copia sin revelar: sin explicación, y
+      // señalando como correcta la primera alternativa, que casi nunca lo es.
+      //
+      // Es una consulta por pregunta respondida, y trae las cuatro
+      // explicaciones que son el motivo de que la práctica enseñe.
+      if (s.session.muestraFeedbackInmediato) {
+        actualizada = await repo.session(sessionId);
+      }
 
       state = AsyncData(
         s.copyWith(

@@ -167,10 +167,16 @@ class MockSessionRepository implements SessionRepository {
   static const _delay = Duration(milliseconds: 500);
 
   /// Registra las claves y devuelve las preguntas tal como las vería el cliente.
+  ///
+  /// [ocultarClasificacion] separa los dos modos del servidor: en un simulacro
+  /// tampoco se dice de qué área es la pregunta (RN-09), pero en práctica sí,
+  /// porque el estudiante eligió el tema. Lo que en práctica se oculta hasta
+  /// responder es solo la clave y las explicaciones (RF-13).
   List<Question> _registrarClaves(
     String sessionId,
     List<Question> preguntas, {
     required bool revelarClaves,
+    bool ocultarClasificacion = true,
   }) {
     final claves = <String, String>{};
 
@@ -186,15 +192,16 @@ class MockSessionRepository implements SessionRepository {
 
     if (revelarClaves) return preguntas;
 
-    // Quitar toda pista antes de entregar al cliente: ni la clave (RF-16) ni la
-    // clasificación (RN-09), porque en el examen real tampoco se ve de qué área
-    // es la pregunta y saberlo acota las alternativas.
+    // Quitar la clave y las explicaciones antes de entregar al cliente
+    // (RF-16). La clasificación se quita solo en simulacro (RN-09): en el
+    // examen real tampoco se ve de qué área es la pregunta y saberlo acota las
+    // alternativas.
     return preguntas
         .map(
           (q) => q.copyWith(
             explicacion: null,
-            areaId: null,
-            subtemaId: null,
+            areaId: ocultarClasificacion ? null : q.areaId,
+            subtemaId: ocultarClasificacion ? null : q.subtemaId,
             opciones: q.opciones
                 .map((o) => o.copyWith(esCorrecta: null, explicacion: null))
                 .toList(),
@@ -220,8 +227,13 @@ class MockSessionRepository implements SessionRepository {
           areaIds: config.areaIds,
           conRespuestas: true,
         ),
-        // En práctica el feedback es inmediato (RF-13), así que sí van.
-        revelarClaves: true,
+        // Tampoco en práctica: el servidor revela cada pregunta AL
+        // RESPONDERLA, no al crear la sesión (RF-13). Con las claves puestas
+        // desde el principio, el mock mentía sobre el contrato y ocultaba que
+        // la app no releía la sesión tras responder.
+        revelarClaves: false,
+        // Pero el área y el tema sí viajan: el estudiante los eligió.
+        ocultarClasificacion: false,
       ),
     );
     return _sessions[id] = session;
@@ -273,7 +285,32 @@ class MockSessionRepository implements SessionRepository {
         (id == idSesionPendiente ? _crearSesionPendiente() : null);
 
     if (session == null) throw const NotFoundFailure('Sesión no encontrada.');
-    return session;
+    return _conRevelado(session);
+  }
+
+  /// Devuelve la sesión revelando las preguntas que ya se respondieron.
+  ///
+  /// Reproduce lo que hace el servidor: en práctica cada pregunta enseña su
+  /// clave y sus cuatro explicaciones AL RESPONDERLA (RF-13); en simulacro, no
+  /// hasta cerrar (RF-16). Sin esto el mock revelaba de más y la app parecía
+  /// funcionar contra datos falsos mientras fallaba contra el backend real.
+  StudySession _conRevelado(StudySession session) {
+    final originales = _originales[session.id];
+    if (originales == null) return session;
+
+    final cerrada = session.estado != SessionStatus.enCurso;
+    if (!session.muestraFeedbackInmediato && !cerrada) return session;
+
+    final porID = {for (final q in originales) q.id: q};
+
+    return session.copyWith(
+      preguntas: session.preguntas.map((q) {
+        final respuesta = session.respuestas[q.id];
+        final respondida = respuesta != null && respuesta.optionId != null;
+        if (!cerrada && !respondida) return q;
+        return porID[q.id] ?? q;
+      }).toList(growable: false),
+    );
   }
 
   StudySession _crearSesionPendiente() {

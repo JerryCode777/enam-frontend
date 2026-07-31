@@ -413,11 +413,15 @@ class _PanelFeedback extends StatelessWidget {
 
     // Se muestran solo la correcta y la elegida, en ese orden. Repetir las cuatro
     // obliga a buscar cuál era cuál.
-    final correcta = opciones.firstWhere(
-      (o) => o.esCorrecta == true,
-      orElse: () => opciones.first,
-    );
-    final acerto = elegida == correcta.id;
+    //
+    // Si el servidor todavía no reveló la clave, `correcta` queda en null y no
+    // se pinta ninguna en verde. Antes se caía a la primera alternativa, que
+    // señalaba como correcta una respuesta cualquiera —enseñando medicina
+    // equivocada con toda la confianza del mundo— en vez de no decir nada.
+    final correcta = opciones
+        .where((o) => o.esCorrecta == true)
+        .firstOrNull;
+    final acerto = correcta != null && elegida == correcta.id;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -434,15 +438,16 @@ class _PanelFeedback extends StatelessWidget {
               ),
             ),
           ),
-        FadeUp(
-          index: acerto ? 0 : 1,
-          child: OptionCard(
-            opcion: correcta,
-            letra: _letra(opciones, correcta.id),
-            visual: OptionVisual.correcta,
-            onTap: null,
+        if (correcta != null)
+          FadeUp(
+            index: acerto ? 0 : 1,
+            child: OptionCard(
+              opcion: correcta,
+              letra: _letra(opciones, correcta.id),
+              visual: OptionVisual.correcta,
+              onTap: null,
+            ),
           ),
-        ),
         const SizedBox(height: DesignTokens.space3 + 2),
         FadeUp(index: 2, child: _Explicacion(estado: estado)),
       ],

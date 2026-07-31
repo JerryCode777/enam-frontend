@@ -164,21 +164,43 @@ void main() {
       expect(answer.esCorrecta, isNotNull);
     });
 
-    test('responder la clave marca acierto', () async {
+    // La clave y las explicaciones NO viajan hasta que la pregunta está
+    // respondida (RF-13). Si viajaran antes, bastaría con mirar la respuesta
+    // de red para aprobar cualquier práctica.
+    test('la clave se revela al responder, no antes', () async {
       final session = await repo.startPractice(
         const PracticeConfig(cantidadPreguntas: 5),
       );
       final pregunta = session.preguntas.first;
-      final clave = pregunta.opciones.firstWhere((o) => o.esCorrecta == true);
 
+      expect(
+        pregunta.opciones.every((o) => o.esCorrecta == null),
+        isTrue,
+        reason: 'ninguna opción debe decir si es la correcta antes de responder',
+      );
+      expect(pregunta.explicacion, isNull);
+
+      final elegida = pregunta.opciones.first;
       final answer = await repo.answer(
         sessionId: session.id,
         questionId: pregunta.id,
-        optionId: clave.id,
+        optionId: elegida.id,
         tiempoMs: 3000,
       );
 
-      expect(answer.esCorrecta, isTrue);
+      // Releer la sesión es lo que trae la clave y las cuatro explicaciones,
+      // que son el motivo de que la práctica enseñe y no solo evalúe.
+      final tras = await repo.session(session.id);
+      final revelada = tras.preguntas.firstWhere((q) => q.id == pregunta.id);
+      final clave = revelada.opciones.firstWhere((o) => o.esCorrecta == true);
+
+      expect(revelada.explicacion, isNotNull);
+      expect(
+        revelada.opciones.every((o) => o.explicacion != null),
+        isTrue,
+        reason: 'las cuatro alternativas llevan su propia explicación',
+      );
+      expect(answer.esCorrecta, elegida.id == clave.id);
     });
 
     test('filtra por las áreas pedidas', () async {
