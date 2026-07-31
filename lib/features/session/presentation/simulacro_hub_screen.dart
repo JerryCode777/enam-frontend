@@ -11,20 +11,22 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
-import '../../../shared/widgets/paywall_sheet.dart';
 import '../../stats/domain/stats_models.dart';
 
 /// Pantallas 5.1 y 5.9 — hub de simulacros e historial.
 ///
-/// Individual autogenerado (RF-16) y nacional programado (RF-19). El de muestra
-/// de 40 preguntas es la puerta del plan gratuito (RN-03).
+/// Individual autogenerado (RF-16) y nacional programado (RF-19).
+///
+/// El de muestra de 40 preguntas **ya no es la puerta de un plan gratuito**:
+/// ese plan no existe (SSD-ENAM-002 §1). Quien llega aquí tiene acceso —el
+/// router bloquea a quien no— así que las dos versiones se ofrecen por lo que
+/// son, y la corta es para medirse en poco tiempo.
 class SimulacroHubScreen extends ConsumerWidget {
   const SimulacroHubScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(dashboardProvider).value;
-    final esFree = stats?.esFree ?? true;
 
     return Scaffold(
       body: Column(
@@ -43,12 +45,10 @@ class SimulacroHubScreen extends ConsumerWidget {
                 DesignTokens.space8,
               ),
               children: [
-                _TarjetaCompleto(esFree: esFree),
+                const _TarjetaCompleto(),
                 const SizedBox(height: DesignTokens.space3),
-                if (esFree) ...[
-                  const _TarjetaMuestra(),
-                  const SizedBox(height: DesignTokens.space3),
-                ],
+                const _TarjetaMuestra(),
+                const SizedBox(height: DesignTokens.space3),
                 const _TarjetaNacional(),
                 const SizedBox(height: DesignTokens.space5),
                 _Historial(evolucion: stats?.evolucion ?? const []),
@@ -62,9 +62,7 @@ class SimulacroHubScreen extends ConsumerWidget {
 }
 
 class _TarjetaCompleto extends StatelessWidget {
-  const _TarjetaCompleto({required this.esFree});
-
-  final bool esFree;
+  const _TarjetaCompleto();
 
   @override
   Widget build(BuildContext context) {
@@ -77,12 +75,7 @@ class _TarjetaCompleto extends StatelessWidget {
           side: BorderSide(color: context.scheme.primary, width: 2),
         ),
         child: InkWell(
-          onTap: () => esFree
-              ? mostrarPaywall(
-                  context,
-                  motivo: PaywallMotivo.simulacroCompleto,
-                )
-              : context.push(Routes.simulacroInstructions),
+          onTap: () => context.push(Routes.simulacroInstructions),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4 + 2),
@@ -106,12 +99,6 @@ class _TarjetaCompleto extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (esFree)
-                      Icon(
-                        Symbols.lock,
-                        size: 20,
-                        color: context.scheme.onSurfaceVariant,
-                      ),
                   ],
                 ),
                 const SizedBox(height: DesignTokens.space3),
@@ -122,8 +109,10 @@ class _TarjetaCompleto extends StatelessWidget {
                   'vigesimal y desglose por área.',
                   style: context.texts.bodyMedium?.copyWith(height: 1.55),
                 ),
-                // Sin etiqueta "Parte de Premium": el simulacro se ofrece por
-                // lo que es, y el límite aparece recién al tocarlo.
+                // Sin etiqueta "Parte de Premium" ni candado: los límites del
+                // plan nunca se anuncian (RP-01), y con el modelo de la v2 aquí
+                // no hay límite que anunciar — quien ve esta pantalla tiene
+                // acceso.
               ],
             ),
           ),
@@ -290,7 +279,7 @@ class _Historial extends StatelessWidget {
           Text(
             'TU HISTORIAL',
             style: context.texts.bodySmall?.copyWith(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.6,
               color: context.scheme.onSurfaceVariant,

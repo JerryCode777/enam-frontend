@@ -201,7 +201,7 @@ class _QueSePierde extends StatelessWidget {
         Text(
           'QUÉ SE ELIMINA',
           style: context.texts.bodySmall?.copyWith(
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.7,
             color: context.scheme.onSurfaceVariant,

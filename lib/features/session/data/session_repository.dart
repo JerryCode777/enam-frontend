@@ -27,6 +27,24 @@ abstract interface class SessionRepository {
 
   /// RF-18. Cierra la sesión y devuelve la calificación (RN-01).
   Future<StudySession> submit(String sessionId);
+
+  /// Sesiones a medio hacer, para la tarjeta «Continuar» del inicio (RF-15).
+  ///
+  /// Siempre una lista, nunca nula.
+  Future<List<OpenSession>> openSessions();
+
+  /// Preguntas marcadas para repasar, de TODAS las sesiones (RF-14).
+  ///
+  /// Llegan reveladas —con clave y explicación—: repasar es justamente ver la
+  /// respuesta, y aquí no hay examen en curso que proteger. La reserva de RN-09
+  /// aplica dentro del simulacro.
+  Future<List<Question>> markedQuestions();
+
+  /// Simulacros nacionales programados (RF-19).
+  Future<List<NationalMock>> nationalMocks();
+
+  /// Entra a un simulacro nacional y devuelve la sesión ya creada.
+  Future<StudySession> joinNationalMock(String mockId);
 }
 
 class ApiSessionRepository implements SessionRepository {
@@ -84,6 +102,40 @@ class ApiSessionRepository implements SessionRepository {
   Future<StudySession> submit(String sessionId) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.sessionSubmit(sessionId),
+    );
+    return StudySession.fromJson(data);
+  }
+
+  @override
+  Future<List<OpenSession>> openSessions() async {
+    final data = await _client.get<List<dynamic>>(ApiEndpoints.openSessions);
+    return data
+        .map((e) => OpenSession.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<Question>> markedQuestions() async {
+    final data = await _client.get<List<dynamic>>(
+      ApiEndpoints.markedQuestions,
+    );
+    return data
+        .map((e) => Question.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<NationalMock>> nationalMocks() async {
+    final data = await _client.get<List<dynamic>>(ApiEndpoints.mockExams);
+    return data
+        .map((e) => NationalMock.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<StudySession> joinNationalMock(String mockId) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.joinMockExam(mockId),
     );
     return StudySession.fromJson(data);
   }
@@ -200,12 +252,60 @@ class MockSessionRepository implements SessionRepository {
     return _sessions[id] = session;
   }
 
+  /// Id de la sesión a medias que el Home ofrece retomar (RF-15).
+  ///
+  /// Se genera la primera vez que se pide, no al arrancar: así el Home puede
+  /// enseñar la tarjeta "Continuar donde quedaste" y el botón lleva a una
+  /// sesión que existe de verdad. Sin esto, "Seguir" abría una sesión
+  /// inexistente y la pantalla moría en "no pudimos cargar la sesión".
+  static const idSesionPendiente = 'mock-sesion';
+
+  /// Preguntas ya respondidas en la sesión pendiente, para que el detalle del
+  /// Home ("pregunta 7 de 20") cuadre con lo que se abre.
+  static const _respondidasPendiente = 6;
+
   @override
   Future<StudySession> session(String id) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
-    final session = _sessions[id];
+
+    final session =
+        _sessions[id] ??
+        (id == idSesionPendiente ? _crearSesionPendiente() : null);
+
     if (session == null) throw const NotFoundFailure('Sesión no encontrada.');
     return session;
+  }
+
+  StudySession _crearSesionPendiente() {
+    const id = idSesionPendiente;
+    final preguntas = _registrarClaves(
+      id,
+      MockData.questions(cantidad: 20, conRespuestas: true),
+      revelarClaves: true,
+    );
+
+    // Las respuestas se atan a los ids reales de las preguntas generadas: con
+    // ids inventados la sesión abriría en la primera y el "7 de 20" mentiría.
+    final claves = _claves[id] ?? const <String, String>{};
+    final respuestas = <String, Answer>{
+      for (var i = 0; i < _respondidasPendiente; i++)
+        preguntas[i].id: Answer(
+          questionId: preguntas[i].id,
+          optionId: claves[preguntas[i].id],
+          esCorrecta: i.isEven,
+          tiempoMs: 30000,
+        ),
+    };
+
+    final session = StudySession(
+      id: id,
+      tipo: SessionType.practica,
+      estado: SessionStatus.enCurso,
+      iniciadaEn: DateTime.now().subtract(const Duration(hours: 3)),
+      preguntas: preguntas,
+      respuestas: respuestas,
+    );
+    return _sessions[id] = session;
   }
 
   @override
@@ -289,5 +389,103 @@ class MockSessionRepository implements SessionRepository {
       nota: Blueprint.toVigesimal(correctas, total: session.totalPreguntas),
     );
     return _sessions[sessionId] = finalizada;
+  }
+
+  @override
+  Future<List<OpenSession>> openSessions() async {
+    await Future<void>.delayed(_delay);
+
+    // Salen de las sesiones que este mock creó de verdad, no de una lista
+    // inventada: así "continuar" lleva a algo que existe y se puede reanudar.
+    return [
+      for (final s in _sessions.values)
+        if (s.estado == SessionStatus.enCurso)
+          OpenSession(
+            id: s.id,
+            tipo: s.tipo,
+            iniciadaEn: s.iniciadaEn,
+            expiraEn: s.expiraEn,
+            respondidas: s.respondidas,
+            totalPreguntas: s.totalPreguntas,
+          ),
+    ]..sort((a, b) => b.iniciadaEn.compareTo(a.iniciadaEn));
+  }
+
+  @override
+  Future<List<Question>> markedQuestions() async {
+    await Future<void>.delayed(_delay);
+
+    // Vale la marca MÁS RECIENTE: si se marcó en un simulacro y se desmarcó al
+    // repasarla, ya no aparece. Es lo que hace el servidor, y hacerlo distinto
+    // aquí dejaría la pantalla comportándose de dos maneras según el modo.
+    final marcadas = <String, Question>{};
+
+    for (final sesion in _sessions.values) {
+      final originales = _originales[sesion.id] ?? sesion.preguntas;
+      final claves = _claves[sesion.id] ?? const <String, String>{};
+
+      for (final pregunta in originales) {
+        final respuesta = sesion.respuestas[pregunta.id];
+        if (respuesta == null) continue;
+
+        if (!respuesta.marcada) {
+          marcadas.remove(pregunta.id);
+          continue;
+        }
+
+        // Reveladas: repasar es ver la respuesta (RF-14). Aquí no hay examen
+        // en curso que proteger.
+        final claveId = claves[pregunta.id];
+        marcadas[pregunta.id] = pregunta.copyWith(
+          explicacion:
+              'Explicación de la clave. Texto de relleno, no es información '
+              'clínica válida.',
+          opciones: pregunta.opciones
+              .map((o) => o.copyWith(esCorrecta: o.id == claveId))
+              .toList(),
+        );
+      }
+    }
+
+    return marcadas.values.toList(growable: false);
+  }
+
+  /// A quién apuntó el usuario, en memoria del proceso.
+  ///
+  /// Contra el backend real esto lo sabe el servidor y llega en `inscrito`. En
+  /// el mock hace falta un sitio donde recordarlo, pero **no** SharedPreferences:
+  /// guardarlo en disco fue lo que hizo que la inscripción sobreviviera al
+  /// cierre de sesión y que cambiar de teléfono la perdiera.
+  final Set<String> _inscritos = {};
+
+  @override
+  Future<List<NationalMock>> nationalMocks() async {
+    await Future<void>.delayed(_delay);
+
+    final ahora = DateTime.now();
+    final inicio = ahora.add(const Duration(days: 6, hours: 3));
+
+    return [
+      NationalMock(
+        id: 'nac-2026-08',
+        nombre: 'Simulacro Nacional · Agosto',
+        inicio: inicio,
+        fin: inicio.add(const Duration(hours: 3)),
+        duracionMinutos: 180,
+        participantes: 1847,
+        inscrito: _inscritos.contains('nac-2026-08'),
+        estado: NationalMockStatus.programado,
+        totalPreguntas: 180,
+      ),
+    ];
+  }
+
+  @override
+  Future<StudySession> joinNationalMock(String mockId) async {
+    _inscritos.add(mockId);
+    final sesion = await startSimulacro();
+    return _sessions[sesion.id] = sesion.copyWith(
+      tipo: SessionType.simulacroNacional,
+    );
   }
 }

@@ -5,7 +5,8 @@ import 'taxonomy.dart';
 /// La **estructura** del temario (áreas, sub áreas, pesos) vive en
 /// [Taxonomy]. Aquí solo están las constantes y el cálculo de la nota.
 ///
-/// Fuente: SSD-ENAM-001 §1.3 y RN-01 a RN-03.
+/// Fuente: SSD-ENAM-001 §1.3 y RN-01 a RN-03, con el modelo de cobro de
+/// SSD-ENAM-002 §1.
 abstract final class Blueprint {
   /// Preguntas de un simulacro completo (RF-16).
   static const int totalQuestions = 180;
@@ -27,12 +28,17 @@ abstract final class Blueprint {
   /// mayoría de enunciados son de varios párrafos.
   static const double clinicalCaseRatio = 0.81;
 
-  /// Preguntas del simulacro de muestra para usuarios free (RN-03).
+  /// Preguntas de la versión corta del simulacro.
+  ///
+  /// Era "el simulacro de cortesía del plan free". Ese plan ya no existe
+  /// (SSD-ENAM-002 §1): ahora es solo una opción para medirse en poco tiempo,
+  /// disponible para cualquiera con acceso.
   static const int sampleExamQuestions = 40;
 
-  /// Límite diario de práctica para usuarios free (RN-03).
-  /// Se muestra en la UI, pero la validación real es del servidor.
-  static const int freeDailyQuestionLimit = 20;
+  // La duración de la prueba (24 h, RN-03 v2) no está aquí a propósito: la
+  // fija el servidor al arrancar el reloj en la primera práctica (D-02), y la
+  // app la lee de `Subscription.expira`. Una constante local sería una segunda
+  // fuente que se contradice en silencio el día que el negocio la cambie.
 
   /// Rango configurable en una sesión de práctica (RF-12).
   static const int practiceMinQuestions = 10;

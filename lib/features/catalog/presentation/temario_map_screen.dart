@@ -109,7 +109,7 @@ class _CabeceraTemario extends StatelessWidget {
                   const Text(
                     'Temario oficial',
                     style: TextStyle(
-                      fontSize: 21,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
@@ -186,7 +186,7 @@ class _BuscadorFalso extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),
@@ -311,7 +311,7 @@ class _Curiosidad extends ConsumerWidget {
                   'Un tema de Ciencias Básicas rinde 4 veces más que uno de '
                   'Medicina.',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     height: 1.45,
                     fontWeight: FontWeight.w700,
                     color: context.scheme.onSurface,
@@ -345,7 +345,7 @@ class _GrupoHeader extends ConsumerWidget {
         '${grupo.label.toUpperCase()} · ${totales.preguntas} PREGUNTAS · '
         '${(totales.porcentaje * 100).round()} %',
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.77,
           color: context.scheme.onSurfaceVariant,

@@ -9,6 +9,7 @@ import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
+import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../domain/catalog_models.dart';
@@ -39,7 +40,7 @@ class TemarioNodeScreen extends ConsumerWidget {
     return arbol.when(
       loading: () => const _NodoCargando(),
       error: (e, _) => Scaffold(
-        appBar: AppBar(),
+        appBar: const GradientHeader(titulo: 'Temario'),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
@@ -57,9 +58,9 @@ class TemarioNodeScreen extends ConsumerWidget {
       data: (_) {
         final encontrado = ref.watch(nodoProvider(nodeId));
         if (encontrado == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(
+          return const Scaffold(
+            appBar: GradientHeader(titulo: 'Temario'),
+            body: Center(
               child: Text('No encontramos ese punto del temario.'),
             ),
           );
@@ -83,18 +84,14 @@ class _Contenido extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: context.scheme.surfaceContainerLowest,
-      appBar: AppBar(
-        // Con el nombre del padre en vez de vacío: quien llegó por búsqueda
-        // necesita saber de dónde cuelga esto.
-        title: Text(
-          _padre() ?? 'Temario',
-          style: context.texts.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: context.scheme.onSurfaceVariant,
-          ),
-        ),
-        titleSpacing: 0,
-      ),
+      // El mismo degradado que el resto de cabeceras de la app: con un AppBar
+      // plano, bajar un nivel del temario parecía salirse a otra aplicación.
+      //
+      // Lleva el **padre**, no el nodo: el nombre del nodo ya va grande en
+      // `EncabezadoNodo`, justo debajo, y repetirlo dejaba "Medicina" dos veces
+      // seguidas. Aquí sirve para saber de dónde cuelga esto, que es lo que
+      // necesita quien llegó por búsqueda.
+      appBar: GradientHeader(titulo: _padre() ?? 'Temario'),
       body: nodo.tieneHijos
           ? _ListaHijos(nodo: nodo, tieneBloques: _tieneBloques)
           : _SinDetalle(nodo: nodo),
@@ -147,7 +144,7 @@ class EncabezadoNodo extends StatelessWidget {
                 child: Text(
                   nodo.nombre,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 26,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
                   ),
@@ -210,7 +207,7 @@ class _Ficha extends StatelessWidget {
       child: Text(
         texto,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w700,
           color: color ?? scheme.onSurface,
         ),
@@ -379,7 +376,7 @@ class _BloqueHeader extends StatelessWidget {
             child: Text(
               bloque.nombre.toUpperCase(),
               style: context.texts.bodySmall?.copyWith(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.8,
                 color: context.scheme.onSurfaceVariant,
@@ -389,7 +386,7 @@ class _BloqueHeader extends StatelessWidget {
           if (bloque.peso != null)
             Text(
               '${bloque.peso} preguntas',
-              style: context.texts.bodySmall?.copyWith(fontSize: 11),
+              style: context.texts.bodySmall?.copyWith(fontSize: 13),
             ),
         ],
       ),
@@ -464,7 +461,7 @@ class _NodoCargando extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: const GradientHeader(titulo: 'Temario'),
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space4),
         children: [

@@ -1,45 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../../core/router/routes.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../domain/subscription_models.dart';
-import 'plans_screen.dart';
-
-/// Suscripción del usuario. Falta `GET /subscription` conectado.
-final miSuscripcionProvider = Provider<Subscription?>((ref) {
-  final plan = ref.watch(plansProvider).first;
-  final ahora = DateTime.now();
-  return Subscription(
-    id: 'sub-1',
-    plan: plan,
-    // En gracia a propósito, para poder ver el caso de cobro fallido (RF-27).
-    estado: SubscriptionStatus.enGracia,
-    origen: SubscriptionOrigin.culqi,
-    inicia: ahora.subtract(const Duration(days: 30)),
-    expira: ahora.add(const Duration(days: 3)),
-  );
-});
+import 'widgets/opciones_de_pago.dart';
 
 /// Pantalla 7.4 — mi suscripción (RF-27, RN-07).
 ///
-/// Dos cosas que tienen que quedar clarísimas:
-/// - Con cobro fallido, **hasta qué fecha exacta** conserva el acceso (3 días de
-///   gracia), y qué hacer al respecto
-/// - Al cancelar, que **el historial y las estadísticas no se borran** (RN-07)
+/// Responde a tres preguntas y a ninguna más: **qué tengo**, **hasta cuándo** y
+/// **cómo lo dejo o lo recupero**.
+///
+/// Lo que ya no hace, y es lo que importa:
+///
+/// - **No enseña el precio ni lleva a un formulario de pago.** Llevaba a `/pago`
+///   desde tres sitios, sin mirar la tienda, así que en un iPhone se llegaba a
+///   una pantalla con precios y campos de tarjeta. Esa es la guideline 3.1.1 de
+///   App Store, que es motivo de rechazo, y era además el único punto donde el
+///   reparto por tienda de la pantalla de bloqueo se saltaba entero.
+/// - **Cancelar cancela.** Antes solo sacaba un mensaje de «renovación
+///   cancelada» sin llamar a nada: se podía cancelar diez veces y la suscripción
+///   seguía viva. Decirle a alguien que canceló algo que no se canceló es peor
+///   que no ofrecer el botón.
+///
+/// Lo que hay en su lugar es [OpcionesDePago], que sabe qué se puede ofrecer en
+/// cada tienda.
 class MySubscriptionScreen extends ConsumerWidget {
   const MySubscriptionScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sub = ref.watch(miSuscripcionProvider);
+    final sub = ref.watch(subscriptionProvider).value;
 
     return Scaffold(
       body: Column(
@@ -78,14 +76,13 @@ class _Contenido extends StatelessWidget {
             child: StateBanner(
               kind: BannerKind.warning,
               icon: Symbols.error,
+              // Sin botón de "actualizar medio de pago": ese botón llevaba al
+              // checkout. Quien tenga que cambiar la tarjeta lo hace en la web
+              // o por WhatsApp, y las dos salidas están más abajo.
               message:
                   'No pudimos cobrar tu renovación. Reintentamos '
                   'automáticamente; tienes acceso hasta el '
-                  '${DateFormat("d 'de' MMMM", 'es').format(sub.expira)}.',
-              action: TextButton(
-                onPressed: () => context.push(Routes.checkout),
-                child: const Text('Actualizar'),
-              ),
+                  '${_fechaLarga(sub.expira)}.',
             ),
           ),
           const SizedBox(height: DesignTokens.space4),
@@ -98,8 +95,8 @@ class _Contenido extends StatelessWidget {
           index: 3,
           child: Text(
             // RN-07: hay que decirlo antes de que cancele, no después.
-            'Si cancelas, mantienes Premium hasta el fin del periodo pagado. Tu '
-            'historial y tus estadísticas nunca se borran.',
+            'Si cancelas, mantienes tu acceso hasta el fin del periodo pagado. '
+            'Tu historial y tus estadísticas nunca se borran.',
             style: context.texts.bodySmall?.copyWith(height: 1.55),
           ),
         ),
@@ -117,6 +114,8 @@ class _TarjetaPlan extends StatelessWidget {
   Widget build(BuildContext context) {
     final states = context.states;
     final (etiqueta, color) = switch (sub.estado) {
+      SubscriptionStatus.pruebaSinIniciar => ('PRUEBA', states.info),
+      SubscriptionStatus.prueba => ('EN PRUEBA', states.info),
       SubscriptionStatus.activa => ('ACTIVO', states.success),
       SubscriptionStatus.enGracia => ('EN GRACIA', states.warning),
       SubscriptionStatus.expirada => ('EXPIRADO', states.error),
@@ -151,7 +150,7 @@ class _TarjetaPlan extends StatelessWidget {
                   child: Text(
                     etiqueta,
                     style: context.texts.bodySmall?.copyWith(
-                      fontSize: 10.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: color.onTint,
                     ),
@@ -162,19 +161,26 @@ class _TarjetaPlan extends StatelessWidget {
             const SizedBox(height: DesignTokens.space3),
             _Fila(
               etiqueta: 'Vigente hasta',
-              valor: DateFormat('d MMM yyyy', 'es').format(sub.expira),
+              // La prueba sin empezar no tiene fecha: el reloj arranca en la
+              // primera práctica (D-02). Poner "hoy" ahí sería inventar.
+              valor: sub.expira == null
+                  ? 'Empieza con tu primera práctica'
+                  : DateFormat('d MMM yyyy', 'es').format(sub.expira!),
             ),
+            // Sin fila de precio ni de medio de pago. Un importe dentro de la
+            // app es justo lo que las tiendas no admiten, y además el dato no
+            // le dice nada a quien ya pagó: lo que quiere saber es hasta cuándo
+            // le vale y cómo se renueva.
             _Fila(
               etiqueta: 'Renovación',
-              valor: sub.origen == SubscriptionOrigin.culqi
-                  ? 'Automática · S/ ${sub.plan.precio.toStringAsFixed(0)}'
-                  : 'Manual (Yape)',
-            ),
-            _Fila(
-              etiqueta: 'Medio de pago',
-              valor: sub.origen == SubscriptionOrigin.culqi
-                  ? 'Tarjeta'
-                  : 'Yape',
+              valor: switch (sub.estado) {
+                SubscriptionStatus.cancelada => 'Cancelada',
+                SubscriptionStatus.activa || SubscriptionStatus.enGracia =>
+                  sub.origen == SubscriptionOrigin.culqi
+                      ? 'Automática'
+                      : 'Manual',
+                _ => 'Sin renovación',
+              },
             ),
           ],
         ),
@@ -182,6 +188,11 @@ class _TarjetaPlan extends StatelessWidget {
     );
   }
 }
+
+/// Fecha larga en español, o el aviso de que la prueba aún no empezó (D-02).
+String _fechaLarga(DateTime? fecha) => fecha == null
+    ? 'que empieces tu primera práctica'
+    : DateFormat("d 'de' MMMM", 'es').format(fecha);
 
 class _Fila extends StatelessWidget {
   const _Fila({required this.etiqueta, required this.valor});
@@ -209,73 +220,93 @@ class _Fila extends StatelessWidget {
   }
 }
 
-class _Acciones extends StatelessWidget {
+class _Acciones extends ConsumerStatefulWidget {
   const _Acciones({required this.sub});
 
   final Subscription sub;
 
   @override
+  ConsumerState<_Acciones> createState() => _AccionesState();
+}
+
+class _AccionesState extends ConsumerState<_Acciones> {
+  bool _cancelando = false;
+
+  bool get _puedeCancelar =>
+      widget.sub.estado == SubscriptionStatus.activa ||
+      widget.sub.estado == SubscriptionStatus.enGracia;
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Symbols.credit_card),
-            title: const Text('Cambiar medio de pago'),
-            trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.checkout),
-          ),
-          Divider(height: 1, color: context.scheme.outlineVariant),
-          ListTile(
-            leading: const Icon(Symbols.receipt_long),
-            title: const Text('Historial de pagos'),
-            trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Disponible pronto')),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Cómo seguir teniendo acceso, según la tienda. Es lo mismo que ve
+        // quien se quedó sin acceso, y a propósito: la regla vive en un solo
+        // sitio para que no se olvide al añadir una pantalla.
+        const OpcionesDePago(etiquetaWhatsApp: 'Escríbenos si necesitas ayuda'),
+
+        if (_puedeCancelar) ...[
+          const SizedBox(height: DesignTokens.space4),
+          Center(
+            child: TextButton(
+              onPressed: _cancelando ? null : _confirmarCancelacion,
+              child: Text(
+                _cancelando ? 'Cancelando…' : 'Cancelar renovación',
+                style: TextStyle(color: context.scheme.onSurfaceVariant),
+              ),
             ),
           ),
-          Divider(height: 1, color: context.scheme.outlineVariant),
-          ListTile(
-            leading: const Icon(Symbols.cancel),
-            title: const Text('Cancelar renovación'),
-            trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => _confirmarCancelacion(context),
-          ),
         ],
-      ),
+      ],
     );
   }
 
-  Future<void> _confirmarCancelacion(BuildContext context) async {
-    final cancelar = await showDialog<bool>(
+  Future<void> _confirmarCancelacion() async {
+    final confirmado = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogo) => AlertDialog(
         title: const Text('¿Cancelar la renovación?'),
         content: Text(
-          'Mantienes Premium hasta el '
-          '${DateFormat("d 'de' MMMM", 'es').format(sub.expira)}. Después '
-          'vuelves al plan gratis.\n\n'
-          // Lo que NO se pierde, que es la duda real de quien cancela.
+          'Mantienes tu acceso hasta el ${_fechaLarga(widget.sub.expira)}. '
+          // No hay plan gratis al que volver (SSD-ENAM-002 §1). Decir que lo
+          // hay sería vender una red de seguridad que no existe.
+          'Después pierdes el acceso hasta que vuelvas a activar un plan.\n\n'
+          // Lo que NO se pierde, que es la duda real de quien cancela (RN-07).
           'Tu historial, tus estadísticas y tus preguntas marcadas se '
           'conservan.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Seguir con Premium'),
+            onPressed: () => Navigator.of(dialogo).pop(false),
+            child: const Text('Seguir con mi plan'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(dialogo).pop(true),
             child: const Text('Cancelar renovación'),
           ),
         ],
       ),
     );
 
-    if (cancelar == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Renovación cancelada')),
-      );
+    if (confirmado != true || !mounted) return;
+
+    setState(() => _cancelando = true);
+    try {
+      await ref.read(subscriptionRepositoryProvider).cancelar();
+      // Sin esto la pantalla seguiría diciendo "ACTIVO" después de cancelar.
+      ref.invalidate(subscriptionProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tu suscripción no se renovará.')),
+        );
+      }
+    } on Failure catch (e) {
+      // Un fallo aquí NO se puede tragar: quien se quede creyendo que canceló
+      // se encuentra el cobro el mes siguiente.
+      if (mounted) showErrorSnack(context, e.message);
+    } finally {
+      if (mounted) setState(() => _cancelando = false);
     }
   }
 }
@@ -285,37 +316,34 @@ class _SinSuscripcion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.space8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Symbols.workspace_premium,
-              size: 40,
-              color: context.scheme.onSurfaceVariant,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(DesignTokens.space6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: DesignTokens.space6),
+          Icon(
+            Symbols.workspace_premium,
+            size: 40,
+            color: context.scheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: DesignTokens.space4),
+          Text(
+            'No tienes un plan activo',
+            style: context.texts.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: DesignTokens.space4),
-            Text(
-              'Estás en el plan gratis',
-              style: context.texts.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space3),
-            Text(
-              '20 preguntas al día y un simulacro de muestra.',
-              textAlign: TextAlign.center,
-              style: context.texts.bodyMedium,
-            ),
-            const SizedBox(height: DesignTokens.space5),
-            FilledButton(
-              onPressed: () => context.push(Routes.plans),
-              child: const Text('Ver los planes'),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
+          Text(
+            // RN-07 antes que la oferta: es la duda real de quien llega aquí.
+            'Tu historial y tus estadísticas siguen guardados.',
+            textAlign: TextAlign.center,
+            style: context.texts.bodyMedium,
+          ),
+          const SizedBox(height: DesignTokens.space5),
+          const OpcionesDePago(),
+        ],
       ),
     );
   }

@@ -66,7 +66,7 @@ class ExamGrid extends StatelessWidget {
                   child: Text(
                     g.etiqueta,
                     style: context.texts.bodySmall?.copyWith(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.6,
                       color: context.scheme.onSurfaceVariant,
@@ -75,7 +75,7 @@ class ExamGrid extends StatelessWidget {
                 ),
                 Text(
                   '${g.desde + 1}–${g.hasta}',
-                  style: context.texts.bodySmall?.copyWith(fontSize: 11),
+                  style: context.texts.bodySmall?.copyWith(fontSize: 13),
                 ),
               ],
             ),
@@ -254,7 +254,7 @@ class _Casilla extends StatelessWidget {
                   child: Text(
                     '$numero',
                     style: context.texts.bodySmall?.copyWith(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: texto,
                     ),
@@ -362,7 +362,7 @@ class _Item extends StatelessWidget {
           ),
         ),
         const SizedBox(width: DesignTokens.space2),
-        Text(texto, style: context.texts.bodySmall?.copyWith(fontSize: 11.5)),
+        Text(texto, style: context.texts.bodySmall?.copyWith(fontSize: 13)),
       ],
     );
   }

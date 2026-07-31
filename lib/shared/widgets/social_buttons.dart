@@ -29,7 +29,7 @@ class SeparadorAuth extends StatelessWidget {
           child: Text(
             texto,
             style: context.texts.bodySmall?.copyWith(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               color: context.scheme.onSurfaceVariant,
             ),
@@ -101,7 +101,7 @@ class GoogleButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.texts.bodyLarge?.copyWith(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: scheme.onSurface,
                       ),
@@ -177,7 +177,7 @@ class AppleButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: tinta,
                       ),

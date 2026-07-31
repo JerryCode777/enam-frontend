@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../../core/mock/mock_data.dart';
+import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -24,19 +24,25 @@ typedef PreguntaMarcada = ({
 
 /// Las preguntas que el usuario marcó para repaso (RF-14).
 ///
-/// Hoy sale del mock. El contrato no tiene endpoint para listarlas todavía:
-/// hace falta un `GET /me/marked` que devuelva las marcadas de todas las
-/// sesiones, no solo de la actual.
-final marcadasProvider = Provider<List<PreguntaMarcada>>((ref) {
-  final preguntas = MockData.questions(cantidad: 12, conRespuestas: true);
+/// Salen de `GET /me/marked`, que devuelve las de **todas** las sesiones, no
+/// solo las de la última. Llegan reveladas —con clave y explicación—: repasar
+/// es justamente ver la respuesta, y aquí no hay examen en curso que proteger.
+final marcadasProvider = FutureProvider<List<PreguntaMarcada>>((ref) async {
+  final preguntas = await ref
+      .watch(sessionRepositoryProvider)
+      .markedQuestions();
+
   return [
-    for (var i = 0; i < preguntas.length; i++)
+    for (final pregunta in preguntas)
       (
-        questionId: preguntas[i].id,
-        extracto: _extracto(preguntas[i].enunciado),
-        areaId: preguntas[i].areaId ?? 'medicina',
-        subtemaNombre: preguntas[i].subtemaId,
-        acertada: i.isEven,
+        questionId: pregunta.id,
+        extracto: _extracto(pregunta.enunciado),
+        areaId: pregunta.areaId ?? 'medicina',
+        subtemaNombre: pregunta.subtemaId,
+        // Sale de la clave que manda el servidor, no de la posición en la
+        // lista: antes era `i.isEven`, o sea que la mitad salía "acertada"
+        // por estar en un índice par.
+        acertada: pregunta.opciones.any((o) => o.esCorrecta == true),
       ),
   ];
 });
@@ -62,7 +68,8 @@ class _MarkedQuestionsScreenState extends ConsumerState<MarkedQuestionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final todas = ref.watch(marcadasProvider);
+    final consulta = ref.watch(marcadasProvider);
+    final todas = consulta.value ?? const <PreguntaMarcada>[];
     final visibles = _filtroArea == null
         ? todas
         : todas.where((m) => m.areaId == _filtroArea).toList();
@@ -78,7 +85,11 @@ class _MarkedQuestionsScreenState extends ConsumerState<MarkedQuestionsScreen> {
         children: [
           const GradientHeader(titulo: 'Marcadas para repaso'),
           Expanded(
-            child: todas.isEmpty
+            // Cargando no es "no tienes marcadas": enseñar el vacío mientras
+            // llega la respuesta le dice al usuario que perdió su trabajo.
+            child: consulta.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : todas.isEmpty
                 ? const _Vacio()
                 : Column(
                     children: [
@@ -273,13 +284,13 @@ class _FilaMarcada extends StatelessWidget {
                         Text(
                           marcada.subtemaNombre ?? marcada.areaId,
                           style: context.texts.bodySmall?.copyWith(
-                            fontSize: 11.5,
+                            fontSize: 13,
                           ),
                         ),
                         Text(
                           '· ${marcada.acertada ? "acertada" : "fallada"}',
                           style: context.texts.bodySmall?.copyWith(
-                            fontSize: 11.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: marcada.acertada
                                 ? states.success.onTint

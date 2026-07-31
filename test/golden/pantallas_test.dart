@@ -16,6 +16,7 @@ import 'package:enam_app/features/auth/presentation/reset_password_screen.dart';
 import 'package:enam_app/features/auth/presentation/splash_screen.dart';
 import 'package:enam_app/features/auth/presentation/verify_email_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_map_screen.dart';
+import 'package:enam_app/features/home/presentation/home_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -72,6 +73,10 @@ void main() {
     (nombre: '1.6-recuperar', widget: ForgotPasswordScreen()),
     (nombre: '1.7-perfil', widget: CompleteProfileScreen()),
     (nombre: '1.8-nueva-contrasena', widget: ResetPasswordScreen(token: 'x')),
+    // El inicio es la pantalla con más piezas y donde antes se rompió el ancho:
+    // las tarjetas de Temario y Marcadas quedaban en dos columnas de ~160 px y
+    // los títulos salían como «Tem…» y «Marc…».
+    (nombre: '2.1-inicio', widget: HomeScreen()),
     (nombre: '3.1-temario', widget: TemarioMapScreen()),
     (nombre: '3.2-area-medicina', widget: TemarioNodeScreen(nodeId: 'medicina')),
     (
@@ -233,6 +238,7 @@ Future<String?> _rutaSimbolos() async {
 
 class _PrefsEnMemoria implements AppPrefs {
   bool _visto = false;
+  DateTime? _inicioPrueba;
 
   @override
   Future<bool> onboardingVisto() async => _visto;
@@ -246,6 +252,19 @@ class _PrefsEnMemoria implements AppPrefs {
   @override
   Future<void> marcarInscritoEnNacional(String id) async =>
       _nacionales.add(id);
+
+  // El reloj de la prueba (D-02). En las capturas siempre arranca sin empezar,
+  // que es como nace todo usuario: así el inicio se retrata en su estado real
+  // de primer uso y no en uno a medias.
+  @override
+  Future<DateTime?> inicioPrueba() async => _inicioPrueba;
+
+  @override
+  Future<DateTime> marcarInicioPrueba() async =>
+      _inicioPrueba = DateTime.now();
+
+  @override
+  Future<void> reiniciarPrueba() async => _inicioPrueba = null;
 
   final _nacionales = <String>{};
 }

@@ -112,7 +112,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ),
                     child: const Text(
                       'Saltar',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -197,7 +197,7 @@ class _VistaPaso extends StatelessWidget {
             paso.titulo,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 30,
+              fontSize: 32,
               fontWeight: FontWeight.w800,
               height: 1.2,
               color: Colors.white,
@@ -211,7 +211,7 @@ class _VistaPaso extends StatelessWidget {
             paso.subtitulo,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 16,
               height: 1.5,
               color: Colors.white.withValues(alpha: 0.85),
             ),
@@ -347,7 +347,7 @@ class _TarjetaPuntos extends StatelessWidget {
                     child: Text(
                       puntos[i].$2,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),

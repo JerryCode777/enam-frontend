@@ -67,8 +67,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
     setState(() => _enviando = true);
     try {
-      // Reutiliza el flujo de recuperación: el backend reenvía el enlace.
-      await ref.read(authRepositoryProvider).forgotPassword(email);
+      await ref.read(authRepositoryProvider).reenviarVerificacion(email);
       if (!mounted) return;
       setState(() => _enlaceVencido = false);
       _startCooldown();
@@ -114,7 +113,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   const Text(
                     'Revisa tu correo',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 30,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                     ),
@@ -123,7 +122,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   Text.rich(
                     TextSpan(
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         height: 1.55,
                         color: Colors.white.withValues(alpha: 0.88),
                       ),
@@ -160,7 +159,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     child: const Text(
                       'Cambiar el correo',
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         decoration: TextDecoration.underline,
                         decorationColor: Colors.white,
@@ -277,7 +276,7 @@ class _PildoraVidrio extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 14.5,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           // Deshabilitado se atenúa, pero sigue legible: el usuario tiene que
           // poder leer cuánto falta para reenviar.

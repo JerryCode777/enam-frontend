@@ -88,7 +88,7 @@ class AuthScaffold extends StatelessWidget {
                         Text(
                           subtitulo!,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
                         ),

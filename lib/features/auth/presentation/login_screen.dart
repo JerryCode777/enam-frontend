@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
@@ -12,6 +11,7 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
 import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/brand_gradient.dart';
+import '../../../shared/widgets/brand_mark.dart';
 import '../../../shared/widgets/ecg_line.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
@@ -74,15 +74,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingGoogle = true);
     try {
-      await ref.read(authControllerProvider.notifier).signInWithGoogle();
-
-      // Igual que en el login normal: el router redirige solo si el estado
-      // pasó a autenticado; si quedó en error, se muestra aquí.
-      //
+      await _conConsentimiento(
+        (acepta) => ref
+            .read(authControllerProvider.notifier)
+            .signInWithGoogle(aceptaTerminos: acepta),
+      );
+    } on Object catch (error) {
       // En snackbar y no bajo los campos: el fallo no viene de lo que el
       // usuario escribió, así que señalarle la contraseña sería engañoso.
-      final error = ref.read(authControllerProvider).error;
-      if (error != null && mounted) {
+      if (mounted) {
         showErrorSnack(
           context,
           error is Failure ? error.message : 'No se pudo continuar con Google.',
@@ -98,10 +98,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingApple = true);
     try {
-      await ref.read(authControllerProvider.notifier).signInWithApple();
-
-      final error = ref.read(authControllerProvider).error;
-      if (error != null && mounted) {
+      await _conConsentimiento(
+        (acepta) => ref
+            .read(authControllerProvider.notifier)
+            .signInWithApple(aceptaTerminos: acepta),
+      );
+    } on Object catch (error) {
+      if (mounted) {
         showErrorSnack(
           context,
           error is Failure ? error.message : 'No se pudo continuar con Apple.',
@@ -112,6 +115,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Entra con Google o Apple, pidiendo el consentimiento solo si hace falta.
+  ///
+  /// El botón vive en el login, que no tiene casilla que marcar, así que el
+  /// consentimiento no se puede pedir por adelantado sin molestar a quien solo
+  /// vuelve a entrar — que es la inmensa mayoría. El camino es al revés: se
+  /// intenta, y **solo si la cuenta es nueva** el servidor responde
+  /// `CONSENT_REQUIRED`; ahí se enseñan los términos y se reintenta.
+  ///
+  /// Marcar el consentimiento de oficio sería inventar una prueba de algo que
+  /// nadie aceptó, y la Ley 29733 pide justo lo contrario.
+  Future<void> _conConsentimiento(
+    Future<bool> Function(bool aceptaTerminos) entrar,
+  ) async {
+    try {
+      await entrar(false);
+    } on Failure catch (error) {
+      if (error.code != 'CONSENT_REQUIRED') rethrow;
+      if (!mounted) return;
+
+      if (await _pedirConsentimiento() != true) return;
+      if (!mounted) return;
+
+      await entrar(true);
+    }
+  }
+
+  Future<bool?> _pedirConsentimiento() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('Antes de crear tu cuenta'),
+        content: const Text(
+          'Necesitamos que aceptes los términos del servicio y la política de '
+          'privacidad. Puedes leerlos en cualquier momento desde Ajustes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogo).pop(false),
+            child: const Text('Ahora no'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogo).pop(false);
+              context.push(Routes.terms);
+            },
+            child: const Text('Leerlos'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogo).pop(true),
+            child: const Text('Acepto'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (_ocupado || !_validate()) return;
 
@@ -120,12 +179,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .signIn(email: _email.text.trim(), password: _password.text);
-
-      // El router redirige solo cuando cambia el estado de auth. Si el estado
-      // quedó en error, hay que mostrarlo aquí.
-      final state = ref.read(authControllerProvider);
-      final error = state.error;
-      if (error != null && mounted) _showFailure(error);
+      // Si llegó aquí, entró: el router se encarga de sacar de esta pantalla.
+    } on Object catch (error) {
+      // El fallo llega como excepción, no leyendo el estado: con credenciales
+      // malas el usuario sigue sin sesión, esta pantalla no se desmonta y el
+      // error se puede enseñar donde toca.
+      if (mounted) _showFailure(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -299,18 +358,13 @@ class _CabeceraMarca extends StatelessWidget {
                   border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
-                  Symbols.stethoscope,
-                  size: 28,
-                  fill: 1,
-                  color: Colors.white,
-                ),
+                child: const Center(child: BrandMark(size: 26)),
               ),
               const SizedBox(width: DesignTokens.space3),
               const Text(
                 'ENAM Prep',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
@@ -321,7 +375,7 @@ class _CabeceraMarca extends StatelessWidget {
           const Text(
             'Hola de nuevo',
             style: TextStyle(
-              fontSize: 28,
+              fontSize: 30,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),

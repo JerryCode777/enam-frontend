@@ -35,10 +35,7 @@ class ApiStatsRepository implements StatsRepository {
 }
 
 class MockStatsRepository implements StatsRepository {
-  MockStatsRepository({this.esFree = true, this.sinDatos = false});
-
-  /// Simula un usuario del plan gratuito, para ver el contador de cuota diaria.
-  final bool esFree;
+  MockStatsRepository({this.sinDatos = false});
 
   /// Simula el día 1: sin respuestas, la nota proyectada aún no se puede calcular.
   final bool sinDatos;
@@ -66,7 +63,6 @@ class MockStatsRepository implements StatsRepository {
               preguntasBlueprint: area.peso ?? 0,
             ),
         ],
-        preguntasRestantesHoy: esFree ? Blueprint.freeDailyQuestionLimit : null,
       );
     }
 
@@ -105,11 +101,25 @@ class MockStatsRepository implements StatsRepository {
             fecha: DateTime.now().subtract(Duration(days: i * 12)),
             nota: 9.4 + (4 - i) * 0.55 + _random.nextDouble() * 0.5,
             sessionId: 'sim-${5 - i}',
+            // El primero es la muestra de 40, que es como empieza casi todo el
+            // mundo. Mezclarlo con los completos sin distinguirlo es
+            // exactamente lo que el campo existe para evitar.
+            tipo: 'simulacro',
+            totalPreguntas: i == 4 ? 40 : 180,
           ),
       ],
-      preguntasRestantesHoy: esFree ? 13 : null,
+      racha: _racha(),
     );
   }
+
+  /// Racha de ejemplo: cinco días seguidos y hoy todavía sin practicar.
+  ///
+  /// Se deja hoy en falso a propósito: es el estado que la tarjeta usa para
+  /// latir en ámbar, y el que más fácil se rompe al tocarla.
+  Racha _racha() => const Racha(
+    dias: 5,
+    diasDeLaSemana: [false, true, true, true, true, true, false],
+  );
 
   /// Promedio ponderado del % de acierto por área, en escala vigesimal (RN-04).
   double _proyectar(List<AreaPerformance> porArea) {

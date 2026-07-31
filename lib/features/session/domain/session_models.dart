@@ -126,6 +126,71 @@ abstract class PracticeConfig with _$PracticeConfig {
       _$PracticeConfigFromJson(json);
 }
 
+/// Resumen de una sesión a medio hacer, para la tarjeta «Continuar» (RF-15).
+///
+/// No lleva las preguntas: son hasta 180 y la tarjeta solo necesita saber qué
+/// sesión es y por dónde iba. Cargarlas todas para pintar una tarjeta en el
+/// arranque sería gastar el peor momento de la conexión del usuario.
+@freezed
+abstract class OpenSession with _$OpenSession {
+  const factory OpenSession({
+    required String id,
+    required SessionType tipo,
+    required DateTime iniciadaEn,
+    DateTime? expiraEn,
+    @Default(0) int respondidas,
+    @Default(0) int totalPreguntas,
+  }) = _OpenSession;
+
+  const OpenSession._();
+
+  factory OpenSession.fromJson(Map<String, dynamic> json) =>
+      _$OpenSessionFromJson(json);
+
+  bool get esSimulacro =>
+      tipo == SessionType.simulacro || tipo == SessionType.simulacroNacional;
+}
+
+/// Estado de un simulacro nacional respecto del reloj (RF-19).
+@JsonEnum(fieldRename: FieldRename.snake)
+enum NationalMockStatus { programado, enCurso, cerrado }
+
+/// Un simulacro nacional programado.
+///
+/// Todo lo que decide qué se ve viene del **servidor**, incluido [inscrito] y
+/// [estado]. Los dos se calculaban en el cliente: la inscripción vivía en
+/// SharedPreferences —así que cambiar de teléfono la perdía y se podía
+/// "participar" dos veces— y el momento salía del reloj del dispositivo, que
+/// si va adelantado enseña "en curso" para algo que el servidor va a rechazar.
+@freezed
+abstract class NationalMock with _$NationalMock {
+  const factory NationalMock({
+    required String id,
+    required String nombre,
+    required DateTime inicio,
+    required DateTime fin,
+    @Default(0) int duracionMinutos,
+    @Default(0) int participantes,
+    @Default(false) bool inscrito,
+    @Default(NationalMockStatus.programado) NationalMockStatus estado,
+    @Default(0) int totalPreguntas,
+  }) = _NationalMock;
+
+  const NationalMock._();
+
+  factory NationalMock.fromJson(Map<String, dynamic> json) =>
+      _$NationalMockFromJson(json);
+
+  Duration get duracion => Duration(minutes: duracionMinutos);
+
+  /// Cuánto falta para que abra. `null` si ya abrió.
+  Duration? get faltaParaEmpezar {
+    if (estado != NationalMockStatus.programado) return null;
+    final falta = inicio.difference(DateTime.now());
+    return falta.isNegative ? Duration.zero : falta;
+  }
+}
+
 /// Una sesión de estudio en curso o terminada.
 @freezed
 abstract class StudySession with _$StudySession {

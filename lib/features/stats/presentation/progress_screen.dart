@@ -129,7 +129,7 @@ class _TarjetaNota extends StatelessWidget {
               Text(
                 'NOTA PROYECTADA',
                 style: context.texts.bodySmall?.copyWith(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
                   color: context.scheme.onSurfaceVariant,
@@ -307,7 +307,7 @@ class _Cifra extends StatelessWidget {
             Text(
               etiqueta,
               maxLines: 2,
-              style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+              style: context.texts.bodySmall?.copyWith(fontSize: 13),
             ),
           ],
         ),
@@ -356,7 +356,7 @@ class _AccesosDirectos extends StatelessWidget {
                         Text(
                           accesos[i].texto,
                           style: context.texts.bodySmall?.copyWith(
-                            fontSize: 11.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -429,7 +429,7 @@ class _Sugerencia extends StatelessWidget {
                     Text(
                       'Ver el análisis completo',
                       style: context.texts.bodySmall?.copyWith(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: states.info.onTint,
                       ),
@@ -468,7 +468,7 @@ class _PorArea extends StatelessWidget {
                 child: Text(
                   'ACIERTO POR ÁREA VS SU PESO',
                   style: context.texts.bodySmall?.copyWith(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.6,
                     color: context.scheme.onSurfaceVariant,
@@ -477,7 +477,7 @@ class _PorArea extends StatelessWidget {
               ),
               Text(
                 'ancho = peso',
-                style: context.texts.bodySmall?.copyWith(fontSize: 11),
+                style: context.texts.bodySmall?.copyWith(fontSize: 13),
               ),
             ],
           ),
@@ -545,7 +545,7 @@ class _FilaArea extends StatelessWidget {
                 child: Text(
                   '${area.areaNombre} · ${area.preguntasBlueprint}',
                   style: context.texts.bodySmall?.copyWith(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -553,7 +553,7 @@ class _FilaArea extends StatelessWidget {
               Text(
                 acierto == null ? 'sin datos' : '${(acierto * 100).round()} %',
                 style: context.texts.bodySmall?.copyWith(
-                  fontSize: 12.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: refuerza
                       ? context.states.warning.onTint
@@ -565,7 +565,7 @@ class _FilaArea extends StatelessWidget {
                 Text(
                   'refuerza',
                   style: context.texts.bodySmall?.copyWith(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: context.states.warning.onTint,
                   ),
@@ -609,7 +609,7 @@ class _Evolucion extends StatelessWidget {
           Text(
             'EVOLUCIÓN DE TU NOTA',
             style: context.texts.bodySmall?.copyWith(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.6,
               color: context.scheme.onSurfaceVariant,
@@ -639,20 +639,20 @@ class _Evolucion extends StatelessWidget {
                     children: [
                       Text(
                         DateFormat('d MMM', 'es').format(puntos.first.fecha),
-                        style: context.texts.bodySmall?.copyWith(fontSize: 11),
+                        style: context.texts.bodySmall?.copyWith(fontSize: 13),
                       ),
                       Text(
                         // El último valor, que es el dato que se busca.
                         'última: ${puntos.last.nota.toStringAsFixed(2)}',
                         style: context.texts.bodySmall?.copyWith(
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                           color: context.scheme.onSurface,
                         ),
                       ),
                       Text(
                         DateFormat('d MMM', 'es').format(puntos.last.fecha),
-                        style: context.texts.bodySmall?.copyWith(fontSize: 11),
+                        style: context.texts.bodySmall?.copyWith(fontSize: 13),
                       ),
                     ],
                   ),

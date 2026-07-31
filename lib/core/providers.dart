@@ -9,8 +9,11 @@ import '../features/auth/domain/auth_models.dart';
 import '../features/catalog/data/catalog_repository.dart';
 import '../features/catalog/domain/catalog_models.dart';
 import '../features/session/data/session_repository.dart';
+import '../features/session/domain/session_models.dart';
 import '../features/stats/data/stats_repository.dart';
 import '../features/stats/domain/stats_models.dart';
+import '../features/subscription/data/subscription_repository.dart';
+import '../features/subscription/domain/subscription_models.dart';
 import 'config/app_config.dart';
 import 'network/api_client.dart';
 import 'storage/app_prefs.dart';
@@ -90,20 +93,81 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
   return ApiSessionRepository(ref.watch(apiClientProvider));
 });
 
-/// Correo que, con mocks, entra como usuario Premium.
-///
-/// El plan no viaja en el modelo `User` (lo decide el backend por
-/// suscripción), así que para revisar la app en premium sin backend el atajo
-/// es el correo con el que se inició sesión. Mismo criterio que los correos
-/// especiales de [MockAuthRepository].
-const mockPremiumEmail = 'premium@enam.pe';
-
 final statsRepositoryProvider = Provider<StatsRepository>((ref) {
+  if (AppConfig.useMocks) return MockStatsRepository();
+  return ApiStatsRepository(ref.watch(apiClientProvider));
+});
+
+/// Correos que, con mocks, entran con un estado de suscripción distinto.
+///
+/// El estado no viaja en el modelo `User` (lo decide el backend por
+/// suscripción), así que para recorrer la app en cada estado sin backend el
+/// atajo es el correo con el que se inició sesión. Mismo criterio que los
+/// correos especiales de [MockAuthRepository].
+///
+/// Cualquier otro correo entra en `prueba_sin_iniciar`, que es como nace todo
+/// usuario de verdad (RN-03 v2).
+const mockEstadosPorCorreo = {
+  'premium@enam.pe': SubscriptionStatus.activa,
+  'gracia@enam.pe': SubscriptionStatus.enGracia,
+  'probando@enam.pe': SubscriptionStatus.prueba,
+
+  // Los dos que bloquean la app. `vencido@` es el caso corriente —se le acabó
+  // el día de prueba— y `cancelado@` el de quien canceló un plan pagado.
+  'vencido@enam.pe': SubscriptionStatus.expirada,
+  'expirado@enam.pe': SubscriptionStatus.expirada,
+  'cancelado@enam.pe': SubscriptionStatus.cancelada,
+};
+
+/// Cuánto dura la prueba (RN-03 v2).
+const duracionPrueba = Duration(hours: 24);
+
+/// Instante en que arrancó el día de prueba, o `null` si no ha empezado.
+///
+/// Solo tiene sentido con mocks: contra el backend real la fecha la manda el
+/// servidor. Se guarda en disco para que cerrar la app no reinicie el reloj,
+/// que es justo lo que haría un usuario para estirar la prueba.
+class InicioPruebaNotifier extends AsyncNotifier<DateTime?> {
+  @override
+  Future<DateTime?> build() => ref.read(appPrefsProvider).inicioPrueba();
+
+  /// Enciende el reloj si no lo estaba. Se llama al crear la primera sesión.
+  Future<void> arrancar() async {
+    if (state.value != null) return;
+    final inicio = await ref.read(appPrefsProvider).marcarInicioPrueba();
+    state = AsyncData(inicio);
+    // La suscripción cambia de estado con esto, así que hay que releerla.
+    ref.invalidate(subscriptionProvider);
+  }
+
+  /// Vuelve a dejar la prueba sin empezar. Solo para probar el flujo.
+  Future<void> reiniciar() async {
+    await ref.read(appPrefsProvider).reiniciarPrueba();
+    state = const AsyncData(null);
+    ref.invalidate(subscriptionProvider);
+  }
+}
+
+final inicioPruebaProvider =
+    AsyncNotifierProvider<InicioPruebaNotifier, DateTime?>(
+      InicioPruebaNotifier.new,
+    );
+
+final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
   if (AppConfig.useMocks) {
     final email = ref.watch(currentUserProvider)?.email;
-    return MockStatsRepository(esFree: email != mockPremiumEmail);
+
+    // Los correos especiales fuerzan un estado concreto; el resto vive el
+    // trial de verdad: sin empezar hasta la primera práctica, 24 h corriendo
+    // desde entonces, y bloqueado al pasarse (D-02).
+    final forzado = mockEstadosPorCorreo[email];
+    if (forzado != null) return MockSubscriptionRepository(estado: forzado);
+
+    return MockSubscriptionRepository(
+      inicioPrueba: ref.watch(inicioPruebaProvider).value,
+    );
   }
-  return ApiStatsRepository(ref.watch(apiClientProvider));
+  return ApiSubscriptionRepository(ref.watch(apiClientProvider));
 });
 
 // ==================== ARRANQUE ====================
@@ -182,44 +246,79 @@ class AuthController extends AsyncNotifier<AuthState> {
     return user == null ? const AuthSignedOut() : AuthSignedIn(user);
   }
 
+  /// Inicia sesión con correo y contraseña.
+  ///
+  /// Lanza la [Failure] del repositorio si falla, y **deja el estado en
+  /// [AuthSignedOut]**, que es la verdad: unas credenciales malas no rompen el
+  /// estado de sesión, simplemente no la crean.
+  ///
+  /// Dos cosas que parecen inocentes y rompían esto, las dos con el mismo
+  /// síntoma —escribir mal la contraseña devolvía a un login en blanco, sin
+  /// ningún error a la vista—:
+  ///
+  /// 1. `AsyncValue.guard` dejaba el estado en `AsyncError`.
+  /// 2. Poner el estado en `AsyncLoading` mientras se intenta entrar.
+  ///
+  /// En los dos casos el router lo lee como "todavía no sé si hay sesión",
+  /// manda al splash y **destruye el formulario**: al volver, la pantalla es
+  /// otra instancia y el mensaje de error se fue con la anterior.
+  ///
+  /// El spinner del botón no se pierde por esto: lo lleva la propia pantalla
+  /// con su estado local, que es donde corresponde.
   Future<void> signIn({required String email, required String password}) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       final user = await ref
           .read(authRepositoryProvider)
           .login(email: email, password: password);
-      return AuthSignedIn(user);
-    });
+      state = AsyncData(AuthSignedIn(user));
+    } catch (_) {
+      state = const AsyncData(AuthSignedOut());
+      rethrow;
+    }
   }
 
   /// Login con Google. Devuelve `false` si el usuario canceló el diálogo.
   ///
   /// Cancelar deja el estado como estaba y no propaga error: la pantalla no
   /// debe mostrar nada rojo porque alguien cerró el selector de cuentas.
-  Future<bool> signInWithGoogle() async {
+  ///
+  /// [aceptaTerminos] va en falso la primera vez, siempre. Si la cuenta es
+  /// nueva el servidor responde `CONSENT_REQUIRED`, la pantalla enseña los
+  /// términos y vuelve a llamar con `true` (RNF-06, Ley 29733). Mandarlo en
+  /// `true` de entrada sería sellar un consentimiento que nadie dio, y el
+  /// botón de Google vive en el login, que no tiene casilla que marcar.
+  Future<bool> signInWithGoogle({bool aceptaTerminos = false}) async {
     // El diálogo nativo se abre **antes** de pasar a cargando: si se pusiera
     // antes, cancelar dejaría un spinner colgado hasta la siguiente acción.
     final String? idToken;
     try {
       idToken = await ref.read(googleSignInServiceProvider).obtenerIdToken();
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      return false;
+    } catch (_) {
+      state = const AsyncData(AuthSignedOut());
+      rethrow;
     }
     if (idToken == null) return false;
 
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       final user = await ref
           .read(authRepositoryProvider)
-          .loginConGoogle(idToken!);
-      return AuthSignedIn(user);
-    });
-    return !state.hasError;
+          .loginConGoogle(idToken, aceptaTerminos: aceptaTerminos);
+      state = AsyncData(AuthSignedIn(user));
+      return true;
+    } catch (_) {
+      // Igual que en el login por correo: el fallo se lanza para que la
+      // pantalla lo muestre, y el estado vuelve a "sin sesión" para que el
+      // router no la mande al splash.
+      state = const AsyncData(AuthSignedOut());
+      rethrow;
+    }
   }
 
   /// Login con Apple. Devuelve `false` si el usuario canceló.
-  Future<bool> signInWithApple() async {
+  ///
+  /// [aceptaTerminos] funciona igual que en Google: falso la primera vez, y la
+  /// pantalla reintenta con `true` tras enseñar los términos.
+  Future<bool> signInWithApple({bool aceptaTerminos = false}) async {
     // Igual que con Google: el diálogo nativo se abre **antes** de pasar a
     // cargando, para que cancelar no deje un spinner colgado.
     final AppleCredential? credencial;
@@ -227,23 +326,26 @@ class AuthController extends AsyncNotifier<AuthState> {
       credencial = await ref
           .read(appleSignInServiceProvider)
           .obtenerCredencial();
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      return false;
+    } catch (_) {
+      state = const AsyncData(AuthSignedOut());
+      rethrow;
     }
     if (credencial == null) return false;
 
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       final user = await ref
           .read(authRepositoryProvider)
           .loginConApple(
-            identityToken: credencial!.identityToken,
+            identityToken: credencial.identityToken,
             nombre: credencial.nombre,
+            aceptaTerminos: aceptaTerminos,
           );
-      return AuthSignedIn(user);
-    });
-    return !state.hasError;
+      state = AsyncData(AuthSignedIn(user));
+      return true;
+    } catch (_) {
+      state = const AsyncData(AuthSignedOut());
+      rethrow;
+    }
   }
 
   Future<void> signOut() async {
@@ -282,16 +384,77 @@ final dashboardProvider = FutureProvider<DashboardStats>((ref) {
   return ref.watch(statsRepositoryProvider).dashboard();
 });
 
+// ==================== SUSCRIPCIÓN Y ACCESO ====================
+
+/// La suscripción del usuario. Es de dónde sale **todo** el control de acceso
+/// de la UI (RN-03 v2).
+///
+/// Se recarga sola cuando cambia el usuario, y hay que invalidarla tras pagar
+/// y al volver de segundo plano: el día de prueba puede haber vencido mientras
+/// la app estaba cerrada.
+final subscriptionProvider = FutureProvider<Subscription>((ref) {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) throw StateError('Sin sesión: no hay suscripción');
+  return ref.watch(subscriptionRepositoryProvider).current();
+});
+
+// No hay `plansProvider` ni `planProvider`, y no es un olvido: la app no lista
+// planes ni enseña precios. Las tiendas no dejan cobrar dentro sin su comisión,
+// así que el catálogo y el importe viven en la web y en el correo, que además
+// es donde pueden cambiar sin publicar una versión nueva.
+//
+// El plan que el usuario YA tiene llega dentro de `GET /subscription`, y de ahí
+// lo saca «Mi suscripción» para poder decir su nombre y hasta cuándo vale.
+
+// No hay un `tieneAccesoProvider` a propósito. Ninguna pantalla decide por su
+// cuenta si el usuario puede estar ahí: eso vive en la guarda del router
+// (`_rutasSinAcceso`). Un getter suelto invita a repartir la regla por la app y
+// a que alguna pantalla se olvide de aplicarla.
+
 // ==================== SESIÓN REANUDABLE ====================
 
 /// Resumen de la sesión interrumpida que el usuario puede retomar (RF-15).
-typedef ResumableSession = ({String sessionId, String titulo, String detalle});
+typedef ResumableSession = ({
+  String sessionId,
+  bool esSimulacro,
+  String titulo,
+  String detalle,
+});
 
-/// `null` cuando no hay ninguna sesión a medias.
+/// Las sesiones a medio hacer, de `GET /sessions/open`.
+final sesionesAbiertasProvider = FutureProvider<List<OpenSession>>((ref) {
+  // Sin sesión no hay nada que retomar, y preguntarlo daría un 401.
+  if (ref.watch(currentUserProvider) == null) return Future.value(const []);
+  return ref.watch(sessionRepositoryProvider).openSessions();
+});
+
+/// La sesión que el inicio propone retomar, o `null` si no hay ninguna.
 ///
-/// Hoy siempre devuelve `null`: el endpoint que lista sesiones abiertas no está
-/// en el contrato todavía. Cuando exista, esto lo consulta y el Home cambia solo.
-final resumableSessionProvider = Provider<ResumableSession?>((ref) => null);
+/// Sale del servidor. Antes era una tupla escrita en el código —"Problemas
+/// infecciosos · pregunta 7 de 20"— que aparecía siempre con mocks y nunca sin
+/// ellos: una tarjeta que invitaba a continuar algo que no existía.
+///
+/// El texto lo compone el cliente y no el servidor: es quien sabe de plurales y
+/// de cómo se ve en pantalla, y un backend que manda texto de interfaz obliga a
+/// desplegarlo para cambiar una palabra.
+final resumableSessionProvider = Provider<ResumableSession?>((ref) {
+  final abiertas = ref.watch(sesionesAbiertasProvider).value;
+  if (abiertas == null || abiertas.isEmpty) return null;
+
+  // La más reciente: es la que la persona recuerda haber dejado a medias.
+  final sesion = abiertas.reduce(
+    (a, b) => a.iniciadaEn.isAfter(b.iniciadaEn) ? a : b,
+  );
+
+  return (
+    sessionId: sesion.id,
+    esSimulacro: sesion.esSimulacro,
+    titulo: sesion.esSimulacro
+        ? 'Termina tu simulacro'
+        : 'Continuar donde quedaste',
+    detalle: 'Pregunta ${sesion.respondidas + 1} de ${sesion.totalPreguntas}',
+  );
+});
 
 // ==================== TEMA ====================
 

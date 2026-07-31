@@ -6,11 +6,41 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/design_tokens.dart';
 
-class EnamApp extends ConsumerWidget {
+class EnamApp extends ConsumerStatefulWidget {
   const EnamApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EnamApp> createState() => _EnamAppState();
+}
+
+class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Al volver de segundo plano se vuelve a preguntar por la suscripción.
+  ///
+  /// La prueba dura 24 h y el cron del servidor corre cada hora, así que puede
+  /// vencer con la app cerrada. Sin esto, quien deja la app abierta de un día
+  /// para otro sigue navegando con el estado que leyó ayer, hasta que el
+  /// servidor le responda un 403 en medio de algo.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(subscriptionProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
 

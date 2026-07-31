@@ -5,6 +5,7 @@ import 'package:enam_app/core/storage/app_prefs.dart';
 import 'package:enam_app/features/auth/data/auth_repository.dart';
 import 'package:enam_app/features/auth/data/mock_auth_repository.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
+import 'package:enam_app/features/subscription/domain/subscription_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -149,9 +150,18 @@ void main() {
 }
 
 /// Ejecuta la guarda del router para una ruta dada.
-String? destino(ProviderContainer c, {required String desde}) => decidirDestino(
+///
+/// [suscripcion] por defecto queda cargando, que es como llega en el arranque:
+/// estos casos son sobre sesión y onboarding, no sobre acceso. El bloqueo por
+/// suscripción tiene sus propias pruebas en `acceso_test.dart`.
+String? destino(
+  ProviderContainer c, {
+  required String desde,
+  AsyncValue<Subscription> suscripcion = const AsyncLoading(),
+}) => decidirDestino(
   auth: c.read(authControllerProvider),
   startup: c.read(startupProvider),
+  suscripcion: suscripcion,
   here: desde,
 );
 
@@ -175,6 +185,15 @@ class _PrefsFalsas implements AppPrefs {
   Future<void> marcarInscritoEnNacional(String id) async => nacionales.add(id);
 
   final nacionales = <String>{};
+
+  @override
+  Future<DateTime?> inicioPrueba() async => null;
+
+  @override
+  Future<DateTime> marcarInicioPrueba() async => DateTime.now();
+
+  @override
+  Future<void> reiniciarPrueba() async {}
 }
 
 /// Usuario con sesión válida y perfil completo.

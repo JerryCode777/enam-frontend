@@ -80,7 +80,7 @@ class _WatermarkPainter extends CustomPainter {
         // Repetido para cubrir el ancho girado sin medir cada vez.
         text: texto * 6,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           letterSpacing: 2.6,
           color: color,

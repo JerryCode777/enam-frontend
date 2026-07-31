@@ -152,7 +152,7 @@ class _Contenido extends StatelessWidget {
                     Text(
                       'PARA VOLVER',
                       style: context.texts.bodySmall?.copyWith(
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.6,
                         color: context.scheme.onSurfaceVariant,

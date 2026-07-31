@@ -189,7 +189,7 @@ class _ResultadoTile extends StatelessWidget {
                         Text(
                           migas,
                           style: context.texts.bodySmall?.copyWith(
-                            fontSize: 11.5,
+                            fontSize: 13,
                           ),
                         ),
                       ],
@@ -201,7 +201,7 @@ class _ResultadoTile extends StatelessWidget {
                           Text(
                             _nivelLabel(nodo.nivel),
                             style: context.texts.bodySmall?.copyWith(
-                              fontSize: 11,
+                              fontSize: 13,
                             ),
                           ),
                         ],
@@ -255,7 +255,7 @@ class _Sugerencias extends StatelessWidget {
           child: Text(
             'PRUEBA CON',
             style: context.texts.bodySmall?.copyWith(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
               color: context.scheme.onSurfaceVariant,

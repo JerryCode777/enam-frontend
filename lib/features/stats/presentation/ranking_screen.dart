@@ -193,7 +193,7 @@ class _Fila extends StatelessWidget {
                   if (entrada.universidad != null)
                     Text(
                       entrada.universidad!,
-                      style: context.texts.bodySmall?.copyWith(fontSize: 11),
+                      style: context.texts.bodySmall?.copyWith(fontSize: 13),
                     ),
                 ],
               ),
@@ -288,7 +288,7 @@ class _Visibilidad extends ConsumerWidget {
           // por ocultarse.
           'Si lo apagas, tus notas siguen contando para ti pero nadie más ve '
           'tu nombre.',
-          style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+          style: context.texts.bodySmall?.copyWith(fontSize: 13),
         ),
       ),
     );

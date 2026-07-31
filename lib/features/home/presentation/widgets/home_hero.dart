@@ -6,17 +6,17 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/providers.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/design_tokens.dart';
-import '../../../../shared/widgets/ecg_line.dart';
-import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../auth/domain/auth_models.dart';
 
 /// Cabecera del inicio, en degradado.
 ///
-/// Reúne saludo, avatar, cuenta regresiva, la línea de ECG animada y la tarjeta
-/// para retomar la sesión. Va todo junto a propósito: es lo primero que el
-/// usuario mira al abrir la app y responde sus dos preguntas inmediatas —
-/// cuánto falta y por dónde iba.
+/// Reúne saludo, avatar, cuenta regresiva y la tarjeta para retomar la sesión.
+/// La cuenta regresiva es línea de apoyo del saludo: informa, pero no compite
+/// con las acciones que vienen debajo.
+///
+/// Los tamaños salen del diseño (`enam-01-auth-home.dc.html`, pantalla 2.1) y
+/// son mínimos: si algo no cabe, se recorta contenido, nunca la tipografía.
 class HomeHero extends StatelessWidget {
   const HomeHero({required this.user, this.sesion, super.key});
 
@@ -40,12 +40,12 @@ class HomeHero extends StatelessWidget {
           stops: DesignTokens.headerGradientStops,
         ),
         borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(DesignTokens.radiusXl + 4),
+          bottom: Radius.circular(DesignTokens.radiusXl + 2),
         ),
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(DesignTokens.radiusXl + 4),
+          bottom: Radius.circular(DesignTokens.radiusXl + 2),
         ),
         child: Stack(
           children: [
@@ -57,18 +57,20 @@ class HomeHero extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   DesignTokens.space5,
-                  DesignTokens.space2 + 2,
+                  DesignTokens.space2 - 2,
                   DesignTokens.space5,
-                  DesignTokens.space4 + 2,
+                  DesignTokens.space4,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SaludoYAvatar(user: user),
-                    const SizedBox(height: DesignTokens.space2),
-                    _CuentaRegresiva(dias: dias, fecha: fecha),
-                    const SizedBox(height: DesignTokens.space3),
-                    _TarjetaRetomar(sesion: sesion),
+                    _SaludoYCuenta(user: user, dias: dias, fecha: fecha),
+                    // Sin sesión previa la tarjeta no se renderiza: el hero
+                    // queda solo con saludo y cuenta regresiva.
+                    if (sesion != null) ...[
+                      const SizedBox(height: DesignTokens.space3 + 2),
+                      _TarjetaRetomar(sesion: sesion!),
+                    ],
                   ],
                 ),
               ),
@@ -99,62 +101,107 @@ class _Circulo extends StatelessWidget {
   }
 }
 
-class _SaludoYAvatar extends StatelessWidget {
-  const _SaludoYAvatar({this.user});
+/// Saludo, cuenta regresiva y avatar.
+///
+/// El avatar se alinea arriba, junto al saludo: la cuenta regresiva es la que
+/// tiene que dominar el bloque, y centrar el avatar le quitaría peso.
+class _SaludoYCuenta extends StatelessWidget {
+  const _SaludoYCuenta({this.user, this.dias, this.fecha});
 
   final User? user;
+  final int? dias;
+  final DateTime? fecha;
 
   @override
   Widget build(BuildContext context) {
     final nombre = user?.nombre.split(' ').first ?? '';
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            nombre.isEmpty ? 'Hola' : 'Hola, $nombre',
-            style: context.texts.bodyMedium?.copyWith(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withValues(alpha: 0.85),
-            ),
-          ),
-        ),
-        Semantics(
-          label: 'Perfil y ajustes',
-          button: true,
-          child: InkWell(
-            onTap: () => context.push(Routes.settings),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-            child: Container(
-              // 42 de caja visible dentro de un área táctil de 48.
-              width: DesignTokens.minTouchTarget,
-              height: DesignTokens.minTouchTarget,
-              alignment: Alignment.center,
-              child: Container(
-                width: 42,
-                height: 42,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.18),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  _iniciales(user?.nombre),
-                  style: context.texts.bodyMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                nombre.isEmpty ? 'Hola' : 'Hola, $nombre',
+                style: context.texts.titleLarge?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  color: Colors.white,
                 ),
               ),
+              const SizedBox(height: DesignTokens.space1 + 2),
+              Text(
+                switch (dias) {
+                  null => 'Tu preparación',
+                  <= 0 => 'Hoy es el día',
+                  1 => '1 día',
+                  _ => '$dias días',
+                },
+                style: context.texts.displaySmall?.copyWith(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                  color: Colors.white,
+                ),
+              ),
+              if (fecha != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  'para el ENAM · ${DateFormat('d MMM yyyy', 'es').format(fecha!)}',
+                  style: context.texts.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: DesignTokens.space3),
+        _Avatar(user: user),
+      ],
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({this.user});
+
+  final User? user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Perfil y ajustes',
+      button: true,
+      child: InkWell(
+        onTap: () => context.push(Routes.settings),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+        child: Container(
+          // 44 es el mínimo táctil que pide el diseño de esta pantalla.
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            _iniciales(user?.nombre),
+            style: context.texts.bodyLarge?.copyWith(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -169,250 +216,82 @@ class _SaludoYAvatar extends StatelessWidget {
   }
 }
 
-class _CuentaRegresiva extends StatelessWidget {
-  const _CuentaRegresiva({this.dias, this.fecha});
-
-  final int? dias;
-  final DateTime? fecha;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                switch (dias) {
-                  null => 'Tu preparación',
-                  <= 0 => 'Hoy es el día',
-                  1 => '1 día',
-                  _ => '$dias días',
-                },
-                style: context.texts.displaySmall?.copyWith(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                  color: Colors.white,
-                ),
-              ),
-              if (fecha != null) ...[
-                const SizedBox(height: DesignTokens.space1),
-                Text(
-                  'para el ENAM · ${DateFormat('d MMM yyyy', 'es').format(fecha!)}',
-                  style: context.texts.bodySmall?.copyWith(
-                    fontSize: 12.5,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: DesignTokens.space2 + 2),
-        const EcgLine(width: 120, height: 30, opacity: 0.75, strokeWidth: 2),
-      ],
-    );
-  }
-}
-
-/// Se detiene si el sistema pidió reducir el movimiento: es decorativa y no
-/// aporta información, así que es la primera que sobra.
-class _EcgAnimado extends StatefulWidget {
-  const _EcgAnimado();
-
-  @override
-  State<_EcgAnimado> createState() => _EcgAnimadoState();
-}
-
-class _EcgAnimadoState extends State<_EcgAnimado>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2400),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (Motion.reduced(context)) {
-      if (_c.isAnimating) _c.stop();
-    } else if (!_c.isAnimating) {
-      _c.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 120,
-      height: 30,
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (context, _) => CustomPaint(
-          painter: _EcgPainter(
-            avance: Motion.reduced(context) ? 1 : _c.value,
-            color: Colors.white.withValues(alpha: 0.75),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EcgPainter extends CustomPainter {
-  const _EcgPainter({required this.avance, required this.color});
-
-  /// De 0 a 1: dónde va el segmento que se ilumina.
-  final double avance;
-  final Color color;
-
-  static const _puntos = <Offset>[
-    Offset(0, 15),
-    Offset(34, 15),
-    Offset(39, 5),
-    Offset(45, 25),
-    Offset(50, 9),
-    Offset(55, 15),
-    Offset(84, 15),
-    Offset(89, 6),
-    Offset(95, 22),
-    Offset(100, 15),
-    Offset(120, 15),
-  ];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final ex = size.width / 120;
-    final ey = size.height / 30;
-
-    final trazo = Path();
-    for (var i = 0; i < _puntos.length; i++) {
-      final p = Offset(_puntos[i].dx * ex, _puntos[i].dy * ey);
-      i == 0 ? trazo.moveTo(p.dx, p.dy) : trazo.lineTo(p.dx, p.dy);
-    }
-
-    final pincel = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    // Base tenue, para que el trazo completo se intuya siempre.
-    canvas.drawPath(trazo, Paint()
-      ..color = color.withValues(alpha: 0.28)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round);
-
-    // Segmento que recorre: se extrae del path con PathMetrics en vez de
-    // simular el dash, para que siga la curva exacta.
-    for (final metrica in trazo.computeMetrics()) {
-      final largo = metrica.length;
-      const proporcion = 0.22;
-      final inicio = (avance * (1 + proporcion) - proporcion) * largo;
-      final fin = inicio + proporcion * largo;
-
-      canvas.drawPath(
-        metrica.extractPath(inicio.clamp(0, largo), fin.clamp(0, largo)),
-        pincel,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_EcgPainter old) => old.avance != avance;
-}
-
 /// Retomar la sesión interrumpida (RF-15), dentro del hero.
-///
-/// Si no hay ninguna, ocupa el mismo sitio con la sugerencia de por dónde
-/// empezar: el hueco se vería raro y la sugerencia es útil de todos modos.
 class _TarjetaRetomar extends StatelessWidget {
-  const _TarjetaRetomar({this.sesion});
+  const _TarjetaRetomar({required this.sesion});
 
-  final ResumableSession? sesion;
+  final ResumableSession sesion;
 
   @override
   Widget build(BuildContext context) {
-    final hay = sesion != null;
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: DesignTokens.space3 + 2,
-        vertical: DesignTokens.space2 + 2,
+        vertical: DesignTokens.space3,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
       ),
       child: Row(
         children: [
-          Icon(
-            hay ? Symbols.play_circle : Symbols.lightbulb,
-            size: 22,
-            fill: 1,
-            color: Colors.white,
-          ),
-          const SizedBox(width: DesignTokens.space2 + 2),
+          const Icon(Symbols.play_circle, size: 26, fill: 1, color: Colors.white),
+          const SizedBox(width: DesignTokens.space3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  sesion?.titulo ?? 'Empieza por lo que más pesa',
-                  style: context.texts.bodySmall?.copyWith(
-                    fontSize: 13,
+                  sesion.titulo,
+                  style: context.texts.bodyLarge?.copyWith(
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    height: 1.2,
                     color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
-                  sesion?.detalle ?? 'Medicina son 40 de las 180 preguntas',
-                  maxLines: 1,
+                  sesion.detalle,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: context.texts.bodySmall?.copyWith(
-                    fontSize: 11.5,
-                    color: Colors.white.withValues(alpha: 0.8),
+                  style: context.texts.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    height: 1.25,
+                    color: Colors.white.withValues(alpha: 0.85),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: DesignTokens.space2),
+          const SizedBox(width: DesignTokens.space3),
           // Botón blanco sobre el degradado: es la acción principal de la
           // pantalla y tiene que ganar al fondo.
           Material(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXl - 4),
             child: InkWell(
+              // Un simulacro a medias no se retoma en la pantalla de práctica:
+              // tiene cronómetro, grilla de 180 y nada de retroalimentación.
+              // Mandarlo a la de práctica enseñaba las claves de un examen en
+              // curso.
               onTap: () => context.push(
-                hay
-                    ? Routes.practiceSessionOf(sesion!.sessionId)
-                    : Routes.practiceConfig,
+                sesion.esSimulacro
+                    ? Routes.simulacroSessionOf(sesion.sessionId)
+                    : Routes.practiceSessionOf(sesion.sessionId),
               ),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXl - 4),
               child: Container(
-                height: 36,
+                height: 40,
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: DesignTokens.space4,
+                  horizontal: DesignTokens.space4 + 2,
                 ),
                 child: Text(
-                  hay ? 'Seguir' : 'Practicar',
-                  style: context.texts.bodySmall?.copyWith(
-                    fontSize: 12.5,
+                  'Seguir',
+                  style: context.texts.bodyLarge?.copyWith(
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: DesignTokens.brandDark,
                   ),

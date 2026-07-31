@@ -8,6 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppPrefs {
   static const _kOnboardingVisto = 'onboarding_visto';
 
+  /// Cuándo arrancó el día de prueba. Solo se usa con mocks: contra el backend
+  /// real la fecha la manda el servidor en `GET /subscription`.
+  static const _kInicioPrueba = 'inicio_prueba';
+
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
   /// Si el onboarding ya se mostró alguna vez.
@@ -21,6 +25,28 @@ class AppPrefs {
 
   Future<void> marcarOnboardingVisto() async =>
       (await _prefs).setBool(_kOnboardingVisto, true);
+
+  /// Instante en que el usuario consumió su primera práctica o simulacro, que
+  /// es cuando arranca el reloj de 24 h (D-02). `null` si aún no ha empezado.
+  Future<DateTime?> inicioPrueba() async {
+    final ms = (await _prefs).getInt(_kInicioPrueba);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  /// Marca el arranque. No pisa uno anterior: el reloj se enciende una vez.
+  Future<DateTime> marcarInicioPrueba() async {
+    final prefs = await _prefs;
+    final guardado = prefs.getInt(_kInicioPrueba);
+    if (guardado != null) return DateTime.fromMillisecondsSinceEpoch(guardado);
+
+    final ahora = DateTime.now();
+    await prefs.setInt(_kInicioPrueba, ahora.millisecondsSinceEpoch);
+    return ahora;
+  }
+
+  /// Para poder volver a probar el flujo desde cero en desarrollo.
+  Future<void> reiniciarPrueba() async =>
+      (await _prefs).remove(_kInicioPrueba);
 
   static const _kNacionalesInscritos = 'nacionales_inscritos';
 

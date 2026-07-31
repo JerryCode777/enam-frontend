@@ -12,11 +12,12 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
-import '../../../shared/widgets/paywall_sheet.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../catalog/presentation/catalog_providers.dart';
+import '../../subscription/presentation/access_ended_screen.dart';
 import '../domain/session_models.dart';
+import 'area_picker_screen.dart';
 
 /// Pantalla 4.1 — configurador de práctica (RF-12).
 ///
@@ -43,24 +44,30 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
     (o) => o.name == widget.origenInicial,
     orElse: () => QuestionSource.todas,
   );
+
+  /// Nodo elegido en esta pantalla. Arranca con el que llegó por la ruta desde
+  /// el temario (RF-38) y cambia si el usuario elige otro.
+  late String? _nodoId = widget.nodoId;
+
   bool _creando = false;
 
   @override
   Widget build(BuildContext context) {
-    final nodo = widget.nodoId == null
-        ? null
-        : ref.watch(nodoProvider(widget.nodoId!));
-    final stats = ref.watch(dashboardProvider).value;
-
-    // Tope del plan gratuito. Se muestra, pero la validación real es del
-    // servidor (RN-03): la app no puede ser la que decide.
-    final restantesHoy = stats?.preguntasRestantesHoy;
-    final tope = restantesHoy == null
-        ? Blueprint.practiceMaxQuestions
-        : restantesHoy.clamp(0, Blueprint.practiceMaxQuestions);
-    final sinCupo = restantesHoy != null && restantesHoy <= 0;
+    final nodo = _nodoId == null ? null : ref.watch(nodoProvider(_nodoId!));
 
     final disponibles = nodo?.nodo.preguntasDisponibles;
+
+    // El tope del rango es el de RF-12, pero si el nodo tiene menos preguntas
+    // manda lo que hay: una barra que llega a 50 donde solo hay 12 promete algo
+    // que no se puede cumplir.
+    final tope = switch (disponibles) {
+      null || 0 => Blueprint.practiceMaxQuestions,
+      final d => d.clamp(
+        Blueprint.practiceMinQuestions,
+        Blueprint.practiceMaxQuestions,
+      ),
+    };
+
     final cantidadEfectiva = _cantidadEfectiva(tope, disponibles);
 
     return Scaffold(
@@ -78,7 +85,11 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
               children: [
                 _Seccion(
                   titulo: 'QUÉ VAS A PRACTICAR',
-                  child: _SelectorNodo(nodo: nodo?.nodo, ruta: nodo?.ruta),
+                  child: _SelectorNodo(
+                    nodo: nodo?.nodo,
+                    ruta: nodo?.ruta,
+                    onElegir: _elegirNodo,
+                  ),
                 ),
                 const SizedBox(height: DesignTokens.space5),
                 _Seccion(
@@ -95,9 +106,6 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
                     valor: _cantidad.toDouble(),
                     tope: tope,
                     onChanged: (v) => setState(() => _cantidad = v.round()),
-                    onTopeAlcanzado: sinCupo
-                        ? null
-                        : () => _avisarTope(context, tope),
                   ),
                 ),
                 const SizedBox(height: DesignTokens.space5),
@@ -125,31 +133,37 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
             ),
           ),
           _BarraEmpezar(
-            sinCupo: sinCupo,
             cantidad: cantidadEfectiva,
             creando: _creando,
             onEmpezar: () => _empezar(cantidadEfectiva),
-            onVerPlanes: () => mostrarPaywall(context, motivo: PaywallMotivo.cuotaDiaria),
           ),
         ],
       ),
     );
   }
 
-  /// La cantidad que realmente se va a pedir: lo elegido, topado por el cupo del
-  /// plan y por lo que hay en el nodo.
+  /// Abre el selector de área y aplica lo elegido.
+  ///
+  /// Se abre como pantalla propia y no navegando a `/temario`: esa ruta vive en
+  /// el shell de pestañas, y hacerle `push` desde aquí montaba un segundo
+  /// Navigator con la misma GlobalKey — pantalla roja y sin vuelta atrás.
+  Future<void> _elegirNodo() async {
+    final elegido = await context.push<Object?>(Routes.practiceAreas);
+    if (!mounted || elegido == null) return;
+
+    setState(() {
+      _nodoId = esPracticarDeTodo(elegido)
+          ? null
+          : (elegido as CatalogNode).id;
+    });
+  }
+
+  /// La cantidad que realmente se va a pedir: lo elegido, dentro del rango de
+  /// RF-12 y topado por lo que hay en el nodo.
   int _cantidadEfectiva(int tope, int? disponibles) {
     var n = _cantidad.clamp(Blueprint.practiceMinQuestions, tope);
     if (disponibles != null && disponibles > 0) n = n.clamp(1, disponibles);
     return n;
-  }
-
-  void _avisarTope(BuildContext context, int tope) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(content: Text('Tu tope de hoy es $tope preguntas.')),
-      );
   }
 
   Future<void> _empezar(int cantidad) async {
@@ -157,7 +171,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
     setState(() => _creando = true);
 
     try {
-      final nodoId = widget.nodoId;
+      final nodoId = _nodoId;
       final session = await ref.read(sessionRepositoryProvider).startPractice(
         PracticeConfig(
           // El nodo puede ser área, sub área o tema; el servidor resuelve el
@@ -170,13 +184,18 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
           origen: _origen,
         ),
       );
+      // D-02: el reloj de las 24 h arranca aquí, no al registrarse.
+      await ref.read(inicioPruebaProvider.notifier).arrancar();
+
       if (mounted) context.pushReplacement(Routes.practiceSessionOf(session.id));
     } on ForbiddenFailure catch (e) {
-      // RN-03: el servidor es el que impone el límite. Si lo rechaza, se muestra
-      // el paywall en vez de un error genérico.
+      // RN-03: el servidor es el que decide. Es también el caso de la prueba
+      // que vence justo aquí — empezar una práctica es lo que arranca el reloj
+      // (D-02), así que este 403 es el desenlace normal del modelo, no un
+      // error raro.
       if (!mounted) return;
-      if (e.isPlanLimit) {
-        await mostrarPaywall(context, motivo: PaywallMotivo.cuotaDiaria);
+      if (e.requiereSuscripcion) {
+        irAlPago(ref, context);
       } else {
         showErrorSnack(context, e.message);
       }
@@ -208,7 +227,7 @@ class _Seccion extends StatelessWidget {
                 child: Text(
                   titulo,
                   style: context.texts.bodySmall?.copyWith(
-                    fontSize: 11.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.6,
                     color: context.scheme.onSurfaceVariant,
@@ -227,10 +246,11 @@ class _Seccion extends StatelessWidget {
 }
 
 class _SelectorNodo extends StatelessWidget {
-  const _SelectorNodo({this.nodo, this.ruta});
+  const _SelectorNodo({required this.onElegir, this.nodo, this.ruta});
 
   final CatalogNode? nodo;
   final List<CatalogNode>? ruta;
+  final VoidCallback onElegir;
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +261,7 @@ class _SelectorNodo extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => context.push(Routes.temario),
+        onTap: onElegir,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space4),
@@ -261,7 +281,7 @@ class _SelectorNodo extends StatelessWidget {
                     if (migas != null)
                       Text(
                         migas,
-                        style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+                        style: context.texts.bodySmall?.copyWith(fontSize: 13),
                       ),
                     Text(
                       sinNodo ? 'Todo el temario' : nodo!.nombre,
@@ -288,71 +308,41 @@ class _SelectorNodo extends StatelessWidget {
   }
 }
 
+/// El rango de RF-12, sin más recortes.
+///
+/// Tenía una marca del "tope de hoy" para el cupo del plan gratuito. Con la v2
+/// no hay cupo: o tienes acceso y practicas lo que quieras, o no llegas a esta
+/// pantalla.
 class _SliderCantidad extends StatelessWidget {
   const _SliderCantidad({
     required this.valor,
     required this.tope,
     required this.onChanged,
-    required this.onTopeAlcanzado,
   });
 
   final double valor;
   final int tope;
   final ValueChanged<double> onChanged;
-  final VoidCallback? onTopeAlcanzado;
 
   @override
   Widget build(BuildContext context) {
     const min = Blueprint.practiceMinQuestions;
     const max = Blueprint.practiceMaxQuestions;
-    final topeRelativo = (tope - min) / (max - min);
 
     return Column(
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            // Marca visual del tope del plan, para que el usuario entienda por
-            // qué el control se frena antes del final.
-            if (tope < max)
-              Align(
-                alignment: Alignment(topeRelativo * 2 - 1, 0),
-                child: Container(
-                  width: 2,
-                  height: 18,
-                  color: context.states.warning.base,
-                ),
-              ),
-            Slider(
-              value: valor.clamp(min.toDouble(), max.toDouble()),
-              min: min.toDouble(),
-              max: max.toDouble(),
-              divisions: max - min,
-              label: '${valor.round()}',
-              onChanged: (v) {
-                if (v > tope) {
-                  onTopeAlcanzado?.call();
-                  onChanged(tope.toDouble());
-                } else {
-                  onChanged(v);
-                }
-              },
-            ),
-          ],
+        Slider(
+          value: valor.clamp(min.toDouble(), tope.toDouble()),
+          min: min.toDouble(),
+          max: max.toDouble(),
+          divisions: max - min,
+          label: '${valor.round()}',
+          onChanged: onChanged,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('$min', style: context.texts.bodySmall),
-            if (tope < max)
-              Text(
-                'tu tope de hoy: $tope',
-                style: context.texts.bodySmall?.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: context.states.warning.onTint,
-                ),
-              ),
             Text('$max', style: context.texts.bodySmall),
           ],
         ),
@@ -369,14 +359,76 @@ class _SelectorOrigen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<QuestionSource>(
-      segments: [
-        for (final origen in QuestionSource.values)
-          ButtonSegment(value: origen, label: Text(origen.label)),
-      ],
-      selected: {valor},
-      showSelectedIcon: false,
-      onSelectionChanged: (s) => onChanged(s.first),
+    final scheme = context.scheme;
+
+    // Segmentado propio y no `SegmentedButton`: ese mide cada segmento por su
+    // texto, así que "Todas", "Nuevas" y "Falladas" salían de anchos distintos
+    // y el grupo se veía torcido. Aquí cada opción ocupa exactamente un tercio.
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd + 2),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          for (final origen in QuestionSource.values)
+            Expanded(
+              child: _Segmento(
+                label: origen.label,
+                activo: origen == valor,
+                onTap: () => onChanged(origen),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Segmento extends StatelessWidget {
+  const _Segmento({
+    required this.label,
+    required this.activo,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool activo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+    final radio = BorderRadius.circular(DesignTokens.radiusMd);
+
+    return Semantics(
+      button: true,
+      selected: activo,
+      child: Material(
+        color: activo ? scheme.primary : Colors.transparent,
+        borderRadius: radio,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radio,
+          child: Container(
+            height: 40,
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.texts.bodyMedium?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: activo ? scheme.onPrimary : scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -436,18 +488,14 @@ class _Fila extends StatelessWidget {
 
 class _BarraEmpezar extends StatelessWidget {
   const _BarraEmpezar({
-    required this.sinCupo,
     required this.cantidad,
     required this.creando,
     required this.onEmpezar,
-    required this.onVerPlanes,
   });
 
-  final bool sinCupo;
   final int cantidad;
   final bool creando;
   final VoidCallback onEmpezar;
-  final VoidCallback onVerPlanes;
 
   @override
   Widget build(BuildContext context) {
@@ -463,11 +511,10 @@ class _BarraEmpezar extends StatelessWidget {
         border: Border(top: BorderSide(color: context.scheme.outlineVariant)),
       ),
       child: EnamButton(
-        // Sin cupo el botón no falla: lleva a lo único que desbloquea seguir.
-        label: sinCupo ? 'Mejorar a Premium' : 'Empezar · $cantidad preguntas',
-        icon: sinCupo ? Symbols.workspace_premium : Symbols.play_arrow,
+        label: 'Empezar · $cantidad preguntas',
+        icon: Symbols.play_arrow,
         loading: creando,
-        onPressed: sinCupo ? onVerPlanes : onEmpezar,
+        onPressed: onEmpezar,
       ),
     );
   }

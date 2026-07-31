@@ -92,7 +92,7 @@ class _Contenido extends StatelessWidget {
                 Text(
                   'TU NOTA',
                   style: context.texts.bodySmall?.copyWith(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1,
                     color: context.scheme.onSurfaceVariant,
@@ -102,7 +102,7 @@ class _Contenido extends StatelessWidget {
                 AnimatedNumber(
                   value: _nota,
                   style: context.texts.displaySmall?.copyWith(
-                    fontSize: 56,
+                    fontSize: 60,
                     fontWeight: FontWeight.w800,
                     color: color.onTint,
                     height: 1,
@@ -226,7 +226,7 @@ class _Desglose extends ConsumerWidget {
         Text(
           'POR ÁREA',
           style: context.texts.bodySmall?.copyWith(
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.6,
             color: context.scheme.onSurfaceVariant,
@@ -296,7 +296,7 @@ class _FilaArea extends ConsumerWidget {
               child: Text(
                 area?.nombre ?? areaId,
                 style: context.texts.bodySmall?.copyWith(
-                  fontSize: 12.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -304,7 +304,7 @@ class _FilaArea extends ConsumerWidget {
             Text(
               '$correctas/$total',
               style: context.texts.bodySmall?.copyWith(
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: context.scheme.onSurface,
               ),
@@ -314,7 +314,7 @@ class _FilaArea extends ConsumerWidget {
               Text(
                 'refuerza',
                 style: context.texts.bodySmall?.copyWith(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: context.states.warning.onTint,
                 ),

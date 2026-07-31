@@ -77,6 +77,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         email: _email.text.trim(),
         password: _password.text,
         nombre: _nombre.text.trim(),
+        // La casilla ya estaba en la pantalla y el botón no se habilita sin
+        // ella; lo que faltaba era que el dato llegara al servidor. Sin él
+        // responde 422 CONSENT_REQUIRED y no se crea ninguna cuenta.
+        aceptaTerminos: _acepta,
       );
       if (mounted) {
         context.go(Routes.verifyEmail, extra: _email.text.trim());

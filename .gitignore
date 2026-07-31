@@ -72,3 +72,6 @@ docs/
 ssd-*
 CONTRATO-API.md
 IMPLEMENTACION.md
+
+# Artefactos de goldens fallidos: se regeneran en cada corrida.
+test/golden/failures/

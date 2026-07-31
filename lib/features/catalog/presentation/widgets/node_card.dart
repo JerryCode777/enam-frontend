@@ -62,7 +62,7 @@ class NodeStateChip extends StatelessWidget {
       child: Text(
         texto,
         style: context.texts.bodySmall?.copyWith(
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: FontWeight.w800,
           color: textoColor,
         ),
@@ -205,7 +205,7 @@ class _Grande extends StatelessWidget {
             Text(
               '${nodo.peso} de 180',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w800,
                 color: color,
               ),
@@ -261,7 +261,7 @@ class _Media extends StatelessWidget {
                     child: Text(
                       nodo.nombre,
                       style: const TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -279,7 +279,7 @@ class _Media extends StatelessWidget {
                   else
                     _estadoTexto(context, nodo.estado).$1,
                 ].join(' · '),
-                style: context.texts.bodySmall?.copyWith(fontSize: 12),
+                style: context.texts.bodySmall?.copyWith(fontSize: 13),
               ),
             ],
           ),
@@ -288,7 +288,7 @@ class _Media extends StatelessWidget {
         Text(
           '${nodo.peso}',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w800,
             color: color,
           ),
@@ -359,7 +359,7 @@ class AreaCompactRow extends StatelessWidget {
                 child: Text(
                   nodo.nombre,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -377,7 +377,7 @@ class AreaCompactRow extends StatelessWidget {
                   child: Text(
                     destacado!,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: states.success.onTint,
                     ),
@@ -388,7 +388,7 @@ class AreaCompactRow extends StatelessWidget {
               Text(
                 '${nodo.peso}',
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: scheme.onSurfaceVariant,
                 ),
@@ -495,7 +495,7 @@ class NodeRow extends StatelessWidget {
                       // caracteres y truncarlos los vuelve indistinguibles
                       // entre sí.
                       style: const TextStyle(
-                        fontSize: 14.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.45,
                       ),
@@ -503,7 +503,7 @@ class NodeRow extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       _detalle(nodo),
-                      style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+                      style: context.texts.bodySmall?.copyWith(fontSize: 13),
                     ),
                     if (agotado) ...[
                       const SizedBox(height: DesignTokens.space1 + 2),
@@ -516,7 +516,7 @@ class NodeRow extends StatelessWidget {
                               child: Text(
                                 'Repasar tus ${nodo.preguntasFalladas} falladas',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: states.info.onTint,
                                 ),
@@ -648,7 +648,7 @@ class _MetaFila extends StatelessWidget {
           Text(
             texto,
             style: context.texts.bodySmall?.copyWith(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: color != null ? FontWeight.w700 : null,
               color: color,
             ),

@@ -76,9 +76,35 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
+      ),
+
+      // Etiquetas de 12: es el mínimo de la escala y no baja aunque el texto
+      // largo ("Simulacros") quede justo.
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: isLight
+            ? DesignTokens.brandSubtle
+            : DesignTokens.infoTintDark,
+        elevation: 0,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final activa = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontFamily: DesignTokens.fontFamily,
+            fontSize: DesignTokens.fontSizeXs,
+            fontWeight: activa ? FontWeight.w800 : FontWeight.w600,
+            color: activa ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final activa = states.contains(WidgetState.selected);
+          return IconThemeData(
+            size: 22,
+            color: activa ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          );
+        }),
       ),
 
       filledButtonTheme: FilledButtonThemeData(

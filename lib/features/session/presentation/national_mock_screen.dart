@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../../core/domain/blueprint.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -15,60 +15,28 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../domain/session_models.dart';
 
-/// Datos del simulacro nacional programado. Vienen del admin (RF-19).
+/// Los simulacros nacionales programados (RF-19).
 ///
-/// Hoy son fijos: el contrato todavía no tiene endpoint para listarlos. Falta un
-/// `GET /mock-exams/next` con fecha, duración, inscritos y si el usuario ya está.
-typedef SimulacroNacional = ({
-  String id,
-  String nombre,
-  DateTime inicio,
-  Duration duracion,
-  int participantes,
-  bool inscrito,
+/// **Todo viene del servidor**, incluido si el usuario ya entró y en qué
+/// momento está el evento. Antes no era así y las dos cosas costaron caro:
+///
+/// - La inscripción se guardaba en `SharedPreferences`. Cambiar de teléfono la
+///   perdía, y el mismo usuario podía "participar" dos veces en el mismo
+///   simulacro. Ahora es el campo `inscrito` que manda la API.
+/// - Los tres momentos —antes, en curso, terminado— salían del reloj del
+///   dispositivo. Con el reloj adelantado la app enseñaba "Entrar al simulacro"
+///   para algo que el servidor iba a rechazar. Ahora es el campo `estado`.
+final nacionalesProvider = FutureProvider<List<NationalMock>>((ref) {
+  return ref.watch(sessionRepositoryProvider).nationalMocks();
 });
 
-/// Inscripciones del usuario en simulacros nacionales.
-///
-/// Vive fuera de la pantalla a propósito: cuando el estado era un `bool` del
-/// widget, salir y volver lo reiniciaba y se podía "participar" otra vez en el
-/// mismo simulacro.
-class InscripcionesNacionales extends AsyncNotifier<Set<String>> {
-  @override
-  Future<Set<String>> build() =>
-      ref.read(appPrefsProvider).nacionalesInscritos();
-
-  Future<void> inscribir(String id) async {
-    await ref.read(appPrefsProvider).marcarInscritoEnNacional(id);
-    state = AsyncData({...?state.value, id});
-  }
-}
-
-final inscripcionesNacionalesProvider =
-    AsyncNotifierProvider<InscripcionesNacionales, Set<String>>(
-      InscripcionesNacionales.new,
-    );
-
-/// Si el usuario ya se anotó en el próximo nacional.
-final inscritoEnNacionalProvider = Provider<bool>((ref) {
-  final evento = ref.watch(nacionalProvider);
-  final inscritos = ref.watch(inscripcionesNacionalesProvider).value ?? {};
-  return evento.inscrito || inscritos.contains(evento.id);
-});
-
-final nacionalProvider = Provider<SimulacroNacional>((ref) {
-  // Fecha calculada a futuro para que la cuenta regresiva siempre tenga sentido
-  // durante el desarrollo.
-  final inicio = DateTime.now().add(const Duration(days: 17, hours: 3));
-  return (
-    id: 'nacional-2026-08',
-    nombre: 'Simulacro Nacional de agosto',
-    inicio: DateTime(inicio.year, inicio.month, inicio.day, 8),
-    duracion: Blueprint.examDuration,
-    participantes: 1847,
-    inscrito: false,
-  );
+/// El próximo simulacro nacional, o `null` si no hay ninguno programado.
+final nacionalProvider = Provider<NationalMock?>((ref) {
+  final lista = ref.watch(nacionalesProvider).value;
+  if (lista == null || lista.isEmpty) return null;
+  return lista.first;
 });
 
 /// Pantalla 5.8 — simulacro nacional (RF-19).
@@ -87,6 +55,7 @@ class NationalMockScreen extends ConsumerStatefulWidget {
 
 class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
   Timer? _reloj;
+  bool _participando = false;
 
   @override
   void initState() {
@@ -106,13 +75,23 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final consulta = ref.watch(nacionalesProvider);
     final evento = ref.watch(nacionalProvider);
-    final inscrito = ref.watch(inscritoEnNacionalProvider);
-    final ahora = DateTime.now();
-    final falta = evento.inicio.difference(ahora);
-    final enCurso =
-        falta.isNegative && ahora.isBefore(evento.inicio.add(evento.duracion));
-    final terminado = ahora.isAfter(evento.inicio.add(evento.duracion));
+
+    if (consulta.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (evento == null) {
+      return const _SinNacional();
+    }
+
+    // Los tres momentos los decide el SERVIDOR, no el reloj del dispositivo:
+    // uno adelantado enseñaría "Entrar al simulacro" para algo que la API va a
+    // rechazar, y el usuario no tendría forma de entender el error.
+    final inscrito = evento.inscrito;
+    final enCurso = evento.estado == NationalMockStatus.enCurso;
+    final terminado = evento.estado == NationalMockStatus.cerrado;
+    final falta = evento.faltaParaEmpezar ?? Duration.zero;
 
     return Scaffold(
       body: Column(
@@ -181,6 +160,7 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
               ),
               _ => EnamButton(
                 label: inscrito ? 'Ya estás participando' : 'Participar',
+                loading: _participando,
                 icon: inscrito
                     ? Symbols.check
                     : Symbols.how_to_reg,
@@ -197,14 +177,75 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
 
   Future<void> _participar() async {
     final evento = ref.read(nacionalProvider);
-    await ref
-        .read(inscripcionesNacionalesProvider.notifier)
-        .inscribir(evento.id);
+    if (evento == null || _participando) return;
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Listo. Te avisamos antes de que empiece.'),
+    setState(() => _participando = true);
+    try {
+      await ref.read(sessionRepositoryProvider).joinNationalMock(evento.id);
+      // Sin esto el botón seguiría diciendo "Participar": quien vuelve a
+      // tocarlo se apunta dos veces, que es justo lo que este cambio arregla.
+      ref.invalidate(nacionalesProvider);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Listo. Te avisamos antes de que empiece.'),
+        ),
+      );
+    } on Failure catch (e) {
+      if (mounted) showErrorSnack(context, e.message);
+    } finally {
+      if (mounted) setState(() => _participando = false);
+    }
+  }
+}
+
+/// Cuando no hay ningún nacional programado.
+///
+/// Antes no podía pasar porque el evento estaba escrito en el código, así que
+/// siempre había uno "programado" aunque no existiera.
+class _SinNacional extends StatelessWidget {
+  const _SinNacional();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          const GradientHeader(titulo: 'Simulacro nacional'),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(DesignTokens.space8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Symbols.event_upcoming,
+                      size: 40,
+                      color: context.scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: DesignTokens.space4),
+                    Text(
+                      'No hay ninguno programado',
+                      style: context.texts.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.space3),
+                    Text(
+                      'Te avisamos cuando anunciemos el siguiente. Mientras '
+                      'tanto puedes rendir un simulacro completo cuando '
+                      'quieras.',
+                      textAlign: TextAlign.center,
+                      style: context.texts.bodyMedium?.copyWith(height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -213,7 +254,7 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
 class _Antes extends StatelessWidget {
   const _Antes({required this.evento, required this.falta});
 
-  final SimulacroNacional evento;
+  final NationalMock evento;
   final Duration falta;
 
   @override
@@ -230,7 +271,7 @@ class _Antes extends StatelessWidget {
               Text(
                 'EMPIEZA EN',
                 style: context.texts.bodySmall?.copyWith(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1,
                   color: context.scheme.onSurfaceVariant,
@@ -297,7 +338,7 @@ class _Unidad extends StatelessWidget {
 class _EnCurso extends StatelessWidget {
   const _EnCurso({required this.evento});
 
-  final SimulacroNacional evento;
+  final NationalMock evento;
 
   @override
   Widget build(BuildContext context) {
@@ -332,14 +373,16 @@ class _Terminado extends StatelessWidget {
 class _Detalles extends StatelessWidget {
   const _Detalles({required this.evento});
 
-  final SimulacroNacional evento;
+  final NationalMock evento;
 
   @override
   Widget build(BuildContext context) {
     final filas = <({IconData icon, String texto})>[
       (
         icon: Symbols.quiz,
-        texto: '${Blueprint.totalQuestions} preguntas con el blueprint oficial',
+        // Del servidor: un nacional de muestra no tiene 180, y afirmarlo
+        // sería prometer un examen distinto del que se va a rendir.
+        texto: '${evento.totalPreguntas} preguntas con el blueprint oficial',
       ),
       (
         icon: Symbols.timer,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/motion.dart';
+import '../../../shared/widgets/brand_mark.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/brand_gradient.dart';
 import '../../../shared/widgets/ecg_line.dart';
@@ -36,7 +36,7 @@ class SplashScreen extends StatelessWidget {
                         child: Text(
                           'ENAM Prep',
                           style: TextStyle(
-                            fontSize: 30,
+                            fontSize: 32,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
                             color: Colors.white,
@@ -51,7 +51,7 @@ class SplashScreen extends StatelessWidget {
                         child: Text(
                           'Tu preparación para el ENAM',
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: 15,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
                         ),
@@ -106,9 +106,7 @@ class _LogoConPulsoState extends State<_LogoConPulso>
     const caja = SizedBox(
       width: 104,
       height: 104,
-      child: Center(
-        child: Icon(Symbols.stethoscope, size: 54, fill: 1, color: Colors.white),
-      ),
+      child: Center(child: BrandMark(size: 60)),
     );
 
     return AnimatedBuilder(

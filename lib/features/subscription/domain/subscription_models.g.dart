@@ -18,7 +18,6 @@ _Plan _$PlanFromJson(Map<String, dynamic> json) => _Plan(
           ?.map((e) => e as String)
           .toList() ??
       const [],
-  limites: json['limites'] as Map<String, dynamic>? ?? const {},
 );
 
 Map<String, dynamic> _$PlanToJson(_Plan instance) => <String, dynamic>{
@@ -29,7 +28,6 @@ Map<String, dynamic> _$PlanToJson(_Plan instance) => <String, dynamic>{
   'duracionDias': instance.duracionDias,
   'esGratuito': instance.esGratuito,
   'beneficios': instance.beneficios,
-  'limites': instance.limites,
 };
 
 _Subscription _$SubscriptionFromJson(Map<String, dynamic> json) =>
@@ -39,7 +37,9 @@ _Subscription _$SubscriptionFromJson(Map<String, dynamic> json) =>
       estado: $enumDecode(_$SubscriptionStatusEnumMap, json['estado']),
       origen: $enumDecode(_$SubscriptionOriginEnumMap, json['origen']),
       inicia: DateTime.parse(json['inicia'] as String),
-      expira: DateTime.parse(json['expira'] as String),
+      expira: json['expira'] == null
+          ? null
+          : DateTime.parse(json['expira'] as String),
     );
 
 Map<String, dynamic> _$SubscriptionToJson(_Subscription instance) =>
@@ -49,10 +49,12 @@ Map<String, dynamic> _$SubscriptionToJson(_Subscription instance) =>
       'estado': _$SubscriptionStatusEnumMap[instance.estado]!,
       'origen': _$SubscriptionOriginEnumMap[instance.origen]!,
       'inicia': instance.inicia.toIso8601String(),
-      'expira': instance.expira.toIso8601String(),
+      'expira': instance.expira?.toIso8601String(),
     };
 
 const _$SubscriptionStatusEnumMap = {
+  SubscriptionStatus.pruebaSinIniciar: 'prueba_sin_iniciar',
+  SubscriptionStatus.prueba: 'prueba',
   SubscriptionStatus.activa: 'activa',
   SubscriptionStatus.enGracia: 'en_gracia',
   SubscriptionStatus.expirada: 'expirada',
@@ -60,6 +62,8 @@ const _$SubscriptionStatusEnumMap = {
 };
 
 const _$SubscriptionOriginEnumMap = {
+  SubscriptionOrigin.sistema: 'sistema',
   SubscriptionOrigin.culqi: 'culqi',
   SubscriptionOrigin.manual: 'manual',
+  SubscriptionOrigin.bot: 'bot',
 };

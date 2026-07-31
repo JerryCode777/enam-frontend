@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/config/contacto.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -98,8 +99,16 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       pregunta: 'Si cancelo Premium, ¿pierdo mi progreso?',
       respuesta:
           'No. Tu historial, tus estadísticas y tus preguntas marcadas se '
-          'conservan. Vuelves al plan gratis: 20 preguntas al día y el '
-          'simulacro de muestra.',
+          'conservan (RN-07). Lo que se acaba es el acceso: al terminar el '
+          'periodo pagado dejas de poder practicar hasta que actives un plan '
+          'de nuevo. Tu avance te espera intacto.',
+    ),
+    (
+      pregunta: '¿Cuánto dura la prueba gratis?',
+      respuesta:
+          'Un día completo, con todo desbloqueado. El reloj empieza cuando '
+          'inicias tu primera práctica o simulacro, no cuando te registras: '
+          'crear la cuenta de noche no te quema el día.',
     ),
   ];
 
@@ -119,13 +128,17 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
               ),
               children: [
                 FadeUp(child: _Contacto(onEscribir: _escribir)),
+                const SizedBox(height: DesignTokens.space3),
+                // El canal donde de verdad se atiende (M10). El correo tarda;
+                // WhatsApp es donde el equipo ya está.
+                FadeUp(index: 1, child: _ContactoWhatsApp(onAbrir: _whatsapp)),
                 const SizedBox(height: DesignTokens.space5),
                 FadeUp(
                   index: 1,
                   child: Text(
                     'PREGUNTAS FRECUENTES',
                     style: context.texts.bodySmall?.copyWith(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.7,
                       color: context.scheme.onSurfaceVariant,
@@ -152,6 +165,23 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
         ],
       ),
     );
+  }
+
+  /// Abre WhatsApp con el soporte humano, no con el bot de ventas.
+  ///
+  /// Son dos números distintos a propósito: quien tiene un problema con la app
+  /// no debería caer en la conversación de cobro.
+  Future<void> _whatsapp() async {
+    final abierto = await Contacto.abrir(
+      Contacto.soporte(mensaje: 'Hola, necesito ayuda con ENAM Prep.'),
+    );
+    if (!abierto && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Escríbenos al ${Contacto.soporteVisible}'),
+        ),
+      );
+    }
   }
 
   /// Abre el correo con el contexto técnico ya puesto.
@@ -224,6 +254,64 @@ class _Contacto extends StatelessWidget {
               ),
             ),
             Icon(Symbols.chevron_right, size: 20, color: states.info.onTint),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// El canal de WhatsApp de soporte (M10).
+class _ContactoWhatsApp extends StatelessWidget {
+  const _ContactoWhatsApp({required this.onAbrir});
+
+  final VoidCallback onAbrir;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+
+    return InkWell(
+      onTap: onAbrir,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.space4),
+        decoration: BoxDecoration(
+          border: Border.all(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Symbols.chat,
+              size: 24,
+              fill: 1,
+              color: scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: DesignTokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WhatsApp',
+                    style: context.texts.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    Contacto.soporteVisible,
+                    style: context.texts.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Symbols.chevron_right,
+              size: 20,
+              color: scheme.onSurfaceVariant,
+            ),
           ],
         ),
       ),
@@ -307,11 +395,11 @@ class _Version extends StatelessWidget {
         children: [
           Text(
             'ENAM Prep${version.isEmpty ? "" : " · $version"}',
-            style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+            style: context.texts.bodySmall?.copyWith(fontSize: 13),
           ),
           Text(
             'Jaks Tech SAC',
-            style: context.texts.bodySmall?.copyWith(fontSize: 11),
+            style: context.texts.bodySmall?.copyWith(fontSize: 13),
           ),
         ],
       ),

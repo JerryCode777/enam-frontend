@@ -112,6 +112,67 @@ const _$QuestionSourceEnumMap = {
   QuestionSource.falladas: 'falladas',
 };
 
+_OpenSession _$OpenSessionFromJson(Map<String, dynamic> json) => _OpenSession(
+  id: json['id'] as String,
+  tipo: $enumDecode(_$SessionTypeEnumMap, json['tipo']),
+  iniciadaEn: DateTime.parse(json['iniciadaEn'] as String),
+  expiraEn: json['expiraEn'] == null
+      ? null
+      : DateTime.parse(json['expiraEn'] as String),
+  respondidas: (json['respondidas'] as num?)?.toInt() ?? 0,
+  totalPreguntas: (json['totalPreguntas'] as num?)?.toInt() ?? 0,
+);
+
+Map<String, dynamic> _$OpenSessionToJson(_OpenSession instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'tipo': _$SessionTypeEnumMap[instance.tipo]!,
+      'iniciadaEn': instance.iniciadaEn.toIso8601String(),
+      'expiraEn': instance.expiraEn?.toIso8601String(),
+      'respondidas': instance.respondidas,
+      'totalPreguntas': instance.totalPreguntas,
+    };
+
+const _$SessionTypeEnumMap = {
+  SessionType.practica: 'practica',
+  SessionType.simulacro: 'simulacro',
+  SessionType.simulacroNacional: 'simulacro_nacional',
+};
+
+_NationalMock _$NationalMockFromJson(Map<String, dynamic> json) =>
+    _NationalMock(
+      id: json['id'] as String,
+      nombre: json['nombre'] as String,
+      inicio: DateTime.parse(json['inicio'] as String),
+      fin: DateTime.parse(json['fin'] as String),
+      duracionMinutos: (json['duracionMinutos'] as num?)?.toInt() ?? 0,
+      participantes: (json['participantes'] as num?)?.toInt() ?? 0,
+      inscrito: json['inscrito'] as bool? ?? false,
+      estado:
+          $enumDecodeNullable(_$NationalMockStatusEnumMap, json['estado']) ??
+          NationalMockStatus.programado,
+      totalPreguntas: (json['totalPreguntas'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$NationalMockToJson(_NationalMock instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'nombre': instance.nombre,
+      'inicio': instance.inicio.toIso8601String(),
+      'fin': instance.fin.toIso8601String(),
+      'duracionMinutos': instance.duracionMinutos,
+      'participantes': instance.participantes,
+      'inscrito': instance.inscrito,
+      'estado': _$NationalMockStatusEnumMap[instance.estado]!,
+      'totalPreguntas': instance.totalPreguntas,
+    };
+
+const _$NationalMockStatusEnumMap = {
+  NationalMockStatus.programado: 'programado',
+  NationalMockStatus.enCurso: 'en_curso',
+  NationalMockStatus.cerrado: 'cerrado',
+};
+
 _StudySession _$StudySessionFromJson(Map<String, dynamic> json) =>
     _StudySession(
       id: json['id'] as String,
@@ -149,12 +210,6 @@ Map<String, dynamic> _$StudySessionToJson(_StudySession instance) =>
       'expiraEn': instance.expiraEn?.toIso8601String(),
       'nota': instance.nota,
     };
-
-const _$SessionTypeEnumMap = {
-  SessionType.practica: 'practica',
-  SessionType.simulacro: 'simulacro',
-  SessionType.simulacroNacional: 'simulacro_nacional',
-};
 
 const _$SessionStatusEnumMap = {
   SessionStatus.enCurso: 'en_curso',

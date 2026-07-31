@@ -100,8 +100,14 @@ class GradientHeader extends StatelessWidget implements PreferredSizeWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Una línea: los nombres largos del temario
+                            // ("Emergencias y Cuidados Críticos Adultos")
+                            // pasaban a dos y desbordaban la cabecera, que
+                            // tiene alto fijo.
                             Text(
                               titulo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: context.texts.titleLarge?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -110,6 +116,8 @@ class GradientHeader extends StatelessWidget implements PreferredSizeWidget {
                             if (subtitulo != null)
                               Text(
                                 subtitulo!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: context.texts.bodySmall?.copyWith(
                                   color: Colors.white.withValues(alpha: 0.85),
                                 ),
