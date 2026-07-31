@@ -8,6 +8,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
+import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
@@ -76,6 +77,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         email: _email.text.trim(),
         password: _password.text,
         nombre: _nombre.text.trim(),
+        // La casilla ya estaba en la pantalla y el botón no se habilita sin
+        // ella; lo que faltaba era que el dato llegara al servidor. Sin él
+        // responde 422 CONSENT_REQUIRED y no se crea ninguna cuenta.
+        aceptaTerminos: _acepta,
       );
       if (mounted) {
         context.go(Routes.verifyEmail, extra: _email.text.trim());
@@ -95,112 +100,77 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
-    return Scaffold(
-      appBar: AppBar(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space6,
-            DesignTokens.space2,
-            DesignTokens.space6,
-            DesignTokens.space6,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Crea tu cuenta',
-                style: context.texts.headlineMedium?.copyWith(
-                  fontSize: DesignTokens.fontSize2xl + 2,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              Text(
-                'Gratis: 20 preguntas de práctica al día y un simulacro de '
-                'muestra.',
-                style: context.texts.bodyMedium,
-              ),
-              const SizedBox(height: DesignTokens.space5),
-              EnamTextField(
-                label: 'Nombre',
-                controller: _nombre,
-                error: _nombreError,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.name],
-                enabled: !_loading,
-                onChanged: (_) {
-                  if (_nombreError != null) setState(() => _nombreError = null);
-                },
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              EnamTextField(
-                label: 'Correo',
-                controller: _email,
-                error: _emailError,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.email],
-                enabled: !_loading,
-                onChanged: (_) {
-                  if (_emailError != null) setState(() => _emailError = null);
-                },
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              EnamTextField(
-                label: 'Contraseña',
-                controller: _password,
-                error: _passwordError,
-                helper: 'Mínimo $_minPassword caracteres',
-                obscure: true,
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.newPassword],
-                enabled: !_loading,
-                onSubmitted: (_) => _submit(),
-                onChanged: (_) {
-                  if (_passwordError != null) {
-                    setState(() => _passwordError = null);
-                  }
-                },
-              ),
-              const SizedBox(height: DesignTokens.space5),
-              _ConsentCheckbox(
-                value: _acepta,
-                onChanged: _loading
-                    ? null
-                    : (v) => setState(() => _acepta = v ?? false),
-                onTapTerms: () => context.push(Routes.terms),
-              ),
-              const SizedBox(height: DesignTokens.space5),
-              EnamButton(
-                label: 'Crear cuenta',
-                loading: _loading,
-                // Sin consentimiento no se puede continuar: es requisito legal,
-                // no una preferencia.
-                onPressed: _acepta ? _submit : null,
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              AuthFooter(
-                pregunta: '¿Ya tienes cuenta?',
-                accion: 'Ingresa',
-                onTap: _loading ? null : () => context.go(Routes.login),
-              ),
-              if (!_acepta) ...[
-                const SizedBox(height: DesignTokens.space3),
-                Text(
-                  'Necesitas aceptar los términos para continuar.',
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
-          ),
+    return AuthScaffold(
+      titulo: 'Crea tu cuenta',
+      subtitulo: 'Te tomará menos de un minuto.',
+      mostrarVolver: true,
+      alVolver: () => context.go(Routes.login),
+      tarjeta: [
+        EnamTextField(
+          label: 'Nombre',
+          controller: _nombre,
+          error: _nombreError,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.name],
+          enabled: !_loading,
+          onChanged: (_) {
+            if (_nombreError != null) setState(() => _nombreError = null);
+          },
         ),
-      ),
+        EnamTextField(
+          label: 'Correo',
+          controller: _email,
+          error: _emailError,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.email],
+          enabled: !_loading,
+          onChanged: (_) {
+            if (_emailError != null) setState(() => _emailError = null);
+          },
+        ),
+        EnamTextField(
+          label: 'Contraseña',
+          controller: _password,
+          error: _passwordError,
+          helper: 'Mínimo $_minPassword caracteres',
+          obscure: true,
+          textInputAction: TextInputAction.done,
+          autofillHints: const [AutofillHints.newPassword],
+          enabled: !_loading,
+          onSubmitted: (_) => _submit(),
+          onChanged: (_) {
+            if (_passwordError != null) setState(() => _passwordError = null);
+          },
+        ),
+        _ConsentCheckbox(
+          value: _acepta,
+          onChanged: _loading
+              ? null
+              : (v) => setState(() => _acepta = v ?? false),
+          onTapTerms: () => context.push(Routes.terms),
+        ),
+        EnamButton(
+          label: 'Crear cuenta',
+          loading: _loading,
+          // Sin consentimiento no se puede continuar: es requisito legal, no
+          // una preferencia.
+          onPressed: _acepta ? _submit : null,
+        ),
+        AuthFooter(
+          pregunta: '¿Ya tienes cuenta?',
+          accion: 'Ingresa',
+          onTap: _loading ? null : () => context.go(Routes.login),
+        ),
+        if (!_acepta)
+          Text(
+            'Necesitas aceptar los términos para continuar.',
+            textAlign: TextAlign.center,
+            style: context.texts.bodySmall?.copyWith(
+              color: context.scheme.onSurfaceVariant,
+            ),
+          ),
+      ],
     );
   }
 }

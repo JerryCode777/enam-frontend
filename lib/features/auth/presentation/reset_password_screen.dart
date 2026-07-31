@@ -8,6 +8,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
@@ -56,7 +57,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   bool get _cumpleLargo => _password.text.length >= _minPassword;
   bool get _tieneNumero => _password.text.contains(RegExp(r'\d'));
   bool get _tieneLetra => _password.text.contains(RegExp('[a-zA-Z]'));
-  bool get _cumpleTodo => _cumpleLargo && _tieneNumero && _tieneLetra;
+  bool get _coinciden =>
+      _password.text.isNotEmpty && _password.text == _confirm.text;
+
+  /// El diseño deshabilita "Guardar contraseña" hasta cumplir todos los
+  /// requisitos, así que la coincidencia cuenta como uno más y no se valida
+  /// solo al enviar.
+  bool get _cumpleTodo =>
+      _cumpleLargo && _tieneNumero && _tieneLetra && _coinciden;
 
   bool _validate() {
     setState(() {
@@ -106,119 +114,107 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space6,
-            DesignTokens.space2,
-            DesignTokens.space6,
-            DesignTokens.space6,
-          ),
-          child: _tokenInvalido ? _expired(context) : _form(context),
-        ),
+    if (_tokenInvalido) {
+      return AuthScaffold(
+        titulo: 'Este enlace ya no sirve',
+        iconoCabecera: Symbols.link_off,
+        tamanoTitulo: 26,
+        tarjeta: _expirado(context),
+      );
+    }
+
+    return AuthScaffold(
+      titulo: 'Contraseña nueva',
+      subtitulo: 'Elige una que no uses en otro sitio.',
+      iconoCabecera: Symbols.lock_reset,
+      tamanoTitulo: 26,
+      tarjeta: _formulario(context),
+    );
+  }
+
+  List<Widget> _formulario(BuildContext context) => [
+    EnamTextField(
+      label: 'Nueva contraseña',
+      controller: _password,
+      error: _passwordError,
+      obscure: true,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.newPassword],
+      autofocus: true,
+      enabled: !_loading,
+      onChanged: (_) => setState(() => _passwordError = null),
+    ),
+    EnamTextField(
+      label: 'Confírmala',
+      controller: _confirm,
+      error: _confirmError,
+      obscure: true,
+      textInputAction: TextInputAction.done,
+      enabled: !_loading,
+      onSubmitted: (_) => _submit(),
+      onChanged: (_) => setState(() => _confirmError = null),
+    ),
+    // La lista se marca en vivo, así el usuario no descubre la regla recién al
+    // enviar.
+    _ListaRequisitos(
+      children: [
+        _Requisito(cumple: _cumpleLargo, texto: 'Mínimo $_minPassword caracteres'),
+        _Requisito(cumple: _tieneNumero, texto: 'Al menos un número'),
+        // Fuera del diseño a propósito: con sus tres reglas, "12345678" sería
+        // una contraseña válida. Una fila más y deja de serlo.
+        _Requisito(cumple: _tieneLetra, texto: 'Al menos una letra'),
+        _Requisito(cumple: _coinciden, texto: 'Ambos campos coinciden'),
+      ],
+    ),
+    EnamButton(
+      label: 'Guardar contraseña',
+      loading: _loading,
+      onPressed: _cumpleTodo ? _submit : null,
+    ),
+  ];
+
+  List<Widget> _expirado(BuildContext context) => [
+    Text(
+      'Los enlaces vencen por seguridad, y también dejan de servir después de '
+      'usarse una vez. Pide uno nuevo.',
+      style: context.texts.bodyMedium?.copyWith(height: 1.55),
+    ),
+    EnamButton(
+      label: 'Pedir un enlace nuevo',
+      onPressed: () => context.go(Routes.forgotPassword),
+    ),
+  ];
+}
+
+/// La caja con borde que agrupa los requisitos, como en el diseño.
+class _ListaRequisitos extends StatelessWidget {
+  const _ListaRequisitos({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        border: Border.all(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd + 2),
       ),
-    );
-  }
-
-  Widget _form(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Crea tu contraseña nueva',
-          style: context.texts.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            height: DesignTokens.lineHeightTight,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        Text(
-          'Elige una que no uses en otro sitio.',
-          style: context.texts.bodyMedium,
-        ),
-        const SizedBox(height: DesignTokens.space5),
-        EnamTextField(
-          label: 'Contraseña nueva',
-          controller: _password,
-          error: _passwordError,
-          obscure: true,
-          textInputAction: TextInputAction.next,
-          autofillHints: const [AutofillHints.newPassword],
-          autofocus: true,
-          enabled: !_loading,
-          onChanged: (_) => setState(() => _passwordError = null),
-        ),
-        const SizedBox(height: DesignTokens.space3),
-        // Los requisitos se marcan en vivo, así el usuario no descubre la regla
-        // recién al enviar.
-        _Requisito(cumple: _cumpleLargo, texto: 'Al menos $_minPassword caracteres'),
-        _Requisito(cumple: _tieneLetra, texto: 'Incluye letras'),
-        _Requisito(cumple: _tieneNumero, texto: 'Incluye números'),
-        const SizedBox(height: DesignTokens.space4),
-        EnamTextField(
-          label: 'Repite la contraseña',
-          controller: _confirm,
-          error: _confirmError,
-          obscure: true,
-          textInputAction: TextInputAction.done,
-          enabled: !_loading,
-          onSubmitted: (_) => _submit(),
-          onChanged: (_) {
-            if (_confirmError != null) setState(() => _confirmError = null);
-          },
-        ),
-        const SizedBox(height: DesignTokens.space6),
-        EnamButton(
-          label: 'Guardar contraseña',
-          loading: _loading,
-          onPressed: _cumpleTodo ? _submit : null,
-        ),
-      ],
-    );
-  }
-
-  Widget _expired(BuildContext context) {
-    final states = context.states;
-
-    return Column(
-      children: [
-        const SizedBox(height: DesignTokens.space10),
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: states.warning.tint,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-          ),
-          child: Icon(
-            Symbols.link_off,
-            size: 40,
-            color: states.warning.onTint,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space5),
-        Text(
-          'Este enlace ya no sirve',
-          style: context.texts.headlineMedium?.copyWith(
-            fontSize: DesignTokens.fontSize2xl - 2,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space3),
-        Text(
-          'Los enlaces vencen por seguridad, y también dejan de servir después '
-          'de usarse una vez. Pide uno nuevo.',
-          textAlign: TextAlign.center,
-          style: context.texts.bodyMedium?.copyWith(height: 1.55),
-        ),
-        const SizedBox(height: DesignTokens.space6),
-        EnamButton(
-          label: 'Pedir un enlace nuevo',
-          onPressed: () => context.go(Routes.forgotPassword),
-        ),
-      ],
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space4,
+        vertical: DesignTokens.space3,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const SizedBox(height: 7),
+            children[i],
+          ],
+        ],
+      ),
     );
   }
 }

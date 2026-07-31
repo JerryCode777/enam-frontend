@@ -87,7 +87,12 @@ class _Explicacion extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Symbols.bolt, size: 22, fill: 1, color: states.info.onTint),
+                Icon(
+                  Symbols.bolt,
+                  size: 22,
+                  fill: 1,
+                  color: states.info.onTint,
+                ),
                 const SizedBox(width: DesignTokens.space2 + 2),
                 Expanded(
                   child: Text(
@@ -202,7 +207,7 @@ class _PrioridadCard extends StatelessWidget {
                         child: Text(
                           'EMPIEZA AQUÍ',
                           style: context.texts.bodySmall?.copyWith(
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: states.warning.onTint,
                           ),
@@ -217,10 +222,7 @@ class _PrioridadCard extends StatelessWidget {
                   spacing: DesignTokens.space4,
                   runSpacing: DesignTokens.space1,
                   children: [
-                    _Dato(
-                      etiqueta: 'pesa',
-                      valor: '${area.peso} de 180',
-                    ),
+                    _Dato(etiqueta: 'pesa', valor: '${area.peso} de 180'),
                     _Dato(
                       etiqueta: 'tu acierto',
                       valor: acierto == null
@@ -288,12 +290,12 @@ class _Dato extends StatelessWidget {
       children: [
         Text(
           '$etiqueta ',
-          style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+          style: context.texts.bodySmall?.copyWith(fontSize: 13),
         ),
         Text(
           valor,
           style: context.texts.bodySmall?.copyWith(
-            fontSize: 11.5,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
             color: context.scheme.onSurface,
           ),

@@ -144,7 +144,7 @@ class OptionCard extends StatelessWidget {
                 child: Text(
                   opcion.texto,
                   style: context.texts.bodyLarge?.copyWith(
-                    fontSize: 14.5,
+                    fontSize: 15,
                     height: 1.5,
                     fontWeight: visual == OptionVisual.normal ||
                             visual == OptionVisual.descartada
@@ -160,7 +160,7 @@ class OptionCard extends StatelessWidget {
                   child: Text(
                     etiqueta,
                     style: context.texts.bodySmall?.copyWith(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: visual == OptionVisual.correcta
                           ? states.success.onTint

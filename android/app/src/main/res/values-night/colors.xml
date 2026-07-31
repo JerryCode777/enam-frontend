@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Equivalente oscuro (DesignTokens.headerGradientDark). -->
+    <color name="marca_arranque">#14213A</color>
+</resources>

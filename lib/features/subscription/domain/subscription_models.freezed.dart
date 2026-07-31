@@ -16,9 +16,9 @@ T _$identity<T>(T value) => value;
 mixin _$Plan {
 
  String get id; String get nombre;/// En céntimos, para no perder precisión con decimales.
- int get precioCentimos; String get moneda; int get duracionDias; bool get esGratuito; List<String> get beneficios;/// Límites del plan. Para free: `{"preguntas_dia": 20, "simulacros": 1}`.
-/// Es informativo para la UI; RN-03 exige que el servidor los valide.
- Map<String, dynamic> get limites;
+ int get precioCentimos; String get moneda; int get duracionDias;/// Cierto **solo** para el plan de prueba. No existe un plan gratuito que
+/// se pueda elegir (RN-03 v2).
+ bool get esGratuito; List<String> get beneficios;
 /// Create a copy of Plan
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -31,16 +31,16 @@ $PlanCopyWith<Plan> get copyWith => _$PlanCopyWithImpl<Plan>(this as Plan, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Plan&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.precioCentimos, precioCentimos) || other.precioCentimos == precioCentimos)&&(identical(other.moneda, moneda) || other.moneda == moneda)&&(identical(other.duracionDias, duracionDias) || other.duracionDias == duracionDias)&&(identical(other.esGratuito, esGratuito) || other.esGratuito == esGratuito)&&const DeepCollectionEquality().equals(other.beneficios, beneficios)&&const DeepCollectionEquality().equals(other.limites, limites));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Plan&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.precioCentimos, precioCentimos) || other.precioCentimos == precioCentimos)&&(identical(other.moneda, moneda) || other.moneda == moneda)&&(identical(other.duracionDias, duracionDias) || other.duracionDias == duracionDias)&&(identical(other.esGratuito, esGratuito) || other.esGratuito == esGratuito)&&const DeepCollectionEquality().equals(other.beneficios, beneficios));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,precioCentimos,moneda,duracionDias,esGratuito,const DeepCollectionEquality().hash(beneficios),const DeepCollectionEquality().hash(limites));
+int get hashCode => Object.hash(runtimeType,id,nombre,precioCentimos,moneda,duracionDias,esGratuito,const DeepCollectionEquality().hash(beneficios));
 
 @override
 String toString() {
-  return 'Plan(id: $id, nombre: $nombre, precioCentimos: $precioCentimos, moneda: $moneda, duracionDias: $duracionDias, esGratuito: $esGratuito, beneficios: $beneficios, limites: $limites)';
+  return 'Plan(id: $id, nombre: $nombre, precioCentimos: $precioCentimos, moneda: $moneda, duracionDias: $duracionDias, esGratuito: $esGratuito, beneficios: $beneficios)';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $PlanCopyWith<$Res>  {
   factory $PlanCopyWith(Plan value, $Res Function(Plan) _then) = _$PlanCopyWithImpl;
 @useResult
 $Res call({
- String id, String nombre, int precioCentimos, String moneda, int duracionDias, bool esGratuito, List<String> beneficios, Map<String, dynamic> limites
+ String id, String nombre, int precioCentimos, String moneda, int duracionDias, bool esGratuito, List<String> beneficios
 });
 
 
@@ -68,7 +68,7 @@ class _$PlanCopyWithImpl<$Res>
 
 /// Create a copy of Plan
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? precioCentimos = null,Object? moneda = null,Object? duracionDias = null,Object? esGratuito = null,Object? beneficios = null,Object? limites = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? precioCentimos = null,Object? moneda = null,Object? duracionDias = null,Object? esGratuito = null,Object? beneficios = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
@@ -77,8 +77,7 @@ as int,moneda: null == moneda ? _self.moneda : moneda // ignore: cast_nullable_t
 as String,duracionDias: null == duracionDias ? _self.duracionDias : duracionDias // ignore: cast_nullable_to_non_nullable
 as int,esGratuito: null == esGratuito ? _self.esGratuito : esGratuito // ignore: cast_nullable_to_non_nullable
 as bool,beneficios: null == beneficios ? _self.beneficios : beneficios // ignore: cast_nullable_to_non_nullable
-as List<String>,limites: null == limites ? _self.limites : limites // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>,
+as List<String>,
   ));
 }
 
@@ -163,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  int precioCentimos,  String moneda,  int duracionDias,  bool esGratuito,  List<String> beneficios,  Map<String, dynamic> limites)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  int precioCentimos,  String moneda,  int duracionDias,  bool esGratuito,  List<String> beneficios)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Plan() when $default != null:
-return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.duracionDias,_that.esGratuito,_that.beneficios,_that.limites);case _:
+return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.duracionDias,_that.esGratuito,_that.beneficios);case _:
   return orElse();
 
 }
@@ -184,10 +183,10 @@ return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.du
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  int precioCentimos,  String moneda,  int duracionDias,  bool esGratuito,  List<String> beneficios,  Map<String, dynamic> limites)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  int precioCentimos,  String moneda,  int duracionDias,  bool esGratuito,  List<String> beneficios)  $default,) {final _that = this;
 switch (_that) {
 case _Plan():
-return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.duracionDias,_that.esGratuito,_that.beneficios,_that.limites);case _:
+return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.duracionDias,_that.esGratuito,_that.beneficios);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +203,10 @@ return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.du
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  int precioCentimos,  String moneda,  int duracionDias,  bool esGratuito,  List<String> beneficios,  Map<String, dynamic> limites)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  int precioCentimos,  String moneda,  int duracionDias,  bool esGratuito,  List<String> beneficios)?  $default,) {final _that = this;
 switch (_that) {
 case _Plan() when $default != null:
-return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.duracionDias,_that.esGratuito,_that.beneficios,_that.limites);case _:
+return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.duracionDias,_that.esGratuito,_that.beneficios);case _:
   return null;
 
 }
@@ -219,7 +218,7 @@ return $default(_that.id,_that.nombre,_that.precioCentimos,_that.moneda,_that.du
 @JsonSerializable()
 
 class _Plan extends Plan {
-  const _Plan({required this.id, required this.nombre, required this.precioCentimos, this.moneda = 'PEN', required this.duracionDias, this.esGratuito = false, final  List<String> beneficios = const [], final  Map<String, dynamic> limites = const {}}): _beneficios = beneficios,_limites = limites,super._();
+  const _Plan({required this.id, required this.nombre, required this.precioCentimos, this.moneda = 'PEN', required this.duracionDias, this.esGratuito = false, final  List<String> beneficios = const []}): _beneficios = beneficios,super._();
   factory _Plan.fromJson(Map<String, dynamic> json) => _$PlanFromJson(json);
 
 @override final  String id;
@@ -228,23 +227,14 @@ class _Plan extends Plan {
 @override final  int precioCentimos;
 @override@JsonKey() final  String moneda;
 @override final  int duracionDias;
+/// Cierto **solo** para el plan de prueba. No existe un plan gratuito que
+/// se pueda elegir (RN-03 v2).
 @override@JsonKey() final  bool esGratuito;
  final  List<String> _beneficios;
 @override@JsonKey() List<String> get beneficios {
   if (_beneficios is EqualUnmodifiableListView) return _beneficios;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_beneficios);
-}
-
-/// Límites del plan. Para free: `{"preguntas_dia": 20, "simulacros": 1}`.
-/// Es informativo para la UI; RN-03 exige que el servidor los valide.
- final  Map<String, dynamic> _limites;
-/// Límites del plan. Para free: `{"preguntas_dia": 20, "simulacros": 1}`.
-/// Es informativo para la UI; RN-03 exige que el servidor los valide.
-@override@JsonKey() Map<String, dynamic> get limites {
-  if (_limites is EqualUnmodifiableMapView) return _limites;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(_limites);
 }
 
 
@@ -261,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Plan&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.precioCentimos, precioCentimos) || other.precioCentimos == precioCentimos)&&(identical(other.moneda, moneda) || other.moneda == moneda)&&(identical(other.duracionDias, duracionDias) || other.duracionDias == duracionDias)&&(identical(other.esGratuito, esGratuito) || other.esGratuito == esGratuito)&&const DeepCollectionEquality().equals(other._beneficios, _beneficios)&&const DeepCollectionEquality().equals(other._limites, _limites));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Plan&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.precioCentimos, precioCentimos) || other.precioCentimos == precioCentimos)&&(identical(other.moneda, moneda) || other.moneda == moneda)&&(identical(other.duracionDias, duracionDias) || other.duracionDias == duracionDias)&&(identical(other.esGratuito, esGratuito) || other.esGratuito == esGratuito)&&const DeepCollectionEquality().equals(other._beneficios, _beneficios));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,precioCentimos,moneda,duracionDias,esGratuito,const DeepCollectionEquality().hash(_beneficios),const DeepCollectionEquality().hash(_limites));
+int get hashCode => Object.hash(runtimeType,id,nombre,precioCentimos,moneda,duracionDias,esGratuito,const DeepCollectionEquality().hash(_beneficios));
 
 @override
 String toString() {
-  return 'Plan(id: $id, nombre: $nombre, precioCentimos: $precioCentimos, moneda: $moneda, duracionDias: $duracionDias, esGratuito: $esGratuito, beneficios: $beneficios, limites: $limites)';
+  return 'Plan(id: $id, nombre: $nombre, precioCentimos: $precioCentimos, moneda: $moneda, duracionDias: $duracionDias, esGratuito: $esGratuito, beneficios: $beneficios)';
 }
 
 
@@ -281,7 +271,7 @@ abstract mixin class _$PlanCopyWith<$Res> implements $PlanCopyWith<$Res> {
   factory _$PlanCopyWith(_Plan value, $Res Function(_Plan) _then) = __$PlanCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String nombre, int precioCentimos, String moneda, int duracionDias, bool esGratuito, List<String> beneficios, Map<String, dynamic> limites
+ String id, String nombre, int precioCentimos, String moneda, int duracionDias, bool esGratuito, List<String> beneficios
 });
 
 
@@ -298,7 +288,7 @@ class __$PlanCopyWithImpl<$Res>
 
 /// Create a copy of Plan
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? precioCentimos = null,Object? moneda = null,Object? duracionDias = null,Object? esGratuito = null,Object? beneficios = null,Object? limites = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? precioCentimos = null,Object? moneda = null,Object? duracionDias = null,Object? esGratuito = null,Object? beneficios = null,}) {
   return _then(_Plan(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
@@ -307,8 +297,7 @@ as int,moneda: null == moneda ? _self.moneda : moneda // ignore: cast_nullable_t
 as String,duracionDias: null == duracionDias ? _self.duracionDias : duracionDias // ignore: cast_nullable_to_non_nullable
 as int,esGratuito: null == esGratuito ? _self.esGratuito : esGratuito // ignore: cast_nullable_to_non_nullable
 as bool,beneficios: null == beneficios ? _self._beneficios : beneficios // ignore: cast_nullable_to_non_nullable
-as List<String>,limites: null == limites ? _self._limites : limites // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>,
+as List<String>,
   ));
 }
 
@@ -319,7 +308,8 @@ as Map<String, dynamic>,
 /// @nodoc
 mixin _$Subscription {
 
- String get id; Plan get plan; SubscriptionStatus get estado; SubscriptionOrigin get origen; DateTime get inicia; DateTime get expira;
+ String get id; Plan get plan; SubscriptionStatus get estado; SubscriptionOrigin get origen; DateTime get inicia;/// `null` mientras la prueba no haya empezado a correr (D-02).
+ DateTime? get expira;
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -352,7 +342,7 @@ abstract mixin class $SubscriptionCopyWith<$Res>  {
   factory $SubscriptionCopyWith(Subscription value, $Res Function(Subscription) _then) = _$SubscriptionCopyWithImpl;
 @useResult
 $Res call({
- String id, Plan plan, SubscriptionStatus estado, SubscriptionOrigin origen, DateTime inicia, DateTime expira
+ String id, Plan plan, SubscriptionStatus estado, SubscriptionOrigin origen, DateTime inicia, DateTime? expira
 });
 
 
@@ -369,15 +359,15 @@ class _$SubscriptionCopyWithImpl<$Res>
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
 as Plan,estado: null == estado ? _self.estado : estado // ignore: cast_nullable_to_non_nullable
 as SubscriptionStatus,origen: null == origen ? _self.origen : origen // ignore: cast_nullable_to_non_nullable
 as SubscriptionOrigin,inicia: null == inicia ? _self.inicia : inicia // ignore: cast_nullable_to_non_nullable
-as DateTime,expira: null == expira ? _self.expira : expira // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,expira: freezed == expira ? _self.expira : expira // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 /// Create a copy of Subscription
@@ -471,7 +461,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime expira)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
 return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
@@ -492,7 +482,7 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime expira)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)  $default,) {final _that = this;
 switch (_that) {
 case _Subscription():
 return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
@@ -512,7 +502,7 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime expira)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
 return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
@@ -527,7 +517,7 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 @JsonSerializable()
 
 class _Subscription extends Subscription {
-  const _Subscription({required this.id, required this.plan, required this.estado, required this.origen, required this.inicia, required this.expira}): super._();
+  const _Subscription({required this.id, required this.plan, required this.estado, required this.origen, required this.inicia, this.expira}): super._();
   factory _Subscription.fromJson(Map<String, dynamic> json) => _$SubscriptionFromJson(json);
 
 @override final  String id;
@@ -535,7 +525,8 @@ class _Subscription extends Subscription {
 @override final  SubscriptionStatus estado;
 @override final  SubscriptionOrigin origen;
 @override final  DateTime inicia;
-@override final  DateTime expira;
+/// `null` mientras la prueba no haya empezado a correr (D-02).
+@override final  DateTime? expira;
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
@@ -570,7 +561,7 @@ abstract mixin class _$SubscriptionCopyWith<$Res> implements $SubscriptionCopyWi
   factory _$SubscriptionCopyWith(_Subscription value, $Res Function(_Subscription) _then) = __$SubscriptionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Plan plan, SubscriptionStatus estado, SubscriptionOrigin origen, DateTime inicia, DateTime expira
+ String id, Plan plan, SubscriptionStatus estado, SubscriptionOrigin origen, DateTime inicia, DateTime? expira
 });
 
 
@@ -587,15 +578,15 @@ class __$SubscriptionCopyWithImpl<$Res>
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = freezed,}) {
   return _then(_Subscription(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
 as Plan,estado: null == estado ? _self.estado : estado // ignore: cast_nullable_to_non_nullable
 as SubscriptionStatus,origen: null == origen ? _self.origen : origen // ignore: cast_nullable_to_non_nullable
 as SubscriptionOrigin,inicia: null == inicia ? _self.inicia : inicia // ignore: cast_nullable_to_non_nullable
-as DateTime,expira: null == expira ? _self.expira : expira // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,expira: freezed == expira ? _self.expira : expira // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

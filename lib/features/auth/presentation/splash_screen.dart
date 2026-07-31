@@ -1,149 +1,205 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/theme/design_tokens.dart';
-import '../../../core/theme/state_colors.dart';
+import '../../../core/theme/motion.dart';
+import '../../../shared/widgets/brand_mark.dart';
+import '../../../shared/widgets/animations.dart';
+import '../../../shared/widgets/brand_gradient.dart';
+import '../../../shared/widgets/ecg_line.dart';
 
 /// Pantalla 1.1 — carga inicial.
 ///
-/// El router decide a dónde ir cuando el estado de sesión se resuelve; esta
-/// pantalla solo espera. No navega por su cuenta.
+/// El router decide a dónde ir cuando el arranque se resuelve; esta pantalla
+/// solo espera y no navega por su cuenta.
+///
+/// Tiene un tiempo mínimo en pantalla (`StartupNotifier.minimoEnSplash`). Sin
+/// él la lectura del storage tarda ~200 ms y esto era un parpadeo: la animación
+/// no llegaba a verse nunca.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-    final states = context.states;
-
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: states.info.tint,
-                        borderRadius: BorderRadius.circular(
-                          DesignTokens.radiusXl,
+      body: BrandGradient(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const _LogoConPulso(),
+                      const SizedBox(height: DesignTokens.space4 + 2),
+                      const FadeUp(
+                        child: Text(
+                          'ENAM Prep',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                      child: Icon(
-                        Symbols.stethoscope,
-                        size: 44,
-                        fill: 1,
-                        color: states.info.onTint,
+                      const SizedBox(height: DesignTokens.space4 + 2),
+                      const EcgLine(),
+                      const SizedBox(height: DesignTokens.space4 + 2),
+                      FadeUp(
+                        delay: const Duration(milliseconds: 250),
+                        child: Text(
+                          'Tu preparación para el ENAM',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    Text(
-                      'ENAM Prep',
-                      style: context.texts.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.24,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    _EcgLine(color: scheme.primary),
-                    const SizedBox(height: DesignTokens.space4),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: DesignTokens.space8,
-                      ),
-                      child: Text(
-                        'Preparación para el Examen Nacional de Medicina',
-                        textAlign: TextAlign.center,
-                        style: context.texts.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: DesignTokens.space10),
-              child: SizedBox(
-                width: 120,
-                height: 4,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    backgroundColor: scheme.outlineVariant,
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
+              const Padding(
+                padding: EdgeInsets.only(bottom: DesignTokens.space12 + 8),
+                child: _BarraIndeterminada(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// La línea de electrocardiograma del logo.
-class _EcgLine extends StatelessWidget {
-  const _EcgLine({required this.color});
+/// El logo en "vidrio", latiendo con un halo que se expande y se desvanece.
+class _LogoConPulso extends StatefulWidget {
+  const _LogoConPulso();
 
-  final Color color;
+  @override
+  State<_LogoConPulso> createState() => _LogoConPulsoState();
+}
+
+class _LogoConPulsoState extends State<_LogoConPulso>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 2),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // El arranque va aquí y no en initState: con el movimiento reducido no se
+    // programa ningún ticker, en vez de programarlo y luego ignorarlo.
+    if (!Motion.reduced(context) && !_c.isAnimating) _c.repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 180,
-      height: 26,
-      child: CustomPaint(painter: _EcgPainter(color)),
+    const caja = SizedBox(
+      width: 104,
+      height: 104,
+      child: Center(child: BrandMark(size: 60)),
+    );
+
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        // Un solo ciclo: crece hasta la mitad y vuelve.
+        final t = _c.value;
+        final vaiven = (t < 0.5 ? t : 1 - t) * 2;
+        final escala = 1 + 0.05 * vaiven;
+
+        return Transform.scale(
+          scale: escala,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                // El halo crece de 0 a 16 px mientras se desvanece.
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.3 * (1 - vaiven)),
+                  spreadRadius: 16 * vaiven,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: caja,
     );
   }
 }
 
-class _EcgPainter extends CustomPainter {
-  const _EcgPainter(this.color);
-
-  final Color color;
-
-  // Coordenadas del trazo, sobre un lienzo de 180 × 26.
-  static const _points = <Offset>[
-    Offset(0, 13),
-    Offset(50, 13),
-    Offset(56, 3),
-    Offset(64, 23),
-    Offset(70, 9),
-    Offset(76, 13),
-    Offset(118, 13),
-    Offset(124, 5),
-    Offset(132, 21),
-    Offset(138, 13),
-    Offset(180, 13),
-  ];
+/// Barra de progreso indeterminada: un bloque que cruza de lado a lado.
+class _BarraIndeterminada extends StatefulWidget {
+  const _BarraIndeterminada();
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final scaleX = size.width / 180;
-    final scaleY = size.height / 26;
+  State<_BarraIndeterminada> createState() => _BarraIndeterminadaState();
+}
 
-    final path = Path();
-    for (var i = 0; i < _points.length; i++) {
-      final p = Offset(_points[i].dx * scaleX, _points[i].dy * scaleY);
-      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
-    }
+class _BarraIndeterminadaState extends State<_BarraIndeterminada>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
 
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!Motion.reduced(context) && !_c.isAnimating) _c.repeat();
   }
 
   @override
-  bool shouldRepaint(_EcgPainter old) => old.color != color;
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const ancho = 130.0;
+    const anchoBloque = ancho * 0.45;
+
+    return SizedBox(
+      width: ancho,
+      height: 4,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: ColoredBox(
+          color: Colors.white.withValues(alpha: 0.25),
+          child: AnimatedBuilder(
+            animation: _c,
+            builder: (context, child) {
+              final t = Curves.easeInOut.transform(_c.value);
+              return Transform.translate(
+                // De fuera por la izquierda a fuera por la derecha.
+                offset: Offset(-anchoBloque + t * (ancho + anchoBloque), 0),
+                child: child,
+              );
+            },
+            child: Container(
+              width: anchoBloque,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

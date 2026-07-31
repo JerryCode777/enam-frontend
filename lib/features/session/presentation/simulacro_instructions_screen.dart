@@ -12,8 +12,8 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
-import '../../../shared/widgets/paywall_sheet.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../subscription/presentation/access_ended_screen.dart';
 
 /// Pantalla 5.2 — antes de empezar el simulacro.
 ///
@@ -162,13 +162,21 @@ class _SimulacroInstructionsScreenState
       final session = await ref
           .read(sessionRepositoryProvider)
           .startSimulacro(esMuestra: widget.esMuestra);
+
+      // D-02: el reloj de las 24 h arranca aquí también.
+      await ref.read(inicioPruebaProvider.notifier).arrancar();
       if (mounted) {
         context.pushReplacement(Routes.simulacroSessionOf(session.id));
       }
     } on ForbiddenFailure catch (e) {
+      // Empezar un simulacro también arranca el reloj de la prueba (D-02), así
+      // que este 403 puede ser la prueba venciendo justo aquí.
       if (!mounted) return;
-      await mostrarPaywall(context, motivo: PaywallMotivo.simulacroCompleto);
-      if (mounted && !e.isPlanLimit) showErrorSnack(context, e.message);
+      if (e.requiereSuscripcion) {
+        irAlPago(ref, context);
+      } else {
+        showErrorSnack(context, e.message);
+      }
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);
     } finally {

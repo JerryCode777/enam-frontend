@@ -8,7 +8,6 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
-import '../../../shared/widgets/paywall_sheet.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/domain/catalog_models.dart';
 
@@ -57,16 +56,15 @@ final paquetesProvider = Provider<List<Paquete>>((ref) {
 
 /// Pantalla 8.1 — descargas offline (RF-30).
 ///
-/// Solo premium: RF-29 dice que el contenido premium **jamás** se descarga a un
-/// cliente free, así que un usuario gratuito ve la pantalla explicada y con
-/// candado, no la lista.
+/// Ya no tiene una variante con candado. RF-29 sigue en pie —el contenido
+/// premium jamás viaja a un cliente sin plan— pero con el modelo de la v2 no
+/// hay cliente sin plan navegando la app: el router lo dejó en la pantalla de
+/// pago (D-01). Quien llega aquí puede descargar.
 class DownloadsScreen extends ConsumerWidget {
   const DownloadsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(dashboardProvider).value;
-    final esFree = stats?.esFree ?? true;
     final paquetes = ref.watch(paquetesProvider);
 
     final usadosMb = paquetes
@@ -82,9 +80,7 @@ class DownloadsScreen extends ConsumerWidget {
         children: [
           const GradientHeader(titulo: 'Estudiar sin conexión'),
           Expanded(
-            child: esFree
-                ? const _SoloPremium()
-                : ListView(
+            child: ListView(
                     padding: const EdgeInsets.fromLTRB(
                       DesignTokens.space4,
                       DesignTokens.space4,
@@ -273,7 +269,7 @@ class _FilaPaquete extends StatelessWidget {
                       Text(
                         detalle,
                         style: context.texts.bodySmall?.copyWith(
-                          fontSize: 11.5,
+                          fontSize: 13,
                           fontWeight:
                               paquete.estado == DownloadState.actualizable
                               ? FontWeight.w700
@@ -338,51 +334,3 @@ class _FilaPaquete extends StatelessWidget {
   }
 }
 
-/// Usuario free: se explica el beneficio, no se muestra la lista (RF-29).
-class _SoloPremium extends StatelessWidget {
-  const _SoloPremium();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(DesignTokens.space8),
-        child: FadeUp(
-          child: Column(
-            children: [
-              Icon(
-                Symbols.cloud_download,
-                size: 44,
-                color: context.states.info.onTint,
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              Text(
-                'Estudiar sin conexión es de Premium',
-                textAlign: TextAlign.center,
-                style: context.texts.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space3),
-              Text(
-                'Descarga áreas completas y practica en la guardia, en el bus o '
-                'donde no llegue la señal. Tus respuestas se sincronizan al '
-                'reconectar.',
-                textAlign: TextAlign.center,
-                style: context.texts.bodyMedium?.copyWith(height: 1.55),
-              ),
-              const SizedBox(height: DesignTokens.space6),
-              FilledButton(
-                onPressed: () => mostrarPaywall(
-                  context,
-                  motivo: PaywallMotivo.descargaOffline,
-                ),
-                child: const Text('Ver los planes'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

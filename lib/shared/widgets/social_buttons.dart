@@ -1,3 +1,10 @@
+/// Botones de proveedores externos del login: Google y Apple.
+///
+/// Cada uno tiene condiciones de marca propias y no negociables, y por eso no
+/// comparten un widget genérico: el de Google exige fondo claro y logo a todo
+/// color, y el de Apple exige negro o blanco con su manzana.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -22,7 +29,7 @@ class SeparadorAuth extends StatelessWidget {
           child: Text(
             texto,
             style: context.texts.bodySmall?.copyWith(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               color: context.scheme.onSurfaceVariant,
             ),
@@ -94,7 +101,7 @@ class GoogleButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.texts.bodyLarge?.copyWith(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: scheme.onSurface,
                       ),
@@ -105,4 +112,85 @@ class GoogleButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Botón de "Continuar con Apple".
+///
+/// Las reglas de marca de Apple son estrictas y su revisión las mira: el botón
+/// va en negro (o blanco), con su logo a la izquierda, el texto en el idioma
+/// del sistema y sin nada más dentro. Alto mínimo 44 y el logo ocupa alrededor
+/// de un tercio del alto.
+///
+/// Se dibuja a mano y no con el widget del paquete para que comparta la altura
+/// y el radio del resto de botones de la pantalla; los tamaños relativos que
+/// Apple exige se respetan igual.
+class AppleButton extends StatelessWidget {
+  const AppleButton({
+    required this.onPressed,
+    this.loading = false,
+    this.label = 'Apple',
+    super.key,
+  });
+
+  final VoidCallback? onPressed;
+  final bool loading;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    // En tema oscuro el botón va blanco: negro sobre fondo oscuro desaparece,
+    // y Apple permite las dos variantes justamente para esto.
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final fondo = oscuro ? Colors.white : Colors.black;
+    final tinta = oscuro ? Colors.black : Colors.white;
+
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: loading ? null : onPressed,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(64, 54),
+          backgroundColor: fondo,
+          foregroundColor: tinta,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(27),
+          ),
+        ),
+        child: loading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: tinta),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset(
+                    'assets/images/apple_logo.svg',
+                    height: 20,
+                    colorFilter: ColorFilter.mode(tinta, BlendMode.srcIn),
+                  ),
+                  const SizedBox(width: DesignTokens.space2 + 2),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: tinta,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  // La manzana va como asset y no como glifo de `cupertino_icons`: ese paquete
+  // ni siquiera está en el pubspec, así que el icono salía como un cuadrado
+  // vacío. Y aun estando, apoyar un logo de marca en un punto de código de uso
+  // privado de una fuente de iconos es frágil.
 }

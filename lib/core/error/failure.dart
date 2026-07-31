@@ -44,17 +44,29 @@ final class UnauthorizedFailure extends Failure {
 
 /// Autenticado, pero sin permiso (403).
 ///
-/// El caso más común es contenido premium con plan free: RN-03 obliga a que la
-/// validación sea del servidor, así que la app debe manejar este 403 mostrando
-/// el paywall, no escondiendo el botón y asumiendo que basta.
+/// El caso más común es contenido premium sin plan vigente: RN-03 obliga a que
+/// la validación sea del servidor, así que la app debe manejar este 403
+/// llevando al pago, no escondiendo el botón y asumiendo que basta.
 final class ForbiddenFailure extends Failure {
   const ForbiddenFailure([
     super.message = 'Tu plan actual no incluye este contenido.',
     String? code,
   ]) : super(code: code);
 
-  /// Si el 403 viene de haber agotado el límite diario del plan free (RN-03).
-  bool get isPlanLimit => code == 'PLAN_LIMIT_REACHED';
+  /// Si el 403 viene de no tener acceso: la prueba venció o el plan expiró
+  /// (RN-03 v2).
+  ///
+  /// Se aceptan **los dos códigos**. `PLAN_LIMIT_REACHED` es el que envía hoy
+  /// el backend (`internal/httpx/errors.go`) y viene del modelo viejo, donde
+  /// significaba "topaste el límite diario del plan gratuito".
+  /// `SUBSCRIPTION_REQUIRED` es el nombre que describe lo que pasa ahora: sin
+  /// plan no se topa un límite, se pierde la app entera (D-01).
+  ///
+  /// Mientras el backend no renombre el suyo, comprobar solo uno deja la app
+  /// sin distinguir este 403 de cualquier otro, y el usuario se queda con un
+  /// mensaje genérico en vez de ir al pago.
+  bool get requiereSuscripcion =>
+      code == 'SUBSCRIPTION_REQUIRED' || code == 'PLAN_LIMIT_REACHED';
 }
 
 /// El recurso no existe (404).

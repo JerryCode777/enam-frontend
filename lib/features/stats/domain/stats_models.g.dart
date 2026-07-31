@@ -28,6 +28,8 @@ _GradePoint _$GradePointFromJson(Map<String, dynamic> json) => _GradePoint(
   fecha: DateTime.parse(json['fecha'] as String),
   nota: (json['nota'] as num).toDouble(),
   sessionId: json['sessionId'] as String?,
+  tipo: json['tipo'] as String?,
+  totalPreguntas: (json['totalPreguntas'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$GradePointToJson(_GradePoint instance) =>
@@ -35,7 +37,23 @@ Map<String, dynamic> _$GradePointToJson(_GradePoint instance) =>
       'fecha': instance.fecha.toIso8601String(),
       'nota': instance.nota,
       'sessionId': instance.sessionId,
+      'tipo': instance.tipo,
+      'totalPreguntas': instance.totalPreguntas,
     };
+
+_Racha _$RachaFromJson(Map<String, dynamic> json) => _Racha(
+  dias: (json['dias'] as num?)?.toInt() ?? 0,
+  diasDeLaSemana:
+      (json['diasDeLaSemana'] as List<dynamic>?)
+          ?.map((e) => e as bool)
+          .toList() ??
+      const [],
+);
+
+Map<String, dynamic> _$RachaToJson(_Racha instance) => <String, dynamic>{
+  'dias': instance.dias,
+  'diasDeLaSemana': instance.diasDeLaSemana,
+};
 
 _DashboardStats _$DashboardStatsFromJson(
   Map<String, dynamic> json,
@@ -54,7 +72,9 @@ _DashboardStats _$DashboardStatsFromJson(
   preguntasVistas: (json['preguntasVistas'] as num?)?.toInt() ?? 0,
   preguntasTotalesBanco: (json['preguntasTotalesBanco'] as num?)?.toInt() ?? 0,
   simulacrosCompletados: (json['simulacrosCompletados'] as num?)?.toInt() ?? 0,
-  preguntasRestantesHoy: (json['preguntasRestantesHoy'] as num?)?.toInt(),
+  racha: json['racha'] == null
+      ? null
+      : Racha.fromJson(json['racha'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$DashboardStatsToJson(_DashboardStats instance) =>
@@ -65,7 +85,7 @@ Map<String, dynamic> _$DashboardStatsToJson(_DashboardStats instance) =>
       'preguntasVistas': instance.preguntasVistas,
       'preguntasTotalesBanco': instance.preguntasTotalesBanco,
       'simulacrosCompletados': instance.simulacrosCompletados,
-      'preguntasRestantesHoy': instance.preguntasRestantesHoy,
+      'racha': instance.racha,
     };
 
 _RankingEntry _$RankingEntryFromJson(Map<String, dynamic> json) =>

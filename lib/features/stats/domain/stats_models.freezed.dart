@@ -290,7 +290,15 @@ as int,
 /// @nodoc
 mixin _$GradePoint {
 
- DateTime get fecha; double get nota; String? get sessionId;
+ DateTime get fecha; double get nota; String? get sessionId;/// `simulacro` o `simulacro_nacional`, y cuántas preguntas tenía.
+///
+/// Sin esto el gráfico compara notas sacadas sobre bases distintas: un 14
+/// en la muestra de 40 y un 14 en el completo de 180 no valen lo mismo, y
+/// dibujarlos en la misma línea sin distinguirlos engaña.
+///
+/// Con `totalPreguntas` bastaría; `tipo` evita que el cliente lo deduzca de
+/// un número, que es una regla escondida esperando a romperse.
+ String? get tipo; int? get totalPreguntas;
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -303,16 +311,16 @@ $GradePointCopyWith<GradePoint> get copyWith => _$GradePointCopyWithImpl<GradePo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId);
+int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId,tipo,totalPreguntas);
 
 @override
 String toString() {
-  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId)';
+  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId, tipo: $tipo, totalPreguntas: $totalPreguntas)';
 }
 
 
@@ -323,7 +331,7 @@ abstract mixin class $GradePointCopyWith<$Res>  {
   factory $GradePointCopyWith(GradePoint value, $Res Function(GradePoint) _then) = _$GradePointCopyWithImpl;
 @useResult
 $Res call({
- DateTime fecha, double nota, String? sessionId
+ DateTime fecha, double nota, String? sessionId, String? tipo, int? totalPreguntas
 });
 
 
@@ -340,12 +348,14 @@ class _$GradePointCopyWithImpl<$Res>
 
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,Object? tipo = freezed,Object? totalPreguntas = freezed,}) {
   return _then(_self.copyWith(
 fecha: null == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
 as DateTime,nota: null == nota ? _self.nota : nota // ignore: cast_nullable_to_non_nullable
 as double,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,tipo: freezed == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as String?,totalPreguntas: freezed == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -430,10 +440,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GradePoint() when $default != null:
-return $default(_that.fecha,_that.nota,_that.sessionId);case _:
+return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas);case _:
   return orElse();
 
 }
@@ -451,10 +461,10 @@ return $default(_that.fecha,_that.nota,_that.sessionId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas)  $default,) {final _that = this;
 switch (_that) {
 case _GradePoint():
-return $default(_that.fecha,_that.nota,_that.sessionId);case _:
+return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -471,10 +481,10 @@ return $default(_that.fecha,_that.nota,_that.sessionId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime fecha,  double nota,  String? sessionId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas)?  $default,) {final _that = this;
 switch (_that) {
 case _GradePoint() when $default != null:
-return $default(_that.fecha,_that.nota,_that.sessionId);case _:
+return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas);case _:
   return null;
 
 }
@@ -485,13 +495,23 @@ return $default(_that.fecha,_that.nota,_that.sessionId);case _:
 /// @nodoc
 @JsonSerializable()
 
-class _GradePoint implements GradePoint {
-  const _GradePoint({required this.fecha, required this.nota, this.sessionId});
+class _GradePoint extends GradePoint {
+  const _GradePoint({required this.fecha, required this.nota, this.sessionId, this.tipo, this.totalPreguntas}): super._();
   factory _GradePoint.fromJson(Map<String, dynamic> json) => _$GradePointFromJson(json);
 
 @override final  DateTime fecha;
 @override final  double nota;
 @override final  String? sessionId;
+/// `simulacro` o `simulacro_nacional`, y cuántas preguntas tenía.
+///
+/// Sin esto el gráfico compara notas sacadas sobre bases distintas: un 14
+/// en la muestra de 40 y un 14 en el completo de 180 no valen lo mismo, y
+/// dibujarlos en la misma línea sin distinguirlos engaña.
+///
+/// Con `totalPreguntas` bastaría; `tipo` evita que el cliente lo deduzca de
+/// un número, que es una regla escondida esperando a romperse.
+@override final  String? tipo;
+@override final  int? totalPreguntas;
 
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
@@ -506,16 +526,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId);
+int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId,tipo,totalPreguntas);
 
 @override
 String toString() {
-  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId)';
+  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId, tipo: $tipo, totalPreguntas: $totalPreguntas)';
 }
 
 
@@ -526,7 +546,7 @@ abstract mixin class _$GradePointCopyWith<$Res> implements $GradePointCopyWith<$
   factory _$GradePointCopyWith(_GradePoint value, $Res Function(_GradePoint) _then) = __$GradePointCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime fecha, double nota, String? sessionId
+ DateTime fecha, double nota, String? sessionId, String? tipo, int? totalPreguntas
 });
 
 
@@ -543,12 +563,289 @@ class __$GradePointCopyWithImpl<$Res>
 
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,Object? tipo = freezed,Object? totalPreguntas = freezed,}) {
   return _then(_GradePoint(
 fecha: null == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
 as DateTime,nota: null == nota ? _self.nota : nota // ignore: cast_nullable_to_non_nullable
 as double,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,tipo: freezed == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as String?,totalPreguntas: freezed == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$Racha {
+
+ int get dias;/// Los últimos siete días; el último es hoy.
+ List<bool> get diasDeLaSemana;
+/// Create a copy of Racha
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RachaCopyWith<Racha> get copyWith => _$RachaCopyWithImpl<Racha>(this as Racha, _$identity);
+
+  /// Serializes this Racha to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Racha&&(identical(other.dias, dias) || other.dias == dias)&&const DeepCollectionEquality().equals(other.diasDeLaSemana, diasDeLaSemana));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,dias,const DeepCollectionEquality().hash(diasDeLaSemana));
+
+@override
+String toString() {
+  return 'Racha(dias: $dias, diasDeLaSemana: $diasDeLaSemana)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RachaCopyWith<$Res>  {
+  factory $RachaCopyWith(Racha value, $Res Function(Racha) _then) = _$RachaCopyWithImpl;
+@useResult
+$Res call({
+ int dias, List<bool> diasDeLaSemana
+});
+
+
+
+
+}
+/// @nodoc
+class _$RachaCopyWithImpl<$Res>
+    implements $RachaCopyWith<$Res> {
+  _$RachaCopyWithImpl(this._self, this._then);
+
+  final Racha _self;
+  final $Res Function(Racha) _then;
+
+/// Create a copy of Racha
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? dias = null,Object? diasDeLaSemana = null,}) {
+  return _then(_self.copyWith(
+dias: null == dias ? _self.dias : dias // ignore: cast_nullable_to_non_nullable
+as int,diasDeLaSemana: null == diasDeLaSemana ? _self.diasDeLaSemana : diasDeLaSemana // ignore: cast_nullable_to_non_nullable
+as List<bool>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [Racha].
+extension RachaPatterns on Racha {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Racha value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Racha() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Racha value)  $default,){
+final _that = this;
+switch (_that) {
+case _Racha():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Racha value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Racha() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int dias,  List<bool> diasDeLaSemana)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Racha() when $default != null:
+return $default(_that.dias,_that.diasDeLaSemana);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int dias,  List<bool> diasDeLaSemana)  $default,) {final _that = this;
+switch (_that) {
+case _Racha():
+return $default(_that.dias,_that.diasDeLaSemana);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int dias,  List<bool> diasDeLaSemana)?  $default,) {final _that = this;
+switch (_that) {
+case _Racha() when $default != null:
+return $default(_that.dias,_that.diasDeLaSemana);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _Racha implements Racha {
+  const _Racha({this.dias = 0, final  List<bool> diasDeLaSemana = const []}): _diasDeLaSemana = diasDeLaSemana;
+  factory _Racha.fromJson(Map<String, dynamic> json) => _$RachaFromJson(json);
+
+@override@JsonKey() final  int dias;
+/// Los últimos siete días; el último es hoy.
+ final  List<bool> _diasDeLaSemana;
+/// Los últimos siete días; el último es hoy.
+@override@JsonKey() List<bool> get diasDeLaSemana {
+  if (_diasDeLaSemana is EqualUnmodifiableListView) return _diasDeLaSemana;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_diasDeLaSemana);
+}
+
+
+/// Create a copy of Racha
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$RachaCopyWith<_Racha> get copyWith => __$RachaCopyWithImpl<_Racha>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$RachaToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Racha&&(identical(other.dias, dias) || other.dias == dias)&&const DeepCollectionEquality().equals(other._diasDeLaSemana, _diasDeLaSemana));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,dias,const DeepCollectionEquality().hash(_diasDeLaSemana));
+
+@override
+String toString() {
+  return 'Racha(dias: $dias, diasDeLaSemana: $diasDeLaSemana)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$RachaCopyWith<$Res> implements $RachaCopyWith<$Res> {
+  factory _$RachaCopyWith(_Racha value, $Res Function(_Racha) _then) = __$RachaCopyWithImpl;
+@override @useResult
+$Res call({
+ int dias, List<bool> diasDeLaSemana
+});
+
+
+
+
+}
+/// @nodoc
+class __$RachaCopyWithImpl<$Res>
+    implements _$RachaCopyWith<$Res> {
+  __$RachaCopyWithImpl(this._self, this._then);
+
+  final _Racha _self;
+  final $Res Function(_Racha) _then;
+
+/// Create a copy of Racha
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? dias = null,Object? diasDeLaSemana = null,}) {
+  return _then(_Racha(
+dias: null == dias ? _self.dias : dias // ignore: cast_nullable_to_non_nullable
+as int,diasDeLaSemana: null == diasDeLaSemana ? _self._diasDeLaSemana : diasDeLaSemana // ignore: cast_nullable_to_non_nullable
+as List<bool>,
   ));
 }
 
@@ -563,9 +860,13 @@ mixin _$DashboardStats {
 /// usando los pesos del blueprint, en escala vigesimal.
 ///
 /// SIEMPRE se muestra junto a la advertencia de que es una estimación.
- double get notaProyectada; List<AreaPerformance> get porArea; List<GradePoint> get evolucion; int get preguntasVistas; int get preguntasTotalesBanco; int get simulacrosCompletados;/// Preguntas que le quedan hoy a un usuario free (RN-03). `null` si es
-/// premium (ilimitado).
- int? get preguntasRestantesHoy;
+ double get notaProyectada; List<AreaPerformance> get porArea; List<GradePoint> get evolucion; int get preguntasVistas; int get preguntasTotalesBanco; int get simulacrosCompletados;/// La racha de días seguidos.
+///
+/// Nula si el servidor no la manda, y entonces la tarjeta **no se pinta**.
+/// Estuvo escrita a mano en la pantalla —18 días, siempre— y un número que
+/// no se corresponde con lo que la persona hizo es peor que no tener
+/// racha: premia por algo que no pasó.
+ Racha? get racha;
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -578,16 +879,16 @@ $DashboardStatsCopyWith<DashboardStats> get copyWith => _$DashboardStatsCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other.porArea, porArea)&&const DeepCollectionEquality().equals(other.evolucion, evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.preguntasRestantesHoy, preguntasRestantesHoy) || other.preguntasRestantesHoy == preguntasRestantesHoy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other.porArea, porArea)&&const DeepCollectionEquality().equals(other.evolucion, evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.racha, racha) || other.racha == racha));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(porArea),const DeepCollectionEquality().hash(evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,preguntasRestantesHoy);
+int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(porArea),const DeepCollectionEquality().hash(evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,racha);
 
 @override
 String toString() {
-  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, preguntasRestantesHoy: $preguntasRestantesHoy)';
+  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, racha: $racha)';
 }
 
 
@@ -598,11 +899,11 @@ abstract mixin class $DashboardStatsCopyWith<$Res>  {
   factory $DashboardStatsCopyWith(DashboardStats value, $Res Function(DashboardStats) _then) = _$DashboardStatsCopyWithImpl;
 @useResult
 $Res call({
- double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, int? preguntasRestantesHoy
+ double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, Racha? racha
 });
 
 
-
+$RachaCopyWith<$Res>? get racha;
 
 }
 /// @nodoc
@@ -615,7 +916,7 @@ class _$DashboardStatsCopyWithImpl<$Res>
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? preguntasRestantesHoy = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? racha = freezed,}) {
   return _then(_self.copyWith(
 notaProyectada: null == notaProyectada ? _self.notaProyectada : notaProyectada // ignore: cast_nullable_to_non_nullable
 as double,porArea: null == porArea ? _self.porArea : porArea // ignore: cast_nullable_to_non_nullable
@@ -623,11 +924,23 @@ as List<AreaPerformance>,evolucion: null == evolucion ? _self.evolucion : evoluc
 as List<GradePoint>,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,preguntasTotalesBanco: null == preguntasTotalesBanco ? _self.preguntasTotalesBanco : preguntasTotalesBanco // ignore: cast_nullable_to_non_nullable
 as int,simulacrosCompletados: null == simulacrosCompletados ? _self.simulacrosCompletados : simulacrosCompletados // ignore: cast_nullable_to_non_nullable
-as int,preguntasRestantesHoy: freezed == preguntasRestantesHoy ? _self.preguntasRestantesHoy : preguntasRestantesHoy // ignore: cast_nullable_to_non_nullable
-as int?,
+as int,racha: freezed == racha ? _self.racha : racha // ignore: cast_nullable_to_non_nullable
+as Racha?,
   ));
 }
+/// Create a copy of DashboardStats
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RachaCopyWith<$Res>? get racha {
+    if (_self.racha == null) {
+    return null;
+  }
 
+  return $RachaCopyWith<$Res>(_self.racha!, (value) {
+    return _then(_self.copyWith(racha: value));
+  });
+}
 }
 
 
@@ -709,10 +1022,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  int? preguntasRestantesHoy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  Racha? racha)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DashboardStats() when $default != null:
-return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.preguntasRestantesHoy);case _:
+return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.racha);case _:
   return orElse();
 
 }
@@ -730,10 +1043,10 @@ return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.pregunt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  int? preguntasRestantesHoy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  Racha? racha)  $default,) {final _that = this;
 switch (_that) {
 case _DashboardStats():
-return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.preguntasRestantesHoy);case _:
+return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.racha);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -750,10 +1063,10 @@ return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.pregunt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  int? preguntasRestantesHoy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  Racha? racha)?  $default,) {final _that = this;
 switch (_that) {
 case _DashboardStats() when $default != null:
-return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.preguntasRestantesHoy);case _:
+return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.racha);case _:
   return null;
 
 }
@@ -765,7 +1078,7 @@ return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.pregunt
 @JsonSerializable()
 
 class _DashboardStats extends DashboardStats {
-  const _DashboardStats({required this.notaProyectada, final  List<AreaPerformance> porArea = const [], final  List<GradePoint> evolucion = const [], this.preguntasVistas = 0, this.preguntasTotalesBanco = 0, this.simulacrosCompletados = 0, this.preguntasRestantesHoy}): _porArea = porArea,_evolucion = evolucion,super._();
+  const _DashboardStats({required this.notaProyectada, final  List<AreaPerformance> porArea = const [], final  List<GradePoint> evolucion = const [], this.preguntasVistas = 0, this.preguntasTotalesBanco = 0, this.simulacrosCompletados = 0, this.racha}): _porArea = porArea,_evolucion = evolucion,super._();
   factory _DashboardStats.fromJson(Map<String, dynamic> json) => _$DashboardStatsFromJson(json);
 
 /// Nota proyectada (RN-04): promedio ponderado del % de acierto por área
@@ -790,9 +1103,13 @@ class _DashboardStats extends DashboardStats {
 @override@JsonKey() final  int preguntasVistas;
 @override@JsonKey() final  int preguntasTotalesBanco;
 @override@JsonKey() final  int simulacrosCompletados;
-/// Preguntas que le quedan hoy a un usuario free (RN-03). `null` si es
-/// premium (ilimitado).
-@override final  int? preguntasRestantesHoy;
+/// La racha de días seguidos.
+///
+/// Nula si el servidor no la manda, y entonces la tarjeta **no se pinta**.
+/// Estuvo escrita a mano en la pantalla —18 días, siempre— y un número que
+/// no se corresponde con lo que la persona hizo es peor que no tener
+/// racha: premia por algo que no pasó.
+@override final  Racha? racha;
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
@@ -807,16 +1124,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other._porArea, _porArea)&&const DeepCollectionEquality().equals(other._evolucion, _evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.preguntasRestantesHoy, preguntasRestantesHoy) || other.preguntasRestantesHoy == preguntasRestantesHoy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other._porArea, _porArea)&&const DeepCollectionEquality().equals(other._evolucion, _evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.racha, racha) || other.racha == racha));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(_porArea),const DeepCollectionEquality().hash(_evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,preguntasRestantesHoy);
+int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(_porArea),const DeepCollectionEquality().hash(_evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,racha);
 
 @override
 String toString() {
-  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, preguntasRestantesHoy: $preguntasRestantesHoy)';
+  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, racha: $racha)';
 }
 
 
@@ -827,11 +1144,11 @@ abstract mixin class _$DashboardStatsCopyWith<$Res> implements $DashboardStatsCo
   factory _$DashboardStatsCopyWith(_DashboardStats value, $Res Function(_DashboardStats) _then) = __$DashboardStatsCopyWithImpl;
 @override @useResult
 $Res call({
- double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, int? preguntasRestantesHoy
+ double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, Racha? racha
 });
 
 
-
+@override $RachaCopyWith<$Res>? get racha;
 
 }
 /// @nodoc
@@ -844,7 +1161,7 @@ class __$DashboardStatsCopyWithImpl<$Res>
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? preguntasRestantesHoy = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? racha = freezed,}) {
   return _then(_DashboardStats(
 notaProyectada: null == notaProyectada ? _self.notaProyectada : notaProyectada // ignore: cast_nullable_to_non_nullable
 as double,porArea: null == porArea ? _self._porArea : porArea // ignore: cast_nullable_to_non_nullable
@@ -852,12 +1169,24 @@ as List<AreaPerformance>,evolucion: null == evolucion ? _self._evolucion : evolu
 as List<GradePoint>,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,preguntasTotalesBanco: null == preguntasTotalesBanco ? _self.preguntasTotalesBanco : preguntasTotalesBanco // ignore: cast_nullable_to_non_nullable
 as int,simulacrosCompletados: null == simulacrosCompletados ? _self.simulacrosCompletados : simulacrosCompletados // ignore: cast_nullable_to_non_nullable
-as int,preguntasRestantesHoy: freezed == preguntasRestantesHoy ? _self.preguntasRestantesHoy : preguntasRestantesHoy // ignore: cast_nullable_to_non_nullable
-as int?,
+as int,racha: freezed == racha ? _self.racha : racha // ignore: cast_nullable_to_non_nullable
+as Racha?,
   ));
 }
 
+/// Create a copy of DashboardStats
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RachaCopyWith<$Res>? get racha {
+    if (_self.racha == null) {
+    return null;
+  }
 
+  return $RachaCopyWith<$Res>(_self.racha!, (value) {
+    return _then(_self.copyWith(racha: value));
+  });
+}
 }
 
 

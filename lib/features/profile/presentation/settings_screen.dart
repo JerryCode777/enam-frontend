@@ -80,7 +80,7 @@ class _Titulo extends StatelessWidget {
       child: Text(
         texto,
         style: context.texts.bodySmall?.copyWith(
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.7,
           color: context.scheme.onSurfaceVariant,
@@ -154,7 +154,7 @@ class _TarjetaPerfil extends StatelessWidget {
                     if (detalle.isNotEmpty)
                       Text(
                         detalle,
-                        style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+                        style: context.texts.bodySmall?.copyWith(fontSize: 13),
                       ),
                   ],
                 ),
@@ -208,7 +208,7 @@ class _EstudioState extends ConsumerState<_Estudio> {
               _recordatorio
                   ? 'Todos los días · ${_hora.format(context)}'
                   : 'Apagado',
-              style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+              style: context.texts.bodySmall?.copyWith(fontSize: 13),
             ),
           ),
           if (_recordatorio) ...[
@@ -233,7 +233,7 @@ class _EstudioState extends ConsumerState<_Estudio> {
             title: const Text('Avisos de simulacro nacional'),
             subtitle: Text(
               'Participación, inicio y resultados',
-              style: context.texts.bodySmall?.copyWith(fontSize: 11.5),
+              style: context.texts.bodySmall?.copyWith(fontSize: 13),
             ),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),

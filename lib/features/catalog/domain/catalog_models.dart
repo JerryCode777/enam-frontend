@@ -87,6 +87,12 @@ abstract class CatalogNode with _$CatalogNode {
   double? get porcentajeAcierto =>
       respuestasTotales == 0 ? null : respuestasCorrectas / respuestasTotales;
 
+  /// Respuestas erradas en este nodo.
+  ///
+  /// Es lo que se ofrece repasar cuando ya se vieron todas las preguntas: sin
+  /// esto, un nodo agotado se queda sin ninguna acción siguiente.
+  int get preguntasFalladas => respuestasTotales - respuestasCorrectas;
+
   /// Avance de cobertura del banco en este nodo (0.0 a 1.0).
   double get cobertura => preguntasDisponibles == 0
       ? 0

@@ -1189,6 +1189,571 @@ as QuestionSource,
 
 
 /// @nodoc
+mixin _$OpenSession {
+
+ String get id; SessionType get tipo; DateTime get iniciadaEn; DateTime? get expiraEn; int get respondidas; int get totalPreguntas;
+/// Create a copy of OpenSession
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$OpenSessionCopyWith<OpenSession> get copyWith => _$OpenSessionCopyWithImpl<OpenSession>(this as OpenSession, _$identity);
+
+  /// Serializes this OpenSession to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OpenSession&&(identical(other.id, id) || other.id == id)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.iniciadaEn, iniciadaEn) || other.iniciadaEn == iniciadaEn)&&(identical(other.expiraEn, expiraEn) || other.expiraEn == expiraEn)&&(identical(other.respondidas, respondidas) || other.respondidas == respondidas)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,tipo,iniciadaEn,expiraEn,respondidas,totalPreguntas);
+
+@override
+String toString() {
+  return 'OpenSession(id: $id, tipo: $tipo, iniciadaEn: $iniciadaEn, expiraEn: $expiraEn, respondidas: $respondidas, totalPreguntas: $totalPreguntas)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $OpenSessionCopyWith<$Res>  {
+  factory $OpenSessionCopyWith(OpenSession value, $Res Function(OpenSession) _then) = _$OpenSessionCopyWithImpl;
+@useResult
+$Res call({
+ String id, SessionType tipo, DateTime iniciadaEn, DateTime? expiraEn, int respondidas, int totalPreguntas
+});
+
+
+
+
+}
+/// @nodoc
+class _$OpenSessionCopyWithImpl<$Res>
+    implements $OpenSessionCopyWith<$Res> {
+  _$OpenSessionCopyWithImpl(this._self, this._then);
+
+  final OpenSession _self;
+  final $Res Function(OpenSession) _then;
+
+/// Create a copy of OpenSession
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? tipo = null,Object? iniciadaEn = null,Object? expiraEn = freezed,Object? respondidas = null,Object? totalPreguntas = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as SessionType,iniciadaEn: null == iniciadaEn ? _self.iniciadaEn : iniciadaEn // ignore: cast_nullable_to_non_nullable
+as DateTime,expiraEn: freezed == expiraEn ? _self.expiraEn : expiraEn // ignore: cast_nullable_to_non_nullable
+as DateTime?,respondidas: null == respondidas ? _self.respondidas : respondidas // ignore: cast_nullable_to_non_nullable
+as int,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [OpenSession].
+extension OpenSessionPatterns on OpenSession {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _OpenSession value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _OpenSession() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _OpenSession value)  $default,){
+final _that = this;
+switch (_that) {
+case _OpenSession():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _OpenSession value)?  $default,){
+final _that = this;
+switch (_that) {
+case _OpenSession() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _OpenSession() when $default != null:
+return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respondidas,_that.totalPreguntas);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)  $default,) {final _that = this;
+switch (_that) {
+case _OpenSession():
+return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respondidas,_that.totalPreguntas);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)?  $default,) {final _that = this;
+switch (_that) {
+case _OpenSession() when $default != null:
+return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respondidas,_that.totalPreguntas);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _OpenSession extends OpenSession {
+  const _OpenSession({required this.id, required this.tipo, required this.iniciadaEn, this.expiraEn, this.respondidas = 0, this.totalPreguntas = 0}): super._();
+  factory _OpenSession.fromJson(Map<String, dynamic> json) => _$OpenSessionFromJson(json);
+
+@override final  String id;
+@override final  SessionType tipo;
+@override final  DateTime iniciadaEn;
+@override final  DateTime? expiraEn;
+@override@JsonKey() final  int respondidas;
+@override@JsonKey() final  int totalPreguntas;
+
+/// Create a copy of OpenSession
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$OpenSessionCopyWith<_OpenSession> get copyWith => __$OpenSessionCopyWithImpl<_OpenSession>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$OpenSessionToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OpenSession&&(identical(other.id, id) || other.id == id)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.iniciadaEn, iniciadaEn) || other.iniciadaEn == iniciadaEn)&&(identical(other.expiraEn, expiraEn) || other.expiraEn == expiraEn)&&(identical(other.respondidas, respondidas) || other.respondidas == respondidas)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,tipo,iniciadaEn,expiraEn,respondidas,totalPreguntas);
+
+@override
+String toString() {
+  return 'OpenSession(id: $id, tipo: $tipo, iniciadaEn: $iniciadaEn, expiraEn: $expiraEn, respondidas: $respondidas, totalPreguntas: $totalPreguntas)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$OpenSessionCopyWith<$Res> implements $OpenSessionCopyWith<$Res> {
+  factory _$OpenSessionCopyWith(_OpenSession value, $Res Function(_OpenSession) _then) = __$OpenSessionCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, SessionType tipo, DateTime iniciadaEn, DateTime? expiraEn, int respondidas, int totalPreguntas
+});
+
+
+
+
+}
+/// @nodoc
+class __$OpenSessionCopyWithImpl<$Res>
+    implements _$OpenSessionCopyWith<$Res> {
+  __$OpenSessionCopyWithImpl(this._self, this._then);
+
+  final _OpenSession _self;
+  final $Res Function(_OpenSession) _then;
+
+/// Create a copy of OpenSession
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? tipo = null,Object? iniciadaEn = null,Object? expiraEn = freezed,Object? respondidas = null,Object? totalPreguntas = null,}) {
+  return _then(_OpenSession(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
+as SessionType,iniciadaEn: null == iniciadaEn ? _self.iniciadaEn : iniciadaEn // ignore: cast_nullable_to_non_nullable
+as DateTime,expiraEn: freezed == expiraEn ? _self.expiraEn : expiraEn // ignore: cast_nullable_to_non_nullable
+as DateTime?,respondidas: null == respondidas ? _self.respondidas : respondidas // ignore: cast_nullable_to_non_nullable
+as int,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$NationalMock {
+
+ String get id; String get nombre; DateTime get inicio; DateTime get fin; int get duracionMinutos; int get participantes; bool get inscrito; NationalMockStatus get estado; int get totalPreguntas;
+/// Create a copy of NationalMock
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NationalMockCopyWith<NationalMock> get copyWith => _$NationalMockCopyWithImpl<NationalMock>(this as NationalMock, _$identity);
+
+  /// Serializes this NationalMock to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NationalMock&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.inicio, inicio) || other.inicio == inicio)&&(identical(other.fin, fin) || other.fin == fin)&&(identical(other.duracionMinutos, duracionMinutos) || other.duracionMinutos == duracionMinutos)&&(identical(other.participantes, participantes) || other.participantes == participantes)&&(identical(other.inscrito, inscrito) || other.inscrito == inscrito)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,nombre,inicio,fin,duracionMinutos,participantes,inscrito,estado,totalPreguntas);
+
+@override
+String toString() {
+  return 'NationalMock(id: $id, nombre: $nombre, inicio: $inicio, fin: $fin, duracionMinutos: $duracionMinutos, participantes: $participantes, inscrito: $inscrito, estado: $estado, totalPreguntas: $totalPreguntas)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NationalMockCopyWith<$Res>  {
+  factory $NationalMockCopyWith(NationalMock value, $Res Function(NationalMock) _then) = _$NationalMockCopyWithImpl;
+@useResult
+$Res call({
+ String id, String nombre, DateTime inicio, DateTime fin, int duracionMinutos, int participantes, bool inscrito, NationalMockStatus estado, int totalPreguntas
+});
+
+
+
+
+}
+/// @nodoc
+class _$NationalMockCopyWithImpl<$Res>
+    implements $NationalMockCopyWith<$Res> {
+  _$NationalMockCopyWithImpl(this._self, this._then);
+
+  final NationalMock _self;
+  final $Res Function(NationalMock) _then;
+
+/// Create a copy of NationalMock
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? inicio = null,Object? fin = null,Object? duracionMinutos = null,Object? participantes = null,Object? inscrito = null,Object? estado = null,Object? totalPreguntas = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
+as String,inicio: null == inicio ? _self.inicio : inicio // ignore: cast_nullable_to_non_nullable
+as DateTime,fin: null == fin ? _self.fin : fin // ignore: cast_nullable_to_non_nullable
+as DateTime,duracionMinutos: null == duracionMinutos ? _self.duracionMinutos : duracionMinutos // ignore: cast_nullable_to_non_nullable
+as int,participantes: null == participantes ? _self.participantes : participantes // ignore: cast_nullable_to_non_nullable
+as int,inscrito: null == inscrito ? _self.inscrito : inscrito // ignore: cast_nullable_to_non_nullable
+as bool,estado: null == estado ? _self.estado : estado // ignore: cast_nullable_to_non_nullable
+as NationalMockStatus,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [NationalMock].
+extension NationalMockPatterns on NationalMock {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _NationalMock value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _NationalMock() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _NationalMock value)  $default,){
+final _that = this;
+switch (_that) {
+case _NationalMock():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _NationalMock value)?  $default,){
+final _that = this;
+switch (_that) {
+case _NationalMock() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  DateTime inicio,  DateTime fin,  int duracionMinutos,  int participantes,  bool inscrito,  NationalMockStatus estado,  int totalPreguntas)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _NationalMock() when $default != null:
+return $default(_that.id,_that.nombre,_that.inicio,_that.fin,_that.duracionMinutos,_that.participantes,_that.inscrito,_that.estado,_that.totalPreguntas);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  DateTime inicio,  DateTime fin,  int duracionMinutos,  int participantes,  bool inscrito,  NationalMockStatus estado,  int totalPreguntas)  $default,) {final _that = this;
+switch (_that) {
+case _NationalMock():
+return $default(_that.id,_that.nombre,_that.inicio,_that.fin,_that.duracionMinutos,_that.participantes,_that.inscrito,_that.estado,_that.totalPreguntas);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  DateTime inicio,  DateTime fin,  int duracionMinutos,  int participantes,  bool inscrito,  NationalMockStatus estado,  int totalPreguntas)?  $default,) {final _that = this;
+switch (_that) {
+case _NationalMock() when $default != null:
+return $default(_that.id,_that.nombre,_that.inicio,_that.fin,_that.duracionMinutos,_that.participantes,_that.inscrito,_that.estado,_that.totalPreguntas);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _NationalMock extends NationalMock {
+  const _NationalMock({required this.id, required this.nombre, required this.inicio, required this.fin, this.duracionMinutos = 0, this.participantes = 0, this.inscrito = false, this.estado = NationalMockStatus.programado, this.totalPreguntas = 0}): super._();
+  factory _NationalMock.fromJson(Map<String, dynamic> json) => _$NationalMockFromJson(json);
+
+@override final  String id;
+@override final  String nombre;
+@override final  DateTime inicio;
+@override final  DateTime fin;
+@override@JsonKey() final  int duracionMinutos;
+@override@JsonKey() final  int participantes;
+@override@JsonKey() final  bool inscrito;
+@override@JsonKey() final  NationalMockStatus estado;
+@override@JsonKey() final  int totalPreguntas;
+
+/// Create a copy of NationalMock
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$NationalMockCopyWith<_NationalMock> get copyWith => __$NationalMockCopyWithImpl<_NationalMock>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$NationalMockToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NationalMock&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.inicio, inicio) || other.inicio == inicio)&&(identical(other.fin, fin) || other.fin == fin)&&(identical(other.duracionMinutos, duracionMinutos) || other.duracionMinutos == duracionMinutos)&&(identical(other.participantes, participantes) || other.participantes == participantes)&&(identical(other.inscrito, inscrito) || other.inscrito == inscrito)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,nombre,inicio,fin,duracionMinutos,participantes,inscrito,estado,totalPreguntas);
+
+@override
+String toString() {
+  return 'NationalMock(id: $id, nombre: $nombre, inicio: $inicio, fin: $fin, duracionMinutos: $duracionMinutos, participantes: $participantes, inscrito: $inscrito, estado: $estado, totalPreguntas: $totalPreguntas)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$NationalMockCopyWith<$Res> implements $NationalMockCopyWith<$Res> {
+  factory _$NationalMockCopyWith(_NationalMock value, $Res Function(_NationalMock) _then) = __$NationalMockCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String nombre, DateTime inicio, DateTime fin, int duracionMinutos, int participantes, bool inscrito, NationalMockStatus estado, int totalPreguntas
+});
+
+
+
+
+}
+/// @nodoc
+class __$NationalMockCopyWithImpl<$Res>
+    implements _$NationalMockCopyWith<$Res> {
+  __$NationalMockCopyWithImpl(this._self, this._then);
+
+  final _NationalMock _self;
+  final $Res Function(_NationalMock) _then;
+
+/// Create a copy of NationalMock
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? inicio = null,Object? fin = null,Object? duracionMinutos = null,Object? participantes = null,Object? inscrito = null,Object? estado = null,Object? totalPreguntas = null,}) {
+  return _then(_NationalMock(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
+as String,inicio: null == inicio ? _self.inicio : inicio // ignore: cast_nullable_to_non_nullable
+as DateTime,fin: null == fin ? _self.fin : fin // ignore: cast_nullable_to_non_nullable
+as DateTime,duracionMinutos: null == duracionMinutos ? _self.duracionMinutos : duracionMinutos // ignore: cast_nullable_to_non_nullable
+as int,participantes: null == participantes ? _self.participantes : participantes // ignore: cast_nullable_to_non_nullable
+as int,inscrito: null == inscrito ? _self.inscrito : inscrito // ignore: cast_nullable_to_non_nullable
+as bool,estado: null == estado ? _self.estado : estado // ignore: cast_nullable_to_non_nullable
+as NationalMockStatus,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$StudySession {
 
  String get id; SessionType get tipo; SessionStatus get estado; DateTime get iniciadaEn; List<Question> get preguntas; Map<String, Answer> get respuestas; DateTime? get finalizadaEn;/// Cuándo se acaba el tiempo. Solo en simulacros.

@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Pantalla nativa de arranque: lo que se ve antes de que Flutter dibuje.
+     Va en el azul de marca, no en blanco: si no, el usuario ve un destello
+     blanco con el logo de Flutter y recién después el splash de la app. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+    <item android:drawable="@color/marca_arranque" />
 </layer-list>

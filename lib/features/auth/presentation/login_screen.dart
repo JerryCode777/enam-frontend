@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
@@ -10,9 +9,13 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
+import '../../../shared/widgets/auth_scaffold.dart';
+import '../../../shared/widgets/brand_gradient.dart';
+import '../../../shared/widgets/brand_mark.dart';
+import '../../../shared/widgets/ecg_line.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
-import '../../../shared/widgets/google_button.dart';
+import '../../../shared/widgets/social_buttons.dart';
 import '../../../shared/widgets/state_banner.dart';
 
 /// Pantalla 1.5 — login con correo y contraseña, y con Google.
@@ -35,10 +38,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _passwordError;
   bool _loading = false;
   bool _loadingGoogle = false;
+  bool _loadingApple = false;
 
   /// Cualquier login en curso: bloquea el resto de la pantalla, para que no se
-  /// puedan lanzar los dos a la vez.
-  bool get _ocupado => _loading || _loadingGoogle;
+  /// puedan lanzar dos a la vez.
+  bool get _ocupado => _loading || _loadingGoogle || _loadingApple;
 
   @override
   void dispose() {
@@ -70,19 +74,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingGoogle = true);
     try {
-      await ref.read(authControllerProvider.notifier).signInWithGoogle();
-
-      // Si el login funcionó, el router ya desmontó esta pantalla y ni el
-      // ref ni el context se pueden tocar (Riverpod lanza si se intenta).
-      if (!mounted) return;
-
-      // Igual que en el login normal: el router redirige solo si el estado
-      // pasó a autenticado; si quedó en error, se muestra aquí.
-      //
+      await _conConsentimiento(
+        (acepta) => ref
+            .read(authControllerProvider.notifier)
+            .signInWithGoogle(aceptaTerminos: acepta),
+      );
+    } on Object catch (error) {
       // En snackbar y no bajo los campos: el fallo no viene de lo que el
       // usuario escribió, así que señalarle la contraseña sería engañoso.
-      final error = ref.read(authControllerProvider).error;
-      if (error != null) {
+      if (mounted) {
         showErrorSnack(
           context,
           error is Failure ? error.message : 'No se pudo continuar con Google.',
@@ -93,6 +93,84 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _submitApple() async {
+    if (_ocupado) return;
+
+    setState(() => _loadingApple = true);
+    try {
+      await _conConsentimiento(
+        (acepta) => ref
+            .read(authControllerProvider.notifier)
+            .signInWithApple(aceptaTerminos: acepta),
+      );
+    } on Object catch (error) {
+      if (mounted) {
+        showErrorSnack(
+          context,
+          error is Failure ? error.message : 'No se pudo continuar con Apple.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingApple = false);
+    }
+  }
+
+  /// Entra con Google o Apple, pidiendo el consentimiento solo si hace falta.
+  ///
+  /// El botón vive en el login, que no tiene casilla que marcar, así que el
+  /// consentimiento no se puede pedir por adelantado sin molestar a quien solo
+  /// vuelve a entrar — que es la inmensa mayoría. El camino es al revés: se
+  /// intenta, y **solo si la cuenta es nueva** el servidor responde
+  /// `CONSENT_REQUIRED`; ahí se enseñan los términos y se reintenta.
+  ///
+  /// Marcar el consentimiento de oficio sería inventar una prueba de algo que
+  /// nadie aceptó, y la Ley 29733 pide justo lo contrario.
+  Future<void> _conConsentimiento(
+    Future<bool> Function(bool aceptaTerminos) entrar,
+  ) async {
+    try {
+      await entrar(false);
+    } on Failure catch (error) {
+      if (error.code != 'CONSENT_REQUIRED') rethrow;
+      if (!mounted) return;
+
+      if (await _pedirConsentimiento() != true) return;
+      if (!mounted) return;
+
+      await entrar(true);
+    }
+  }
+
+  Future<bool?> _pedirConsentimiento() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('Antes de crear tu cuenta'),
+        content: const Text(
+          'Necesitamos que aceptes los términos del servicio y la política de '
+          'privacidad. Puedes leerlos en cualquier momento desde Ajustes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogo).pop(false),
+            child: const Text('Ahora no'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogo).pop(false);
+              context.push(Routes.terms);
+            },
+            child: const Text('Leerlos'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogo).pop(true),
+            child: const Text('Acepto'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (_ocupado || !_validate()) return;
 
@@ -101,16 +179,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .signIn(email: _email.text.trim(), password: _password.text);
-
-      // Si el login funcionó, el router ya desmontó esta pantalla y ni el
-      // ref ni el context se pueden tocar (Riverpod lanza si se intenta).
-      if (!mounted) return;
-
-      // El router redirige solo cuando cambia el estado de auth. Si el estado
-      // quedó en error, hay que mostrarlo aquí.
-      final state = ref.read(authControllerProvider);
-      final error = state.error;
-      if (error != null) _showFailure(error);
+      // Si llegó aquí, entró: el router se encarga de sacar de esta pantalla.
+    } on Object catch (error) {
+      // El fallo llega como excepción, no leyendo el estado: con credenciales
+      // malas el usuario sigue sin sesión, esta pantalla no se desmonta y el
+      // error se puede enseñar donde toca.
+      if (mounted) _showFailure(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -134,134 +208,187 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  /// Si hay al menos un proveedor externo que mostrar.
+  bool get _hayProveedores =>
+      AppConfig.googleSignInHabilitado ||
+      (ref.read(appleDisponibleProvider).value ?? false);
+
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-    final states = context.states;
-
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space6,
-            DesignTokens.space12,
-            DesignTokens.space6,
-            DesignTokens.space6,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: states.info.tint,
-                      borderRadius: BorderRadius.circular(
-                        DesignTokens.radiusMd + 2,
+      body: BrandGradient(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _CabeceraMarca(),
+                const SizedBox(height: DesignTokens.space3),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space4,
+                    0,
+                    DesignTokens.space4,
+                    DesignTokens.space6,
+                  ),
+                  child: AuthCard(
+                    children: [
+                      EnamTextField(
+                        label: 'Correo',
+                        controller: _email,
+                        error: _emailError,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
+                        enabled: !_ocupado,
+                        onChanged: (_) {
+                          if (_emailError != null) {
+                            setState(() => _emailError = null);
+                          }
+                        },
                       ),
-                    ),
-                    child: Icon(
-                      Symbols.stethoscope,
-                      size: 24,
-                      fill: 1,
-                      color: states.info.onTint,
-                    ),
+                      EnamTextField(
+                        label: 'Contraseña',
+                        controller: _password,
+                        error: _passwordError,
+                        obscure: true,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        enabled: !_ocupado,
+                        onSubmitted: (_) => _submit(),
+                        onChanged: (_) {
+                          if (_passwordError != null) {
+                            setState(() => _passwordError = null);
+                          }
+                        },
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _ocupado
+                              ? null
+                              : () => context.push(
+                                  Routes.forgotPassword,
+                                  // Se lleva lo que ya escribió: volver a
+                                  // teclear el correo justo cuando no
+                                  // recuerdas algo es fricción gratuita.
+                                  extra: _email.text.trim().isEmpty
+                                      ? null
+                                      : _email.text.trim(),
+                                ),
+                          child: const Text(
+                            '¿Olvidaste tu contraseña?',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      EnamButton(
+                        label: 'Ingresar',
+                        loading: _loading,
+                        onPressed: _submit,
+                      ),
+                      if (_hayProveedores) const SeparadorAuth(),
+                      if (AppConfig.googleSignInHabilitado)
+                        GoogleButton(
+                          loading: _loadingGoogle,
+                          onPressed: _ocupado ? null : _submitGoogle,
+                        ),
+                      // Solo en iOS: si la app ofrece otro proveedor externo,
+                      // App Store exige también "Sign in with Apple", y en
+                      // Android el botón no le diría nada a nadie.
+                      if (ref.watch(appleDisponibleProvider).value ?? false)
+                        AppleButton(
+                          loading: _loadingApple,
+                          onPressed: _ocupado ? null : _submitApple,
+                        ),
+                      AuthFooter(
+                        pregunta: '¿Primera vez?',
+                        accion: 'Crea tu cuenta',
+                        onTap: _ocupado ? null : () => context.go(Routes.register),
+                      ),
+                      // Ayuda para desarrollo: con mocks, estos correos disparan
+                      // cada camino de error sin tocar código.
+                      if (const bool.fromEnvironment('dart.vm.product') == false)
+                        Text(
+                          'Modo desarrollo · cualquier correo entra · '
+                          'contraseña "error" falla · nuevo2@enam.pe entra con '
+                          'perfil incompleto',
+                          textAlign: TextAlign.center,
+                          style: context.texts.bodySmall?.copyWith(
+                            color: context.scheme.onSurfaceVariant.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: DesignTokens.space3),
-                  Text(
-                    'ENAM Prep',
-                    style: context.texts.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: DesignTokens.space6),
-              Text(
-                'Hola de nuevo',
-                style: context.texts.headlineMedium?.copyWith(
-                  fontSize: DesignTokens.fontSize2xl + 2,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space5),
-              EnamTextField(
-                label: 'Correo',
-                controller: _email,
-                error: _emailError,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.email],
-                enabled: !_ocupado,
-                onChanged: (_) {
-                  if (_emailError != null) setState(() => _emailError = null);
-                },
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              EnamTextField(
-                label: 'Contraseña',
-                controller: _password,
-                error: _passwordError,
-                obscure: true,
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.password],
-                enabled: !_ocupado,
-                onSubmitted: (_) => _submit(),
-                onChanged: (_) {
-                  if (_passwordError != null) {
-                    setState(() => _passwordError = null);
-                  }
-                },
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _ocupado
-                      ? null
-                      : () => context.push(Routes.forgotPassword),
-                  child: const Text('¿Olvidaste tu contraseña?'),
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              EnamButton(
-                label: 'Ingresar',
-                loading: _loading,
-                onPressed: _submit,
-              ),
-              if (AppConfig.googleSignInHabilitado) ...[
-                const SizedBox(height: DesignTokens.space5),
-                const SeparadorAuth(),
-                const SizedBox(height: DesignTokens.space4),
-                GoogleButton(
-                  loading: _loadingGoogle,
-                  onPressed: _ocupado ? null : _submitGoogle,
                 ),
               ],
-              const SizedBox(height: DesignTokens.space4),
-              AuthFooter(
-                pregunta: '¿Primera vez?',
-                accion: 'Crea tu cuenta',
-                onTap: _ocupado ? null : () => context.go(Routes.register),
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              // Ayuda para desarrollo: con mocks, estos correos disparan cada
-              // camino de error sin tocar código.
-              if (const bool.fromEnvironment('dart.vm.product') == false)
-                Text(
-                  'Modo desarrollo · cualquier correo entra · '
-                  'contraseña "error" falla · nuevo2@enam.pe entra con perfil '
-                  'incompleto',
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Logo, saludo y el electrocardiograma sobre el degradado.
+class _CabeceraMarca extends StatelessWidget {
+  const _CabeceraMarca();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space5,
+        DesignTokens.space6,
+        DesignTokens.space5,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(child: BrandMark(size: 26)),
+              ),
+              const SizedBox(width: DesignTokens.space3),
+              const Text(
+                'ENAM Prep',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space5),
+          const Text(
+            'Hola de nuevo',
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
+          // El mismo trazo del splash, aquí más pequeño y discreto.
+          const EcgLine(
+            width: 170,
+            height: 22,
+            opacity: 0.7,
+            strokeWidth: 2,
+          ),
+        ],
       ),
     );
   }

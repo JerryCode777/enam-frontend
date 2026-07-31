@@ -5,11 +5,12 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
-import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../domain/catalog_models.dart';
 import 'catalog_providers.dart';
@@ -39,7 +40,7 @@ class TemarioNodeScreen extends ConsumerWidget {
     return arbol.when(
       loading: () => const _NodoCargando(),
       error: (e, _) => Scaffold(
-        appBar: AppBar(),
+        appBar: const GradientHeader(titulo: 'Temario'),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
@@ -57,9 +58,9 @@ class TemarioNodeScreen extends ConsumerWidget {
       data: (_) {
         final encontrado = ref.watch(nodoProvider(nodeId));
         if (encontrado == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(
+          return const Scaffold(
+            appBar: GradientHeader(titulo: 'Temario'),
+            body: Center(
               child: Text('No encontramos ese punto del temario.'),
             ),
           );
@@ -82,95 +83,134 @@ class _Contenido extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: Column(
-        children: [
-          GradientHeader(
-            titulo: nodo.nombre,
-            subtitulo: _migas(),
-            bottom: _ResumenNodo(nodo: nodo),
-          ),
-          Expanded(
-            child: nodo.tieneHijos
-                ? _ListaHijos(nodo: nodo, tieneBloques: _tieneBloques)
-                : _SinDetalle(nodo: nodo),
-          ),
-        ],
-      ),
-      bottomNavigationBar: nodo.estado == NodeState.sinContenido
-          ? null
-          : _BarraPracticar(nodo: nodo),
+      backgroundColor: context.scheme.surfaceContainerLowest,
+      // El mismo degradado que el resto de cabeceras de la app: con un AppBar
+      // plano, bajar un nivel del temario parecía salirse a otra aplicación.
+      //
+      // Lleva el **padre**, no el nodo: el nombre del nodo ya va grande en
+      // `EncabezadoNodo`, justo debajo, y repetirlo dejaba "Medicina" dos veces
+      // seguidas. Aquí sirve para saber de dónde cuelga esto, que es lo que
+      // necesita quien llegó por búsqueda.
+      appBar: GradientHeader(titulo: _padre() ?? 'Temario'),
+      body: nodo.tieneHijos
+          ? _ListaHijos(nodo: nodo, tieneBloques: _tieneBloques)
+          : _SinDetalle(nodo: nodo),
     );
   }
 
-  /// Migas de pan: sin esto, alguien que llegó por búsqueda no sabe dónde está.
-  String? _migas() {
-    if (ruta.length <= 1) return null;
-    return ruta.take(ruta.length - 1).map((n) => n.nombre).join(' › ');
-  }
+  /// Nombre del nodo padre, para la barra superior.
+  String? _padre() => ruta.length <= 1 ? null : ruta[ruta.length - 2].nombre;
 }
 
-/// Cifras del nodo, dentro del degradado de la cabecera.
-class _ResumenNodo extends StatelessWidget {
-  const _ResumenNodo({required this.nodo});
+/// Identidad del nodo: icono del área, nombre y sus cifras en fichas.
+///
+/// Va dentro de la lista y no en una cabecera fija: el diseño deja que suba con
+/// el contenido, así la lista de sub áreas gana pantalla al desplazar.
+class EncabezadoNodo extends StatelessWidget {
+  const EncabezadoNodo({required this.nodo, required this.areaId, super.key});
 
   final CatalogNode nodo;
+  final String areaId;
 
   @override
   Widget build(BuildContext context) {
+    final states = context.states;
+    final color = AreaColors.of(areaId, Theme.of(context).brightness);
     final acierto = nodo.porcentajeAcierto;
-    final densidad = nodo.temasPorPregunta;
+    final subAreas = nodo.hijos.length;
 
-    return Row(
-      children: [
-        if (nodo.peso != null)
-          _Cifra(
-            valor: '${nodo.peso}',
-            etiqueta: nodo.peso == 1 ? 'pregunta' : 'preguntas',
-          ),
-        _Cifra(
-          valor: acierto == null ? '—' : '${(acierto * 100).round()} %',
-          etiqueta: 'tu acierto',
-        ),
-        if (nodo.totalTemas > 0)
-          _Cifra(valor: '${nodo.totalTemas}', etiqueta: 'temas'),
-        if (densidad != null)
-          _Cifra(
-            valor: densidad.toStringAsFixed(1),
-            etiqueta: 'temas/pregunta',
-          ),
-      ],
-    );
-  }
-}
-
-class _Cifra extends StatelessWidget {
-  const _Cifra({required this.valor, required this.etiqueta});
-
-  final String valor;
-  final String etiqueta;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
+    return FadeUp(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            valor,
-            style: context.texts.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: states.info.tint,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  AreaColors.iconOf(areaId),
+                  size: 24,
+                  fill: 1,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space2 + 2),
+              Expanded(
+                child: Text(
+                  nodo.nombre,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
           ),
-          Text(
-            etiqueta,
-            maxLines: 2,
-            style: context.texts.bodySmall?.copyWith(
-              fontSize: 10.5,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
+          const SizedBox(height: DesignTokens.space3),
+          Wrap(
+            spacing: DesignTokens.space2,
+            runSpacing: DesignTokens.space2,
+            children: [
+              if (nodo.peso != null)
+                _Ficha(
+                  texto:
+                      '${nodo.peso} de 180 · '
+                      '${(nodo.peso! / 180 * 100).round()} %',
+                ),
+              _Ficha(
+                texto: [
+                  if (subAreas > 0)
+                    '$subAreas ${subAreas == 1 ? "sub área" : "sub áreas"}',
+                  '${nodo.totalTemas} temas',
+                ].join(' · '),
+              ),
+              if (acierto != null)
+                _Ficha(
+                  texto: 'Acierto ${(acierto * 100).round()} %',
+                  color: states.success.onTint,
+                ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Ficha con borde para las cifras del nodo.
+class _Ficha extends StatelessWidget {
+  const _Ficha({required this.texto, this.color});
+
+  final String texto;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space2 + 2,
+        vertical: DesignTokens.space1 + 2,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border.all(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: color ?? scheme.onSurface,
+        ),
       ),
     );
   }
@@ -186,56 +226,99 @@ class _ListaHijos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Muchos temas: hace falta buscar dentro del nodo. Medicina llega a 123.
     final necesitaBuscador = nodo.hijos.length > 12;
+    final areaId = AreaColors.rootOf(nodo.id);
+    final color = AreaColors.of(areaId, Theme.of(context).brightness);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space4,
-        DesignTokens.space4,
-        DesignTokens.space4,
-        DesignTokens.space16,
+        DesignTokens.space5,
+        DesignTokens.space1,
+        DesignTokens.space5,
+        DesignTokens.space8,
       ),
       children: [
+        EncabezadoNodo(nodo: nodo, areaId: areaId),
+        const SizedBox(height: DesignTokens.space3),
+        if (nodo.estado != NodeState.sinContenido) ...[
+          _BotonPracticar(nodo: nodo),
+          const SizedBox(height: DesignTokens.space3),
+        ],
         if (necesitaBuscador) ...[
           _AvisoLista(cantidad: nodo.hijos.length),
-          const SizedBox(height: DesignTokens.space4),
+          const SizedBox(height: DesignTokens.space3),
         ],
         if (tieneBloques)
           // Gineco: los bloques son encabezados, y sus hijos van debajo.
           for (final bloque in nodo.hijos) ...[
             _BloqueHeader(bloque: bloque),
-            const SizedBox(height: DesignTokens.space3),
-            for (var i = 0; i < bloque.hijos.length; i++) ...[
-              if (i > 0) const SizedBox(height: DesignTokens.space3),
-              _hijo(context, bloque.hijos[i], i, bloque.peso ?? 1),
-            ],
-            const SizedBox(height: DesignTokens.space6),
+            const SizedBox(height: DesignTokens.space2),
+            _TarjetaHijos(hijos: bloque.hijos, color: color),
+            const SizedBox(height: DesignTokens.space4),
           ]
         else
-          for (var i = 0; i < nodo.hijos.length; i++) ...[
-            if (i > 0) const SizedBox(height: DesignTokens.space3),
-            _hijo(context, nodo.hijos[i], i, nodo.peso ?? 1),
-          ],
+          _TarjetaHijos(hijos: nodo.hijos, color: color),
       ],
     );
   }
+}
 
-  Widget _hijo(
-    BuildContext context,
-    CatalogNode hijo,
-    int index,
-    int pesoPadre,
-  ) {
-    return NodeCard(
-      nodo: hijo,
-      index: index,
-      pesoMaximo: pesoPadre,
-      // Los temas no tienen peso propio en el documento oficial, así que no se
-      // muestra una cifra que no existe.
-      mostrarPeso: hijo.peso != null,
-      onTap: hijo.tieneHijos
-          ? () => context.push(Routes.temarioAreaOf(hijo.id))
-          : null,
-      onPracticar: () => context.push('${Routes.practiceConfig}?nodo=${hijo.id}'),
+/// Los hijos de un nodo, como filas de una sola tarjeta.
+///
+/// Una tarjeta por sub área daría once tarjetas en Medicina, cada una con su
+/// borde y su sombra: mucho marco y poca información. El diseño usa una sola
+/// tarjeta con separadores finos.
+class _TarjetaHijos extends StatelessWidget {
+  const _TarjetaHijos({required this.hijos, required this.color});
+
+  final List<CatalogNode> hijos;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return GroupedCard(
+      children: [
+        for (var i = 0; i < hijos.length; i++)
+          NodeRow(
+            nodo: hijos[i],
+            color: color,
+            ultima: i == hijos.length - 1,
+            onTap: hijos[i].tieneHijos
+                ? () => context.push(Routes.temarioAreaOf(hijos[i].id))
+                : null,
+            onPracticar: () => context.push(
+              '${Routes.practiceConfig}?nodo=${hijos[i].id}'
+              '${hijos[i].estado == NodeState.agotado ? "&origen=falladas" : ""}',
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// El único botón de práctica de la pantalla, con el degradado de marca.
+///
+/// Antes vivía fijo abajo. Arriba funciona mejor: se ve sin desplazar, y la
+/// lista de sub áreas recupera el alto que ocupaba la barra.
+class _BotonPracticar extends StatelessWidget {
+  const _BotonPracticar({required this.nodo});
+
+  final CatalogNode nodo;
+
+  @override
+  Widget build(BuildContext context) {
+    final agotado = nodo.estado == NodeState.agotado;
+
+    return FadeUp(
+      child: EnamButton(
+        // Un nodo agotado no ofrece "practicar" sin más: ya vio todo. Se le
+        // ofrece lo único que aporta, repasar lo que falló (RF-40).
+        label: agotado ? 'Repasar lo que fallaste' : 'Practicar ${nodo.nombre}',
+        icon: agotado ? Symbols.replay : Symbols.play_arrow,
+        onPressed: () => context.push(
+          '${Routes.practiceConfig}?nodo=${nodo.id}'
+          '${agotado ? "&origen=falladas" : ""}',
+        ),
+      ),
     );
   }
 }
@@ -293,7 +376,7 @@ class _BloqueHeader extends StatelessWidget {
             child: Text(
               bloque.nombre.toUpperCase(),
               style: context.texts.bodySmall?.copyWith(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.8,
                 color: context.scheme.onSurfaceVariant,
@@ -303,7 +386,7 @@ class _BloqueHeader extends StatelessWidget {
           if (bloque.peso != null)
             Text(
               '${bloque.peso} preguntas',
-              style: context.texts.bodySmall?.copyWith(fontSize: 11),
+              style: context.texts.bodySmall?.copyWith(fontSize: 13),
             ),
         ],
       ),
@@ -334,7 +417,9 @@ class _SinDetalle extends StatelessWidget {
           child: Column(
             children: [
               Icon(
-                sinContenido ? Symbols.hourglass_empty : Symbols.subdirectory_arrow_right,
+                sinContenido
+                    ? Symbols.hourglass_empty
+                    : Symbols.subdirectory_arrow_right,
                 size: 40,
                 color: sinContenido
                     ? states.warning.onTint
@@ -370,48 +455,13 @@ class _SinDetalle extends StatelessWidget {
   }
 }
 
-/// Botón fijo abajo para practicar el nodo actual (RF-38).
-class _BarraPracticar extends StatelessWidget {
-  const _BarraPracticar({required this.nodo});
-
-  final CatalogNode nodo;
-
-  @override
-  Widget build(BuildContext context) {
-    final agotado = nodo.estado == NodeState.agotado;
-
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        DesignTokens.space4,
-        DesignTokens.space3,
-        DesignTokens.space4,
-        DesignTokens.space3 + MediaQuery.paddingOf(context).bottom,
-      ),
-      decoration: BoxDecoration(
-        color: context.scheme.surface,
-        border: Border(top: BorderSide(color: context.scheme.outlineVariant)),
-      ),
-      child: EnamButton(
-        // Un nodo agotado no ofrece "practicar" sin más: ya vio todo. Se le
-        // ofrece lo único que aporta, repasar lo que falló (RF-40).
-        label: agotado ? 'Repasar lo que fallaste' : 'Practicar este tema',
-        icon: agotado ? Symbols.replay : Symbols.play_arrow,
-        onPressed: () => context.push(
-          '${Routes.practiceConfig}?nodo=${nodo.id}'
-          '${agotado ? "&origen=falladas" : ""}',
-        ),
-      ),
-    );
-  }
-}
-
 class _NodoCargando extends StatelessWidget {
   const _NodoCargando();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: const GradientHeader(titulo: 'Temario'),
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space4),
         children: [

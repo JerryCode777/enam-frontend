@@ -82,6 +82,34 @@ abstract final class AppConfig {
   static bool get googleSignInHabilitado =>
       useMocks || googleServerClientId.isNotEmpty;
 
+  /// Dónde se paga: la web de ENAM Prep.
+  ///
+  /// Se sobreescribe con `--dart-define=WEB_URL=...`. En dev apunta al servidor
+  /// local de la web React.
+  static const String webUrl = String.fromEnvironment(
+    'WEB_URL',
+    defaultValue: 'http://localhost:5173',
+  );
+
+  /// La pantalla de activación de la web.
+  ///
+  /// Es la única dirección de la web que la app enlaza, y es a propósito: sabe
+  /// recibir a alguien que llega **sin sesión**, que es como llega siempre
+  /// quien viene de iOS. Enlazar a `/planes` mandaba al login, y enlazar a la
+  /// raíz al splash; en los dos casos la persona acababa lejos de lo que iba a
+  /// hacer, y en un teclado de móvil.
+  ///
+  /// El `origen` no lo usa el servidor: viaja para poder medir por separado los
+  /// dos caminos de compra.
+  static String get urlActivar => '$webUrl/activar?origen=ios';
+
+  /// Fuerza la variante de tienda de la pantalla de bloqueo, para poder ver
+  /// las dos sin cambiar de dispositivo:
+  /// `--dart-define=TIENDA=apple` o `--dart-define=TIENDA=android`.
+  ///
+  /// Vacío = la real del dispositivo.
+  static const String tiendaForzada = String.fromEnvironment('TIENDA');
+
   /// Registrar peticiones HTTP en consola. Nunca en producción: los logs
   /// llevarían tokens y contenido premium.
   static bool get logHttp => !isProd;

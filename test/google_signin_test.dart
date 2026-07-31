@@ -4,7 +4,7 @@ import 'package:enam_app/features/auth/data/auth_repository.dart';
 import 'package:enam_app/features/auth/data/google_signin_service.dart';
 import 'package:enam_app/features/auth/data/mock_auth_repository.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
-import 'package:enam_app/shared/widgets/google_button.dart';
+import 'package:enam_app/shared/widgets/social_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,9 +37,12 @@ void main() {
       final c = contenedor();
       await c.read(authControllerProvider.future);
 
+      // Con consentimiento: el mock rechaza sin él igual que el servidor, que
+      // solo lo exige cuando la cuenta es nueva (RNF-06, Ley 29733). El
+      // reintento tras enseñar los términos lo hace la pantalla de login.
       final ok = await c
           .read(authControllerProvider.notifier)
-          .signInWithGoogle();
+          .signInWithGoogle(aceptaTerminos: true);
 
       expect(ok, isTrue);
       expect(c.read(authControllerProvider).value, isA<AuthSignedIn>());
@@ -63,16 +66,22 @@ void main() {
       expect(c.read(authControllerProvider).value, isA<AuthSignedOut>());
     });
 
-    test('si el canje falla, el estado queda en error', () async {
+    test('si el canje falla, lanza y deja la sesión sin iniciar', () async {
+      // El fallo se lanza en vez de quedarse en el estado: así la pantalla lo
+      // puede enseñar. Y el estado vuelve a "sin sesión", que es la verdad —
+      // dejarlo en `AsyncError` hacía que el router lo leyera como "todavía no
+      // sé si hay sesión" y mandara al splash, desmontando el login antes de
+      // que el usuario viera ningún error.
       final c = contenedor(repo: _RepoQueFalla());
       await c.read(authControllerProvider.future);
 
-      final ok = await c
-          .read(authControllerProvider.notifier)
-          .signInWithGoogle();
+      await expectLater(
+        c.read(authControllerProvider.notifier).signInWithGoogle(),
+        throwsA(isA<Exception>()),
+      );
 
-      expect(ok, isFalse);
-      expect(c.read(authControllerProvider).hasError, isTrue);
+      expect(c.read(authControllerProvider).hasError, isFalse);
+      expect(c.read(authControllerProvider).value, isA<AuthSignedOut>());
     });
 
     test('cerrar sesión también olvida la cuenta de Google', () async {
@@ -80,7 +89,9 @@ void main() {
       // anterior de un solo toque.
       final c = contenedor();
       await c.read(authControllerProvider.future);
-      await c.read(authControllerProvider.notifier).signInWithGoogle();
+      await c
+          .read(authControllerProvider.notifier)
+          .signInWithGoogle(aceptaTerminos: true);
 
       await c.read(authControllerProvider.notifier).signOut();
 
@@ -146,6 +157,6 @@ class _FakeGoogle implements GoogleSignInService {
 /// Todo igual que el mock salvo el canje, que revienta.
 class _RepoQueFalla extends MockAuthRepository {
   @override
-  Future<User> loginConGoogle(String idToken) async =>
+  Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async =>
       throw Exception('backend caído');
 }

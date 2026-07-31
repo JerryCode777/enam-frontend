@@ -2,6 +2,8 @@ import 'package:enam_app/core/mock/mock_data.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/features/catalog/data/catalog_repository.dart';
 import 'package:enam_app/features/catalog/domain/catalog_models.dart';
+import 'package:enam_app/features/session/data/session_repository.dart';
+import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:enam_app/features/stats/data/stats_repository.dart';
 import 'package:enam_app/features/stats/domain/stats_models.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
@@ -33,10 +35,10 @@ import 'package:enam_app/features/profile/presentation/settings_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_instructions_screen.dart';
 import 'package:enam_app/features/stats/presentation/progress_screen.dart';
 import 'package:enam_app/features/stats/presentation/ranking_screen.dart';
-import 'package:enam_app/features/subscription/presentation/checkout_screen.dart';
+import 'package:enam_app/features/subscription/data/subscription_repository.dart';
+import 'package:enam_app/features/subscription/domain/subscription_models.dart';
+import 'package:enam_app/features/subscription/presentation/access_ended_screen.dart';
 import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
-import 'package:enam_app/features/subscription/presentation/payment_result_screen.dart';
-import 'package:enam_app/features/subscription/presentation/plans_screen.dart';
 import 'package:enam_app/features/system/presentation/system_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,12 +102,12 @@ void main() {
     // Progreso, pagos, offline y ajustes
     'Progreso': const ProgressScreen(),
     'Ranking': const RankingScreen(),
-    'Planes': const PlansScreen(),
-    'Checkout': const CheckoutScreen(),
-    'Pago · éxito': const PaymentResultScreen(estado: EstadoPago.exito),
-    'Pago · pendiente': const PaymentResultScreen(estado: EstadoPago.pendiente),
-    'Pago · fallo': const PaymentResultScreen(estado: EstadoPago.fallo),
+    // Ya no hay pantallas de planes, checkout ni resultado de pago: la app no
+    // cobra ni enseña precios (modelo Netflix, ver opciones_de_pago.dart).
     'Mi suscripción': const MySubscriptionScreen(),
+    // El bloqueo por prueba vencida (D-01): titular largo, aviso de RN-07 y
+    // dos botones apilados, que es lo que aprieta a 360 px.
+    'Acceso terminado': const AccessEndedScreen(),
     'Descargas': const DownloadsScreen(),
     'Ajustes': const SettingsScreen(),
 
@@ -178,6 +180,10 @@ Widget _harness(Widget screen, Brightness brightness, {double textScale = 1.0}) 
       authControllerProvider.overrideWith(_FakeAuthController.new),
       catalogRepositoryProvider.overrideWithValue(_InstantCatalog()),
       statsRepositoryProvider.overrideWithValue(_InstantStats()),
+      subscriptionRepositoryProvider.overrideWithValue(_InstantSubscription()),
+      // Sin esto, la tarjeta del nacional del inicio deja un temporizador del
+      // mock pendiente y el test de layout falla por algo que no es el layout.
+      sessionRepositoryProvider.overrideWithValue(_InstantSessions()),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,
@@ -205,6 +211,90 @@ class _FakeAuthController extends AuthController {
   );
 }
 
+
+/// Suscripción que responde sin latencia.
+///
+/// En prueba sin empezar, que es como nace todo usuario (RN-03 v2) y el caso
+/// con `expira` nulo — el que rompe cualquier formato de fecha descuidado.
+class _InstantSubscription implements SubscriptionRepository {
+  static const _plan = Plan(
+    id: 'mensual',
+    nombre: 'Premium mensual',
+    precioCentimos: 4900,
+    duracionDias: 30,
+    beneficios: ['Banco completo y práctica ilimitada'],
+  );
+
+  @override
+  Future<Subscription> current() => Future.value(
+    Subscription(
+      id: 's1',
+      plan: _plan,
+      estado: SubscriptionStatus.pruebaSinIniciar,
+      origen: SubscriptionOrigin.sistema,
+      inicia: DateTime(2026, 7, 30),
+    ),
+  );
+
+  @override
+  Future<void> enviarEnlaceDeSuscripcion(String email) async {}
+
+  @override
+  Future<void> cancelar() async {}
+}
+
+/// Sesiones que responden sin latencia.
+///
+/// Solo lo que la pantalla de inicio consulta: el nacional y las sesiones a
+/// medias. El resto no se toca al pintar, y una excepción es mejor aviso que
+/// un dato inventado si algún día se toca.
+class _InstantSessions implements SessionRepository {
+  @override
+  Future<List<NationalMock>> nationalMocks() async => [
+    NationalMock(
+      id: 'nac-1',
+      nombre: 'Simulacro Nacional · Agosto',
+      inicio: DateTime(2026, 8, 15, 8),
+      fin: DateTime(2026, 8, 15, 11),
+      duracionMinutos: 180,
+      participantes: 1847,
+      totalPreguntas: 180,
+    ),
+  ];
+
+  @override
+  Future<List<OpenSession>> openSessions() async => const [];
+
+  @override
+  Future<List<Question>> markedQuestions() async => const [];
+
+  @override
+  Future<StudySession> joinNationalMock(String mockId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<StudySession> startPractice(PracticeConfig config) =>
+      throw UnimplementedError();
+
+  @override
+  Future<StudySession> startSimulacro({bool esMuestra = false}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<StudySession> session(String id) => throw UnimplementedError();
+
+  @override
+  Future<Answer> answer({
+    required String sessionId,
+    required String questionId,
+    String? optionId,
+    required int tiempoMs,
+    bool marcada = false,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<StudySession> submit(String sessionId) => throw UnimplementedError();
+}
 
 /// Catálogo que responde sin latencia.
 class _InstantCatalog implements CatalogRepository {
@@ -244,7 +334,6 @@ class _InstantStats implements StatsRepository {
             nota: 9.5 + (4 - i) * 0.7,
           ),
       ],
-      preguntasRestantesHoy: 13,
     );
   }
 

@@ -206,7 +206,7 @@ class _TarjetaRevisionState extends State<_TarjetaRevision> {
                               Text(
                                 etiqueta,
                                 style: context.texts.bodySmall?.copyWith(
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w800,
                                   color: color,
                                 ),

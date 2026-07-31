@@ -501,7 +501,7 @@ class _Explicacion extends StatelessWidget {
             Text(
               pregunta.explicacion ?? 'Sin explicación disponible.',
               style: context.texts.bodyLarge?.copyWith(
-                fontSize: 14.5,
+                fontSize: 15,
                 height: DesignTokens.lineHeightRelaxed,
               ),
             ),
@@ -582,7 +582,7 @@ class _MigasPregunta extends ConsumerWidget {
             child: Text(
               texto,
               style: context.texts.bodySmall?.copyWith(
-                fontSize: 10.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),

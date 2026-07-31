@@ -70,10 +70,15 @@ abstract final class Routes {
   static const ranking = '/ranking';
 
   // ---------- Suscripción (Módulo 6) ----------
-  static const plans = '/planes';
-  static const paywall = '/premium';
-  static const checkout = '/pago';
-  static const paymentResult = '/pago/resultado';
+  // /planes, /pago y /pago/resultado son de la WEB, no de la app.
+  //
+  // Las tiendas no dejan cobrar dentro de la app sin su comisión, así que la
+  // app no enseña precios ni cobra: manda un enlace por correo (Android) o
+  // enseña la dirección del sitio (iOS). Ver app_router.dart.
+
+  /// Bloqueo por falta de acceso (RN-03 v2, D-01). No es una hoja sobre la
+  /// pantalla: es donde queda el usuario hasta que pague.
+  static const accessEnded = '/acceso-terminado';
   static const mySubscription = '/mi-suscripcion';
 
   // ---------- Offline (Módulo 7) ----------

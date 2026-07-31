@@ -63,3 +63,15 @@ ios/Runner/GoogleService-Info.plist
 # Config local de máquina
 .vscode/
 *.iml
+
+# Material privado: SSD, documentos oficiales de ASPEFAM y contrato.
+# El repo del frontend es público. Esto vive en ~/Developer/enam-docs-privado/
+# y no debe entrar aquí ni por accidente.
+docs/
+*.pdf
+ssd-*
+CONTRATO-API.md
+IMPLEMENTACION.md
+
+# Artefactos de goldens fallidos: se regeneran en cada corrida.
+test/golden/failures/

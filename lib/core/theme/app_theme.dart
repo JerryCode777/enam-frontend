@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'design_tokens.dart';
 
@@ -60,7 +59,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor:
           isLight ? DesignTokens.backgroundLight : DesignTokens.backgroundDark,
       textTheme: textTheme,
-      fontFamily: GoogleFonts.nunito().fontFamily,
+      fontFamily: DesignTokens.fontFamily,
 
       appBarTheme: AppBarTheme(
         backgroundColor:
@@ -77,9 +76,35 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
+      ),
+
+      // Etiquetas de 12: es el mínimo de la escala y no baja aunque el texto
+      // largo ("Simulacros") quede justo.
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: isLight
+            ? DesignTokens.brandSubtle
+            : DesignTokens.infoTintDark,
+        elevation: 0,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final activa = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontFamily: DesignTokens.fontFamily,
+            fontSize: DesignTokens.fontSizeXs,
+            fontWeight: activa ? FontWeight.w800 : FontWeight.w600,
+            color: activa ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final activa = states.contains(WidgetState.selected);
+          return IconThemeData(
+            size: 22,
+            color: activa ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          );
+        }),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
@@ -181,7 +206,9 @@ abstract final class AppTheme {
   }
 
   static TextTheme _textTheme(ColorScheme scheme) {
-    final base = GoogleFonts.nunitoTextTheme();
+    // Nunito viene del bundle (ver pubspec), no de la red: la app tiene modo
+    // offline y la marca no puede depender de que haya señal.
+    final base = ThemeData(fontFamily: DesignTokens.fontFamily).textTheme;
 
     return base.copyWith(
       displaySmall: base.displaySmall?.copyWith(
@@ -243,7 +270,8 @@ abstract final class AppTheme {
   /// decisión tipográfica más importante de la app: no la bajes.
   static TextStyle clinicalCase(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return GoogleFonts.nunito(
+    return TextStyle(
+      fontFamily: DesignTokens.fontFamily,
       fontSize: DesignTokens.fontSizeMd,
       height: DesignTokens.lineHeightRelaxed,
       color: scheme.onSurface,

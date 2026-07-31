@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Desde Android 12 la pantalla de arranque la dibuja el sistema con la API
+     SplashScreen: ignora windowBackground y usa estos atributos. Sin esto el
+     fondo sale blanco aunque launch_background diga otra cosa. -->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowSplashScreenBackground">@color/marca_arranque</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>

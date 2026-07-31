@@ -22,6 +22,7 @@ import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/help_screen.dart';
 import '../../features/profile/presentation/legal_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
+import '../../features/session/presentation/area_picker_screen.dart';
 import '../../features/session/presentation/marked_questions_screen.dart';
 import '../../features/session/presentation/national_mock_screen.dart';
 import '../../features/session/presentation/practice_config_screen.dart';
@@ -34,10 +35,9 @@ import '../../features/session/presentation/simulacro_results_screen.dart';
 import '../../features/session/presentation/simulacro_screen.dart';
 import '../../features/stats/presentation/progress_screen.dart';
 import '../../features/stats/presentation/ranking_screen.dart';
-import '../../features/subscription/presentation/checkout_screen.dart';
+import '../../features/subscription/domain/subscription_models.dart';
+import '../../features/subscription/presentation/access_ended_screen.dart';
 import '../../features/subscription/presentation/my_subscription_screen.dart';
-import '../../features/subscription/presentation/payment_result_screen.dart';
-import '../../features/subscription/presentation/plans_screen.dart';
 import '../../features/system/presentation/system_screens.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
@@ -61,7 +61,13 @@ import 'transitions.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ValueNotifier(0);
 
+  // Sin escuchar también el arranque, la app se quedaría en el splash para
+  // siempre: al resolverse no habría nada que dispare un nuevo redirect.
   ref.listen(authControllerProvider, (_, _) => notifier.value++);
+  ref.listen(startupProvider, (_, _) => notifier.value++);
+  // Sin esto el bloqueo por acceso llegaría tarde: la suscripción se resuelve
+  // después del login, y nada dispararía un nuevo redirect.
+  ref.listen(subscriptionProvider, (_, _) => notifier.value++);
   ref.onDispose(notifier.dispose);
 
   return GoRouter(
@@ -101,21 +107,78 @@ const _entryRoutes = {
   Routes.completeProfile,
 };
 
-/// Decide a dónde mandar al usuario. `null` lo deja pasar.
-String? _redirect(Ref ref, GoRouterState state) {
-  final auth = ref.read(authControllerProvider);
-  final here = state.matchedLocation;
+/// Lo que sigue alcanzable sin acceso (D-01).
+///
+/// La decisión del cliente fue **nada**: la app queda bloqueada tras la
+/// pantalla de pago, sin temario ni estadísticas. Lo que queda aquí es solo lo
+/// necesario para poder pagar, entender qué se cobra o irse — negarle a alguien
+/// el camino de vuelta a su propio dinero, o los términos que aceptó, no es
+/// bloquear el producto, es atraparlo.
+///
+/// Queda anotado que D-01 es **mejorable**: dejar ver el temario y el propio
+/// avance daría una razón concreta para volver, y el temario no es el activo
+/// del negocio — las preguntas sí. Revisar tras los primeros datos de
+/// conversión.
+/// Público para que un test lo pueda fijar: es una lista que crece sola en
+/// cuanto alguien añade una pantalla "que también debería verse sin plan", y
+/// cada entrada de más es contenido de pago regalado.
+const rutasSinAcceso = {
+  Routes.accessEnded,
+  Routes.mySubscription,
+  Routes.help,
+  Routes.terms,
+};
 
-  // Aún leyendo el storage: quedarse en splash y no parpadear al login.
-  if (auth.isLoading || !auth.hasValue) {
+String? _redirect(Ref ref, GoRouterState state) => decidirDestino(
+  auth: ref.read(authControllerProvider),
+  startup: ref.read(startupProvider),
+  suscripcion: ref.read(subscriptionProvider),
+  here: state.matchedLocation,
+);
+
+/// Decide a dónde mandar al usuario. `null` lo deja pasar.
+///
+/// Función pura sobre los dos estados que importan, en vez de leer del `Ref`
+/// directamente: así el recorrido de arranque —que es donde estaba el fallo del
+/// onboarding inalcanzable— se puede probar sin montar un router.
+@visibleForTesting
+String? decidirDestino({
+  required AsyncValue<AuthState> auth,
+  required AsyncValue<Startup> startup,
+  required AsyncValue<Subscription> suscripcion,
+  required String here,
+}) {
+  // Aún leyendo el storage, o el splash no ha cumplido su tiempo mínimo:
+  // quedarse en splash y no parpadear al login.
+  //
+  // Se mira `hasValue` y **no** `isLoading`: en cuanto se sabe si hay sesión o
+  // no, una recarga posterior no debe mover al usuario de donde está. Con
+  // `isLoading` aquí, cualquier operación que tocara el estado de auth mandaba
+  // al splash y destruía la pantalla de turno — por eso un login fallido
+  // devolvía un formulario en blanco, sin el error.
+  if (!auth.hasValue || !startup.hasValue) {
     return here == Routes.splash ? null : Routes.splash;
   }
 
   return switch (auth.requireValue) {
     AuthLoading() => Routes.splash,
 
-    AuthSignedOut() =>
-      _publicRoutes.contains(here) && here != Routes.splash ? null : Routes.login,
+    // Sin sesión: el onboarding la primera vez, el login a partir de ahí.
+    //
+    // Antes esto mandaba siempre al login, así que el onboarding no era
+    // alcanzable por ninguna ruta: existía el archivo y nadie lo veía nunca.
+    AuthSignedOut() => switch (here) {
+      _ when here == Routes.splash =>
+        startup.requireValue.onboardingVisto ? Routes.login : Routes.onboarding,
+
+      // Si ya se vio, volver a entrar por onboarding no tiene sentido.
+      _ when here == Routes.onboarding && startup.requireValue.onboardingVisto =>
+        Routes.login,
+
+      _ when _publicRoutes.contains(here) => null,
+
+      _ => Routes.login,
+    },
 
     AuthSignedIn(:final user) => switch (user) {
       // RF-01: sin correo verificado no se entra a la app.
@@ -129,6 +192,25 @@ String? _redirect(Ref ref, GoRouterState state) {
               !user.perfilCompleto &&
               here != Routes.completeProfile =>
         Routes.completeProfile,
+
+      // RN-03 v2: sin acceso, la app queda tras la pantalla de pago (D-01).
+      //
+      // Se bloquea solo con un valor cargado que dice que no hay acceso. Con la
+      // suscripción todavía cargando —o si falló la petición— se deja pasar: la
+      // pantalla de pago parpadeando en cada arranque sería peor que dejar ver
+      // una pantalla de más, y de todas formas el contenido lo protege el
+      // servidor (RNF-04), no este redirect.
+      _
+          when suscripcion.value?.sinAcceso == true &&
+              !rutasSinAcceso.contains(here) =>
+        Routes.accessEnded,
+
+      // Con acceso, la pantalla de bloqueo no tiene por qué seguir en pie: es
+      // a donde vuelve alguien que acaba de pagar.
+      _
+          when here == Routes.accessEnded &&
+              suscripcion.value?.daAcceso != false =>
+        Routes.home,
 
       _ when user.perfilCompleto && _entryRoutes.contains(here) => Routes.home,
 
@@ -181,7 +263,10 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.forgotPassword,
-    builder: (context, state) => const ForgotPasswordScreen(),
+    // El correo viaja desde el login: quien ya lo escribió no debería tener
+    // que volver a escribirlo, y menos si lo que pasó es que no recuerda algo.
+    builder: (context, state) =>
+        ForgotPasswordScreen(email: state.extra as String?),
   ),
   GoRoute(
     path: Routes.resetPassword,
@@ -341,6 +426,14 @@ final List<RouteBase> _routes = [
       state: state,
     ),
   ),
+  // Fuera del shell, como el configurador: abrir `/temario` con `push` desde
+  // aquí montaría una segunda copia del shell y su Navigator, con la misma
+  // GlobalKey que el ya montado, y la app muere con pantalla roja.
+  GoRoute(
+    path: Routes.practiceAreas,
+    pageBuilder: (context, state) =>
+        modalPage(child: const AreaPickerScreen(), state: state),
+  ),
   GoRoute(
     path: Routes.markedQuestions,
     pageBuilder: (context, state) =>
@@ -349,31 +442,23 @@ final List<RouteBase> _routes = [
 
   // ==================== SUSCRIPCIÓN (Módulo 6) ====================
   GoRoute(
-    path: Routes.plans,
-    // Sube desde abajo: interrumpe lo que el usuario estaba haciendo.
+    path: Routes.accessEnded,
+    // Sin transición de entrada: no es una pantalla que el usuario abrió, es
+    // donde lo dejó el router. Deslizarla la haría parecer navegación suya.
     pageBuilder: (context, state) =>
-        modalPage(child: const PlansScreen(), state: state),
+        fadePage(child: const AccessEndedScreen(), state: state),
   ),
-  GoRoute(
-    path: Routes.checkout,
-    pageBuilder: (context, state) => slidePage(
-      child: CheckoutScreen(planId: state.uri.queryParameters['plan']),
-      state: state,
-    ),
-  ),
-  GoRoute(
-    path: Routes.paymentResult,
-    pageBuilder: (context, state) => fadePage(
-      child: PaymentResultScreen(
-        estado: EstadoPago.values.firstWhere(
-          (e) => e.name == state.uri.queryParameters['estado'],
-          orElse: () => EstadoPago.exito,
-        ),
-        planId: state.uri.queryParameters['plan'],
-      ),
-      state: state,
-    ),
-  ),
+  // No hay rutas de planes, pago ni resultado de pago, y no es un olvido.
+  //
+  // Ni App Store ni Google Play dejan cobrar dentro de la app sin llevarse su
+  // comisión, así que el cobro ocurre en la web (modelo Netflix). Estas tres
+  // pantallas existieron y se quitaron: enseñaban precios en iOS —motivo de
+  // rechazo por la guideline 3.1.1— y el checkout, además, no llamaba a ningún
+  // endpoint: validaba el formato de la tarjeta, esperaba 900 ms y anunciaba
+  // "pago exitoso" pasara lo que pasara.
+  //
+  // Volver a añadirlas es volver a los dos problemas. Lo que las sustituye está
+  // en features/subscription/presentation/widgets/opciones_de_pago.dart.
   GoRoute(
     path: Routes.mySubscription,
     pageBuilder: (context, state) =>
