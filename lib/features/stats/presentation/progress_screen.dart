@@ -525,7 +525,9 @@ class _FilaArea extends StatelessWidget {
     );
 
     return InkWell(
-      onTap: () => context.push(Routes.temarioAreaOf(area.areaId)),
+      // go y no push: cruza de la rama de estadísticas a la del temario, y
+      // pushear una ruta de otra rama del shell duplica la página del shell.
+      onTap: () => context.go(Routes.temarioAreaOf(area.areaId)),
       borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

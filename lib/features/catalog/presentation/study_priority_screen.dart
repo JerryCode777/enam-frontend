@@ -151,7 +151,9 @@ class _PrioridadCard extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          onTap: () => context.push(Routes.temarioAreaOf(area.id)),
+          // go y no push: cruza de la rama de estadísticas a la del temario
+          // (ver progress_screen).
+          onTap: () => context.go(Routes.temarioAreaOf(area.id)),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),

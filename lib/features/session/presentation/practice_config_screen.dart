@@ -241,7 +241,10 @@ class _SelectorNodo extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => context.push(Routes.temario),
+        // go y no push: el temario es una rama del StatefulShellRoute, y
+        // pushearlo mete una segunda página del shell con la misma key
+        // (assert '!keyReservation.contains(key)' del Navigator).
+        onTap: () => context.go(Routes.temario),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space4),

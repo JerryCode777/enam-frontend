@@ -112,7 +112,8 @@ class _TarjetaNota extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => context.push(Routes.stats),
+        // go y no push: estadísticas es una rama del shell (ver práctica).
+        onTap: () => context.go(Routes.stats),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space4),

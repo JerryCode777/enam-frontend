@@ -143,7 +143,8 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
               _ when terminado => EnamButton(
                 label: 'Ver el ranking',
                 icon: Symbols.trophy,
-                onPressed: () => context.push(Routes.ranking),
+                // go y no push: el ranking es una rama del shell (ver práctica).
+                onPressed: () => context.go(Routes.ranking),
               ),
               _ when enCurso => EnamButton(
                 label: 'Entrar al simulacro',

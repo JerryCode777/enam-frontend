@@ -72,13 +72,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authControllerProvider.notifier).signInWithGoogle();
 
+      // Si el login funcionó, el router ya desmontó esta pantalla y ni el
+      // ref ni el context se pueden tocar (Riverpod lanza si se intenta).
+      if (!mounted) return;
+
       // Igual que en el login normal: el router redirige solo si el estado
       // pasó a autenticado; si quedó en error, se muestra aquí.
       //
       // En snackbar y no bajo los campos: el fallo no viene de lo que el
       // usuario escribió, así que señalarle la contraseña sería engañoso.
       final error = ref.read(authControllerProvider).error;
-      if (error != null && mounted) {
+      if (error != null) {
         showErrorSnack(
           context,
           error is Failure ? error.message : 'No se pudo continuar con Google.',
@@ -98,11 +102,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .read(authControllerProvider.notifier)
           .signIn(email: _email.text.trim(), password: _password.text);
 
+      // Si el login funcionó, el router ya desmontó esta pantalla y ni el
+      // ref ni el context se pueden tocar (Riverpod lanza si se intenta).
+      if (!mounted) return;
+
       // El router redirige solo cuando cambia el estado de auth. Si el estado
       // quedó en error, hay que mostrarlo aquí.
       final state = ref.read(authControllerProvider);
       final error = state.error;
-      if (error != null && mounted) _showFailure(error);
+      if (error != null) _showFailure(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
