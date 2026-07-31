@@ -228,7 +228,11 @@ class ApiAuthRepository implements AuthRepository {
         'nombre': ?nombre,
         'universidad': ?universidad,
         'condicion': ?condicion?.name,
-        'fechaObjetivo': ?fechaObjetivo?.toIso8601String(),
+        // toUtc() antes de serializar: un DateTime local sale sin zona
+        // ("2026-12-12T00:00:00.000") y el servidor exige ISO 8601 con hora y
+        // zona. Sin esto, guardar la fecha objetivo responde 422 y el onboarding
+        // no se puede terminar.
+        'fechaObjetivo': ?fechaObjetivo?.toUtc().toIso8601String(),
         'ocultoEnRanking': ?ocultoEnRanking,
       },
     );

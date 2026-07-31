@@ -482,7 +482,10 @@ class _PorDondeSeguir extends ConsumerWidget {
                 ),
               ),
               InkWell(
-                onTap: () => context.push(Routes.temario),
+                // go y no push: el temario es OTRA rama del shell, y pushearlo
+                // desde el inicio monta una segunda copia del shell con la
+                // misma key y la app muere con pantalla roja.
+                onTap: () => context.go(Routes.temario),
                 borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -534,7 +537,8 @@ class _AreaSugerida extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => context.push(Routes.temarioAreaOf(area.id)),
+        // go y no push: cruza del inicio a la rama del temario (ver arriba).
+        onTap: () => context.go(Routes.temarioAreaOf(area.id)),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
         child: Padding(
           padding: const EdgeInsets.symmetric(
