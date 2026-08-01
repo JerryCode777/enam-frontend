@@ -1,7 +1,22 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Credenciales de la clave de subida. Viven en android/key.properties, que
+// está fuera del repositorio junto con el propio keystore: una clave de firma
+// en el control de versiones deja que cualquiera con acceso al código publique
+// actualizaciones en nombre de la app.
+//
+// Si el archivo no existe —una clonación limpia, la máquina de otra persona—
+// el build de release falla con un mensaje claro en vez de firmar con la clave
+// de depuración, que es lo que hacía antes y que Play Store rechaza.
+val keyProperties = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -26,11 +41,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val alias = keyProperties.getProperty("keyAlias")
+            if (alias != null) {
+                keyAlias = alias
+                keyPassword = keyProperties.getProperty("keyPassword")
+                storeFile = keyProperties.getProperty("storeFile")?.let { file(it) }
+                storePassword = keyProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sin key.properties se falla en seco. Firmar con la clave de
+            // depuración produce un APK que Play Store rechaza, y descubrirlo
+            // al subir cuesta más que descubrirlo al compilar.
+            require(keyProperties.getProperty("keyAlias") != null) {
+                "Falta android/key.properties: sin él no se puede firmar el " +
+                    "build de release. Pídelo a quien tenga el keystore."
+            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
