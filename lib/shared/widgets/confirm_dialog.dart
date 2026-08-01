@@ -60,99 +60,121 @@ class _Confirmacion extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.scheme;
 
-    return AlertDialog(
+    // `Dialog` y no `AlertDialog`: aquel mete las acciones en un `OverflowBar`
+    // que las mide de forma intrínseca, y ahí dentro un `LayoutBuilder` no
+    // puede vivir —lanza al calcular el alto y el diálogo sale sin botones—.
+    // Con la columna propia se decide la disposición sin pelear con eso.
+    return Dialog(
       backgroundColor: scheme.surface,
+      insetPadding: const EdgeInsets.all(DesignTokens.space5),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusXl - 4),
       ),
-      titlePadding: const EdgeInsets.fromLTRB(
-        DesignTokens.space5,
-        DesignTokens.space5,
-        DesignTokens.space5,
-        0,
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(
-        DesignTokens.space5,
-        DesignTokens.space2,
-        DesignTokens.space5,
-        DesignTokens.space4,
-      ),
-      actionsPadding: const EdgeInsets.fromLTRB(
-        DesignTokens.space5,
-        0,
-        DesignTokens.space5,
-        DesignTokens.space5,
-      ),
-      title: Text(
-        titulo,
-        style: context.texts.headlineMedium?.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          height: 1.25,
-          color: scheme.onSurface,
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.space5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              titulo,
+              style: context.texts.headlineMedium?.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                height: 1.25,
+                color: scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              mensaje,
+              style: context.texts.bodyMedium?.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.45,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space5),
+            _Acciones(
+              confirmar: confirmar,
+              cancelar: cancelar,
+              destructivo: destructivo,
+            ),
+          ],
         ),
       ),
-      content: Text(
-        mensaje,
-        style: context.texts.bodyMedium?.copyWith(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          height: 1.45,
-          color: scheme.onSurfaceVariant,
-        ),
-      ),
-      // Las dos acciones a la derecha, con la que confirma al final: es donde
-      // el pulgar acaba el gesto de leer. Si las etiquetas no caben en una
-      // fila —pasa con la fuente muy ampliada— se apilan en vez de partirse.
-      actions: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final volver = _Volver(
-              label: cancelar,
-              onPressed: () => Navigator.of(context).pop(false),
-            );
-            final seguir = destructivo
+    );
+  }
+}
+
+/// Las dos salidas, con la que confirma al final: es donde el pulgar acaba el
+/// gesto de leer.
+///
+/// En fila si caben; apiladas si la fuente está muy ampliada o la pantalla es
+/// estrecha, porque en fila se partirían en dos líneas contra el borde.
+class _Acciones extends StatelessWidget {
+  const _Acciones({
+    required this.confirmar,
+    required this.cancelar,
+    required this.destructivo,
+  });
+
+  final String confirmar;
+  final String cancelar;
+  final bool destructivo;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final volver = _Volver(
+          label: cancelar,
+          onPressed: () => Navigator.of(context).pop(false),
+        );
+
+        final apiladas =
+            MediaQuery.textScalerOf(context).scale(15) > 20 ||
+            constraints.maxWidth < 300;
+
+        if (apiladas) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              destructivo
+                  ? _BotonPeligro(
+                      label: confirmar,
+                      onPressed: () => Navigator.of(context).pop(true),
+                    )
+                  : EnamButton(
+                      label: confirmar,
+                      onPressed: () => Navigator.of(context).pop(true),
+                    ),
+              const SizedBox(height: DesignTokens.space2),
+              volver,
+            ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Flexible(child: volver),
+            const SizedBox(width: DesignTokens.space2),
+            destructivo
                 ? _BotonPeligro(
                     label: confirmar,
                     onPressed: () => Navigator.of(context).pop(true),
+                    expandido: false,
                   )
                 : EnamButton(
                     label: confirmar,
                     expanded: false,
                     onPressed: () => Navigator.of(context).pop(true),
-                  );
-
-            final apiladas =
-                MediaQuery.textScalerOf(context).scale(15) > 20 ||
-                constraints.maxWidth < 280;
-
-            if (apiladas) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  destructivo
-                      ? seguir
-                      : EnamButton(
-                          label: confirmar,
-                          onPressed: () => Navigator.of(context).pop(true),
-                        ),
-                  const SizedBox(height: DesignTokens.space2),
-                  volver,
-                ],
-              );
-            }
-
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Flexible(child: volver),
-                const SizedBox(width: DesignTokens.space2),
-                seguir,
-              ],
-            );
-          },
-        ),
-      ],
+                  ),
+          ],
+        );
+      },
     );
   }
 }
@@ -189,10 +211,15 @@ class _Volver extends StatelessWidget {
 
 /// Para lo que no tiene vuelta atrás, como eliminar la cuenta.
 class _BotonPeligro extends StatelessWidget {
-  const _BotonPeligro({required this.label, required this.onPressed});
+  const _BotonPeligro({
+    required this.label,
+    required this.onPressed,
+    this.expandido = true,
+  });
 
   final String label;
   final VoidCallback onPressed;
+  final bool expandido;
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +230,7 @@ class _BotonPeligro extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: states.error.base,
         foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: expandido ? const Size.fromHeight(52) : const Size(0, 52),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusXl - 4),
         ),
