@@ -173,11 +173,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
     setState(() => _guardando = true);
     try {
-      // Falta `POST /me/password` en el contrato. Se reutiliza resetPassword
-      // como puente hasta que exista.
       await ref
           .read(authRepositoryProvider)
-          .resetPassword(token: _actual.text, newPassword: _nueva.text);
+          .cambiarContrasena(actual: _actual.text, nueva: _nueva.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Contraseña actualizada')),

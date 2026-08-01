@@ -68,8 +68,21 @@ class _AuthListo implements AuthRepository {
 
   @override
   Future<void> resetPassword({
-    required String token,
+    required String email,
+    required String codigo,
     required String newPassword,
+  }) async {}
+
+  @override
+  Future<void> verificarConCodigo({
+    required String email,
+    required String codigo,
+  }) async {}
+
+  @override
+  Future<void> cambiarContrasena({
+    required String actual,
+    required String nueva,
   }) async {}
 
   @override

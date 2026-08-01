@@ -81,7 +81,7 @@ void main() {
     'Registro': const RegisterScreen(),
     'Verificar correo': const VerifyEmailScreen(email: 'valeria@unmsm.edu.pe'),
     'Recuperar contraseña': const ForgotPasswordScreen(),
-    'Nueva contraseña': const ResetPasswordScreen(token: 'tok'),
+    'Nueva contraseña': const ResetPasswordScreen(email: 'valeria@unmsm.edu.pe'),
     'Perfil inicial': const CompleteProfileScreen(),
     'Inicio': const HomeScreen(),
 
@@ -156,7 +156,7 @@ void main() {
     for (final pantalla in [
       const RegisterScreen(),
       const CompleteProfileScreen(),
-      const ResetPasswordScreen(token: 'tok'),
+      const ResetPasswordScreen(email: 'valeria@unmsm.edu.pe'),
     ]) {
       await tester.pumpWidget(
         _harness(pantalla, Brightness.light, textScale: 1.4),

@@ -271,9 +271,12 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.resetPassword,
-    // El token viaja en la URL del enlace del correo: /nueva-contrasena?token=…
-    builder: (context, state) =>
-        ResetPasswordScreen(token: state.uri.queryParameters['token']),
+    // El correo llega desde la pantalla anterior; el código lo escribe el
+    // usuario. Se acepta también por query para poder abrir la pantalla desde
+    // un enlace de soporte.
+    builder: (context, state) => ResetPasswordScreen(
+      email: (state.extra as String?) ?? state.uri.queryParameters['email'],
+    ),
   ),
   GoRoute(
     path: Routes.completeProfile,
