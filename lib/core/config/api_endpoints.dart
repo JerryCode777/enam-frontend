@@ -17,6 +17,13 @@ abstract final class ApiEndpoints {
   static const String forgotPassword = '/auth/forgot';
   static const String resetPassword = '/auth/reset';
 
+  /// Activa la cuenta con el código de 6 dígitos del correo (RF-01).
+  static const String verifyCode = '/auth/verify-code';
+
+  /// Cambiar la contraseña estando dentro. Distinto de [resetPassword], que es
+  /// para quien NO puede entrar.
+  static const String changePassword = '/me/password';
+
   /// Reenvía el enlace de verificación de correo. **No** es `forgotPassword`:
   /// ese manda un correo de recuperación de contraseña.
   static const String resendVerification = '/auth/resend-verification';

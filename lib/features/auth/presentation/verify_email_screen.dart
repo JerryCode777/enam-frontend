@@ -13,15 +13,16 @@ import '../../../core/theme/motion.dart';
 import '../../../shared/widgets/brand_gradient.dart';
 import '../../../shared/widgets/state_banner.dart';
 
-/// Pantalla 1.4 — espera de verificación de correo.
+/// Pantalla 1.4 — verificación de correo con código.
 ///
-/// La verificación es **por enlace** (RF-01), no por código: el enlace abre la
-/// app por deep link y de ahí se va a completar el perfil. Esta pantalla solo
-/// espera y permite reenviar tras 60 s.
+/// El correo trae un código de 6 dígitos (RF-01) que se escribe aquí. Antes era
+/// un enlace, y eso obligaba a abrirlo en ESTE teléfono, se rompía si el
+/// certificado del dominio no estaba listo, y en spam un enlace es justo lo que
+/// a la gente le enseñaron a no pulsar.
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({this.email, super.key});
 
-  /// Correo al que se envió el enlace. Si es nulo, se lee del usuario en sesión.
+  /// Correo al que se envió el código. Si es nulo, se lee del usuario en sesión.
   final String? email;
 
   @override
@@ -31,10 +32,16 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   static const _cooldown = 60;
 
+  /// Dígitos del código que manda el servidor.
+  static const _largoCodigo = 6;
+
+  final _codigo = TextEditingController();
+
   Timer? _timer;
   int _restante = _cooldown;
   bool _enviando = false;
-  bool _enlaceVencido = false;
+  bool _verificando = false;
+  String? _codigoError;
 
   @override
   void initState() {
@@ -45,7 +52,41 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _codigo.dispose();
     super.dispose();
+  }
+
+  Future<void> _verificar(String email) async {
+    if (_verificando) return;
+    if (_codigo.text.length != _largoCodigo) {
+      setState(() => _codigoError = 'El código tiene $_largoCodigo dígitos.');
+      return;
+    }
+
+    setState(() {
+      _verificando = true;
+      _codigoError = null;
+    });
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .verificarConCodigo(email: email, codigo: _codigo.text);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tu cuenta quedó verificada.')),
+      );
+      // Al login: verificar no abre sesión, y mandar al inicio rebotaría
+      // contra el router con un error que el usuario no entendería.
+      context.go(Routes.login);
+    } on Failure catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _codigoError = e.message;
+        _codigo.clear();
+      });
+    } finally {
+      if (mounted) setState(() => _verificando = false);
+    }
   }
 
   void _startCooldown() {
@@ -69,10 +110,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     try {
       await ref.read(authRepositoryProvider).reenviarVerificacion(email);
       if (!mounted) return;
-      setState(() => _enlaceVencido = false);
+      setState(() {
+        _codigo.clear();
+        _codigoError = null;
+      });
       _startCooldown();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Te enviamos un enlace nuevo.')),
+        const SnackBar(content: Text('Te enviamos un código nuevo.')),
       );
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);
@@ -127,7 +171,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                         color: Colors.white.withValues(alpha: 0.88),
                       ),
                       children: [
-                        const TextSpan(text: 'Enviamos un enlace a\n'),
+                        const TextSpan(text: 'Enviamos un código a\n'),
                         TextSpan(
                           text: email,
                           style: const TextStyle(
@@ -135,21 +179,28 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                             color: Colors.white,
                           ),
                         ),
-                        const TextSpan(text: '\nÁbrelo desde este teléfono.'),
+                        const TextSpan(text: '\nEscríbelo aquí para continuar.'),
                       ],
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  if (_enlaceVencido) ...[
-                    const SizedBox(height: DesignTokens.space4 + 2),
-                    const StateBanner(
-                      kind: BannerKind.warning,
-                      message: 'El enlace venció. Pide uno nuevo para continuar.',
-                    ),
-                  ],
-                  const SizedBox(height: DesignTokens.space4 + 2),
+                  const SizedBox(height: DesignTokens.space5),
+                  _CampoCodigo(
+                    controller: _codigo,
+                    error: _codigoError,
+                    largo: _largoCodigo,
+                    enabled: !_verificando,
+                    onChanged: () => setState(() => _codigoError = null),
+                    onSubmit: () => _verificar(email),
+                  ),
+                  const SizedBox(height: DesignTokens.space4),
                   _PildoraVidrio(
-                    label: puedeReenviar ? 'Reenviar enlace' : _cooldownLabel,
+                    label: _verificando ? 'Verificando…' : 'Verificar cuenta',
+                    onPressed: _verificando ? null : () => _verificar(email),
+                  ),
+                  const SizedBox(height: DesignTokens.space3),
+                  _PildoraVidrio(
+                    label: puedeReenviar ? 'Reenviar código' : _cooldownLabel,
                     onPressed: puedeReenviar ? _reenviar : null,
                   ),
                   const SizedBox(height: DesignTokens.space2),
@@ -167,8 +218,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     ),
                   ),
                   const SizedBox(height: DesignTokens.space5),
-                  // Salida de emergencia: sin esto, un usuario con el enlace
-                  // perdido queda encerrado en esta pantalla.
+                  // Salida de emergencia: sin esto, quien no recibe el código
+                  // queda encerrado en esta pantalla.
                   TextButton(
                     onPressed: () =>
                         ref.read(authControllerProvider.notifier).signOut(),
@@ -283,6 +334,88 @@ class _PildoraVidrio extends StatelessWidget {
           color: Colors.white.withValues(alpha: habilitado ? 1 : 0.75),
         ),
       ),
+    );
+  }
+}
+
+/// Campo de los 6 dígitos, sobre el fondo degradado de la pantalla.
+///
+/// Va en blanco translúcido y no con el campo normal de la app porque aquí el
+/// fondo es la marca a pantalla completa: un campo claro con borde gris se ve
+/// pegado encima, no dentro.
+class _CampoCodigo extends StatelessWidget {
+  const _CampoCodigo({
+    required this.controller,
+    required this.largo,
+    required this.enabled,
+    required this.onChanged,
+    required this.onSubmit,
+    this.error,
+  });
+
+  final TextEditingController controller;
+  final int largo;
+  final bool enabled;
+  final VoidCallback onChanged;
+  final VoidCallback onSubmit;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          // Teclado numérico y autocompletado del código: iOS y Android lo
+          // ofrecen encima del teclado y no hay que teclearlo.
+          keyboardType: TextInputType.number,
+          autofillHints: const [AutofillHints.oneTimeCode],
+          textInputAction: TextInputAction.done,
+          maxLength: largo,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 12,
+            color: Colors.white,
+          ),
+          cursorColor: Colors.white,
+          onChanged: (_) => onChanged(),
+          onSubmitted: (_) => onSubmit(),
+          decoration: InputDecoration(
+            counterText: '',
+            hintText: '000000',
+            hintStyle: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 12,
+              color: Colors.white.withValues(alpha: 0.35),
+            ),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.15),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: DesignTokens.space4,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              borderSide: const BorderSide(color: Colors.white, width: 2),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+          ),
+        ),
+        if (error != null) ...[
+          const SizedBox(height: DesignTokens.space2),
+          StateBanner(kind: BannerKind.error, message: error!),
+        ],
+      ],
     );
   }
 }

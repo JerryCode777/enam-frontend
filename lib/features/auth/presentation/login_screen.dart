@@ -306,12 +306,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         accion: 'Crea tu cuenta',
                         onTap: _ocupado ? null : () => context.go(Routes.register),
                       ),
-                      // Ayuda para desarrollo: con mocks, estos correos
-                      // disparan cada camino de error sin tocar código.
+                      // Ayuda para desarrollo: con mocks, estos correos disparan
+                      // cada camino de error sin tocar código.
                       //
-                      // Va atado a los mocks y no a la build: contra el
-                      // servidor real ninguna de estas reglas es cierta, y el
-                      // texto quedaba mintiendo en cada prueba con la API.
+                      // La condición mira los mocks y no el modo de compilación:
+                      // en debug contra el backend real ninguno de esos correos
+                      // entra, y el cartel prometía lo contrario.
                       if (AppConfig.useMocks)
                         Text(
                           'Modo desarrollo · cualquier correo entra · '

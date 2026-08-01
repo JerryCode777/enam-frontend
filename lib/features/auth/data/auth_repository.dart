@@ -72,9 +72,30 @@ abstract interface class AuthRepository {
   /// devuelve 422.
   Future<void> reenviarVerificacion(String email);
 
+  /// Cambia la contraseña con el código que llegó por correo (RF-03).
+  ///
+  /// Se identifica con correo + código y no con un token de enlace: el enlace
+  /// obligaba a abrirlo en este mismo dispositivo y moría si el correo caía en
+  /// spam. El servidor sigue aceptando el token para los correos ya enviados.
   Future<void> resetPassword({
-    required String token,
+    required String email,
+    required String codigo,
     required String newPassword,
+  });
+
+  /// Verifica la cuenta con el código del correo (RF-01).
+  Future<void> verificarConCodigo({
+    required String email,
+    required String codigo,
+  });
+
+  /// Cambia la contraseña con sesión abierta, comprobando la actual.
+  ///
+  /// Distinto de [resetPassword]: aquí el usuario SÍ puede entrar, así que la
+  /// prueba de identidad es la contraseña de ahora y no un código del correo.
+  Future<void> cambiarContrasena({
+    required String actual,
+    required String nueva,
   });
 
   /// RF-04. Completa o actualiza el perfil.
@@ -203,12 +224,35 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<void> resetPassword({
-    required String token,
+    required String email,
+    required String codigo,
     required String newPassword,
   }) async {
     await _client.post<Map<String, dynamic>>(
       ApiEndpoints.resetPassword,
-      data: {'token': token, 'password': newPassword},
+      data: {'email': email, 'codigo': codigo, 'password': newPassword},
+    );
+  }
+
+  @override
+  Future<void> verificarConCodigo({
+    required String email,
+    required String codigo,
+  }) async {
+    await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.verifyCode,
+      data: {'email': email, 'codigo': codigo},
+    );
+  }
+
+  @override
+  Future<void> cambiarContrasena({
+    required String actual,
+    required String nueva,
+  }) async {
+    await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.changePassword,
+      data: {'actual': actual, 'nueva': nueva},
     );
   }
 

@@ -152,9 +152,40 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<void> resetPassword({
-    required String token,
+    required String email,
+    required String codigo,
     required String newPassword,
-  }) => Future<void>.delayed(_delay);
+  }) async {
+    await Future<void>.delayed(_delay);
+    // El mock acepta cualquier código de 6 dígitos salvo 000000, que sirve para
+    // probar el camino del error sin tener que esperar a que uno venza.
+    if (codigo == '000000') {
+      throw const ValidationFailure('Ese código ya venció o no es válido.');
+    }
+  }
+
+  @override
+  Future<void> cambiarContrasena({
+    required String actual,
+    required String nueva,
+  }) async {
+    await Future<void>.delayed(_delay);
+    // Igual que el servidor: la contraseña actual tiene que ser la buena.
+    if (actual == 'error') {
+      throw const UnauthorizedFailure('La contraseña actual no es correcta.');
+    }
+  }
+
+  @override
+  Future<void> verificarConCodigo({
+    required String email,
+    required String codigo,
+  }) async {
+    await Future<void>.delayed(_delay);
+    if (codigo == '000000') {
+      throw const ValidationFailure('Ese código ya venció o no es válido.');
+    }
+  }
 
   @override
   Future<User> updateProfile({

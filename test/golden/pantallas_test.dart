@@ -72,7 +72,7 @@ void main() {
     (nombre: '1.5-login', widget: LoginScreen()),
     (nombre: '1.6-recuperar', widget: ForgotPasswordScreen()),
     (nombre: '1.7-perfil', widget: CompleteProfileScreen()),
-    (nombre: '1.8-nueva-contrasena', widget: ResetPasswordScreen(token: 'x')),
+    (nombre: '1.8-nueva-contrasena', widget: ResetPasswordScreen(email: 'valeria.rojas@unmsm.edu.pe')),
     // El inicio es la pantalla con más piezas y donde antes se rompió el ancho:
     // las tarjetas de Temario y Marcadas quedaban en dos columnas de ~160 px y
     // los títulos salían como «Tem…» y «Marc…».

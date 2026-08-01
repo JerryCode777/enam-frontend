@@ -15,15 +15,19 @@ import '../../../shared/widgets/state_banner.dart';
 
 /// Pantalla 1.8 — nueva contraseña.
 ///
-/// Se abre desde el enlace del correo, que trae el token en la URL. Esta pantalla
-/// **faltaba en el diseño del bloque 1** (estaba solo descrita en una anotación),
-/// así que la construyo con los mismos patrones del resto: campo de 56 px,
-/// validación inline y requisitos visibles mientras se escribe.
+/// Se llega desde "olvidé mi contraseña": el correo trae un código de 6 dígitos
+/// que se escribe aquí junto con la contraseña nueva.
+///
+/// Antes se abría desde un enlace del correo. Eso obligaba a abrirlo en ESTE
+/// dispositivo, moría si el certificado del dominio no estaba listo y en la
+/// carpeta de spam un enlace es justo lo que a la gente le enseñaron a no
+/// pulsar. El código se lee en la vista previa y se teclea donde haga falta.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
-  const ResetPasswordScreen({this.token, super.key});
+  const ResetPasswordScreen({this.email, super.key});
 
-  /// Token del enlace del correo. Si es nulo, el enlace es inválido.
-  final String? token;
+  /// Correo al que se mandó el código. Llega desde la pantalla anterior; si
+  /// falta, se pide aquí.
+  final String? email;
 
   @override
   ConsumerState<ResetPasswordScreen> createState() =>
@@ -33,24 +37,31 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   static const _minPassword = 8;
 
+  /// Dígitos del código que manda el servidor.
+  static const _largoCodigo = 6;
+
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _codigo = TextEditingController();
+  final _email = TextEditingController();
 
   String? _passwordError;
   String? _confirmError;
+  String? _codigoError;
   bool _loading = false;
-  bool _tokenInvalido = false;
 
   @override
   void initState() {
     super.initState();
-    _tokenInvalido = (widget.token ?? '').isEmpty;
+    _email.text = widget.email ?? '';
   }
 
   @override
   void dispose() {
     _password.dispose();
     _confirm.dispose();
+    _codigo.dispose();
+    _email.dispose();
     super.dispose();
   }
 
@@ -68,6 +79,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   bool _validate() {
     setState(() {
+      _codigoError = switch (_codigo.text) {
+        '' => 'Escribe el código que te enviamos.',
+        _ when _codigo.text.length != _largoCodigo =>
+          'El código tiene $_largoCodigo dígitos.',
+        _ => null,
+      };
       _passwordError = switch (_password.text) {
         '' => 'Crea una contraseña.',
         _ when !_cumpleLargo => 'Debe tener al menos $_minPassword caracteres.',
@@ -81,17 +98,19 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         _ => null,
       };
     });
-    return _passwordError == null && _confirmError == null;
+    return _passwordError == null &&
+        _confirmError == null &&
+        _codigoError == null;
   }
 
   Future<void> _submit() async {
-    final token = widget.token;
-    if (_loading || token == null || !_validate()) return;
+    if (_loading || !_validate()) return;
 
     setState(() => _loading = true);
     try {
       await ref.read(authRepositoryProvider).resetPassword(
-        token: token,
+        email: _email.text.trim(),
+        codigo: _codigo.text,
         newPassword: _password.text,
       );
       if (!mounted) return;
@@ -100,11 +119,25 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       );
       context.go(Routes.login);
     } on UnauthorizedFailure {
-      // Token vencido o ya usado: no tiene sentido dejar el formulario.
-      if (mounted) setState(() => _tokenInvalido = true);
+      // El código no vale: se queda en el formulario, porque puede ser un
+      // dígito mal escrito y quedan intentos.
+      if (mounted) {
+        setState(() {
+          _codigoError = 'Ese código no es válido o ya venció.';
+          _codigo.clear();
+        });
+      }
     } on ValidationFailure catch (e) {
       if (!mounted) return;
-      setState(() => _passwordError = e.fieldErrors['password'] ?? e.message);
+      setState(() {
+        final dePassword = e.fieldErrors['password'];
+        if (dePassword != null) {
+          _passwordError = dePassword;
+        } else {
+          _codigoError = e.message;
+          _codigo.clear();
+        }
+      });
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);
     } finally {
@@ -114,18 +147,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_tokenInvalido) {
-      return AuthScaffold(
-        titulo: 'Este enlace ya no sirve',
-        iconoCabecera: Symbols.link_off,
-        tamanoTitulo: 26,
-        tarjeta: _expirado(context),
-      );
-    }
-
     return AuthScaffold(
       titulo: 'Contraseña nueva',
-      subtitulo: 'Elige una que no uses en otro sitio.',
+      subtitulo: 'Escribe el código que te enviamos y elige tu contraseña.',
       iconoCabecera: Symbols.lock_reset,
       tamanoTitulo: 26,
       tarjeta: _formulario(context),
@@ -133,6 +157,30 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   }
 
   List<Widget> _formulario(BuildContext context) => [
+    // Solo si no llegó desde la pantalla anterior: quien viene de ahí ya lo
+    // escribió una vez.
+    if ((widget.email ?? '').isEmpty)
+      EnamTextField(
+        label: 'Correo',
+        controller: _email,
+        keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.next,
+        autofillHints: const [AutofillHints.email],
+        enabled: !_loading,
+      ),
+    EnamTextField(
+      label: 'Código de $_largoCodigo dígitos',
+      controller: _codigo,
+      error: _codigoError,
+      // Teclado numérico y autocompletado del código: en iOS y Android el
+      // sistema lo ofrece encima del teclado y no hay que teclearlo.
+      keyboardType: TextInputType.number,
+      autofillHints: const [AutofillHints.oneTimeCode],
+      textInputAction: TextInputAction.next,
+      autofocus: true,
+      enabled: !_loading,
+      onChanged: (_) => setState(() => _codigoError = null),
+    ),
     EnamTextField(
       label: 'Nueva contraseña',
       controller: _password,
@@ -140,7 +188,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       obscure: true,
       textInputAction: TextInputAction.next,
       autofillHints: const [AutofillHints.newPassword],
-      autofocus: true,
       enabled: !_loading,
       onChanged: (_) => setState(() => _passwordError = null),
     ),
@@ -173,17 +220,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     ),
   ];
 
-  List<Widget> _expirado(BuildContext context) => [
-    Text(
-      'Los enlaces vencen por seguridad, y también dejan de servir después de '
-      'usarse una vez. Pide uno nuevo.',
-      style: context.texts.bodyMedium?.copyWith(height: 1.55),
-    ),
-    EnamButton(
-      label: 'Pedir un enlace nuevo',
-      onPressed: () => context.go(Routes.forgotPassword),
-    ),
-  ];
 }
 
 /// La caja con borde que agrupa los requisitos, como en el diseño.
