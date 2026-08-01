@@ -114,10 +114,7 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
         children: [
           const _NotaDelSitio(),
           const SizedBox(height: DesignTokens.space3),
-          BotonWhatsApp(
-            label: etiqueta ?? 'Escríbenos si necesitas ayuda',
-            soloAyuda: true,
-          ),
+          BotonWhatsApp(label: etiqueta ?? 'Escríbenos si necesitas ayuda'),
         ],
       );
     }
@@ -320,18 +317,9 @@ class _NotaDelSitio extends StatelessWidget {
 ///
 /// No es una integración: es un enlace `wa.me`, igual que en la app hermana.
 class BotonWhatsApp extends StatelessWidget {
-  const BotonWhatsApp({
-    super.key,
-    this.label = 'Activar por WhatsApp',
-    this.soloAyuda = false,
-  });
+  const BotonWhatsApp({super.key, this.label = 'Activar por WhatsApp'});
 
   final String label;
-
-  /// En iOS el botón es de ayuda, no de venta: no puede abrir una
-  /// conversación pidiendo activar el plan, que es exactamente el cobro que
-  /// la tienda no permite gestionar desde la app.
-  final bool soloAyuda;
 
   @override
   Widget build(BuildContext context) {
@@ -339,11 +327,7 @@ class BotonWhatsApp extends StatelessWidget {
 
     return OutlinedButton.icon(
       onPressed: () async {
-        final abierto = await Contacto.abrir(
-          soloAyuda
-              ? Contacto.soporte(mensaje: 'Hola, necesito ayuda con ENAM Prep.')
-              : Contacto.activarPlan(),
-        );
+        final abierto = await Contacto.abrir(Contacto.activarPlan());
         if (!abierto && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

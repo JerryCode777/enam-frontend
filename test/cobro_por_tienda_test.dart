@@ -53,6 +53,14 @@ void main() {
     // `enTiendaApple` es la única condición que decide qué se ofrece. Vivía
     // suelta en la pantalla de bloqueo, y por eso «Mi suscripción» se saltaba
     // el reparto entero y llegaba a los precios en iPhone.
+    test('la web a la que enlaza está publicada, no en localhost', () {
+      // Es una dirección que abre el navegador del usuario: un localhost por
+      // defecto es un enlace roto en cuanto la app sale del equipo de quien
+      // programa, y el fallo solo se ve en el móvil de otra persona.
+      expect(AppConfig.webUrl, startsWith('https://'));
+      expect(AppConfig.webUrl, isNot(contains('localhost')));
+    });
+
     test('se puede forzar para revisar las dos sin cambiar de equipo', () {
       // Sin `--dart-define=TIENDA`, sale la del dispositivo; en los tests eso
       // es el host, que no es iOS.

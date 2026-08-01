@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -26,7 +27,6 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
-  static const _minPassword = 8;
 
   final _actual = TextEditingController();
   final _nueva = TextEditingController();
@@ -45,7 +45,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     super.dispose();
   }
 
-  bool get _cumpleLargo => _nueva.text.length >= _minPassword;
+  bool get _cumpleLargo => _nueva.text.length >= PasswordRules.minimo;
   bool get _tieneNumero => _nueva.text.contains(RegExp(r'\d'));
   bool get _tieneLetra => _nueva.text.contains(RegExp('[a-zA-Z]'));
   bool get _cumpleTodo => _cumpleLargo && _tieneNumero && _tieneLetra;
@@ -94,7 +94,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 const SizedBox(height: DesignTokens.space3),
                 _Requisito(
                   cumple: _cumpleLargo,
-                  texto: 'Al menos $_minPassword caracteres',
+                  texto: 'Al menos ${PasswordRules.minimo} caracteres',
                 ),
                 _Requisito(cumple: _tieneLetra, texto: 'Incluye letras'),
                 _Requisito(cumple: _tieneNumero, texto: 'Incluye números'),

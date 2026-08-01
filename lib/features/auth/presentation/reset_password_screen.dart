@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -35,7 +36,6 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
-  static const _minPassword = 8;
 
   /// Dígitos del código que manda el servidor.
   static const _largoCodigo = 6;
@@ -65,7 +65,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     super.dispose();
   }
 
-  bool get _cumpleLargo => _password.text.length >= _minPassword;
+  bool get _cumpleLargo => _password.text.length >= PasswordRules.minimo;
   bool get _tieneNumero => _password.text.contains(RegExp(r'\d'));
   bool get _tieneLetra => _password.text.contains(RegExp('[a-zA-Z]'));
   bool get _coinciden =>
@@ -87,7 +87,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       };
       _passwordError = switch (_password.text) {
         '' => 'Crea una contraseña.',
-        _ when !_cumpleLargo => 'Debe tener al menos $_minPassword caracteres.',
+        _ when !_cumpleLargo => 'Debe tener al menos ${PasswordRules.minimo} caracteres.',
         _ when !_tieneNumero || !_tieneLetra =>
           'Combina letras y números.',
         _ => null,
@@ -205,7 +205,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     // enviar.
     _ListaRequisitos(
       children: [
-        _Requisito(cumple: _cumpleLargo, texto: 'Mínimo $_minPassword caracteres'),
+        _Requisito(cumple: _cumpleLargo, texto: 'Mínimo ${PasswordRules.minimo} caracteres'),
         _Requisito(cumple: _tieneNumero, texto: 'Al menos un número'),
         // Fuera del diseño a propósito: con sus tres reglas, "12345678" sería
         // una contraseña válida. Una fila más y deja de serlo.

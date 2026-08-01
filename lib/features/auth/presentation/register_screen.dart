@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -35,7 +36,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _acepta = false;
   bool _loading = false;
 
-  static const _minPassword = 8;
 
   @override
   void dispose() {
@@ -58,11 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           'Ese correo no parece válido.',
         _ => null,
       };
-      _passwordError = switch (password.length) {
-        0 => 'Crea una contraseña.',
-        < _minPassword => 'Debe tener al menos $_minPassword caracteres.',
-        _ => null,
-      };
+      _passwordError = PasswordRules.motivo(password);
     });
 
     return _nombreError == null && _emailError == null && _passwordError == null;
@@ -133,7 +129,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           label: 'Contraseña',
           controller: _password,
           error: _passwordError,
-          helper: 'Mínimo $_minPassword caracteres',
+          helper: PasswordRules.ayuda,
           obscure: true,
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.newPassword],

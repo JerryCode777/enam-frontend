@@ -99,20 +99,30 @@ abstract final class AppConfig {
 
   /// Dónde se paga: la web de ENAM Prep.
   ///
-  /// Se sobreescribe con `--dart-define=WEB_URL=...`. En dev apunta al servidor
-  /// local de la web React.
+  /// Apunta a la web desplegada, no al servidor local: es una dirección que
+  /// el usuario abre en su navegador, así que un `localhost` por defecto
+  /// significa un enlace roto en cuanto la app sale del equipo de quien
+  /// programa. Para desarrollar contra la web local:
+  /// `--dart-define=WEB_URL=http://localhost:5173`.
   static const String webUrl = String.fromEnvironment(
     'WEB_URL',
-    defaultValue: 'http://localhost:5173',
+    defaultValue: 'https://enamprep.com',
   );
 
   /// La pantalla de activación de la web.
   ///
-  /// Es la única dirección de la web que la app enlaza, y es a propósito: sabe
-  /// recibir a alguien que llega **sin sesión**, que es como llega siempre
-  /// quien viene de iOS. Enlazar a `/planes` mandaba al login, y enlazar a la
-  /// raíz al splash; en los dos casos la persona acababa lejos de lo que iba a
-  /// hacer, y en un teclado de móvil.
+  /// Es la única dirección de la web que la app enlaza, y **no es `/planes` a
+  /// propósito**. La guía 3.1.1 de App Store prohíbe enlazar a un mecanismo de
+  /// compra externo; lo que sí tolera —y lo que el *External Link Account
+  /// Entitlement* contempla— es llevar a **gestionar la cuenta**. Una lista de
+  /// precios es inequívocamente lo primero; una pantalla que pregunta a qué
+  /// vienes, no. Google Play tiene una política equivalente, más tolerante en
+  /// la práctica pero igual de explícita en el papel.
+  ///
+  /// Por eso tampoco lleva al inicio: quien viene de la app llega **sin
+  /// sesión** y acabaría en el splash y de ahí en el login, escribiendo una
+  /// contraseña en el teclado del móvil sin ninguna pista de a qué había ido.
+  /// `/activar` es la única que sabe recibir a alguien en frío.
   ///
   /// El `origen` no lo usa el servidor: viaja para poder medir por separado los
   /// dos caminos de compra.
