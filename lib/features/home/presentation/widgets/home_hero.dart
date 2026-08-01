@@ -276,11 +276,15 @@ class _TarjetaRetomar extends StatelessWidget {
               // tiene cronómetro, grilla de 180 y nada de retroalimentación.
               // Mandarlo a la de práctica enseñaba las claves de un examen en
               // curso.
-              onTap: () => context.push(
-                sesion.esSimulacro
-                    ? Routes.simulacroSessionOf(sesion.sessionId)
-                    : Routes.practiceSessionOf(sesion.sessionId),
-              ),
+              //
+              // Y `go` para el simulacro, `push` para la práctica: la sesión
+              // de simulacro vive dentro del contenedor de pestañas, y
+              // apilarla desde aquí monta un segundo Navigator con la misma
+              // GlobalKey —pantalla roja y sin vuelta atrás—. La de práctica
+              // está fuera, así que ahí sí se apila.
+              onTap: () => sesion.esSimulacro
+                  ? context.go(Routes.simulacroSessionOf(sesion.sessionId))
+                  : context.push(Routes.practiceSessionOf(sesion.sessionId)),
               borderRadius: BorderRadius.circular(DesignTokens.radiusXl - 4),
               child: Container(
                 height: 40,

@@ -11,6 +11,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/motion.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/state_banner.dart';
@@ -207,27 +208,16 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
   }
 
   Future<void> _confirmarAbandono() async {
-    final salir = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Salir del simulacro?'),
-        content: const Text(
+    final salir = await confirmar(
+      context,
+      titulo: '¿Salir del simulacro?',
+      mensaje:
           'El cronómetro sigue corriendo. Si el tiempo se agota, el examen se '
           'envía con lo que hayas respondido.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Seguir rindiendo'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Salir'),
-          ),
-        ],
-      ),
+      confirmar: 'Salir',
+      cancelar: 'Seguir rindiendo',
     );
-    if (salir == true && mounted) context.go(Routes.simulacroSelection);
+    if (salir && mounted) context.go(Routes.simulacroSelection);
   }
 
   /// Pantalla 5.5 — confirmación de envío.

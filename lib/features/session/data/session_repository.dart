@@ -259,7 +259,11 @@ class MockSessionRepository implements SessionRepository {
         id,
         MockData.questions(
           cantidad: config.cantidadPreguntas,
-          areaIds: config.areaIds,
+          // Los subtemas acotan más que el área, así que mandan cuando vienen.
+          // El servidor resuelve el subárbol; aquí basta con no ignorarlos.
+          areaIds: config.subtemaIds.isNotEmpty
+              ? config.subtemaIds
+              : config.areaIds,
           conRespuestas: true,
         ),
         // Tampoco en práctica: el servidor revela cada pregunta AL

@@ -10,6 +10,7 @@ import '../../../core/theme/motion.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
@@ -137,27 +138,17 @@ class _Contenido extends ConsumerWidget {
   }
 
   Future<void> _confirmarSalida(BuildContext context) async {
-    final salir = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Salir de la práctica?'),
-        // RF-15: hay que decirlo, o el usuario asume que pierde el avance.
-        content: const Text(
-          'Tu avance queda guardado. Puedes retomar esta sesión desde el inicio.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Seguir practicando'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Salir'),
-          ),
-        ],
-      ),
+    final salir = await confirmar(
+      context,
+      titulo: '¿Salir de la práctica?',
+      // RF-15: hay que decirlo, o el usuario asume que pierde el avance.
+      mensaje:
+          'Tu avance queda guardado. Puedes retomar esta sesión desde el '
+          'inicio.',
+      confirmar: 'Salir',
+      cancelar: 'Seguir practicando',
     );
-    if (salir == true && context.mounted) context.pop();
+    if (salir && context.mounted) context.pop();
   }
 }
 

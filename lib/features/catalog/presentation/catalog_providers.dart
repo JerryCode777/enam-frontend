@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/taxonomy.dart';
 import '../../../core/providers.dart';
+import '../../stats/domain/stats_models.dart';
 import '../domain/catalog_models.dart';
 
 /// Un nodo con su ruta desde el área, para las migas de pan.
@@ -157,15 +158,30 @@ String _normalizar(String s) {
 /// usuario para dominarla, y cuánto temario hay que cubrir por pregunta. Un área
 /// grande donde va mal pesa más que una chica donde va peor.
 final prioridadEstudioProvider =
-    Provider<List<({CatalogNode area, double score})>>((ref) {
+    Provider<List<({CatalogNode area, double score, double? acierto})>>((ref) {
       final arbol = ref.watch(catalogProvider).value;
       if (arbol == null) return const [];
 
-      final lista = <({CatalogNode area, double score})>[];
+      // El progreso por área sale del dashboard y no del árbol.
+      //
+      // `GET /catalog/areas` responde hoy con el progreso en cero para todas
+      // las áreas, aunque el usuario haya respondido: `GET /stats/dashboard`
+      // devuelve 40 respondidas en Medicina y el catálogo, 0. Hasta que el
+      // servidor lo pueble, tomar el acierto de ahí dejaba la lista entera en
+      // "sin datos" y el orden salía del peso a secas.
+      final porArea = {
+        for (final a
+            in ref.watch(dashboardProvider).value?.porArea ??
+                const <AreaPerformance>[])
+          a.areaId: a,
+      };
+
+      final lista = <({CatalogNode area, double score, double? acierto})>[];
 
       for (final area in arbol) {
         final peso = (area.peso ?? 0) / 180;
-        final acierto = area.porcentajeAcierto;
+        final acierto =
+            porArea[area.id]?.porcentajeAcierto ?? area.porcentajeAcierto;
 
         // Sin datos se asume medio: no se puede afirmar que va mal, pero tampoco
         // conviene mandarla al final de la lista.
@@ -176,7 +192,11 @@ final prioridadEstudioProvider =
         final densidad = area.temasPorPregunta ?? 2.0;
         final rendimiento = (2.0 / densidad).clamp(0.5, 2.0);
 
-        lista.add((area: area, score: peso * brecha * rendimiento));
+        lista.add((
+          area: area,
+          score: peso * brecha * rendimiento,
+          acierto: acierto,
+        ));
       }
 
       lista.sort((a, b) => b.score.compareTo(a.score));

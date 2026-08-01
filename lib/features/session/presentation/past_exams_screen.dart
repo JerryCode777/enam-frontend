@@ -278,6 +278,7 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
 
       // D-02: rendir un examen también consume el día de prueba.
       await ref.read(inicioPruebaProvider.notifier).arrancar();
+      ref.invalidate(sesionesAbiertasProvider);
 
       if (!mounted) return;
       Navigator.of(context).pop();

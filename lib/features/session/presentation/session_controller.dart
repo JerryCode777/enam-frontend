@@ -274,10 +274,13 @@ class SessionController extends AsyncNotifier<SessionState> {
           .submit(sessionId);
       state = AsyncData(s.copyWith(session: finalizada, enviando: false));
 
-      // El progreso del temario y las estadísticas cambiaron.
+      // El progreso del temario y las estadísticas cambiaron. Y la sesión ya
+      // no está abierta: sin invalidarla, el inicio seguiría ofreciendo
+      // retomar algo que acaba de terminar.
       ref
         ..invalidate(catalogProvider)
-        ..invalidate(dashboardProvider);
+        ..invalidate(dashboardProvider)
+        ..invalidate(sesionesAbiertasProvider);
 
       return finalizada;
     } on Failure catch (e) {

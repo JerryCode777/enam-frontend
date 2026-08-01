@@ -4,11 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/state_banner.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 
@@ -39,10 +42,19 @@ class SessionSummaryScreen extends ConsumerWidget {
   }
 }
 
-class _Contenido extends StatelessWidget {
+class _Contenido extends ConsumerStatefulWidget {
   const _Contenido({required this.session});
 
   final StudySession session;
+
+  @override
+  ConsumerState<_Contenido> createState() => _ContenidoState();
+}
+
+class _ContenidoState extends ConsumerState<_Contenido> {
+  bool _repasando = false;
+
+  StudySession get session => widget.session;
 
   int get _correctas => session.correctas;
   int get _total => session.totalPreguntas;
@@ -66,6 +78,64 @@ class _Contenido extends StatelessWidget {
     // "Difícil" describe el material, no al usuario.
     _ => 'Sesión difícil',
   };
+
+
+  /// Arranca una práctica con lo que se falló en **esta** sesión.
+  ///
+  /// Antes mandaba al configurador con el origen puesto, y ahí se perdían dos
+  /// cosas: el nodo que se estaba practicando —así que "repasar las falladas
+  /// de Cardiología" acababa ofreciendo todo el temario— y el propio gesto,
+  /// porque el usuario ya había decidido qué quería y volvía a una pantalla de
+  /// ajustes.
+  ///
+  /// El nodo no viaja en la sesión, pero sí en las preguntas: al terminar
+  /// llegan con su área y su subtema, así que el ámbito sale de las falladas.
+  Future<void> _repasarFalladas() async {
+    if (_repasando) return;
+    setState(() => _repasando = true);
+
+    try {
+      final falladas = session.respuestas.values
+          .where((r) => r.esCorrecta == false)
+          .map((r) => r.questionId)
+          .toSet();
+
+      final preguntas = session.preguntas
+          .where((q) => falladas.contains(q.id))
+          .toList();
+
+      final subtemas = preguntas
+          .map((q) => q.subtemaId)
+          .nonNulls
+          .toSet()
+          .toList();
+      final areas = preguntas.map((q) => q.areaId).nonNulls.toSet().toList();
+
+      final sesion = await ref
+          .read(sessionRepositoryProvider)
+          .startPractice(
+            PracticeConfig(
+              // Con subtemas se acota a ellos; si no llegaron, al área. Sin
+              // ninguno de los dos, el servidor busca entre todas las falladas
+              // del usuario, que sigue siendo mejor que empezar de cero.
+              areaIds: subtemas.isEmpty ? areas : const [],
+              subtemaIds: subtemas,
+              cantidadPreguntas: falladas.length.clamp(
+                Blueprint.practiceMinQuestions,
+                Blueprint.practiceMaxQuestions,
+              ),
+              origen: QuestionSource.falladas,
+            ),
+          );
+
+      if (!mounted) return;
+      context.pushReplacement(Routes.practiceSessionOf(sesion.id));
+    } on Failure catch (e) {
+      if (mounted) showErrorSnack(context, e.message);
+    } finally {
+      if (mounted) setState(() => _repasando = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,9 +255,8 @@ class _Contenido extends StatelessWidget {
               child: EnamButton(
                 label: 'Repasar las $_falladas falladas',
                 icon: Symbols.replay,
-                onPressed: () => context.pushReplacement(
-                  '${Routes.practiceConfig}?origen=falladas',
-                ),
+                loading: _repasando,
+                onPressed: _repasarFalladas,
               ),
             ),
           const SizedBox(height: DesignTokens.space2 + 2),

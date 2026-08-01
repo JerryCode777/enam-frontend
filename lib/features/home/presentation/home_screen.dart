@@ -45,7 +45,11 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(dashboardProvider),
+        onRefresh: () async => ref
+          ..invalidate(dashboardProvider)
+          // Tirar hacia abajo también relee lo que quedó a medias: es el gesto
+          // con el que la gente pregunta "¿esto está al día?".
+          ..invalidate(sesionesAbiertasProvider),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -605,7 +609,7 @@ class _PorDondeSeguir extends ConsumerWidget {
         ),
         for (var i = 0; i < areas.length; i++) ...[
           if (i > 0) const SizedBox(height: DesignTokens.space2),
-          _AreaSugerida(area: areas[i].area),
+          _AreaSugerida(area: areas[i].area, acierto: areas[i].acierto),
         ],
       ],
     );
@@ -613,15 +617,19 @@ class _PorDondeSeguir extends ConsumerWidget {
 }
 
 class _AreaSugerida extends StatelessWidget {
-  const _AreaSugerida({required this.area});
+  const _AreaSugerida({required this.area, this.acierto});
 
   final CatalogNode area;
+
+  /// Acierto efectivo del área. Llega ya resuelto porque el catálogo no lo
+  /// trae poblado; ver `prioridadEstudioProvider`.
+  final double? acierto;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
     final color = AreaColors.of(area.id, Theme.of(context).brightness);
-    final acierto = area.porcentajeAcierto;
+    final pct = acierto;
 
     return Card(
       child: InkWell(
@@ -663,10 +671,10 @@ class _AreaSugerida extends StatelessWidget {
                     // El peso va siempre visible: 40 preguntas y 2 preguntas no
                     // pueden verse igual a la hora de decidir (RN-02).
                     Text(
-                      acierto == null
+                      pct == null
                           ? '${area.peso ?? 0} preguntas · sin datos'
                           : '${area.peso ?? 0} preguntas · '
-                                '${(acierto * 100).round()} % de acierto',
+                                '${(pct * 100).round()} % de acierto',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.texts.bodySmall?.copyWith(
@@ -678,7 +686,7 @@ class _AreaSugerida extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(3),
                       child: LinearProgressIndicator(
-                        value: acierto ?? 0,
+                        value: pct ?? 0,
                         minHeight: 6,
                         backgroundColor: scheme.outlineVariant,
                         valueColor: AlwaysStoppedAnimation(color),

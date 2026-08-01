@@ -165,6 +165,7 @@ class _SimulacroInstructionsScreenState
 
       // D-02: el reloj de las 24 h arranca aquí también.
       await ref.read(inicioPruebaProvider.notifier).arrancar();
+      ref.invalidate(sesionesAbiertasProvider);
       if (mounted) {
         context.pushReplacement(Routes.simulacroSessionOf(session.id));
       }

@@ -187,6 +187,9 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
       // D-02: el reloj de las 24 h arranca aquí, no al registrarse.
       await ref.read(inicioPruebaProvider.notifier).arrancar();
 
+      // Hay una sesión abierta nueva: el inicio tiene que poder ofrecerla.
+      ref.invalidate(sesionesAbiertasProvider);
+
       if (mounted) context.pushReplacement(Routes.practiceSessionOf(session.id));
     } on ForbiddenFailure catch (e) {
       // RN-03: el servidor es el que decide. Es también el caso de la prueba

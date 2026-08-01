@@ -452,7 +452,12 @@ final resumableSessionProvider = Provider<ResumableSession?>((ref) {
     titulo: sesion.esSimulacro
         ? 'Termina tu simulacro'
         : 'Continuar donde quedaste',
-    detalle: 'Pregunta ${sesion.respondidas + 1} de ${sesion.totalPreguntas}',
+    // La que toca es la siguiente sin responder, pero nunca una más allá del
+    // total: con la última ya contestada, "pregunta 21 de 20" no significa
+    // nada.
+    detalle:
+        'Pregunta ${(sesion.respondidas + 1).clamp(1, sesion.totalPreguntas)} '
+        'de ${sesion.totalPreguntas}',
   );
 });
 
