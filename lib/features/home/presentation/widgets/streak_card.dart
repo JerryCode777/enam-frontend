@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/domain/hora_peru.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/state_colors.dart';
@@ -254,10 +255,13 @@ class _SemanaState extends State<_Semana> with TickerProviderStateMixin {
   }
 
   /// Inicial del día que ocupa la posición [i], contando hacia atrás desde hoy.
+  ///
+  /// En hora de PERÚ, no la del dispositivo: el servidor arma esta semana con
+  /// el calendario peruano, y etiquetarla con otro reloj desplazaría las letras
+  /// un día respecto a los círculos. Ver `core/domain/hora_peru.dart`.
   static String _inicial(int i, int total) {
     const iniciales = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-    final fecha = DateTime.now().subtract(Duration(days: total - 1 - i));
-    return iniciales[fecha.weekday - 1];
+    return iniciales[diaDeLaSemanaEnPeru(total - 1 - i) - 1];
   }
 
   @override
