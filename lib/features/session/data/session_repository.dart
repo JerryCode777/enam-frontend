@@ -567,39 +567,42 @@ class MockSessionRepository implements SessionRepository {
 
   /// Los exámenes ENAM que ya se rindieron, del más reciente al más antiguo.
   ///
-  /// Es la lista real del banco. Van aquí mientras el servidor no exponga
-  /// `GET /exams`; cuando lo haga, esto se borra y no cambia una línea de UI.
+  /// Es la lista real del banco, con la forma exacta que devuelve
+  /// `GET /past-exams`: año y convocatoria, no una fecha completa —el servidor
+  /// no guarda el día— e `intentos` en vez de un booleano, porque un examen
+  /// pasado se puede rendir las veces que uno quiera.
   static final _examenesPasados = <PastExam>[
-    PastExam(id: 'examen_enam_05.07.2026', nombre: 'ENAM 2026-I',
-        fecha: DateTime(2026, 7, 5), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_26.04.2026', nombre: 'ENAM extraordinario 2026',
-        fecha: DateTime(2026, 4, 26), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_07.12.2025', nombre: 'ENAM 2025-II',
-        fecha: DateTime(2025, 12, 7), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_12.10.2025', nombre: 'ENAM octubre 2025',
-        fecha: DateTime(2025, 10, 12), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_12.10.2025_preinternos',
-        nombre: 'ENAM octubre 2025', etiqueta: 'Preinternos',
-        fecha: DateTime(2025, 10, 12), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_30.03.2025', nombre: 'ENAM 2025-I',
-        fecha: DateTime(2025, 3, 30), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_17112024', nombre: 'ENAM 2024-II',
-        fecha: DateTime(2024, 11, 17), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_14.07.2024', nombre: 'ENAM julio 2024',
-        fecha: DateTime(2024, 7, 14), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_17.03.2024', nombre: 'ENAM 2024-I',
-        fecha: DateTime(2024, 3, 17), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_03122023', nombre: 'ENAM 2023-II',
-        fecha: DateTime(2023, 12, 3), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_29082021-2', nombre: 'ENAM agosto 2021',
-        fecha: DateTime(2021, 8, 29), totalPreguntas: 180),
-    PastExam(id: 'examen_enam05062021', nombre: 'ENAM junio 2021',
-        fecha: DateTime(2021, 6, 5), totalPreguntas: 180),
-    PastExam(id: 'examen_enam25042021', nombre: 'ENAM abril 2021',
-        fecha: DateTime(2021, 4, 25), totalPreguntas: 180),
-    PastExam(id: 'examen_enam_e2020', nombre: 'ENAM 2020',
-        fecha: DateTime(2020), totalPreguntas: 180),
+    _pasado('examen_enam_05.07.2026', 'ENAM 2026', 2026, 'I'),
+    _pasado('examen_enam_26.04.2026', 'ENAM extraordinario 2026', 2026, ''),
+    _pasado('examen_enam_07.12.2025', 'ENAM 2025', 2025, 'II'),
+    _pasado('examen_enam_12.10.2025', 'ENAM octubre 2025', 2025, ''),
+    _pasado('examen_enam_12.10.2025_preinternos',
+        'ENAM octubre 2025 Preinternos', 2025, ''),
+    _pasado('examen_enam_30.03.2025', 'ENAM 2025', 2025, 'I'),
+    _pasado('examen_enam_17112024', 'ENAM 2024', 2024, 'II'),
+    _pasado('examen_enam_14.07.2024', 'ENAM julio 2024', 2024, ''),
+    _pasado('examen_enam_17.03.2024', 'ENAM 2024', 2024, 'I'),
+    _pasado('examen_enam_03122023', 'ENAM 2023', 2023, 'II'),
+    _pasado('examen_enam_29082021-2', 'ENAM agosto 2021', 2021, ''),
+    _pasado('examen_enam05062021', 'ENAM junio 2021', 2021, ''),
+    _pasado('examen_enam25042021', 'ENAM abril 2021', 2021, ''),
+    _pasado('examen_enam_e2020', 'ENAM 2020', 2020, ''),
   ];
+
+  /// Un examen del banco, con los 180 y las 3 h del examen real.
+  static PastExam _pasado(
+    String id,
+    String nombre,
+    int anio,
+    String convocatoria,
+  ) => PastExam(
+        id: id,
+        nombre: nombre,
+        anio: anio,
+        convocatoria: convocatoria,
+        duracionMinutos: Blueprint.examDuration.inMinutes,
+        totalPreguntas: Blueprint.totalQuestions,
+      );
 
   @override
   Future<List<PastExam>> pastExams() async {

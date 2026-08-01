@@ -253,20 +253,32 @@ abstract class PastExam with _$PastExam {
     required String id,
     required String nombre,
 
-    /// Cuándo se rindió. Ordena la lista: lo más reciente primero, que es lo
-    /// que más le sirve al estudiante.
-    DateTime? fecha,
+    /// El año del examen. Agrupa la lista.
+    ///
+    /// Es un año, no una fecha: el servidor no guarda el día. Esto estuvo
+    /// modelado como `DateTime? fecha` contra un contrato imaginado, y contra
+    /// el servidor real llegaba siempre nulo, así que la lista salía sin
+    /// agrupar y sin fecha que enseñar.
+    @Default(0) int anio,
+
+    /// Distingue las dos convocatorias de un mismo año, como "I" o "II".
+    ///
+    /// **Vacía** cuando ese año hubo una sola: por eso es un texto y no un
+    /// nulo, que es como lo manda el servidor.
+    @Default('') String convocatoria,
+
+    /// Minutos, no segundos: el servidor ya hace la división.
+    @Default(0) int duracionMinutos,
     @Default(0) int totalPreguntas,
 
-    /// Matiz del examen cuando lo tiene, como "Preinternos". Va aparte del
-    /// nombre para poder pintarlo como distintivo.
-    String? etiqueta,
+    /// Cuántas veces lo rindió ESTE usuario. Cero es «nunca».
+    ///
+    /// Un examen pasado se puede rendir las veces que uno quiera —es material
+    /// de estudio, no una competición—, así que lo que importa no es un
+    /// booleano sino cuántas van.
+    @Default(0) int intentos,
 
-    /// Si el usuario ya lo rindió alguna vez. Se marca en la lista para que no
-    /// repita sin querer el mismo de la semana pasada.
-    @Default(false) bool resuelto,
-
-    /// Su mejor nota, si ya lo rindió.
+    /// Su mejor nota, o null si no lo ha rendido.
     double? mejorNota,
   }) = _PastExam;
 
@@ -275,8 +287,15 @@ abstract class PastExam with _$PastExam {
   factory PastExam.fromJson(Map<String, dynamic> json) =>
       _$PastExamFromJson(json);
 
-  /// El año, para agrupar la lista.
-  int? get anio => fecha?.year;
+  /// Si el usuario ya lo rindió alguna vez.
+  bool get resuelto => intentos > 0;
+
+  /// Cuánto dura, para pintarlo junto al número de preguntas.
+  Duration get duracion => Duration(minutes: duracionMinutos);
+
+  /// El nombre con su convocatoria, cuando la tiene: «ENAM 2025 · II».
+  String get nombreCompleto =>
+      convocatoria.isEmpty ? nombre : '$nombre · $convocatoria';
 }
 
 /// Cómo se rinde un examen pasado (RF-52).

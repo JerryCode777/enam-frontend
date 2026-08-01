@@ -83,10 +83,14 @@ abstract final class ApiEndpoints {
   // ---------- Exámenes pasados (RF-52) ----------
   //
   // Exámenes ENAM reales de años anteriores. El servidor manda todo: nombre,
-  // fecha, preguntas, alternativas y explicaciones.
-  static const String pastExams = '/exams';
+  // año, preguntas, alternativas y explicaciones.
+  //
+  // `/past-exams`, no `/exams`: esta ruta estaba escrita a mano contra un
+  // contrato imaginado y contra el servidor devolvía 404. El cliente web usa
+  // la buena desde el principio.
+  static const String pastExams = '/past-exams';
 
-  static String startPastExam(String examId) => '/exams/$examId/start';
+  static String startPastExam(String examId) => '/past-exams/$examId/start';
 
   // ---------- Simulacros nacionales (RF-19) ----------
   static const String mockExams = '/mock-exams';

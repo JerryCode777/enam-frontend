@@ -2059,13 +2059,23 @@ as double?,
 /// @nodoc
 mixin _$PastExam {
 
- String get id; String get nombre;/// Cuándo se rindió. Ordena la lista: lo más reciente primero, que es lo
-/// que más le sirve al estudiante.
- DateTime? get fecha; int get totalPreguntas;/// Matiz del examen cuando lo tiene, como "Preinternos". Va aparte del
-/// nombre para poder pintarlo como distintivo.
- String? get etiqueta;/// Si el usuario ya lo rindió alguna vez. Se marca en la lista para que no
-/// repita sin querer el mismo de la semana pasada.
- bool get resuelto;/// Su mejor nota, si ya lo rindió.
+ String get id; String get nombre;/// El año del examen. Agrupa la lista.
+///
+/// Es un año, no una fecha: el servidor no guarda el día. Esto estuvo
+/// modelado como `DateTime? fecha` contra un contrato imaginado, y contra
+/// el servidor real llegaba siempre nulo, así que la lista salía sin
+/// agrupar y sin fecha que enseñar.
+ int get anio;/// Distingue las dos convocatorias de un mismo año, como "I" o "II".
+///
+/// **Vacía** cuando ese año hubo una sola: por eso es un texto y no un
+/// nulo, que es como lo manda el servidor.
+ String get convocatoria;/// Minutos, no segundos: el servidor ya hace la división.
+ int get duracionMinutos; int get totalPreguntas;/// Cuántas veces lo rindió ESTE usuario. Cero es «nunca».
+///
+/// Un examen pasado se puede rendir las veces que uno quiera —es material
+/// de estudio, no una competición—, así que lo que importa no es un
+/// booleano sino cuántas van.
+ int get intentos;/// Su mejor nota, o null si no lo ha rendido.
  double? get mejorNota;
 /// Create a copy of PastExam
 /// with the given fields replaced by the non-null parameter values.
@@ -2079,16 +2089,16 @@ $PastExamCopyWith<PastExam> get copyWith => _$PastExamCopyWithImpl<PastExam>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PastExam&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.etiqueta, etiqueta) || other.etiqueta == etiqueta)&&(identical(other.resuelto, resuelto) || other.resuelto == resuelto)&&(identical(other.mejorNota, mejorNota) || other.mejorNota == mejorNota));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PastExam&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.anio, anio) || other.anio == anio)&&(identical(other.convocatoria, convocatoria) || other.convocatoria == convocatoria)&&(identical(other.duracionMinutos, duracionMinutos) || other.duracionMinutos == duracionMinutos)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.intentos, intentos) || other.intentos == intentos)&&(identical(other.mejorNota, mejorNota) || other.mejorNota == mejorNota));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,fecha,totalPreguntas,etiqueta,resuelto,mejorNota);
+int get hashCode => Object.hash(runtimeType,id,nombre,anio,convocatoria,duracionMinutos,totalPreguntas,intentos,mejorNota);
 
 @override
 String toString() {
-  return 'PastExam(id: $id, nombre: $nombre, fecha: $fecha, totalPreguntas: $totalPreguntas, etiqueta: $etiqueta, resuelto: $resuelto, mejorNota: $mejorNota)';
+  return 'PastExam(id: $id, nombre: $nombre, anio: $anio, convocatoria: $convocatoria, duracionMinutos: $duracionMinutos, totalPreguntas: $totalPreguntas, intentos: $intentos, mejorNota: $mejorNota)';
 }
 
 
@@ -2099,7 +2109,7 @@ abstract mixin class $PastExamCopyWith<$Res>  {
   factory $PastExamCopyWith(PastExam value, $Res Function(PastExam) _then) = _$PastExamCopyWithImpl;
 @useResult
 $Res call({
- String id, String nombre, DateTime? fecha, int totalPreguntas, String? etiqueta, bool resuelto, double? mejorNota
+ String id, String nombre, int anio, String convocatoria, int duracionMinutos, int totalPreguntas, int intentos, double? mejorNota
 });
 
 
@@ -2116,15 +2126,16 @@ class _$PastExamCopyWithImpl<$Res>
 
 /// Create a copy of PastExam
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? fecha = freezed,Object? totalPreguntas = null,Object? etiqueta = freezed,Object? resuelto = null,Object? mejorNota = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? anio = null,Object? convocatoria = null,Object? duracionMinutos = null,Object? totalPreguntas = null,Object? intentos = null,Object? mejorNota = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
-as String,fecha: freezed == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
-as DateTime?,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
-as int,etiqueta: freezed == etiqueta ? _self.etiqueta : etiqueta // ignore: cast_nullable_to_non_nullable
-as String?,resuelto: null == resuelto ? _self.resuelto : resuelto // ignore: cast_nullable_to_non_nullable
-as bool,mejorNota: freezed == mejorNota ? _self.mejorNota : mejorNota // ignore: cast_nullable_to_non_nullable
+as String,anio: null == anio ? _self.anio : anio // ignore: cast_nullable_to_non_nullable
+as int,convocatoria: null == convocatoria ? _self.convocatoria : convocatoria // ignore: cast_nullable_to_non_nullable
+as String,duracionMinutos: null == duracionMinutos ? _self.duracionMinutos : duracionMinutos // ignore: cast_nullable_to_non_nullable
+as int,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,intentos: null == intentos ? _self.intentos : intentos // ignore: cast_nullable_to_non_nullable
+as int,mejorNota: freezed == mejorNota ? _self.mejorNota : mejorNota // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
@@ -2210,10 +2221,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  DateTime? fecha,  int totalPreguntas,  String? etiqueta,  bool resuelto,  double? mejorNota)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  int anio,  String convocatoria,  int duracionMinutos,  int totalPreguntas,  int intentos,  double? mejorNota)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PastExam() when $default != null:
-return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.etiqueta,_that.resuelto,_that.mejorNota);case _:
+return $default(_that.id,_that.nombre,_that.anio,_that.convocatoria,_that.duracionMinutos,_that.totalPreguntas,_that.intentos,_that.mejorNota);case _:
   return orElse();
 
 }
@@ -2231,10 +2242,10 @@ return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.eti
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  DateTime? fecha,  int totalPreguntas,  String? etiqueta,  bool resuelto,  double? mejorNota)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  int anio,  String convocatoria,  int duracionMinutos,  int totalPreguntas,  int intentos,  double? mejorNota)  $default,) {final _that = this;
 switch (_that) {
 case _PastExam():
-return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.etiqueta,_that.resuelto,_that.mejorNota);case _:
+return $default(_that.id,_that.nombre,_that.anio,_that.convocatoria,_that.duracionMinutos,_that.totalPreguntas,_that.intentos,_that.mejorNota);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2251,10 +2262,10 @@ return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.eti
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  DateTime? fecha,  int totalPreguntas,  String? etiqueta,  bool resuelto,  double? mejorNota)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  int anio,  String convocatoria,  int duracionMinutos,  int totalPreguntas,  int intentos,  double? mejorNota)?  $default,) {final _that = this;
 switch (_that) {
 case _PastExam() when $default != null:
-return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.etiqueta,_that.resuelto,_that.mejorNota);case _:
+return $default(_that.id,_that.nombre,_that.anio,_that.convocatoria,_that.duracionMinutos,_that.totalPreguntas,_that.intentos,_that.mejorNota);case _:
   return null;
 
 }
@@ -2266,22 +2277,33 @@ return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.eti
 @JsonSerializable()
 
 class _PastExam extends PastExam {
-  const _PastExam({required this.id, required this.nombre, this.fecha, this.totalPreguntas = 0, this.etiqueta, this.resuelto = false, this.mejorNota}): super._();
+  const _PastExam({required this.id, required this.nombre, this.anio = 0, this.convocatoria = '', this.duracionMinutos = 0, this.totalPreguntas = 0, this.intentos = 0, this.mejorNota}): super._();
   factory _PastExam.fromJson(Map<String, dynamic> json) => _$PastExamFromJson(json);
 
 @override final  String id;
 @override final  String nombre;
-/// Cuándo se rindió. Ordena la lista: lo más reciente primero, que es lo
-/// que más le sirve al estudiante.
-@override final  DateTime? fecha;
+/// El año del examen. Agrupa la lista.
+///
+/// Es un año, no una fecha: el servidor no guarda el día. Esto estuvo
+/// modelado como `DateTime? fecha` contra un contrato imaginado, y contra
+/// el servidor real llegaba siempre nulo, así que la lista salía sin
+/// agrupar y sin fecha que enseñar.
+@override@JsonKey() final  int anio;
+/// Distingue las dos convocatorias de un mismo año, como "I" o "II".
+///
+/// **Vacía** cuando ese año hubo una sola: por eso es un texto y no un
+/// nulo, que es como lo manda el servidor.
+@override@JsonKey() final  String convocatoria;
+/// Minutos, no segundos: el servidor ya hace la división.
+@override@JsonKey() final  int duracionMinutos;
 @override@JsonKey() final  int totalPreguntas;
-/// Matiz del examen cuando lo tiene, como "Preinternos". Va aparte del
-/// nombre para poder pintarlo como distintivo.
-@override final  String? etiqueta;
-/// Si el usuario ya lo rindió alguna vez. Se marca en la lista para que no
-/// repita sin querer el mismo de la semana pasada.
-@override@JsonKey() final  bool resuelto;
-/// Su mejor nota, si ya lo rindió.
+/// Cuántas veces lo rindió ESTE usuario. Cero es «nunca».
+///
+/// Un examen pasado se puede rendir las veces que uno quiera —es material
+/// de estudio, no una competición—, así que lo que importa no es un
+/// booleano sino cuántas van.
+@override@JsonKey() final  int intentos;
+/// Su mejor nota, o null si no lo ha rendido.
 @override final  double? mejorNota;
 
 /// Create a copy of PastExam
@@ -2297,16 +2319,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PastExam&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.etiqueta, etiqueta) || other.etiqueta == etiqueta)&&(identical(other.resuelto, resuelto) || other.resuelto == resuelto)&&(identical(other.mejorNota, mejorNota) || other.mejorNota == mejorNota));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PastExam&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.anio, anio) || other.anio == anio)&&(identical(other.convocatoria, convocatoria) || other.convocatoria == convocatoria)&&(identical(other.duracionMinutos, duracionMinutos) || other.duracionMinutos == duracionMinutos)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.intentos, intentos) || other.intentos == intentos)&&(identical(other.mejorNota, mejorNota) || other.mejorNota == mejorNota));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,fecha,totalPreguntas,etiqueta,resuelto,mejorNota);
+int get hashCode => Object.hash(runtimeType,id,nombre,anio,convocatoria,duracionMinutos,totalPreguntas,intentos,mejorNota);
 
 @override
 String toString() {
-  return 'PastExam(id: $id, nombre: $nombre, fecha: $fecha, totalPreguntas: $totalPreguntas, etiqueta: $etiqueta, resuelto: $resuelto, mejorNota: $mejorNota)';
+  return 'PastExam(id: $id, nombre: $nombre, anio: $anio, convocatoria: $convocatoria, duracionMinutos: $duracionMinutos, totalPreguntas: $totalPreguntas, intentos: $intentos, mejorNota: $mejorNota)';
 }
 
 
@@ -2317,7 +2339,7 @@ abstract mixin class _$PastExamCopyWith<$Res> implements $PastExamCopyWith<$Res>
   factory _$PastExamCopyWith(_PastExam value, $Res Function(_PastExam) _then) = __$PastExamCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String nombre, DateTime? fecha, int totalPreguntas, String? etiqueta, bool resuelto, double? mejorNota
+ String id, String nombre, int anio, String convocatoria, int duracionMinutos, int totalPreguntas, int intentos, double? mejorNota
 });
 
 
@@ -2334,15 +2356,16 @@ class __$PastExamCopyWithImpl<$Res>
 
 /// Create a copy of PastExam
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? fecha = freezed,Object? totalPreguntas = null,Object? etiqueta = freezed,Object? resuelto = null,Object? mejorNota = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? anio = null,Object? convocatoria = null,Object? duracionMinutos = null,Object? totalPreguntas = null,Object? intentos = null,Object? mejorNota = freezed,}) {
   return _then(_PastExam(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
-as String,fecha: freezed == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
-as DateTime?,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
-as int,etiqueta: freezed == etiqueta ? _self.etiqueta : etiqueta // ignore: cast_nullable_to_non_nullable
-as String?,resuelto: null == resuelto ? _self.resuelto : resuelto // ignore: cast_nullable_to_non_nullable
-as bool,mejorNota: freezed == mejorNota ? _self.mejorNota : mejorNota // ignore: cast_nullable_to_non_nullable
+as String,anio: null == anio ? _self.anio : anio // ignore: cast_nullable_to_non_nullable
+as int,convocatoria: null == convocatoria ? _self.convocatoria : convocatoria // ignore: cast_nullable_to_non_nullable
+as String,duracionMinutos: null == duracionMinutos ? _self.duracionMinutos : duracionMinutos // ignore: cast_nullable_to_non_nullable
+as int,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,intentos: null == intentos ? _self.intentos : intentos // ignore: cast_nullable_to_non_nullable
+as int,mejorNota: freezed == mejorNota ? _self.mejorNota : mejorNota // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }

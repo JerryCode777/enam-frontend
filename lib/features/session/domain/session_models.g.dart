@@ -220,19 +220,21 @@ const _$SessionStatusEnumMap = {
 _PastExam _$PastExamFromJson(Map<String, dynamic> json) => _PastExam(
   id: json['id'] as String,
   nombre: json['nombre'] as String,
-  fecha: json['fecha'] == null ? null : DateTime.parse(json['fecha'] as String),
+  anio: (json['anio'] as num?)?.toInt() ?? 0,
+  convocatoria: json['convocatoria'] as String? ?? '',
+  duracionMinutos: (json['duracionMinutos'] as num?)?.toInt() ?? 0,
   totalPreguntas: (json['totalPreguntas'] as num?)?.toInt() ?? 0,
-  etiqueta: json['etiqueta'] as String?,
-  resuelto: json['resuelto'] as bool? ?? false,
+  intentos: (json['intentos'] as num?)?.toInt() ?? 0,
   mejorNota: (json['mejorNota'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$PastExamToJson(_PastExam instance) => <String, dynamic>{
   'id': instance.id,
   'nombre': instance.nombre,
-  'fecha': instance.fecha?.toIso8601String(),
+  'anio': instance.anio,
+  'convocatoria': instance.convocatoria,
+  'duracionMinutos': instance.duracionMinutos,
   'totalPreguntas': instance.totalPreguntas,
-  'etiqueta': instance.etiqueta,
-  'resuelto': instance.resuelto,
+  'intentos': instance.intentos,
   'mejorNota': instance.mejorNota,
 };

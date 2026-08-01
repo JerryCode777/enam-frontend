@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
@@ -86,7 +85,7 @@ class _Lista extends StatelessWidget {
         final examen = examenes[i];
         // El año solo se anuncia cuando cambia: repetirlo en cada fila es ruido.
         final anterior = i == 0 ? null : examenes[i - 1].anio;
-        final nuevoAnio = examen.anio != null && examen.anio != anterior;
+        final nuevoAnio = examen.anio != anterior;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,7 +122,6 @@ class _FilaExamen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.scheme;
     final states = context.states;
-    final fecha = examen.fecha;
 
     return Card(
       child: InkWell(
@@ -166,19 +164,26 @@ class _FilaExamen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (examen.etiqueta != null) ...[
+                        // La convocatoria distingue las dos del mismo año.
+                        // Va aparte del nombre para poder pintarla como
+                        // distintivo, y viene VACÍA —no nula— cuando ese año
+                        // hubo una sola.
+                        if (examen.convocatoria.isNotEmpty) ...[
                           const SizedBox(width: DesignTokens.space2),
-                          _Distintivo(texto: examen.etiqueta!),
+                          _Distintivo(texto: examen.convocatoria),
                         ],
                       ],
                     ),
                     const SizedBox(height: 2),
                     Text(
                       [
-                        if (fecha != null)
-                          DateFormat('d MMM yyyy', 'es').format(fecha),
                         '${examen.totalPreguntas} preguntas',
-                        if (examen.resuelto && examen.mejorNota != null)
+                        // Cuántas veces lo rindió, no un "ya lo hiciste": un
+                        // examen pasado es material de estudio y repetirlo es
+                        // justo para lo que sirve.
+                        if (examen.intentos == 1) '1 intento',
+                        if (examen.intentos > 1) '${examen.intentos} intentos',
+                        if (examen.mejorNota != null)
                           'tu mejor: ${examen.mejorNota!.toStringAsFixed(2)}',
                       ].join(' · '),
                       style: context.texts.bodySmall?.copyWith(
