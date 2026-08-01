@@ -34,12 +34,15 @@ abstract final class Contacto {
     return Uri.parse('$base?text=${Uri.encodeComponent(mensaje)}');
   }
 
-  /// El mensaje arranca la conversación con el bot, que reconoce estas frases.
+  /// Activar la cuenta: va al **soporte humano**, no al bot.
+  ///
+  /// Del otro lado se cobra y se activa a mano, así que quien contesta tiene
+  /// que poder hacerlo. El bot todavía no cierra el cobro.
   static Uri activarPlan({String? codigoDescuento}) => _enlace(
-    botNumero,
+    soporteNumero,
     codigoDescuento == null
-        ? 'Hola, quiero activar mi plan de ENAM Prep.'
-        : 'Hola, quiero activar mi plan de ENAM Prep con mi código de '
+        ? 'hola, quiero activar mi cuenta de ENAM Prep'
+        : 'hola, quiero activar mi cuenta de ENAM Prep con mi código de '
               'descuento: $codigoDescuento',
   );
 
