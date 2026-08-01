@@ -168,9 +168,15 @@ class ApiSessionRepository implements SessionRepository {
     String examId, {
     required PastExamMode modo,
   }) async {
+    // El cuerpo es `{"muestra": bool}`, no `{"modo": "corto"}`.
+    //
+    // Mandaba `modo` contra un contrato imaginado. El servidor ignora las
+    // claves que no conoce, así que no fallaba: devolvía el examen ENTERO de
+    // 180 preguntas y tres horas cada vez que el estudiante pedía el corto, sin
+    // que nada avisara. La web ya usaba `muestra`; esta era la que se salía.
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.startPastExam(examId),
-      data: {'modo': modo.name},
+      data: {'muestra': modo.esCorto},
     );
     return StudySession.fromJson(data);
   }

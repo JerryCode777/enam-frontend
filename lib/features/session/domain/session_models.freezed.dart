@@ -1191,7 +1191,7 @@ as QuestionSource,
 /// @nodoc
 mixin _$OpenSession {
 
- String get id; SessionType get tipo; DateTime get iniciadaEn; DateTime? get expiraEn; int get respondidas; int get totalPreguntas;
+ String get id;@JsonKey(unknownEnumValue: SessionType.desconocido) SessionType get tipo; DateTime get iniciadaEn; DateTime? get expiraEn; int get respondidas; int get totalPreguntas;
 /// Create a copy of OpenSession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1224,7 +1224,7 @@ abstract mixin class $OpenSessionCopyWith<$Res>  {
   factory $OpenSessionCopyWith(OpenSession value, $Res Function(OpenSession) _then) = _$OpenSessionCopyWithImpl;
 @useResult
 $Res call({
- String id, SessionType tipo, DateTime iniciadaEn, DateTime? expiraEn, int respondidas, int totalPreguntas
+ String id,@JsonKey(unknownEnumValue: SessionType.desconocido) SessionType tipo, DateTime iniciadaEn, DateTime? expiraEn, int respondidas, int totalPreguntas
 });
 
 
@@ -1334,7 +1334,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: SessionType.desconocido)  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OpenSession() when $default != null:
 return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respondidas,_that.totalPreguntas);case _:
@@ -1355,7 +1355,7 @@ return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respon
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: SessionType.desconocido)  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)  $default,) {final _that = this;
 switch (_that) {
 case _OpenSession():
 return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respondidas,_that.totalPreguntas);case _:
@@ -1375,7 +1375,7 @@ return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respon
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(unknownEnumValue: SessionType.desconocido)  SessionType tipo,  DateTime iniciadaEn,  DateTime? expiraEn,  int respondidas,  int totalPreguntas)?  $default,) {final _that = this;
 switch (_that) {
 case _OpenSession() when $default != null:
 return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respondidas,_that.totalPreguntas);case _:
@@ -1390,11 +1390,11 @@ return $default(_that.id,_that.tipo,_that.iniciadaEn,_that.expiraEn,_that.respon
 @JsonSerializable()
 
 class _OpenSession extends OpenSession {
-  const _OpenSession({required this.id, required this.tipo, required this.iniciadaEn, this.expiraEn, this.respondidas = 0, this.totalPreguntas = 0}): super._();
+  const _OpenSession({required this.id, @JsonKey(unknownEnumValue: SessionType.desconocido) required this.tipo, required this.iniciadaEn, this.expiraEn, this.respondidas = 0, this.totalPreguntas = 0}): super._();
   factory _OpenSession.fromJson(Map<String, dynamic> json) => _$OpenSessionFromJson(json);
 
 @override final  String id;
-@override final  SessionType tipo;
+@override@JsonKey(unknownEnumValue: SessionType.desconocido) final  SessionType tipo;
 @override final  DateTime iniciadaEn;
 @override final  DateTime? expiraEn;
 @override@JsonKey() final  int respondidas;
@@ -1433,7 +1433,7 @@ abstract mixin class _$OpenSessionCopyWith<$Res> implements $OpenSessionCopyWith
   factory _$OpenSessionCopyWith(_OpenSession value, $Res Function(_OpenSession) _then) = __$OpenSessionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, SessionType tipo, DateTime iniciadaEn, DateTime? expiraEn, int respondidas, int totalPreguntas
+ String id,@JsonKey(unknownEnumValue: SessionType.desconocido) SessionType tipo, DateTime iniciadaEn, DateTime? expiraEn, int respondidas, int totalPreguntas
 });
 
 
@@ -1756,7 +1756,7 @@ as int,
 /// @nodoc
 mixin _$StudySession {
 
- String get id; SessionType get tipo; SessionStatus get estado; DateTime get iniciadaEn; List<Question> get preguntas; Map<String, Answer> get respuestas; DateTime? get finalizadaEn;/// Cuándo se acaba el tiempo. Solo en simulacros.
+ String get id;@JsonKey(unknownEnumValue: SessionType.desconocido) SessionType get tipo; SessionStatus get estado; DateTime get iniciadaEn; List<Question> get preguntas; Map<String, Answer> get respuestas; DateTime? get finalizadaEn;/// Cuándo se acaba el tiempo. Solo en simulacros.
  DateTime? get expiraEn;/// Nota vigesimal. Solo cuando la sesión terminó (RN-01).
  double? get nota;
 /// Create a copy of StudySession
@@ -1791,7 +1791,7 @@ abstract mixin class $StudySessionCopyWith<$Res>  {
   factory $StudySessionCopyWith(StudySession value, $Res Function(StudySession) _then) = _$StudySessionCopyWithImpl;
 @useResult
 $Res call({
- String id, SessionType tipo, SessionStatus estado, DateTime iniciadaEn, List<Question> preguntas, Map<String, Answer> respuestas, DateTime? finalizadaEn, DateTime? expiraEn, double? nota
+ String id,@JsonKey(unknownEnumValue: SessionType.desconocido) SessionType tipo, SessionStatus estado, DateTime iniciadaEn, List<Question> preguntas, Map<String, Answer> respuestas, DateTime? finalizadaEn, DateTime? expiraEn, double? nota
 });
 
 
@@ -1904,7 +1904,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  SessionType tipo,  SessionStatus estado,  DateTime iniciadaEn,  List<Question> preguntas,  Map<String, Answer> respuestas,  DateTime? finalizadaEn,  DateTime? expiraEn,  double? nota)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: SessionType.desconocido)  SessionType tipo,  SessionStatus estado,  DateTime iniciadaEn,  List<Question> preguntas,  Map<String, Answer> respuestas,  DateTime? finalizadaEn,  DateTime? expiraEn,  double? nota)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StudySession() when $default != null:
 return $default(_that.id,_that.tipo,_that.estado,_that.iniciadaEn,_that.preguntas,_that.respuestas,_that.finalizadaEn,_that.expiraEn,_that.nota);case _:
@@ -1925,7 +1925,7 @@ return $default(_that.id,_that.tipo,_that.estado,_that.iniciadaEn,_that.pregunta
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  SessionType tipo,  SessionStatus estado,  DateTime iniciadaEn,  List<Question> preguntas,  Map<String, Answer> respuestas,  DateTime? finalizadaEn,  DateTime? expiraEn,  double? nota)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(unknownEnumValue: SessionType.desconocido)  SessionType tipo,  SessionStatus estado,  DateTime iniciadaEn,  List<Question> preguntas,  Map<String, Answer> respuestas,  DateTime? finalizadaEn,  DateTime? expiraEn,  double? nota)  $default,) {final _that = this;
 switch (_that) {
 case _StudySession():
 return $default(_that.id,_that.tipo,_that.estado,_that.iniciadaEn,_that.preguntas,_that.respuestas,_that.finalizadaEn,_that.expiraEn,_that.nota);case _:
@@ -1945,7 +1945,7 @@ return $default(_that.id,_that.tipo,_that.estado,_that.iniciadaEn,_that.pregunta
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  SessionType tipo,  SessionStatus estado,  DateTime iniciadaEn,  List<Question> preguntas,  Map<String, Answer> respuestas,  DateTime? finalizadaEn,  DateTime? expiraEn,  double? nota)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(unknownEnumValue: SessionType.desconocido)  SessionType tipo,  SessionStatus estado,  DateTime iniciadaEn,  List<Question> preguntas,  Map<String, Answer> respuestas,  DateTime? finalizadaEn,  DateTime? expiraEn,  double? nota)?  $default,) {final _that = this;
 switch (_that) {
 case _StudySession() when $default != null:
 return $default(_that.id,_that.tipo,_that.estado,_that.iniciadaEn,_that.preguntas,_that.respuestas,_that.finalizadaEn,_that.expiraEn,_that.nota);case _:
@@ -1960,11 +1960,11 @@ return $default(_that.id,_that.tipo,_that.estado,_that.iniciadaEn,_that.pregunta
 @JsonSerializable()
 
 class _StudySession extends StudySession {
-  const _StudySession({required this.id, required this.tipo, required this.estado, required this.iniciadaEn, final  List<Question> preguntas = const [], final  Map<String, Answer> respuestas = const {}, this.finalizadaEn, this.expiraEn, this.nota}): _preguntas = preguntas,_respuestas = respuestas,super._();
+  const _StudySession({required this.id, @JsonKey(unknownEnumValue: SessionType.desconocido) required this.tipo, required this.estado, required this.iniciadaEn, final  List<Question> preguntas = const [], final  Map<String, Answer> respuestas = const {}, this.finalizadaEn, this.expiraEn, this.nota}): _preguntas = preguntas,_respuestas = respuestas,super._();
   factory _StudySession.fromJson(Map<String, dynamic> json) => _$StudySessionFromJson(json);
 
 @override final  String id;
-@override final  SessionType tipo;
+@override@JsonKey(unknownEnumValue: SessionType.desconocido) final  SessionType tipo;
 @override final  SessionStatus estado;
 @override final  DateTime iniciadaEn;
  final  List<Question> _preguntas;
@@ -2020,7 +2020,7 @@ abstract mixin class _$StudySessionCopyWith<$Res> implements $StudySessionCopyWi
   factory _$StudySessionCopyWith(_StudySession value, $Res Function(_StudySession) _then) = __$StudySessionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, SessionType tipo, SessionStatus estado, DateTime iniciadaEn, List<Question> preguntas, Map<String, Answer> respuestas, DateTime? finalizadaEn, DateTime? expiraEn, double? nota
+ String id,@JsonKey(unknownEnumValue: SessionType.desconocido) SessionType tipo, SessionStatus estado, DateTime iniciadaEn, List<Question> preguntas, Map<String, Answer> respuestas, DateTime? finalizadaEn, DateTime? expiraEn, double? nota
 });
 
 

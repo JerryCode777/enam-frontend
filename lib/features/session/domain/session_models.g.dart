@@ -114,7 +114,11 @@ const _$QuestionSourceEnumMap = {
 
 _OpenSession _$OpenSessionFromJson(Map<String, dynamic> json) => _OpenSession(
   id: json['id'] as String,
-  tipo: $enumDecode(_$SessionTypeEnumMap, json['tipo']),
+  tipo: $enumDecode(
+    _$SessionTypeEnumMap,
+    json['tipo'],
+    unknownValue: SessionType.desconocido,
+  ),
   iniciadaEn: DateTime.parse(json['iniciadaEn'] as String),
   expiraEn: json['expiraEn'] == null
       ? null
@@ -137,6 +141,8 @@ const _$SessionTypeEnumMap = {
   SessionType.practica: 'practica',
   SessionType.simulacro: 'simulacro',
   SessionType.simulacroNacional: 'simulacro_nacional',
+  SessionType.examenPasado: 'examen_pasado',
+  SessionType.desconocido: 'desconocido',
 };
 
 _NationalMock _$NationalMockFromJson(Map<String, dynamic> json) =>
@@ -176,7 +182,11 @@ const _$NationalMockStatusEnumMap = {
 _StudySession _$StudySessionFromJson(Map<String, dynamic> json) =>
     _StudySession(
       id: json['id'] as String,
-      tipo: $enumDecode(_$SessionTypeEnumMap, json['tipo']),
+      tipo: $enumDecode(
+        _$SessionTypeEnumMap,
+        json['tipo'],
+        unknownValue: SessionType.desconocido,
+      ),
       estado: $enumDecode(_$SessionStatusEnumMap, json['estado']),
       iniciadaEn: DateTime.parse(json['iniciadaEn'] as String),
       preguntas:

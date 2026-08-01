@@ -96,4 +96,80 @@ void main() {
     expect(minimo.resuelto, isFalse);
     expect(minimo.mejorNota, isNull);
   });
+
+  // ---------------------------------------------------------------------
+  // La sesión que devuelve POST /past-exams/:id/start
+  //
+  // Acá estaba el fallo de verdad: la LISTA cargaba bien y la pantalla moría
+  // justo al abrir un examen. SessionType no conocía `examen_pasado` y el
+  // decodificador de enums lanza excepción con un valor que no está en el
+  // mapa, así que reventaba la sesión entera —no el campo, la sesión—.
+  //
+  // Es el peor sitio donde enterarse: la lista te dice que todo funciona.
+  // ---------------------------------------------------------------------
+
+  /// Lo que responde el servidor al empezar un examen pasado, recortado.
+  Map<String, dynamic> sesionDelServidor({String tipo = 'examen_pasado'}) => {
+    'id': 'sesion-abc',
+    'tipo': tipo,
+    'estado': 'en_curso',
+    'iniciadaEn': '2026-08-01T18:00:00Z',
+    'expiraEn': '2026-08-01T21:00:00Z',
+    'preguntas': <dynamic>[],
+    'respuestas': <String, dynamic>{},
+  };
+
+  test('la sesión de un examen pasado se deserializa', () {
+    final sesion = StudySession.fromJson(sesionDelServidor());
+
+    expect(sesion.tipo, SessionType.examenPasado);
+    expect(sesion.estado, SessionStatus.enCurso);
+    expect(sesion.expiraEn, isNotNull, reason: 'se rinde con cronómetro');
+  });
+
+  test('se rinde como examen: con reloj y sin claves a la vista', () {
+    final sesion = StudySession.fromJson(sesionDelServidor());
+
+    expect(sesion.esSimulacro, isTrue);
+    // RF-16: mandar la clave antes de terminar es regalar el examen.
+    expect(sesion.muestraFeedbackInmediato, isFalse);
+  });
+
+  test('un tipo que la app no conoce no la tumba', () {
+    // El servidor puede añadir tipos sin que la app se actualice el mismo día.
+    // Antes esto lanzaba y se llevaba por delante la pantalla entera.
+    final sesion = StudySession.fromJson(
+      sesionDelServidor(tipo: 'modalidad_que_no_existe_todavia'),
+    );
+
+    expect(sesion.tipo, SessionType.desconocido);
+    // Y cae del lado prudente: se comporta como examen, así que no enseña
+    // claves. Equivocarse ocultándolas no arruina nada; enseñarlas, sí.
+    expect(sesion.esSimulacro, isTrue);
+    expect(sesion.muestraFeedbackInmediato, isFalse);
+  });
+
+  test('la tarjeta «Continuar» también aguanta un examen pasado', () {
+    // OpenSession se deserializa por su cuenta en GET /sessions/open, así que
+    // tenía el mismo fallo por separado.
+    final abierta = OpenSession.fromJson({
+      'id': 'sesion-abc',
+      'tipo': 'examen_pasado',
+      'iniciadaEn': '2026-08-01T18:00:00Z',
+      'expiraEn': '2026-08-01T21:00:00Z',
+      'respondidas': 12,
+      'totalPreguntas': 180,
+    });
+
+    expect(abierta.tipo, SessionType.examenPasado);
+    expect(abierta.esSimulacro, isTrue);
+    expect(abierta.respondidas, 12);
+  });
+
+  test('la práctica sigue siendo el único modo con corrección al instante', () {
+    final practica = StudySession.fromJson(sesionDelServidor(tipo: 'practica'));
+
+    expect(practica.esSimulacro, isFalse);
+    expect(practica.muestraFeedbackInmediato, isTrue);
+  });
 }

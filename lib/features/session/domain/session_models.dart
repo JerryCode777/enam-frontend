@@ -14,6 +14,23 @@ enum SessionType {
 
   /// Simulacro nacional: simultáneo, con ranking, requiere conexión (RF-19/33).
   simulacroNacional,
+
+  /// Un ENAM real de un año anterior (RF-52). Se rinde como un simulacro —con
+  /// cronómetro y sin ver las claves— pero se puede repetir y no entra en el
+  /// ranking: si entrara, el primer puesto sería de quien más veces repitió el
+  /// mismo examen y no de quien más sabe.
+  examenPasado,
+
+  /// Un tipo que este cliente todavía no conoce.
+  ///
+  /// Existe para que la app NO se caiga cuando el servidor añada uno nuevo.
+  /// Sin esto, `examen_pasado` reventaba la deserialización de la sesión
+  /// entera: la lista de exámenes cargaba bien y la pantalla moría justo al
+  /// abrir uno, que es el peor sitio donde enterarse.
+  ///
+  /// Se comporta como simulacro para lo único que importa —no revelar las
+  /// claves—, porque equivocarse hacia el lado prudente no arruina un examen.
+  desconocido,
 }
 
 @JsonEnum(fieldRename: FieldRename.snake)
@@ -135,6 +152,7 @@ abstract class PracticeConfig with _$PracticeConfig {
 abstract class OpenSession with _$OpenSession {
   const factory OpenSession({
     required String id,
+    @JsonKey(unknownEnumValue: SessionType.desconocido)
     required SessionType tipo,
     required DateTime iniciadaEn,
     DateTime? expiraEn,
@@ -147,8 +165,17 @@ abstract class OpenSession with _$OpenSession {
   factory OpenSession.fromJson(Map<String, dynamic> json) =>
       _$OpenSessionFromJson(json);
 
-  bool get esSimulacro =>
-      tipo == SessionType.simulacro || tipo == SessionType.simulacroNacional;
+  /// Se rinde en condiciones de examen: con reloj y sin ver las claves.
+  ///
+  /// Se define por lo que NO es en vez de enumerar los que sí: la práctica es
+  /// el único modo sin cronómetro y con corrección al instante, así que todo
+  /// lo demás es un examen. Enumerarlos obligaba a acordarse de este sitio
+  /// cada vez que el servidor añade un tipo, y ya pasó una vez: `examen_pasado`
+  /// entró sin que nadie tocara este getter.
+  ///
+  /// Un tipo desconocido cae también aquí, que es el lado prudente:
+  /// equivocarse ocultando una clave no arruina nada; enseñarla, sí.
+  bool get esSimulacro => tipo != SessionType.practica;
 }
 
 /// Estado de un simulacro nacional respecto del reloj (RF-19).
@@ -196,6 +223,7 @@ abstract class NationalMock with _$NationalMock {
 abstract class StudySession with _$StudySession {
   const factory StudySession({
     required String id,
+    @JsonKey(unknownEnumValue: SessionType.desconocido)
     required SessionType tipo,
     required SessionStatus estado,
     required DateTime iniciadaEn,
@@ -215,8 +243,17 @@ abstract class StudySession with _$StudySession {
   factory StudySession.fromJson(Map<String, dynamic> json) =>
       _$StudySessionFromJson(json);
 
-  bool get esSimulacro =>
-      tipo == SessionType.simulacro || tipo == SessionType.simulacroNacional;
+  /// Se rinde en condiciones de examen: con reloj y sin ver las claves.
+  ///
+  /// Se define por lo que NO es en vez de enumerar los que sí: la práctica es
+  /// el único modo sin cronómetro y con corrección al instante, así que todo
+  /// lo demás es un examen. Enumerarlos obligaba a acordarse de este sitio
+  /// cada vez que el servidor añade un tipo, y ya pasó una vez: `examen_pasado`
+  /// entró sin que nadie tocara este getter.
+  ///
+  /// Un tipo desconocido cae también aquí, que es el lado prudente:
+  /// equivocarse ocultando una clave no arruina nada; enseñarla, sí.
+  bool get esSimulacro => tipo != SessionType.practica;
 
   /// En simulacro no se muestra si acertaste hasta el final (RF-16).
   bool get muestraFeedbackInmediato => tipo == SessionType.practica;
