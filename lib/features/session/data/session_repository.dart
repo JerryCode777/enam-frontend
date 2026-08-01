@@ -5,6 +5,11 @@ import '../../../core/mock/mock_data.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/session_models.dart';
 
+/// Cuánto dura un examen pasado según el modo elegido (RF-52).
+Duration duracionDe(PastExamMode modo) => modo.esCorto
+    ? Blueprint.sampleExamDuration
+    : Blueprint.examDuration;
+
 /// Sesiones de práctica y simulacro (Módulos 3 y 4 del SSD).
 abstract interface class SessionRepository {
   /// RF-12. El servidor valida la config contra el plan del usuario (RN-03).
@@ -45,6 +50,16 @@ abstract interface class SessionRepository {
 
   /// Entra a un simulacro nacional y devuelve la sesión ya creada.
   Future<StudySession> joinNationalMock(String mockId);
+
+  /// Exámenes ENAM de años anteriores (RF-52).
+  ///
+  /// Llegan ordenados del más reciente al más antiguo, que es el orden en que
+  /// le sirven al estudiante.
+  Future<List<PastExam>> pastExams();
+
+  /// Arranca un examen pasado. El servidor devuelve sus preguntas reales, no
+  /// una selección generada con el blueprint.
+  Future<StudySession> startPastExam(String examId, {required PastExamMode modo});
 }
 
 class ApiSessionRepository implements SessionRepository {
@@ -136,6 +151,26 @@ class ApiSessionRepository implements SessionRepository {
   Future<StudySession> joinNationalMock(String mockId) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.joinMockExam(mockId),
+    );
+    return StudySession.fromJson(data);
+  }
+
+  @override
+  Future<List<PastExam>> pastExams() async {
+    final data = await _client.get<List<dynamic>>(ApiEndpoints.pastExams);
+    return data
+        .map((e) => PastExam.fromJson(e as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<StudySession> startPastExam(
+    String examId, {
+    required PastExamMode modo,
+  }) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.startPastExam(examId),
+      data: {'modo': modo.name},
     );
     return StudySession.fromJson(data);
   }
@@ -524,5 +559,80 @@ class MockSessionRepository implements SessionRepository {
     return _sessions[sesion.id] = sesion.copyWith(
       tipo: SessionType.simulacroNacional,
     );
+  }
+
+  /// Los exámenes ENAM que ya se rindieron, del más reciente al más antiguo.
+  ///
+  /// Es la lista real del banco. Van aquí mientras el servidor no exponga
+  /// `GET /exams`; cuando lo haga, esto se borra y no cambia una línea de UI.
+  static final _examenesPasados = <PastExam>[
+    PastExam(id: 'examen_enam_05.07.2026', nombre: 'ENAM 2026-I',
+        fecha: DateTime(2026, 7, 5), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_26.04.2026', nombre: 'ENAM extraordinario 2026',
+        fecha: DateTime(2026, 4, 26), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_07.12.2025', nombre: 'ENAM 2025-II',
+        fecha: DateTime(2025, 12, 7), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_12.10.2025', nombre: 'ENAM octubre 2025',
+        fecha: DateTime(2025, 10, 12), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_12.10.2025_preinternos',
+        nombre: 'ENAM octubre 2025', etiqueta: 'Preinternos',
+        fecha: DateTime(2025, 10, 12), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_30.03.2025', nombre: 'ENAM 2025-I',
+        fecha: DateTime(2025, 3, 30), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_17112024', nombre: 'ENAM 2024-II',
+        fecha: DateTime(2024, 11, 17), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_14.07.2024', nombre: 'ENAM julio 2024',
+        fecha: DateTime(2024, 7, 14), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_17.03.2024', nombre: 'ENAM 2024-I',
+        fecha: DateTime(2024, 3, 17), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_03122023', nombre: 'ENAM 2023-II',
+        fecha: DateTime(2023, 12, 3), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_29082021-2', nombre: 'ENAM agosto 2021',
+        fecha: DateTime(2021, 8, 29), totalPreguntas: 180),
+    PastExam(id: 'examen_enam05062021', nombre: 'ENAM junio 2021',
+        fecha: DateTime(2021, 6, 5), totalPreguntas: 180),
+    PastExam(id: 'examen_enam25042021', nombre: 'ENAM abril 2021',
+        fecha: DateTime(2021, 4, 25), totalPreguntas: 180),
+    PastExam(id: 'examen_enam_e2020', nombre: 'ENAM 2020',
+        fecha: DateTime(2020), totalPreguntas: 180),
+  ];
+
+  @override
+  Future<List<PastExam>> pastExams() async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    return _examenesPasados;
+  }
+
+  @override
+  Future<StudySession> startPastExam(
+    String examId, {
+    required PastExamMode modo,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+
+    final examen = _examenesPasados.firstWhere(
+      (e) => e.id == examId,
+      orElse: () => throw const NotFoundFailure('Ese examen no existe.'),
+    );
+
+    final total = modo.esCorto
+        ? Blueprint.sampleExamQuestions
+        : examen.totalPreguntas;
+    final id = 'examen-${++_counter}';
+
+    final session = StudySession(
+      id: id,
+      // Se rinde como un simulacro: sin feedback, con reloj y sin pausa.
+      tipo: SessionType.simulacro,
+      estado: SessionStatus.enCurso,
+      iniciadaEn: DateTime.now(),
+      expiraEn: DateTime.now().add(duracionDe(modo)),
+      preguntas: _registrarClaves(
+        id,
+        MockData.questions(cantidad: total, conRespuestas: true),
+        revelarClaves: false,
+      ),
+    );
+    return _sessions[id] = session;
   }
 }

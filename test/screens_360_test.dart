@@ -294,6 +294,15 @@ class _InstantSessions implements SessionRepository {
 
   @override
   Future<StudySession> submit(String sessionId) => throw UnimplementedError();
+
+  @override
+  Future<List<PastExam>> pastExams() async => const [];
+
+  @override
+  Future<StudySession> startPastExam(
+    String examId, {
+    required PastExamMode modo,
+  }) async => throw UnimplementedError();
 }
 
 /// Catálogo que responde sin latencia.

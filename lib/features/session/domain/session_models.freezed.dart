@@ -2055,4 +2055,299 @@ as double?,
 
 }
 
+
+/// @nodoc
+mixin _$PastExam {
+
+ String get id; String get nombre;/// Cuándo se rindió. Ordena la lista: lo más reciente primero, que es lo
+/// que más le sirve al estudiante.
+ DateTime? get fecha; int get totalPreguntas;/// Matiz del examen cuando lo tiene, como "Preinternos". Va aparte del
+/// nombre para poder pintarlo como distintivo.
+ String? get etiqueta;/// Si el usuario ya lo rindió alguna vez. Se marca en la lista para que no
+/// repita sin querer el mismo de la semana pasada.
+ bool get resuelto;/// Su mejor nota, si ya lo rindió.
+ double? get mejorNota;
+/// Create a copy of PastExam
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PastExamCopyWith<PastExam> get copyWith => _$PastExamCopyWithImpl<PastExam>(this as PastExam, _$identity);
+
+  /// Serializes this PastExam to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PastExam&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.etiqueta, etiqueta) || other.etiqueta == etiqueta)&&(identical(other.resuelto, resuelto) || other.resuelto == resuelto)&&(identical(other.mejorNota, mejorNota) || other.mejorNota == mejorNota));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,nombre,fecha,totalPreguntas,etiqueta,resuelto,mejorNota);
+
+@override
+String toString() {
+  return 'PastExam(id: $id, nombre: $nombre, fecha: $fecha, totalPreguntas: $totalPreguntas, etiqueta: $etiqueta, resuelto: $resuelto, mejorNota: $mejorNota)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PastExamCopyWith<$Res>  {
+  factory $PastExamCopyWith(PastExam value, $Res Function(PastExam) _then) = _$PastExamCopyWithImpl;
+@useResult
+$Res call({
+ String id, String nombre, DateTime? fecha, int totalPreguntas, String? etiqueta, bool resuelto, double? mejorNota
+});
+
+
+
+
+}
+/// @nodoc
+class _$PastExamCopyWithImpl<$Res>
+    implements $PastExamCopyWith<$Res> {
+  _$PastExamCopyWithImpl(this._self, this._then);
+
+  final PastExam _self;
+  final $Res Function(PastExam) _then;
+
+/// Create a copy of PastExam
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? fecha = freezed,Object? totalPreguntas = null,Object? etiqueta = freezed,Object? resuelto = null,Object? mejorNota = freezed,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
+as String,fecha: freezed == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
+as DateTime?,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,etiqueta: freezed == etiqueta ? _self.etiqueta : etiqueta // ignore: cast_nullable_to_non_nullable
+as String?,resuelto: null == resuelto ? _self.resuelto : resuelto // ignore: cast_nullable_to_non_nullable
+as bool,mejorNota: freezed == mejorNota ? _self.mejorNota : mejorNota // ignore: cast_nullable_to_non_nullable
+as double?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [PastExam].
+extension PastExamPatterns on PastExam {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _PastExam value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _PastExam() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _PastExam value)  $default,){
+final _that = this;
+switch (_that) {
+case _PastExam():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _PastExam value)?  $default,){
+final _that = this;
+switch (_that) {
+case _PastExam() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  DateTime? fecha,  int totalPreguntas,  String? etiqueta,  bool resuelto,  double? mejorNota)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _PastExam() when $default != null:
+return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.etiqueta,_that.resuelto,_that.mejorNota);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  DateTime? fecha,  int totalPreguntas,  String? etiqueta,  bool resuelto,  double? mejorNota)  $default,) {final _that = this;
+switch (_that) {
+case _PastExam():
+return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.etiqueta,_that.resuelto,_that.mejorNota);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  DateTime? fecha,  int totalPreguntas,  String? etiqueta,  bool resuelto,  double? mejorNota)?  $default,) {final _that = this;
+switch (_that) {
+case _PastExam() when $default != null:
+return $default(_that.id,_that.nombre,_that.fecha,_that.totalPreguntas,_that.etiqueta,_that.resuelto,_that.mejorNota);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _PastExam extends PastExam {
+  const _PastExam({required this.id, required this.nombre, this.fecha, this.totalPreguntas = 0, this.etiqueta, this.resuelto = false, this.mejorNota}): super._();
+  factory _PastExam.fromJson(Map<String, dynamic> json) => _$PastExamFromJson(json);
+
+@override final  String id;
+@override final  String nombre;
+/// Cuándo se rindió. Ordena la lista: lo más reciente primero, que es lo
+/// que más le sirve al estudiante.
+@override final  DateTime? fecha;
+@override@JsonKey() final  int totalPreguntas;
+/// Matiz del examen cuando lo tiene, como "Preinternos". Va aparte del
+/// nombre para poder pintarlo como distintivo.
+@override final  String? etiqueta;
+/// Si el usuario ya lo rindió alguna vez. Se marca en la lista para que no
+/// repita sin querer el mismo de la semana pasada.
+@override@JsonKey() final  bool resuelto;
+/// Su mejor nota, si ya lo rindió.
+@override final  double? mejorNota;
+
+/// Create a copy of PastExam
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$PastExamCopyWith<_PastExam> get copyWith => __$PastExamCopyWithImpl<_PastExam>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$PastExamToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PastExam&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.etiqueta, etiqueta) || other.etiqueta == etiqueta)&&(identical(other.resuelto, resuelto) || other.resuelto == resuelto)&&(identical(other.mejorNota, mejorNota) || other.mejorNota == mejorNota));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,nombre,fecha,totalPreguntas,etiqueta,resuelto,mejorNota);
+
+@override
+String toString() {
+  return 'PastExam(id: $id, nombre: $nombre, fecha: $fecha, totalPreguntas: $totalPreguntas, etiqueta: $etiqueta, resuelto: $resuelto, mejorNota: $mejorNota)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$PastExamCopyWith<$Res> implements $PastExamCopyWith<$Res> {
+  factory _$PastExamCopyWith(_PastExam value, $Res Function(_PastExam) _then) = __$PastExamCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String nombre, DateTime? fecha, int totalPreguntas, String? etiqueta, bool resuelto, double? mejorNota
+});
+
+
+
+
+}
+/// @nodoc
+class __$PastExamCopyWithImpl<$Res>
+    implements _$PastExamCopyWith<$Res> {
+  __$PastExamCopyWithImpl(this._self, this._then);
+
+  final _PastExam _self;
+  final $Res Function(_PastExam) _then;
+
+/// Create a copy of PastExam
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? fecha = freezed,Object? totalPreguntas = null,Object? etiqueta = freezed,Object? resuelto = null,Object? mejorNota = freezed,}) {
+  return _then(_PastExam(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
+as String,fecha: freezed == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
+as DateTime?,totalPreguntas: null == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int,etiqueta: freezed == etiqueta ? _self.etiqueta : etiqueta // ignore: cast_nullable_to_non_nullable
+as String?,resuelto: null == resuelto ? _self.resuelto : resuelto // ignore: cast_nullable_to_non_nullable
+as bool,mejorNota: freezed == mejorNota ? _self.mejorNota : mejorNota // ignore: cast_nullable_to_non_nullable
+as double?,
+  ));
+}
+
+
+}
+
 // dart format on

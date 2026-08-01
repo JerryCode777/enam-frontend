@@ -66,6 +66,9 @@ abstract final class Routes {
 
   static const nationalMock = '/simulacro/nacional';
 
+  /// Exámenes ENAM de años anteriores (RF-52). Cuelga de simulacros porque se
+  /// rinden con la misma metodología.
+  static const pastExams = '/examenes';
   // ---------- Ranking (Módulo 5) ----------
   static const ranking = '/ranking';
 

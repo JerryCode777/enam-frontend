@@ -25,6 +25,7 @@ import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/session/presentation/area_picker_screen.dart';
 import '../../features/session/presentation/marked_questions_screen.dart';
 import '../../features/session/presentation/national_mock_screen.dart';
+import '../../features/session/presentation/past_exams_screen.dart';
 import '../../features/session/presentation/practice_config_screen.dart';
 import '../../features/session/presentation/question_screen.dart';
 import '../../features/session/presentation/review_screen.dart';
@@ -278,7 +279,6 @@ final List<RouteBase> _routes = [
     path: Routes.completeProfile,
     builder: (context, state) => const CompleteProfileScreen(),
   ),
-
   // ==================== SECCIONES PRINCIPALES ====================
   StatefulShellRoute.indexedStack(
     builder: (context, state, navigationShell) =>
@@ -410,6 +410,12 @@ final List<RouteBase> _routes = [
       ),
       state: state,
     ),
+  ),
+
+  GoRoute(
+    path: Routes.pastExams,
+    pageBuilder: (context, state) =>
+        slidePage(child: const PastExamsScreen(), state: state),
   ),
   GoRoute(
     path: Routes.practiceSession,

@@ -73,6 +73,14 @@ abstract final class ApiEndpoints {
   /// lo usa todavía no tiene sesión, y por eso el correo va en el cuerpo.
   static const String activationLink = '/billing/activation-link';
 
+  // ---------- Exámenes pasados (RF-52) ----------
+  //
+  // Exámenes ENAM reales de años anteriores. El servidor manda todo: nombre,
+  // fecha, preguntas, alternativas y explicaciones.
+  static const String pastExams = '/exams';
+
+  static String startPastExam(String examId) => '/exams/$examId/start';
+
   // ---------- Simulacros nacionales (RF-19) ----------
   static const String mockExams = '/mock-exams';
 

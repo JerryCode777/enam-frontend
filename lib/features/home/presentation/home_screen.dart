@@ -191,7 +191,95 @@ class _EmpiezaAPracticar extends StatelessWidget {
             );
           },
         ),
+        const SizedBox(height: DesignTokens.space2 + 2),
+        const _ExamenesPasados(),
       ],
+    );
+  }
+}
+
+/// Los exámenes ENAM reales, debajo de las dos acciones (RF-52).
+///
+/// Va ancho y con acento propio para que destaque —es lo que más se pide y lo
+/// que diferencia a la app de un banco de preguntas cualquiera— pero sin salir
+/// de la paleta: el degradado de marca ya lo usa "Practicar", así que aquí el
+/// peso lo dan el borde y el fondo tenue, no un color nuevo.
+class _ExamenesPasados extends StatelessWidget {
+  const _ExamenesPasados();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+    final states = context.states;
+    final radio = BorderRadius.circular(DesignTokens.radiusXl - 4);
+
+    return Semantics(
+      button: true,
+      child: Material(
+        color: states.info.tint,
+        borderRadius: radio,
+        child: InkWell(
+          // `push` porque la lista vive fuera del contenedor de pestañas: se
+          // apila sobre el inicio y el botón de atrás devuelve aquí.
+          onTap: () => context.push(Routes.pastExams),
+          borderRadius: radio,
+          child: Container(
+            padding: const EdgeInsets.all(DesignTokens.space4),
+            decoration: BoxDecoration(
+              borderRadius: radio,
+              border: Border.all(color: scheme.primary, width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(DesignTokens.space2 + 1),
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  ),
+                  child: Icon(
+                    Symbols.history_edu,
+                    size: 24,
+                    fill: 1,
+                    color: states.info.onTint,
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.space3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Exámenes pasados',
+                        style: context.texts.titleMedium?.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                          color: scheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Los ENAM reales, tal como fueron',
+                        style: context.texts.bodySmall?.copyWith(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: states.info.onTint,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Symbols.chevron_right,
+                  size: 22,
+                  color: states.info.onTint,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

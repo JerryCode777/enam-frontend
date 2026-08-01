@@ -240,3 +240,55 @@ abstract class StudySession with _$StudySession {
     return restante.isNegative ? Duration.zero : restante;
   }
 }
+
+/// Un examen ENAM real de un año anterior (RF-52).
+///
+/// A diferencia del simulacro, que se **genera** respetando el blueprint, esto
+/// es un examen que ya se rindió: las preguntas, el orden y las claves son las
+/// oficiales. Por eso todo llega del servidor —hasta el nombre—: el cliente no
+/// inventa ni reordena nada.
+@freezed
+abstract class PastExam with _$PastExam {
+  const factory PastExam({
+    required String id,
+    required String nombre,
+
+    /// Cuándo se rindió. Ordena la lista: lo más reciente primero, que es lo
+    /// que más le sirve al estudiante.
+    DateTime? fecha,
+    @Default(0) int totalPreguntas,
+
+    /// Matiz del examen cuando lo tiene, como "Preinternos". Va aparte del
+    /// nombre para poder pintarlo como distintivo.
+    String? etiqueta,
+
+    /// Si el usuario ya lo rindió alguna vez. Se marca en la lista para que no
+    /// repita sin querer el mismo de la semana pasada.
+    @Default(false) bool resuelto,
+
+    /// Su mejor nota, si ya lo rindió.
+    double? mejorNota,
+  }) = _PastExam;
+
+  const PastExam._();
+
+  factory PastExam.fromJson(Map<String, dynamic> json) =>
+      _$PastExamFromJson(json);
+
+  /// El año, para agrupar la lista.
+  int? get anio => fecha?.year;
+}
+
+/// Cómo se rinde un examen pasado (RF-52).
+///
+/// Son los dos modos del simulacro, aplicados a un examen real: entero, o una
+/// parte para medirse en poco tiempo.
+enum PastExamMode {
+  /// El examen completo, con su tiempo oficial.
+  completo,
+
+  /// Una selección corta del mismo examen.
+  corto;
+
+  bool get esCorto => this == PastExamMode.corto;
+}

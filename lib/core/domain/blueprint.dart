@@ -28,6 +28,15 @@ abstract final class Blueprint {
   /// mayoría de enunciados son de varios párrafos.
   static const double clinicalCaseRatio = 0.81;
 
+  /// Duración de la versión corta: un minuto por pregunta.
+  ///
+  /// Sale de las mismas cuentas del examen real —180 preguntas en 3 h son 60
+  /// segundos por pregunta—, así que medirse en corto se siente igual de
+  /// apretado que el examen entero.
+  static const Duration sampleExamDuration = Duration(
+    minutes: sampleExamQuestions,
+  );
+
   /// Preguntas de la versión corta del simulacro.
   ///
   /// Era "el simulacro de cortesía del plan free". Ese plan ya no existe
