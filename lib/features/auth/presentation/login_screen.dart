@@ -308,7 +308,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       // Ayuda para desarrollo: con mocks, estos correos disparan
                       // cada camino de error sin tocar código.
-                      if (const bool.fromEnvironment('dart.vm.product') == false)
+                      //
+                      // La condición mira los mocks y no el modo de compilación:
+                      // en debug contra el backend real ninguno de esos correos
+                      // entra, y el cartel prometía lo contrario.
+                      if (AppConfig.useMocks)
                         Text(
                           'Modo desarrollo · cualquier correo entra · '
                           'contraseña "error" falla · nuevo2@enam.pe entra con '
