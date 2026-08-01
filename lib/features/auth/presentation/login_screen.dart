@@ -306,9 +306,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         accion: 'Crea tu cuenta',
                         onTap: _ocupado ? null : () => context.go(Routes.register),
                       ),
-                      // Ayuda para desarrollo: con mocks, estos correos disparan
-                      // cada camino de error sin tocar código.
-                      if (const bool.fromEnvironment('dart.vm.product') == false)
+                      // Ayuda para desarrollo: con mocks, estos correos
+                      // disparan cada camino de error sin tocar código.
+                      //
+                      // Va atado a los mocks y no a la build: contra el
+                      // servidor real ninguna de estas reglas es cierta, y el
+                      // texto quedaba mintiendo en cada prueba con la API.
+                      if (AppConfig.useMocks)
                         Text(
                           'Modo desarrollo · cualquier correo entra · '
                           'contraseña "error" falla · nuevo2@enam.pe entra con '

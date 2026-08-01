@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/config/app_config.dart';
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -56,7 +57,7 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
         // fuente al máximo rompe la grilla de 180 casillas del simulacro; sin
         // límite inferior, el texto quedaría más chico de lo diseñado.
         final media = MediaQuery.of(context);
-        return MediaQuery(
+        final contenido = MediaQuery(
           data: media.copyWith(
             textScaler: media.textScaler.clamp(
               minScaleFactor: 1,
@@ -64,6 +65,18 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
             ),
           ),
           child: child ?? const SizedBox.shrink(),
+        );
+
+        // Con datos falsos, que se vea. Media hora depurando un número que no
+        // cuadra para descubrir que venía de un mock es un rato perdido que se
+        // evita con una cinta en la esquina. En release no existe: `useMocks`
+        // es const y el compilador se lleva la rama entera.
+        if (!AppConfig.useMocks) return contenido;
+        return Banner(
+          message: 'DATOS FALSOS',
+          location: BannerLocation.topEnd,
+          color: DesignTokens.warning,
+          child: contenido,
         );
       },
     );

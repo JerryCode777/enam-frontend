@@ -16,6 +16,8 @@
 /// ruidosamente, en vez de golpear producción por accidente.
 library;
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
+
 enum Environment {
   dev,
   staging,
@@ -59,10 +61,23 @@ abstract final class AppConfig {
   ///
   /// Mientras el backend no exista, esto arranca en `true` en dev. Se apaga con
   /// `--dart-define=USE_MOCKS=false` para probar contra un backend real.
-  static const bool useMocks = bool.fromEnvironment(
+  static const bool _mocksPedidos = bool.fromEnvironment(
     'USE_MOCKS',
     defaultValue: true,
   );
+
+  /// Datos falsos en vez del backend. **Nunca en una build de release.**
+  ///
+  /// El flag por sí solo no basta: una build para la tienda mal parametrizada
+  /// saldría con preguntas inventadas, y nadie lo notaría hasta que un usuario
+  /// estudiara con ellas. `kReleaseMode` lo hace imposible por construcción, no
+  /// por disciplina.
+  ///
+  /// La app hermana tiene la bandera equivalente en `false` en los dos
+  /// entornos, pero su servicio de suscripción **cae a datos falsos cuando la
+  /// red falla** si alguien la enciende: un fallo de red se convertiría en
+  /// acceso premium regalado. Aquí eso no puede pasar ni queriendo.
+  static const bool useMocks = _mocksPedidos && !kReleaseMode;
 
   /// ID de cliente **web** de OAuth del proyecto de Google Cloud.
   ///
