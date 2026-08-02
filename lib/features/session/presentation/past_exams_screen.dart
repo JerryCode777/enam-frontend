@@ -287,7 +287,12 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      unawaited(context.push(Routes.simulacroSessionOf(sesion.id)));
+      // `go` y no `push`: `/simulacro/sesion/:id` cuelga de la rama de
+      // Simulacros del StatefulShellRoute, y esta pantalla vive fuera del
+      // contenedor de pestañas. Apilarla desde aquí construye el shell por
+      // segunda vez con la misma GlobalKey y la app muere en pantalla roja
+      // —`!keyReservation.contains(key)`— sin forma de volver atrás.
+      context.go(Routes.simulacroSessionOf(sesion.id));
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);
     } finally {
