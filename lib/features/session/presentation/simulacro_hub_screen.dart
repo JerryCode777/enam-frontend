@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -75,7 +75,7 @@ class _TarjetaCompleto extends StatelessWidget {
           side: BorderSide(color: context.scheme.primary, width: 2),
         ),
         child: InkWell(
-          onTap: () => context.push(Routes.simulacroInstructions),
+          onTap: () => context.irA(Routes.simulacroInstructions),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4 + 2),
@@ -131,7 +131,8 @@ class _TarjetaMuestra extends ConsumerWidget {
       index: 1,
       child: Card(
         child: InkWell(
-          onTap: () => context.push('${Routes.simulacroInstructions}?muestra=1'),
+          onTap: () =>
+              context.irA('${Routes.simulacroInstructions}?muestra=1'),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
@@ -186,7 +187,7 @@ class _TarjetaNacional extends StatelessWidget {
       index: 2,
       child: Card(
         child: InkWell(
-          onTap: () => context.push(Routes.nationalMock),
+          onTap: () => context.irA(Routes.nationalMock),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),

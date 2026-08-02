@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -158,7 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(dialogo).pop(false);
-              context.push(Routes.terms);
+              context.irA(Routes.terms);
             },
             child: const Text('Leerlos'),
           ),
@@ -267,7 +268,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: TextButton(
                           onPressed: _ocupado
                               ? null
-                              : () => context.push(
+                              : () => context.irA(
                                   Routes.forgotPassword,
                                   // Se lleva lo que ya escribió: volver a
                                   // teclear el correo justo cuando no
@@ -304,7 +305,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       AuthFooter(
                         pregunta: '¿Primera vez?',
                         accion: 'Crea tu cuenta',
-                        onTap: _ocupado ? null : () => context.go(Routes.register),
+                        onTap: _ocupado
+                            ? null
+                            : () => context.go(Routes.register),
                       ),
                       // Ayuda para desarrollo: con mocks, estos correos disparan
                       // cada camino de error sin tocar código.
@@ -359,7 +362,9 @@ class _CabeceraMarca extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Center(child: BrandMark(size: 26)),
@@ -386,12 +391,7 @@ class _CabeceraMarca extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space3),
           // El mismo trazo del splash, aquí más pequeño y discreto.
-          const EcgLine(
-            width: 170,
-            height: 22,
-            opacity: 0.7,
-            strokeWidth: 2,
-          ),
+          const EcgLine(width: 170, height: 22, opacity: 0.7, strokeWidth: 2),
         ],
       ),
     );

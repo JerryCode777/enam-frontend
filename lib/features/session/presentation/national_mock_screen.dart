@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -61,10 +62,7 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
   void initState() {
     super.initState();
     // Un minuto basta: la cuenta regresiva es de días, no de segundos.
-    _reloj = Timer.periodic(
-      const Duration(minutes: 1),
-      (_) => setState(() {}),
-    );
+    _reloj = Timer.periodic(const Duration(minutes: 1), (_) => setState(() {}));
   }
 
   @override
@@ -157,17 +155,13 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
               _ when enCurso => EnamButton(
                 label: 'Entrar al simulacro',
                 icon: Symbols.play_arrow,
-                onPressed: () => context.push(Routes.simulacroInstructions),
+                onPressed: () => context.irA(Routes.simulacroInstructions),
               ),
               _ => EnamButton(
                 label: inscrito ? 'Ya estás participando' : 'Participar',
                 loading: _participando,
-                icon: inscrito
-                    ? Symbols.check
-                    : Symbols.how_to_reg,
-                onPressed: inscrito
-                    ? null
-                    : _participar,
+                icon: inscrito ? Symbols.check : Symbols.how_to_reg,
+                onPressed: inscrito ? null : _participar,
               ),
             },
           ),
@@ -413,11 +407,7 @@ class _Detalles extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  f.icon,
-                  size: 20,
-                  color: context.scheme.onSurfaceVariant,
-                ),
+                Icon(f.icon, size: 20, color: context.scheme.onSurfaceVariant),
                 const SizedBox(width: DesignTokens.space3),
                 Expanded(
                   child: Text(

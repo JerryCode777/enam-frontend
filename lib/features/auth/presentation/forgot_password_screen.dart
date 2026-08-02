@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
@@ -168,7 +168,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         // identifica a nadie, y volver a pedirlo escrito sería repetir el
         // trabajo que el usuario acaba de hacer.
         onPressed: () =>
-            context.push(Routes.resetPassword, extra: _email.text.trim()),
+            context.irA(Routes.resetPassword, extra: _email.text.trim()),
       ),
       EnamOutlinedButton(
         label: puedeReenviar

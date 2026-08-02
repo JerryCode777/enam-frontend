@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -148,7 +149,9 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
   /// el shell de pestañas, y hacerle `push` desde aquí montaba un segundo
   /// Navigator con la misma GlobalKey — pantalla roja y sin vuelta atrás.
   Future<void> _elegirNodo() async {
-    final elegido = await context.push<Object?>(Routes.practiceAreas);
+    final elegido = await context.irAPorUnResultado<Object?>(
+      Routes.practiceAreas,
+    );
     if (!mounted || elegido == null) return;
 
     setState(() {

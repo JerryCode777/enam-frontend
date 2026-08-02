@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../session/presentation/national_mock_screen.dart';
 import '../../catalog/domain/catalog_models.dart';
@@ -225,7 +226,7 @@ class _ExamenesPasados extends StatelessWidget {
         child: InkWell(
           // `push` porque la lista vive fuera del contenedor de pestañas: se
           // apila sobre el inicio y el botón de atrás devuelve aquí.
-          onTap: () => context.push(Routes.pastExams),
+          onTap: () => context.irA(Routes.pastExams),
           borderRadius: radio,
           child: Container(
             padding: const EdgeInsets.all(DesignTokens.space4),
@@ -1246,7 +1247,9 @@ class _SimulacroNacional extends ConsumerWidget {
             ),
             const SizedBox(width: DesignTokens.space2),
             OutlinedButton(
-              onPressed: () => context.push(Routes.nationalMock),
+              // `go`: el nacional cuelga de la pestaña de simulacros, y el
+              // inicio es otra rama del contenedor.
+              onPressed: () => context.go(Routes.nationalMock),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 40),
                 padding: const EdgeInsets.symmetric(

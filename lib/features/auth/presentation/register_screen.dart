@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -36,7 +37,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _acepta = false;
   bool _loading = false;
 
-
   @override
   void dispose() {
     _nombre.dispose();
@@ -61,7 +61,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _passwordError = PasswordRules.motivo(password);
     });
 
-    return _nombreError == null && _emailError == null && _passwordError == null;
+    return _nombreError == null &&
+        _emailError == null &&
+        _passwordError == null;
   }
 
   Future<void> _submit() async {
@@ -69,15 +71,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() => _loading = true);
     try {
-      await ref.read(authRepositoryProvider).register(
-        email: _email.text.trim(),
-        password: _password.text,
-        nombre: _nombre.text.trim(),
-        // La casilla ya estaba en la pantalla y el botón no se habilita sin
-        // ella; lo que faltaba era que el dato llegara al servidor. Sin él
-        // responde 422 CONSENT_REQUIRED y no se crea ninguna cuenta.
-        aceptaTerminos: _acepta,
-      );
+      await ref
+          .read(authRepositoryProvider)
+          .register(
+            email: _email.text.trim(),
+            password: _password.text,
+            nombre: _nombre.text.trim(),
+            // La casilla ya estaba en la pantalla y el botón no se habilita sin
+            // ella; lo que faltaba era que el dato llegara al servidor. Sin él
+            // responde 422 CONSENT_REQUIRED y no se crea ninguna cuenta.
+            aceptaTerminos: _acepta,
+          );
       if (mounted) {
         context.go(Routes.verifyEmail, extra: _email.text.trim());
       }
@@ -144,7 +148,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           onChanged: _loading
               ? null
               : (v) => setState(() => _acepta = v ?? false),
-          onTapTerms: () => context.push(Routes.terms),
+          onTapTerms: () => context.irA(Routes.terms),
         ),
         EnamButton(
           label: 'Crear cuenta',
@@ -212,10 +216,7 @@ class _ConsentCheckbox extends StatelessWidget {
                   onTap: onTapTerms,
                   child: Text('Política de datos personales', style: linkStyle),
                 ),
-                Text(
-                  ' (Ley N.º 29733)',
-                  style: context.texts.bodyMedium,
-                ),
+                Text(' (Ley N.º 29733)', style: context.texts.bodyMedium),
               ],
             ),
           ),

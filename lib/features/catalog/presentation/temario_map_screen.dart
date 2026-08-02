@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/taxonomy.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -116,7 +116,7 @@ class _CabeceraTemario extends StatelessWidget {
                   ),
                   const SizedBox(height: DesignTokens.space2),
                   _BuscadorFalso(
-                    onTap: () => context.push(Routes.temarioSearch),
+                    onTap: () => context.irA(Routes.temarioSearch),
                   ),
                 ],
               ),
@@ -249,7 +249,7 @@ class _MapaContenido extends ConsumerWidget {
         AreaCard(
           nodo: grandes[i],
           index: i,
-          onTap: () => context.push(Routes.temarioAreaOf(grandes[i].id)),
+          onTap: () => context.irA(Routes.temarioAreaOf(grandes[i].id)),
         ),
       ],
       if (compactas.isNotEmpty) ...[
@@ -267,8 +267,7 @@ class _MapaContenido extends ConsumerWidget {
                 destacado: compactas[i].id == 'ciencias-basicas'
                     ? 'Rinde 4×'
                     : null,
-                onTap: () =>
-                    context.push(Routes.temarioAreaOf(compactas[i].id)),
+                onTap: () => context.irA(Routes.temarioAreaOf(compactas[i].id)),
               ),
           ],
         ),
@@ -291,7 +290,7 @@ class _Curiosidad extends ConsumerWidget {
 
     return FadeUp(
       child: InkWell(
-        onTap: () => context.push(Routes.studyPriority),
+        onTap: () => context.irA(Routes.studyPriority),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd + 2),
         child: Container(
           padding: const EdgeInsets.symmetric(

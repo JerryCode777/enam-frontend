@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -118,7 +118,7 @@ class _TarjetaPerfil extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => context.push(Routes.editProfile),
+        onTap: () => context.irA(Routes.editProfile),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space4),
@@ -241,7 +241,7 @@ class _EstudioState extends ConsumerState<_Estudio> {
             leading: const Icon(Symbols.download),
             title: const Text('Estudiar sin conexión'),
             trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.downloads),
+            onTap: () => context.irA(Routes.downloads),
           ),
         ],
       ),
@@ -312,7 +312,7 @@ class _Cuenta extends ConsumerWidget {
             leading: const Icon(Symbols.workspace_premium),
             title: const Text('Mi suscripción'),
             trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.mySubscription),
+            onTap: () => context.irA(Routes.mySubscription),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           SwitchListTile(
@@ -331,7 +331,7 @@ class _Cuenta extends ConsumerWidget {
             leading: const Icon(Symbols.lock),
             title: const Text('Cambiar contraseña'),
             trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.changePassword),
+            onTap: () => context.irA(Routes.changePassword),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           ListTile(
@@ -341,7 +341,7 @@ class _Cuenta extends ConsumerWidget {
               style: TextStyle(color: states.error.onTint),
             ),
             trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.deleteAccount),
+            onTap: () => context.irA(Routes.deleteAccount),
           ),
         ],
       ),
@@ -361,14 +361,14 @@ class _Ayuda extends StatelessWidget {
             leading: const Icon(Symbols.help),
             title: const Text('Ayuda y contacto'),
             trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.help),
+            onTap: () => context.irA(Routes.help),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           ListTile(
             leading: const Icon(Symbols.gavel),
             title: const Text('Términos y privacidad'),
             trailing: const Icon(Symbols.chevron_right, size: 20),
-            onTap: () => context.push(Routes.terms),
+            onTap: () => context.irA(Routes.terms),
           ),
         ],
       ),

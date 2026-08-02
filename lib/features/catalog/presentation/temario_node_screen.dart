@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -60,9 +60,7 @@ class TemarioNodeScreen extends ConsumerWidget {
         if (encontrado == null) {
           return const Scaffold(
             appBar: GradientHeader(titulo: 'Temario'),
-            body: Center(
-              child: Text('No encontramos ese punto del temario.'),
-            ),
+            body: Center(child: Text('No encontramos ese punto del temario.')),
           );
         }
         return _Contenido(nodo: encontrado.nodo, ruta: encontrado.ruta);
@@ -283,9 +281,9 @@ class _TarjetaHijos extends StatelessWidget {
             color: color,
             ultima: i == hijos.length - 1,
             onTap: hijos[i].tieneHijos
-                ? () => context.push(Routes.temarioAreaOf(hijos[i].id))
+                ? () => context.irA(Routes.temarioAreaOf(hijos[i].id))
                 : null,
-            onPracticar: () => context.push(
+            onPracticar: () => context.irA(
               '${Routes.practiceConfig}?nodo=${hijos[i].id}'
               '${hijos[i].estado == NodeState.agotado ? "&origen=falladas" : ""}',
             ),
@@ -314,7 +312,7 @@ class _BotonPracticar extends StatelessWidget {
         // ofrece lo único que aporta, repasar lo que falló (RF-40).
         label: agotado ? 'Repasar lo que fallaste' : 'Practicar ${nodo.nombre}',
         icon: agotado ? Symbols.replay : Symbols.play_arrow,
-        onPressed: () => context.push(
+        onPressed: () => context.irA(
           '${Routes.practiceConfig}?nodo=${nodo.id}'
           '${agotado ? "&origen=falladas" : ""}',
         ),
@@ -332,7 +330,7 @@ class _AvisoLista extends StatelessWidget {
   Widget build(BuildContext context) {
     return FadeUp(
       child: GestureDetector(
-        onTap: () => context.push(Routes.temarioSearch),
+        onTap: () => context.irA(Routes.temarioSearch),
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.space3 + 1),
           decoration: BoxDecoration(

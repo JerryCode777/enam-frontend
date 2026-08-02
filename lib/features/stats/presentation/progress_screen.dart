@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -33,10 +34,7 @@ class ProgressScreen extends ConsumerWidget {
     return Scaffold(
       body: Column(
         children: [
-          const GradientHeader(
-            titulo: 'Tu progreso',
-            mostrarVolver: false,
-          ),
+          const GradientHeader(titulo: 'Tu progreso', mostrarVolver: false),
           Expanded(
             child: stats.when(
               loading: () => const _Cargando(),
@@ -388,7 +386,7 @@ class _Sugerencia extends StatelessWidget {
     return FadeUp(
       index: 3,
       child: InkWell(
-        onTap: () => context.push(Routes.studyPriority),
+        onTap: () => context.irA(Routes.studyPriority),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
@@ -580,7 +578,11 @@ class _FilaArea extends StatelessWidget {
             children: [
               Expanded(
                 flex: (anchoRelativo * 100).round(),
-                child: AnimatedBar(value: acierto ?? 0, color: color, height: 8),
+                child: AnimatedBar(
+                  value: acierto ?? 0,
+                  color: color,
+                  height: 8,
+                ),
               ),
               if (anchoRelativo < 1)
                 Expanded(
@@ -697,11 +699,7 @@ class _LineaPainter extends CustomPainter {
       ..color = aprobado
       ..strokeWidth = 1;
     for (var dx = 0.0; dx < size.width; dx += 8) {
-      canvas.drawLine(
-        Offset(dx, yAprobado),
-        Offset(dx + 4, yAprobado),
-        dashed,
-      );
+      canvas.drawLine(Offset(dx, yAprobado), Offset(dx + 4, yAprobado), dashed);
     }
 
     final path = Path();

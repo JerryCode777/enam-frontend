@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/providers.dart';
+import '../../../../core/router/navegar.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
@@ -51,7 +52,11 @@ class HomeHero extends StatelessWidget {
           children: [
             // Círculos decorativos, recortados por las esquinas del hero.
             const Positioned(top: -70, right: -70, child: _Circulo(200, 0.10)),
-            const Positioned(bottom: -60, left: -50, child: _Circulo(150, 0.07)),
+            const Positioned(
+              bottom: -60,
+              left: -50,
+              child: _Circulo(150, 0.07),
+            ),
             SafeArea(
               bottom: false,
               child: Padding(
@@ -180,7 +185,7 @@ class _Avatar extends StatelessWidget {
       label: 'Perfil y ajustes',
       button: true,
       child: InkWell(
-        onTap: () => context.push(Routes.settings),
+        onTap: () => context.irA(Routes.settings),
         borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
         child: Container(
           // 44 es el mínimo táctil que pide el diseño de esta pantalla.
@@ -236,7 +241,12 @@ class _TarjetaRetomar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Symbols.play_circle, size: 26, fill: 1, color: Colors.white),
+          const Icon(
+            Symbols.play_circle,
+            size: 26,
+            fill: 1,
+            color: Colors.white,
+          ),
           const SizedBox(width: DesignTokens.space3),
           Expanded(
             child: Column(
@@ -284,7 +294,7 @@ class _TarjetaRetomar extends StatelessWidget {
               // está fuera, así que ahí sí se apila.
               onTap: () => sesion.esSimulacro
                   ? context.go(Routes.simulacroSessionOf(sesion.sessionId))
-                  : context.push(Routes.practiceSessionOf(sesion.sessionId)),
+                  : context.irA(Routes.practiceSessionOf(sesion.sessionId)),
               borderRadius: BorderRadius.circular(DesignTokens.radiusXl - 4),
               child: Container(
                 height: 40,

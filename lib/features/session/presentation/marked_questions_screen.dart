@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -144,7 +144,7 @@ class _MarkedQuestionsScreenState extends ConsumerState<MarkedQuestionsScreen> {
               child: EnamButton(
                 label: 'Practicar las ${visibles.length} marcadas',
                 icon: Symbols.play_arrow,
-                onPressed: () => context.push(
+                onPressed: () => context.irA(
                   '${Routes.practiceConfig}?origen=marcadas',
                 ),
               ),
