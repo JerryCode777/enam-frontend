@@ -17,6 +17,7 @@ import 'package:enam_app/features/auth/presentation/splash_screen.dart';
 import 'package:enam_app/features/auth/presentation/verify_email_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_map_screen.dart';
 import 'package:enam_app/features/home/presentation/home_screen.dart';
+import 'package:enam_app/features/stats/presentation/ranking_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,6 +78,9 @@ void main() {
     // las tarjetas de Temario y Marcadas quedaban en dos columnas de ~160 px y
     // los títulos salían como «Tem…» y «Marc…».
     (nombre: '2.1-inicio', widget: HomeScreen()),
+    // El ranking: el podio arriba y la barra de posición propia abajo, que es
+    // lo único que ve quien está fuera del top.
+    (nombre: '6.2-ranking', widget: RankingScreen()),
     (nombre: '3.1-temario', widget: TemarioMapScreen()),
     (nombre: '3.2-area-medicina', widget: TemarioNodeScreen(nodeId: 'medicina')),
     (

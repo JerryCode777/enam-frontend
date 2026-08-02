@@ -10,6 +10,10 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../domain/stats_models.dart';
+import 'widgets/podio_ranking.dart';
+
+/// Cuántas filas se muestran. Igual que `TopDelRanking` en el servidor.
+const _top = 10;
 
 final rankingProvider = FutureProvider<List<RankingEntry>>((ref) {
   return ref.watch(statsRepositoryProvider).rankingGeneral();
@@ -80,7 +84,23 @@ class _Contenido extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // La fila propia sale de la respuesta ENTERA, no del top: quien va 340º la
+    // recibe aparte y es lo único que lo ancla en esta pantalla.
     final propia = filas.where((f) => f.esUsuarioActual).firstOrNull;
+
+    // Diez y ni una más, se mande lo que se mande.
+    //
+    // El servidor ya recorta, pero el recorte se comprueba también aquí: es lo
+    // que se ve, y depender de que el otro lado lo haga bien significa que el
+    // día que cambie —o que una app vieja hable con un servidor nuevo— la
+    // pantalla crece sin que nadie se entere.
+    final top = filas.where((f) => f.posicion <= _top).take(_top).toList();
+
+    // El podio quiere exactamente tres. Con menos no se pinta: tres escalones
+    // con dos llenos y uno vacío se leen como un fallo de carga, no como
+    // «todavía no hay tercero».
+    final hayPodio = top.length >= 3;
+    final resto = hayPodio ? top.skip(3).toList() : top;
 
     return Column(
       children: [
@@ -93,6 +113,24 @@ class _Contenido extends ConsumerWidget {
               DesignTokens.space4,
             ),
             children: [
+              if (hayPodio) ...[
+                PodioRanking(filas: top.take(3).toList()),
+                const SizedBox(height: DesignTokens.space4),
+              ],
+              if (resto.isNotEmpty)
+                Card(
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < resto.length; i++)
+                        _Fila(
+                          entrada: resto[i],
+                          index: i,
+                          esUltima: i == resto.length - 1,
+                        ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: DesignTokens.space4),
               Text(
                 'Solo cuentan simulacros terminados de '
                 '${Blueprint.totalQuestions} preguntas. En los nacionales '
@@ -100,24 +138,12 @@ class _Contenido extends ConsumerWidget {
                 style: context.texts.bodySmall?.copyWith(height: 1.5),
               ),
               const SizedBox(height: DesignTokens.space4),
-              Card(
-                child: Column(
-                  children: [
-                    for (var i = 0; i < filas.length; i++)
-                      _Fila(
-                        entrada: filas[i],
-                        index: i,
-                        esUltima: i == filas.length - 1,
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space4),
               _Visibilidad(oculto: oculto),
             ],
           ),
         ),
-        // Fijada abajo: es el dato que la persona vino a buscar.
+        // Fijada abajo: es el dato que la persona vino a buscar, y el único
+        // sitio donde se ve si está fuera del top.
         if (propia != null) _MiPosicion(entrada: propia),
       ],
     );
@@ -140,14 +166,6 @@ class _Fila extends StatelessWidget {
     final states = context.states;
     final propia = entrada.esUsuarioActual;
 
-    // Medalla para los tres primeros, número para el resto.
-    final medalla = switch (entrada.posicion) {
-      1 => const Color(0xFFD4A017),
-      2 => const Color(0xFF9CA3AF),
-      3 => const Color(0xFFB87333),
-      _ => null,
-    };
-
     return FadeUp(
       index: index,
       child: Container(
@@ -165,26 +183,27 @@ class _Fila extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Sin medalla: los tres primeros van al podio, y aquí ya solo
+            // hay números. Una lista sobria debajo deja que el brillo esté
+            // arriba, donde importa.
             SizedBox(
               width: 30,
-              child: medalla != null
-                  ? Icon(Symbols.trophy, size: 18, fill: 1, color: medalla)
-                  : Text(
-                      '${entrada.posicion}',
-                      style: context.texts.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: propia
-                            ? states.info.onTint
-                            : context.scheme.onSurfaceVariant,
-                      ),
-                    ),
+              child: Text(
+                '${entrada.posicion}',
+                style: context.texts.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: propia
+                      ? states.info.onTint
+                      : context.scheme.onSurfaceVariant,
+                ),
+              ),
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    propia ? 'Tú · ${entrada.usuarioNombre}' : entrada.usuarioNombre,
+                    propia ? 'Tú' : entrada.usuarioNombre,
                     style: context.texts.bodyMedium?.copyWith(
                       fontWeight: propia ? FontWeight.w800 : FontWeight.w700,
                       color: propia ? states.info.onTint : null,
@@ -213,6 +232,14 @@ class _Fila extends StatelessWidget {
   }
 }
 
+/// Dónde va el usuario. Posición y promedio, nada más.
+///
+/// Es lo único que la persona vino a buscar. Su nombre y su universidad ya los
+/// sabe, y ocuparían el sitio de las dos cifras que sí importan.
+///
+/// Va **siempre visible**, esté o no dentro del top: quien está fuera de los
+/// diez ya no tiene fila en la lista, y el servidor le manda la suya aparte
+/// justamente para esto.
 class _MiPosicion extends StatelessWidget {
   const _MiPosicion({required this.entrada});
 
@@ -220,42 +247,59 @@ class _MiPosicion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final states = context.states;
-
     return Container(
       padding: EdgeInsets.fromLTRB(
         DesignTokens.space4,
-        DesignTokens.space3,
+        DesignTokens.space3 + 2,
         DesignTokens.space4,
-        DesignTokens.space3 + MediaQuery.paddingOf(context).bottom,
+        DesignTokens.space3 + 2 + MediaQuery.paddingOf(context).bottom,
       ),
       decoration: BoxDecoration(
-        color: states.info.tint,
+        color: DesignTokens.headerGradientLight.first,
         border: Border(top: BorderSide(color: context.scheme.outlineVariant)),
       ),
       child: Row(
         children: [
+          Expanded(
+            child: Text(
+              'Tu posición',
+              style: context.texts.bodyMedium?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ),
+          ),
           Text(
-            'Tu posición',
-            style: context.texts.bodySmall?.copyWith(
+            '#',
+            style: context.texts.bodyMedium?.copyWith(
+              fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: states.info.onTint,
+              color: Colors.white.withValues(alpha: 0.6),
             ),
           ),
-          const Spacer(),
           Text(
-            '#${entrada.posicion}',
+            '${entrada.posicion}',
             style: context.texts.titleMedium?.copyWith(
+              fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: states.info.onTint,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(width: DesignTokens.space3),
+          // La línea separa dos cifras que se leen distinto: una es un puesto y
+          // la otra una nota sobre 20. Pegadas se leen como un marcador.
+          Container(
+            width: 1,
+            height: 20,
+            margin: const EdgeInsets.symmetric(horizontal: DesignTokens.space3),
+            color: Colors.white.withValues(alpha: 0.2),
+          ),
           Text(
             entrada.promedio.toStringAsFixed(2),
             style: context.texts.titleMedium?.copyWith(
+              fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: states.info.onTint,
+              color: DesignTokens.headerGradientLight.last,
             ),
           ),
         ],

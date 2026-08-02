@@ -139,19 +139,37 @@ class MockStatsRepository implements StatsRepository {
     );
   }
 
+  /// El ranking tal como lo devuelve el servidor: los diez primeros **más** la
+  /// fila de quien pregunta.
+  ///
+  /// El usuario va 34º a propósito. Es el caso que da sentido al recorte:
+  /// cortar por las bravas a diez le quitaría su propia fila justo a quien está
+  /// fuera del top, que es exactamente la persona que abre esta pantalla a
+  /// buscarse. Con él dentro del top, la pantalla nunca se probaría en el
+  /// estado en el que la va a ver casi todo el mundo.
   @override
   Future<List<RankingEntry>> rankingGeneral() async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
+
     return [
-      for (var i = 1; i <= 20; i++)
+      for (var i = 1; i <= 10; i++)
         RankingEntry(
           posicion: i,
-          usuarioNombre: i == 7 ? 'Tú' : 'Estudiante ${String.fromCharCode(64 + i)}.',
+          usuarioNombre: 'Estudiante ${String.fromCharCode(64 + i)}.',
           universidad: ['UNMSM', 'UNSA', 'UPCH', 'UNT'][i % 4],
-          promedio: double.parse((17.8 - i * 0.28).toStringAsFixed(2)),
-          esUsuarioActual: i == 7,
+          promedio: double.parse((13.4 - i * 0.58).toStringAsFixed(2)),
+          esUsuarioActual: false,
           tiempoTotalMs: 9600000 + i * 42000,
         ),
+      // La propia, con su posición REAL sobre el ranking completo.
+      const RankingEntry(
+        posicion: 34,
+        usuarioNombre: 'E. R.',
+        universidad: 'UNMSM',
+        promedio: 9.85,
+        esUsuarioActual: true,
+        tiempoTotalMs: 10980000,
+      ),
     ];
   }
 }
