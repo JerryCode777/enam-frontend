@@ -66,7 +66,7 @@ class ApiSubscriptionRepository implements SubscriptionRepository {
 const _planPagado = Plan(
   id: 'mensual',
   nombre: 'Premium mensual',
-  precioCentimos: 6900,
+  precioCentimos: 5900,
   duracionDias: 30,
   beneficios: [
     'Banco completo y práctica ilimitada',
