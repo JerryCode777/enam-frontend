@@ -15,8 +15,10 @@ import 'auth_interceptor.dart';
 ///
 /// Los repositorios usan esta clase; nunca crean su propio `Dio`.
 class ApiClient {
-  ApiClient({required TokenStorage tokenStorage, required this.onSessionExpired})
-    : _tokens = tokenStorage {
+  ApiClient({
+    required TokenStorage tokenStorage,
+    required this.onSessionExpired,
+  }) : _tokens = tokenStorage {
     _dio = Dio(_baseOptions);
 
     // Cliente separado para el refresh: sin AuthInterceptor, para no recursar.
@@ -62,15 +64,20 @@ class ApiClient {
 
   Dio get raw => _dio;
 
+  /// [onReceiveProgress] existe para las descargas grandes —el paquete de un
+  /// área son cientos de preguntas—, donde una barra de verdad es la diferencia
+  /// entre esperar y creer que se colgó. En respuestas normales no se usa.
   Future<T> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
     CancelToken? cancelToken,
+    ProgressCallback? onReceiveProgress,
   }) => _request(
     () => _dio.get<T>(
       path,
       queryParameters: queryParameters,
       cancelToken: cancelToken,
+      onReceiveProgress: onReceiveProgress,
     ),
   );
 
@@ -92,7 +99,9 @@ class ApiClient {
       _request(() => _dio.patch<T>(path, data: data, cancelToken: cancelToken));
 
   Future<T> delete<T>(String path, {Object? data, CancelToken? cancelToken}) =>
-      _request(() => _dio.delete<T>(path, data: data, cancelToken: cancelToken));
+      _request(
+        () => _dio.delete<T>(path, data: data, cancelToken: cancelToken),
+      );
 
   Future<T> _request<T>(Future<Response<T>> Function() send) async {
     try {
@@ -168,7 +177,9 @@ class ApiClient {
     if (body is! Map) return (message: null, code: null, fieldErrors: const {});
 
     final error = body['error'];
-    if (error is! Map) return (message: null, code: null, fieldErrors: const {});
+    if (error is! Map) {
+      return (message: null, code: null, fieldErrors: const {});
+    }
 
     final details = error['details'];
     final fieldErrors = <String, String>{};

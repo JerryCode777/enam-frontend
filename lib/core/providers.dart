@@ -7,8 +7,13 @@ import '../features/auth/data/google_signin_service.dart';
 import '../features/auth/data/mock_auth_repository.dart';
 import '../features/auth/domain/auth_models.dart';
 import '../features/catalog/data/catalog_repository.dart';
+import '../features/catalog/data/catalog_repository_offline.dart';
 import '../features/catalog/domain/catalog_models.dart';
+import '../features/offline/data/almacen_offline.dart';
+import '../features/offline/data/offline_repository.dart';
+import '../features/offline/data/servicio_offline.dart';
 import '../features/session/data/session_repository.dart';
+import '../features/session/data/session_repository_offline.dart';
 import '../features/session/domain/session_models.dart';
 import '../features/stats/data/stats_repository.dart';
 import '../features/stats/domain/stats_models.dart';
@@ -16,6 +21,9 @@ import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/subscription_models.dart';
 import 'config/app_config.dart';
 import 'network/api_client.dart';
+import 'network/conectividad.dart';
+import 'security/cifrado_local.dart';
+import 'storage/base_local.dart';
 import 'storage/app_prefs.dart';
 import 'storage/token_storage.dart';
 
@@ -84,13 +92,98 @@ final appleDisponibleProvider = FutureProvider<bool>((ref) {
 });
 
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
-  if (AppConfig.useMocks) return MockCatalogRepository();
-  return ApiCatalogRepository(ref.watch(apiClientProvider));
+  final remoto = AppConfig.useMocks
+      ? MockCatalogRepository()
+      : ApiCatalogRepository(ref.watch(apiClientProvider));
+
+  // Con sesión iniciada, el temario se guarda en el teléfono: sin él no se
+  // puede ni elegir qué practicar sin señal.
+  final usuario = ref.watch(currentUserProvider);
+  if (usuario == null) return remoto;
+
+  return CatalogRepositoryConRespaldo(
+    remoto: remoto,
+    almacen: ref.watch(almacenOfflineProvider),
+    usuarioId: usuario.id,
+  );
 });
 
-final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
+/// El repositorio que habla con el servidor, sin respaldo local.
+///
+/// Lo usan el servicio offline —para crear la reserva y cerrar sesiones, que
+/// son operaciones que **exigen** servidor— y el repositorio con respaldo, que
+/// lo envuelve. Separarlo evita la dependencia circular que aparecería si el
+/// servicio pidiera el mismo provider que lo contiene.
+final sessionRepositoryRemotoProvider = Provider<SessionRepository>((ref) {
   if (AppConfig.useMocks) return MockSessionRepository();
   return ApiSessionRepository(ref.watch(apiClientProvider));
+});
+
+/// El que usan las pantallas: con red o sin ella (RF-31).
+///
+/// Sin sesión iniciada no hay nada local que consultar —la base guarda por
+/// usuario— así que se devuelve el remoto tal cual.
+final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
+  final remoto = ref.watch(sessionRepositoryRemotoProvider);
+  final offline = ref.watch(servicioOfflineProvider);
+  if (offline == null) return remoto;
+
+  return SessionRepositoryConRespaldo(
+    remoto: remoto,
+    offline: offline,
+    red: ref.watch(conectividadProvider),
+  );
+});
+
+// ==================== MODO SIN CONEXIÓN (M7) ====================
+
+final baseLocalProvider = Provider<BaseLocal>((ref) {
+  final base = BaseLocal();
+  ref.onDispose(base.cerrar);
+  return base;
+});
+
+final cifradoLocalProvider = Provider<CifradoLocal>((ref) => CifradoLocal());
+
+final almacenOfflineProvider = Provider<AlmacenOffline>((ref) {
+  return AlmacenOfflineSqlite(
+    base: ref.watch(baseLocalProvider),
+    cifrado: ref.watch(cifradoLocalProvider),
+  );
+});
+
+/// Si el teléfono tiene red. Ver [Conectividad] sobre lo que esto sabe y lo
+/// que no: nunca decide por sí solo que una petición va a funcionar.
+final conectividadProvider = Provider<Conectividad>((ref) {
+  return ConectividadDelSistema();
+});
+
+/// Emite en cada cambio de red, empezando por el estado actual.
+final hayRedProvider = StreamProvider<bool>((ref) async* {
+  final red = ref.watch(conectividadProvider);
+  yield await red.hayRed();
+  yield* red.cambios;
+});
+
+final offlineRepositoryProvider = Provider<OfflineRepository>((ref) {
+  if (AppConfig.useMocks) return MockOfflineRepository();
+  return ApiOfflineRepository(ref.watch(apiClientProvider));
+});
+
+/// El servicio del modo sin conexión, o `null` si no hay sesión iniciada.
+///
+/// Todo lo local va colgado del usuario: en un teléfono compartido, lo
+/// descargado por una cuenta no aparece —ni se puede descifrar— desde la otra.
+final servicioOfflineProvider = Provider<ServicioOffline?>((ref) {
+  final usuario = ref.watch(currentUserProvider);
+  if (usuario == null) return null;
+
+  return ServicioOffline(
+    almacen: ref.watch(almacenOfflineProvider),
+    remoto: ref.watch(offlineRepositoryProvider),
+    sesiones: ref.watch(sessionRepositoryRemotoProvider),
+    usuarioId: usuario.id,
+  );
 });
 
 final statsRepositoryProvider = Provider<StatsRepository>((ref) {
@@ -349,6 +442,21 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    // Lo descargado se va con la cuenta, y antes que nada.
+    //
+    // Son preguntas premium con sus claves; dejarlas en el teléfono de alguien
+    // que ya cerró sesión no tiene defensa posible. Se borran las filas **y**
+    // la llave de cifrado, así que aunque el borrado quedara a medias lo que
+    // sobreviva es ruido. Va primero porque necesita saber quién era el
+    // usuario, y en cuanto el estado pasa a `AuthSignedOut` ya no hay ninguno.
+    try {
+      await ref.read(servicioOfflineProvider)?.olvidarTodo();
+    } catch (_) {
+      // Que un fallo de la base local no impida cerrar sesión: quedarse dentro
+      // de la cuenta es peor que quedarse con la base sin limpiar, y la llave
+      // se pierde igual en el reinstalado.
+    }
+
     await ref.read(authRepositoryProvider).logout();
     // Sin esto, el selector de cuentas no vuelve a preguntar y quien comparte
     // el teléfono entraría con la cuenta del anterior de un solo toque.

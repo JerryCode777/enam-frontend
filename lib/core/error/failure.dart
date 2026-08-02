@@ -27,6 +27,20 @@ final class NetworkFailure extends Failure {
   ]);
 }
 
+/// No hay conexión **y** tampoco hay nada descargado que sirva (RF-30).
+///
+/// Se distingue de [NetworkFailure] porque la salida es otra: ahí lo que toca
+/// es reintentar cuando vuelva la señal; aquí, descargar un área la próxima vez
+/// que haya internet. Decir «revisa tu conexión» a alguien que está en el metro
+/// no le da nada que hacer.
+final class SinDescargasFailure extends Failure {
+  const SinDescargasFailure([
+    super.message =
+        'No tienes prácticas listas para usar sin conexión. Descarga un '
+        'área cuando vuelvas a tener internet.',
+  ]);
+}
+
 /// La petición tardó demasiado.
 final class TimeoutFailure extends Failure {
   const TimeoutFailure([

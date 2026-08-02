@@ -25,6 +25,7 @@ import 'package:enam_app/features/session/presentation/marked_questions_screen.d
 import 'package:enam_app/features/session/presentation/national_mock_screen.dart';
 import 'package:enam_app/features/session/presentation/practice_config_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_hub_screen.dart';
+import 'package:enam_app/features/offline/domain/offline_models.dart';
 import 'package:enam_app/features/offline/presentation/downloads_screen.dart';
 import 'package:enam_app/features/profile/presentation/change_password_screen.dart';
 import 'package:enam_app/features/profile/presentation/delete_account_screen.dart';
@@ -45,6 +46,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'ayuda/offline.dart';
+
 /// Verifica que ninguna pantalla desborde a **360 px de ancho** (RNF-09) ni en
 /// tema claro ni en oscuro, y que aguante la fuente del sistema ampliada.
 ///
@@ -52,7 +55,28 @@ import 'package:intl/date_symbol_data_local.dart';
 /// de forma automática, así que deja de depender de que alguien se acuerde.
 void main() {
   // Igual que en `main()`: sin esto, DateFormat con locale 'es' revienta.
-  setUpAll(() => initializeDateFormatting('es'));
+  setUpAll(() async {
+    await initializeDateFormatting('es');
+
+    // La pantalla de descargas se mide **con contenido**: un área guardada y
+    // una práctica lista. Vacía no prueba nada, y es justo con los textos
+    // largos —«40 preguntas · 47 KB · al día»— donde puede desbordar.
+    await _almacen.guardarPaquete(
+      'u1',
+      PaqueteOffline(
+        areaId: 'medicina',
+        generadoEn: DateTime(2026, 7, 20),
+        preguntas: [preguntaDePrueba('q1')],
+        total: 40,
+      ),
+    );
+    await _almacen.guardarSesion(
+      'u1',
+      areaId: 'medicina',
+      estado: EstadoSesionLocal.reservada,
+      sesion: sesionDePrueba(),
+    );
+  });
 
   /// El teléfono más angosto que soportamos, y uno bajo para forzar desborde
   /// vertical si una pantalla no es desplazable.
@@ -167,6 +191,9 @@ void main() {
   });
 }
 
+/// La base local de estas pruebas, con un área ya descargada.
+final _almacen = AlmacenEnMemoria();
+
 /// Envuelve la pantalla con lo mínimo para pintarla, con datos ya resueltos.
 ///
 /// Los repositorios se sustituyen por versiones **instantáneas**: los mocks de
@@ -184,6 +211,9 @@ Widget _harness(Widget screen, Brightness brightness, {double textScale = 1.0}) 
       // Sin esto, la tarjeta del nacional del inicio deja un temporizador del
       // mock pendiente y el test de layout falla por algo que no es el layout.
       sessionRepositoryProvider.overrideWithValue(_InstantSessions()),
+      // Sin esto la base local intentaría abrir SQLite, que en las pruebas no
+      // existe, y la pantalla de descargas se mediría en su estado de error.
+      almacenOfflineProvider.overrideWithValue(_almacen),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,
@@ -302,6 +332,7 @@ class _InstantSessions implements SessionRepository {
   Future<StudySession> startPastExam(
     String examId, {
     required PastExamMode modo,
+    int? cantidad,
   }) async => throw UnimplementedError();
 }
 
