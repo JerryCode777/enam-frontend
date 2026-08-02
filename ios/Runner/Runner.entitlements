@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		Sign in with Apple.
+
+		La directriz 4.8 de App Store lo exige en cuanto la app ofrece entrar con
+		una cuenta de terceros, y ofrece Google. Sin este entitlement el paquete
+		compila y el botón se dibuja, pero al tocarlo Apple devuelve un error de
+		autorización: la capacidad se declara aquí, no en el código.
+
+		Tiene que estar también activada en el App ID del portal de Apple; una
+		sola de las dos mitades no basta.
+	-->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>
