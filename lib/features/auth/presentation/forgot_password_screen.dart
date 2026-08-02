@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -88,10 +90,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      titulo: _enviado ? 'Enlace enviado' : 'Recupera tu acceso',
+      titulo: _enviado ? 'Código enviado' : 'Recupera tu acceso',
       subtitulo: _enviado
           ? null
-          : 'Te enviaremos un enlace para crear una nueva.',
+          : 'Te enviaremos un código para crear una nueva.',
       mostrarVolver: true,
       tamanoTitulo: 26,
       // El diseño resuelve el envío dentro de la misma tarjeta, no en otra
@@ -115,11 +117,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         if (_emailError != null) setState(() => _emailError = null);
       },
     ),
-    EnamButton(label: 'Enviar enlace', loading: _loading, onPressed: _submit),
+    EnamButton(label: 'Enviar código', loading: _loading, onPressed: _submit),
     AuthTintNote(
       icono: Symbols.info,
       texto: Text(
-        'Si el correo existe, llega en 1-2 minutos. Revisa también el spam.',
+        'Si el correo existe, el código llega en 1-2 minutos. Revisa también '
+        'el spam.',
         style: context.texts.bodySmall?.copyWith(
           height: 1.5,
           color: context.scheme.onSurfaceVariant,
@@ -151,14 +154,25 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       ),
       Text(
         // El mismo texto exista o no la cuenta: no confirmamos correos.
-        'Si ${_email.text.trim()} tiene una cuenta, el enlace ya está en '
-        'camino. Ábrelo desde este teléfono.',
+        'Si ${_email.text.trim()} tiene una cuenta, el código ya está en '
+        'camino.',
         textAlign: TextAlign.center,
         style: context.texts.bodyMedium?.copyWith(height: 1.55),
       ),
+      // Sin este botón no había forma de llegar a escribir el código: la
+      // pantalla daba por hecho que el correo traía un enlace que resolvía
+      // todo, y el correo trae seis dígitos que hay que teclear aquí.
+      EnamButton(
+        label: 'Ya tengo el código',
+        // El correo viaja con la navegación: el código por sí solo no
+        // identifica a nadie, y volver a pedirlo escrito sería repetir el
+        // trabajo que el usuario acaba de hacer.
+        onPressed: () =>
+            context.push(Routes.resetPassword, extra: _email.text.trim()),
+      ),
       EnamOutlinedButton(
         label: puedeReenviar
-            ? 'Reenviar enlace'
+            ? 'Reenviar código'
             : 'Reenviar en 0:${(_restante % 60).toString().padLeft(2, '0')}',
         height: 48,
         onPressed: puedeReenviar ? _submit : null,
