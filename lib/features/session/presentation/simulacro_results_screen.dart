@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
 import '../../../features/catalog/presentation/catalog_providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -32,9 +33,8 @@ class SimulacroResultsScreen extends ConsumerWidget {
     return Scaffold(
       body: estado.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const Center(
-          child: Text('No pudimos cargar los resultados.'),
-        ),
+        error: (e, _) =>
+            const Center(child: Text('No pudimos cargar los resultados.')),
         data: (s) => _Contenido(session: s.session),
       ),
     );
@@ -169,7 +169,7 @@ class _Contenido extends StatelessWidget {
               label: 'Revisar las ${session.totalPreguntas} preguntas',
               icon: Symbols.fact_check,
               onPressed: () =>
-                  context.push(Routes.simulacroReviewOf(session.id)),
+                  context.irA(Routes.simulacroReviewOf(session.id)),
             ),
           ),
           const SizedBox(height: DesignTokens.space2 + 2),
@@ -185,9 +185,17 @@ class _Contenido extends StatelessWidget {
           FadeUp(
             index: 4,
             child: TextButton(
-              onPressed: () => context.go(Routes.simulacroSelection),
+              // Un examen pasado no se empieza desde la pestaña de simulacros:
+              // devolver ahí deja al usuario en un sitio por el que no pasó.
+              onPressed: () => context.go(
+                session.tipo == SessionType.examenPasado
+                    ? Routes.home
+                    : Routes.simulacroSelection,
+              ),
               child: Text(
-                'Volver a simulacros',
+                session.tipo == SessionType.examenPasado
+                    ? 'Volver al inicio'
+                    : 'Volver a simulacros',
                 style: TextStyle(color: context.scheme.onSurfaceVariant),
               ),
             ),

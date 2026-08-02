@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../domain/session_models.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
@@ -80,9 +81,9 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
         restante > _aviso5 &&
         mounted) {
       _aviso15Dado = true;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Quedan 15 minutos.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Quedan 15 minutos.')));
     }
 
     // Envío automático al agotarse, sin diálogo que pregunte: el tiempo del
@@ -98,9 +99,8 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
     final estado = ref.watch(sessionControllerProvider(widget.sessionId));
 
     return estado.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
         body: const Center(child: Text('No pudimos cargar el simulacro.')),
@@ -146,7 +146,9 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
                       texto: _marca(usuario?.id, usuario?.email),
                       child: Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(DesignTokens.space4 + 2),
+                          padding: const EdgeInsets.all(
+                            DesignTokens.space4 + 2,
+                          ),
                           child: Text(
                             pregunta.enunciado,
                             style: context.texts.bodyLarge?.copyWith(
@@ -160,19 +162,18 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     for (var i = 0; i < pregunta.opciones.length; i++) ...[
-                      if (i > 0) const SizedBox(height: DesignTokens.space2 + 2),
+                      if (i > 0)
+                        const SizedBox(height: DesignTokens.space2 + 2),
                       OptionCard(
                         opcion: pregunta.opciones[i],
                         letra: const ['A', 'B', 'C', 'D'][i],
                         visual:
-                            (estado.seleccion ??
-                                    estado.respuesta?.optionId) ==
+                            (estado.seleccion ?? estado.respuesta?.optionId) ==
                                 pregunta.opciones[i].id
                             ? OptionVisual.seleccionada
                             : OptionVisual.normal,
-                        onTap: () => control.seleccionar(
-                          pregunta.opciones[i].id,
-                        ),
+                        onTap: () =>
+                            control.seleccionar(pregunta.opciones[i].id),
                       ),
                     ],
                   ],
@@ -208,16 +209,33 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
   }
 
   Future<void> _confirmarAbandono() async {
+    final tipo = ref
+        .read(sessionControllerProvider(widget.sessionId))
+        .value
+        ?.session
+        .tipo;
+
     final salir = await confirmar(
       context,
-      titulo: '¿Salir del simulacro?',
+      titulo: tipo == SessionType.examenPasado
+          ? '¿Salir del examen?'
+          : '¿Salir del simulacro?',
       mensaje:
           'El cronómetro sigue corriendo. Si el tiempo se agota, el examen se '
           'envía con lo que hayas respondido.',
       confirmar: 'Salir',
       cancelar: 'Seguir rindiendo',
     );
-    if (salir && mounted) context.go(Routes.simulacroSelection);
+    if (!salir || !mounted) return;
+
+    // Un examen pasado no se empieza desde la pestaña de simulacros, así que
+    // devolver ahí deja al usuario en un sitio por el que no pasó. Al inicio,
+    // que es de donde salió.
+    context.go(
+      tipo == SessionType.examenPasado
+          ? Routes.home
+          : Routes.simulacroSelection,
+    );
   }
 
   /// Pantalla 5.5 — confirmación de envío.

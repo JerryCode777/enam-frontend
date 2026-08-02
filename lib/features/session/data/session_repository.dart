@@ -6,9 +6,11 @@ import '../../../core/network/api_client.dart';
 import '../domain/session_models.dart';
 
 /// Cuánto dura un examen pasado según el modo elegido (RF-52).
-Duration duracionDe(PastExamMode modo) => modo.esCorto
-    ? Blueprint.sampleExamDuration
-    : Blueprint.examDuration;
+/// Cuánto dura un examen pasado según el modo (RF-52).
+///
+/// En modo estudio no aplica: esa sesión no lleva reloj.
+Duration duracionDe(PastExamMode modo) =>
+    modo.esCorto ? Blueprint.sampleExamDuration : Blueprint.examDuration;
 
 /// Sesiones de práctica y simulacro (Módulos 3 y 4 del SSD).
 abstract interface class SessionRepository {
@@ -59,7 +61,14 @@ abstract interface class SessionRepository {
 
   /// Arranca un examen pasado. El servidor devuelve sus preguntas reales, no
   /// una selección generada con el blueprint.
-  Future<StudySession> startPastExam(String examId, {required PastExamMode modo});
+  ///
+  /// [cantidad] solo cuenta en modo estudio: en los de examen la fija el
+  /// propio examen.
+  Future<StudySession> startPastExam(
+    String examId, {
+    required PastExamMode modo,
+    int? cantidad,
+  });
 }
 
 class ApiSessionRepository implements SessionRepository {
@@ -131,9 +140,7 @@ class ApiSessionRepository implements SessionRepository {
 
   @override
   Future<List<Question>> markedQuestions() async {
-    final data = await _client.get<List<dynamic>>(
-      ApiEndpoints.markedQuestions,
-    );
+    final data = await _client.get<List<dynamic>>(ApiEndpoints.markedQuestions);
     return data
         .map((e) => Question.fromJson(e as Map<String, dynamic>))
         .toList(growable: false);
@@ -167,16 +174,18 @@ class ApiSessionRepository implements SessionRepository {
   Future<StudySession> startPastExam(
     String examId, {
     required PastExamMode modo,
+    int? cantidad,
   }) async {
-    // El cuerpo es `{"muestra": bool}`, no `{"modo": "corto"}`.
+    // Van los dos campos, y no sobra ninguno.
     //
-    // Mandaba `modo` contra un contrato imaginado. El servidor ignora las
-    // claves que no conoce, así que no fallaba: devolvía el examen ENTERO de
-    // 180 preguntas y tres horas cada vez que el estudiante pedía el corto, sin
-    // que nada avisara. La web ya usaba `muestra`; esta era la que se salía.
+    // `modo` es el actual y el único que distingue los tres. `muestra` es el
+    // anterior, de cuando solo había dos, y se manda porque un servidor que
+    // todavía no conozca `modo` ignoraría esa clave en silencio: pedirías el
+    // corto y te devolvería el examen entero sin que nada avisara. Ya pasó una
+    // vez, al revés, con `modo` contra un servidor que solo leía `muestra`.
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.startPastExam(examId),
-      data: {'muestra': modo.esCorto},
+      data: {'modo': modo.name, 'muestra': modo.esCorto, 'cantidad': ?cantidad},
     );
     return StudySession.fromJson(data);
   }
@@ -349,12 +358,14 @@ class MockSessionRepository implements SessionRepository {
     final porID = {for (final q in originales) q.id: q};
 
     return session.copyWith(
-      preguntas: session.preguntas.map((q) {
-        final respuesta = session.respuestas[q.id];
-        final respondida = respuesta != null && respuesta.optionId != null;
-        if (!cerrada && !respondida) return q;
-        return porID[q.id] ?? q;
-      }).toList(growable: false),
+      preguntas: session.preguntas
+          .map((q) {
+            final respuesta = session.respuestas[q.id];
+            final respondida = respuesta != null && respuesta.optionId != null;
+            if (!cerrada && !respondida) return q;
+            return porID[q.id] ?? q;
+          })
+          .toList(growable: false),
     );
   }
 
@@ -582,8 +593,12 @@ class MockSessionRepository implements SessionRepository {
     _pasado('examen_enam_26.04.2026', 'ENAM extraordinario 2026', 2026, ''),
     _pasado('examen_enam_07.12.2025', 'ENAM 2025', 2025, 'II'),
     _pasado('examen_enam_12.10.2025', 'ENAM octubre 2025', 2025, ''),
-    _pasado('examen_enam_12.10.2025_preinternos',
-        'ENAM octubre 2025 Preinternos', 2025, ''),
+    _pasado(
+      'examen_enam_12.10.2025_preinternos',
+      'ENAM octubre 2025 Preinternos',
+      2025,
+      '',
+    ),
     _pasado('examen_enam_30.03.2025', 'ENAM 2025', 2025, 'I'),
     _pasado('examen_enam_17112024', 'ENAM 2024', 2024, 'II'),
     _pasado('examen_enam_14.07.2024', 'ENAM julio 2024', 2024, ''),
@@ -602,13 +617,13 @@ class MockSessionRepository implements SessionRepository {
     int anio,
     String convocatoria,
   ) => PastExam(
-        id: id,
-        nombre: nombre,
-        anio: anio,
-        convocatoria: convocatoria,
-        duracionMinutos: Blueprint.examDuration.inMinutes,
-        totalPreguntas: Blueprint.totalQuestions,
-      );
+    id: id,
+    nombre: nombre,
+    anio: anio,
+    convocatoria: convocatoria,
+    duracionMinutos: Blueprint.examDuration.inMinutes,
+    totalPreguntas: Blueprint.totalQuestions,
+  );
 
   @override
   Future<List<PastExam>> pastExams() async {
@@ -620,6 +635,7 @@ class MockSessionRepository implements SessionRepository {
   Future<StudySession> startPastExam(
     String examId, {
     required PastExamMode modo,
+    int? cantidad,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 900));
 
@@ -628,22 +644,37 @@ class MockSessionRepository implements SessionRepository {
       orElse: () => throw const NotFoundFailure('Ese examen no existe.'),
     );
 
-    final total = modo.esCorto
-        ? Blueprint.sampleExamQuestions
-        : examen.totalPreguntas;
+    final total = switch (modo) {
+      PastExamMode.corto => Blueprint.sampleExamQuestions,
+      // Estudiando manda lo que pidió el estudiante, acotado al examen.
+      PastExamMode.practica => (cantidad ?? examen.totalPreguntas).clamp(
+        Blueprint.practiceMinQuestions,
+        examen.totalPreguntas,
+      ),
+      PastExamMode.completo => examen.totalPreguntas,
+    };
     final id = 'examen-${++_counter}';
+
+    // Estudiar crea una sesión de PRÁCTICA, no de examen: es lo que hace el
+    // servidor, y así hereda el feedback inmediato y el no tener reloj sin
+    // exceptuar el comportamiento en cada pantalla.
+    final esExamen = modo.esExamen;
 
     final session = StudySession(
       id: id,
-      // Se rinde como un simulacro: sin feedback, con reloj y sin pausa.
-      tipo: SessionType.simulacro,
+      // `examenPasado` y no `simulacro`: es lo que manda el servidor, y de ahí
+      // sale a qué pantalla se vuelve al salir —al inicio, que es de donde se
+      // entró, y no a la pestaña de simulacros—.
+      tipo: esExamen ? SessionType.examenPasado : SessionType.practica,
       estado: SessionStatus.enCurso,
       iniciadaEn: DateTime.now(),
-      expiraEn: DateTime.now().add(duracionDe(modo)),
+      expiraEn: esExamen ? DateTime.now().add(duracionDe(modo)) : null,
       preguntas: _registrarClaves(
         id,
         MockData.questions(cantidad: total, conRespuestas: true),
         revelarClaves: false,
+        // En práctica el área y el tema sí viajan: no hay examen que proteger.
+        ocultarClasificacion: esExamen,
       ),
     );
     return _sessions[id] = session;

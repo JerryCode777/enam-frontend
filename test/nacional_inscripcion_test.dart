@@ -179,5 +179,6 @@ class _RepoDeSesiones implements SessionRepository {
   Future<StudySession> startPastExam(
     String examId, {
     required PastExamMode modo,
+    int? cantidad,
   }) async => throw UnimplementedError();
 }

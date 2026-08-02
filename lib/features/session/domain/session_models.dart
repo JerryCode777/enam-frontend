@@ -267,7 +267,8 @@ abstract class StudySession with _$StudySession {
 
   int get marcadas => respuestas.values.where((r) => r.marcada).length;
 
-  int get correctas => respuestas.values.where((r) => r.esCorrecta == true).length;
+  int get correctas =>
+      respuestas.values.where((r) => r.esCorrecta == true).length;
 
   /// Tiempo restante en un simulacro. `null` si no aplica o ya terminó.
   Duration? get tiempoRestante {
@@ -344,7 +345,19 @@ enum PastExamMode {
   completo,
 
   /// Una selección corta del mismo examen.
-  corto;
+  corto,
+
+  /// Las mismas preguntas, pero para estudiarlas: explicación al responder y
+  /// sin reloj.
+  ///
+  /// No es un examen con otro nombre. Quien elige esto viene a aprender, no a
+  /// medirse, así que el servidor crea una sesión de **práctica** y hereda su
+  /// comportamiento entero. Lo único que cambia respecto a una práctica normal
+  /// es de dónde salen las preguntas.
+  practica;
 
   bool get esCorto => this == PastExamMode.corto;
+
+  /// Si se rinde contra reloj y sin retroalimentación.
+  bool get esExamen => this != PastExamMode.practica;
 }

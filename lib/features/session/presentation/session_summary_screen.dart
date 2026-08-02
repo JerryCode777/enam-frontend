@@ -33,9 +33,8 @@ class SessionSummaryScreen extends ConsumerWidget {
     return Scaffold(
       body: estado.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const Center(
-          child: Text('No pudimos cargar el resumen.'),
-        ),
+        error: (e, _) =>
+            const Center(child: Text('No pudimos cargar el resumen.')),
         data: (s) => _Contenido(session: s.session),
       ),
     );
@@ -58,9 +57,8 @@ class _ContenidoState extends ConsumerState<_Contenido> {
 
   int get _correctas => session.correctas;
   int get _total => session.totalPreguntas;
-  int get _falladas => session.respuestas.values
-      .where((r) => r.esCorrecta == false)
-      .length;
+  int get _falladas =>
+      session.respuestas.values.where((r) => r.esCorrecta == false).length;
   int get _marcadas => session.marcadas;
 
   double get _acierto => _total == 0 ? 0 : _correctas / _total;
@@ -78,7 +76,6 @@ class _ContenidoState extends ConsumerState<_Contenido> {
     // "Difícil" describe el material, no al usuario.
     _ => 'Sesión difícil',
   };
-
 
   /// Arranca una práctica con lo que se falló en **esta** sesión.
   ///
@@ -231,12 +228,14 @@ class _ContenidoState extends ConsumerState<_Contenido> {
                     const SizedBox(height: DesignTokens.space2 + 2),
                     _Fila(
                       etiqueta: 'Fallaste',
-                      valor: '$_falladas '
+                      valor:
+                          '$_falladas '
                           '${_falladas == 1 ? "pregunta" : "preguntas"}',
                     ),
                     _Fila(
                       etiqueta: 'Marcaste para repaso',
-                      valor: '$_marcadas '
+                      valor:
+                          '$_marcadas '
                           '${_marcadas == 1 ? "pregunta" : "preguntas"}',
                     ),
                     _Fila(
@@ -265,9 +264,9 @@ class _ContenidoState extends ConsumerState<_Contenido> {
             child: EnamOutlinedButton(
               label: 'Revisar pregunta por pregunta',
               height: 52,
-              onPressed: () => context.push(
-                Routes.simulacroReviewOf(session.id),
-              ),
+              // `go`: la revisión cuelga de la pestaña de simulacros y este
+              // resumen vive fuera del contenedor.
+              onPressed: () => context.go(Routes.simulacroReviewOf(session.id)),
             ),
           ),
           const SizedBox(height: DesignTokens.space2),

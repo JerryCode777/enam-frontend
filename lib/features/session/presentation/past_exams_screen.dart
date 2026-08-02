@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -57,9 +58,8 @@ class PastExamsScreen extends ConsumerWidget {
             ),
           ),
         ),
-        data: (lista) => lista.isEmpty
-            ? const _SinExamenes()
-            : _Lista(examenes: lista),
+        data: (lista) =>
+            lista.isEmpty ? const _SinExamenes() : _Lista(examenes: lista),
       ),
     );
   }
@@ -80,7 +80,8 @@ class _Lista extends StatelessWidget {
         DesignTokens.space8,
       ),
       itemCount: examenes.length,
-      separatorBuilder: (_, _) => const SizedBox(height: DesignTokens.space2 + 2),
+      separatorBuilder: (_, _) =>
+          const SizedBox(height: DesignTokens.space2 + 2),
       itemBuilder: (context, i) {
         final examen = examenes[i];
         // El año solo se anuncia cuando cambia: repetirlo en cada fila es ruido.
@@ -270,6 +271,10 @@ class _HojaDeModo extends ConsumerStatefulWidget {
 
 class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
   PastExamMode _modo = PastExamMode.completo;
+
+  /// Cuántas preguntas abarcar al estudiar. Arranca en 20, como la práctica.
+  int _cantidad = 20;
+
   bool _empezando = false;
 
   Future<void> _empezar() async {
@@ -279,7 +284,13 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
     try {
       final sesion = await ref
           .read(sessionRepositoryProvider)
-          .startPastExam(widget.examen.id, modo: _modo);
+          .startPastExam(
+            widget.examen.id,
+            modo: _modo,
+            // Solo cuenta al estudiar: en los modos de examen la cantidad la
+            // fija el examen, no el estudiante.
+            cantidad: _modo.esExamen ? null : _cantidad,
+          );
 
       // D-02: rendir un examen también consume el día de prueba.
       await ref.read(inicioPruebaProvider.notifier).arrancar();
@@ -287,12 +298,19 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      // `go` y no `push`: `/simulacro/sesion/:id` cuelga de la rama de
-      // Simulacros del StatefulShellRoute, y esta pantalla vive fuera del
-      // contenedor de pestañas. Apilarla desde aquí construye el shell por
-      // segunda vez con la misma GlobalKey y la app muere en pantalla roja
-      // —`!keyReservation.contains(key)`— sin forma de volver atrás.
-      context.go(Routes.simulacroSessionOf(sesion.id));
+      // Estudiar abre una sesión de práctica, que vive FUERA del contenedor
+      // de pestañas: ahí se apila y el botón de atrás devuelve a esta lista.
+      //
+      // El examen contra reloj sí vive dentro —`/simulacro/sesion/:id` cuelga
+      // de la rama de Simulacros—, y esta pantalla está fuera, así que cruzar
+      // es `go`: apilarlo construía el shell por segunda vez con la misma
+      // GlobalKey y la app moría en pantalla roja
+      // —`!keyReservation.contains(key)`— nada más empezar.
+      if (_modo.esExamen) {
+        context.go(Routes.simulacroSessionOf(sesion.id));
+      } else {
+        context.irA(Routes.practiceSessionOf(sesion.id));
+      }
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);
     } finally {
@@ -365,14 +383,43 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
               apoyo: 'Para medirte cuando no tienes tres horas',
               onTap: () => setState(() => _modo = PastExamMode.corto),
             ),
+            const SizedBox(height: DesignTokens.space2 + 2),
+            _OpcionModo(
+              modo: PastExamMode.practica,
+              seleccionado: _modo == PastExamMode.practica,
+              titulo: 'Estudiarlo',
+              detalle: '${examen.totalPreguntas} preguntas · sin reloj',
+              apoyo: 'Ves la explicación al responder cada una',
+              onTap: () => setState(() => _modo = PastExamMode.practica),
+            ),
+
+            // Cuántas preguntas, solo al estudiar: es la decisión que
+            // convierte «las 180 de un examen» en una sesión de veinte
+            // minutos. En los modos de examen no se ofrece porque ahí la
+            // cantidad es parte de lo que se está reproduciendo.
+            if (!_modo.esExamen) ...[
+              const SizedBox(height: DesignTokens.space4),
+              _CuantasPreguntas(
+                valor: _cantidad,
+                tope: examen.totalPreguntas,
+                onChanged: (v) => setState(() => _cantidad = v),
+              ),
+            ],
 
             const SizedBox(height: DesignTokens.space4),
-            // Lo mismo que en el simulacro, y por lo mismo: quien abandona a
-            // los 40 minutos pierde el intento, y eso se dice antes.
-            const StateBanner(
-              kind: BannerKind.warning,
-              message: 'Una vez que empieces, el reloj no se detiene.',
-            ),
+            // El aviso es del reloj, así que solo aparece cuando lo hay:
+            // ponerlo en el modo de estudio asustaría con algo que no pasa.
+            if (_modo.esExamen)
+              const StateBanner(
+                kind: BannerKind.warning,
+                message: 'Una vez que empieces, el reloj no se detiene.',
+              )
+            else
+              const StateBanner(
+                kind: BannerKind.info,
+                message:
+                    'Puedes salir cuando quieras y retomar donde lo dejaste.',
+              ),
             const SizedBox(height: DesignTokens.space4),
             EnamButton(
               label: 'Empezar',
@@ -539,6 +586,74 @@ class _Cargando extends StatelessWidget {
             padding: EdgeInsets.only(bottom: DesignTokens.space2 + 2),
             child: SkeletonBox(height: 76, radius: DesignTokens.radiusLg + 2),
           ),
+      ],
+    );
+  }
+}
+
+/// Cuántas preguntas del examen abarcar al estudiarlo.
+///
+/// El techo es el examen y no el tope de una práctica normal: aquí las 180
+/// tienen sentido —es el examen entero, con explicaciones—, mientras que en una
+/// práctica suelta 50 es el límite razonable de una sentada.
+class _CuantasPreguntas extends StatelessWidget {
+  const _CuantasPreguntas({
+    required this.valor,
+    required this.tope,
+    required this.onChanged,
+  });
+
+  final int valor;
+  final int tope;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const minimo = Blueprint.practiceMinQuestions;
+    final maximo = tope < minimo ? minimo : tope;
+    final actual = valor.clamp(minimo, maximo);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'CUÁNTAS PREGUNTAS',
+                style: context.texts.bodySmall?.copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.9,
+                  color: context.scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Text(
+              '$actual',
+              style: context.texts.bodyLarge?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: context.states.info.onTint,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          value: actual.toDouble(),
+          min: minimo.toDouble(),
+          max: maximo.toDouble(),
+          divisions: maximo - minimo,
+          label: '$actual',
+          onChanged: (v) => onChanged(v.round()),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('$minimo', style: context.texts.bodySmall),
+            Text('$maximo', style: context.texts.bodySmall),
+          ],
+        ),
       ],
     );
   }
