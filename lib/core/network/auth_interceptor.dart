@@ -39,9 +39,23 @@ class AuthInterceptor extends Interceptor {
   /// El refresh en vuelo, si hay uno. Las peticiones concurrentes lo comparten.
   Future<String?>? _inFlightRefresh;
 
+  /// Rutas por las que se ENTRA. Ninguna puede exigir estar dentro.
+  ///
+  /// Google y Apple faltaban, y el efecto era que no se podía entrar con
+  /// ninguno de los dos: sin sesión válida `isExpired()` es cierto, el refresh
+  /// proactivo de [onRequest] no encuentra token que renovar y rechaza la
+  /// petición **antes de que salga del teléfono**, con un 401 fabricado y sin
+  /// cuerpo. El usuario elegía su cuenta en la hoja de Google, volvía a la app y
+  /// se encontraba «Tu sesión expiró», que era el texto por defecto de un 401
+  /// sin mensaje. El servidor nunca llegó a enterarse del intento.
+  ///
+  /// Se notaba solo cuando de verdad no había sesión —instalación nueva, o la
+  /// anterior ya vencida—, que es justo cuando alguien pulsa el botón.
   static const _skipAuthPaths = {
     ApiEndpoints.login,
     ApiEndpoints.register,
+    ApiEndpoints.google,
+    ApiEndpoints.apple,
     ApiEndpoints.refresh,
     ApiEndpoints.forgotPassword,
     ApiEndpoints.resetPassword,
