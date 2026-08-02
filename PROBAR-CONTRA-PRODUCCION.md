@@ -24,11 +24,28 @@ Con el simulador ya abierto:
 
 ```sh
 flutter run --dart-define=USE_MOCKS=false \
-            --dart-define=API_URL=https://api-production-4b34.up.railway.app
+            --dart-define=API_URL=https://api-production-4b34.up.railway.app \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=776242647673-ftoserm7trib6ab6c47dn2ogholhavfj.apps.googleusercontent.com
 ```
 
-Los dos `--dart-define` son imprescindibles. Sin ellos la app arranca con los
-mocks y no toca el servidor.
+Los tres `--dart-define` son imprescindibles. Sin los dos primeros la app arranca
+con los mocks y no toca el servidor.
+
+El tercero es el que más despista si falta, porque el síntoma no parece tener
+que ver: **el botón de Google desaparece**. Con mocks se muestra igual —para
+poder recorrer la pantalla sin credenciales—, así que apagarlos lo esconde a
+menos que se le dé el client ID de verdad. El botón se oculta a propósito
+cuando no puede funcionar, en vez de fallar al tocarlo.
+
+No es un secreto: es el client ID **web** de OAuth, el mismo que viaja dentro
+del APK y del IPA y que el navegador enseña en cualquier login con Google. Lo
+que sí es secreto es `android/key.properties`, y ese no se comparte.
+
+Falta además un archivo que **no viaja en git** y sin el cual Android no
+compila: `android/app/google-services.json`. Se descarga de la consola de
+Firebase —Configuración del proyecto, la app de Android— o te lo pasa alguien
+del equipo por un canal privado. El equivalente en iOS es
+`ios/Runner/GoogleService-Info.plist`.
 
 ## 3. Entrar
 
