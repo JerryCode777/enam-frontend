@@ -308,7 +308,7 @@ as List<String>,
 /// @nodoc
 mixin _$Subscription {
 
- String get id; Plan get plan; SubscriptionStatus get estado; SubscriptionOrigin get origen; DateTime get inicia;/// `null` mientras la prueba no haya empezado a correr (D-02).
+ String get id; Plan get plan; SubscriptionStatus get estado;@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin get origen; DateTime get inicia;/// `null` mientras la prueba no haya empezado a correr (D-02).
  DateTime? get expira;
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
@@ -342,7 +342,7 @@ abstract mixin class $SubscriptionCopyWith<$Res>  {
   factory $SubscriptionCopyWith(Subscription value, $Res Function(Subscription) _then) = _$SubscriptionCopyWithImpl;
 @useResult
 $Res call({
- String id, Plan plan, SubscriptionStatus estado, SubscriptionOrigin origen, DateTime inicia, DateTime? expira
+ String id, Plan plan, SubscriptionStatus estado,@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin origen, DateTime inicia, DateTime? expira
 });
 
 
@@ -461,7 +461,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
 return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
@@ -482,7 +482,7 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)  $default,) {final _that = this;
 switch (_that) {
 case _Subscription():
 return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
@@ -502,7 +502,7 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Plan plan,  SubscriptionStatus estado,  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
 return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
@@ -517,13 +517,13 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 @JsonSerializable()
 
 class _Subscription extends Subscription {
-  const _Subscription({required this.id, required this.plan, required this.estado, required this.origen, required this.inicia, this.expira}): super._();
+  const _Subscription({required this.id, required this.plan, required this.estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) required this.origen, required this.inicia, this.expira}): super._();
   factory _Subscription.fromJson(Map<String, dynamic> json) => _$SubscriptionFromJson(json);
 
 @override final  String id;
 @override final  Plan plan;
 @override final  SubscriptionStatus estado;
-@override final  SubscriptionOrigin origen;
+@override@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) final  SubscriptionOrigin origen;
 @override final  DateTime inicia;
 /// `null` mientras la prueba no haya empezado a correr (D-02).
 @override final  DateTime? expira;
@@ -561,7 +561,7 @@ abstract mixin class _$SubscriptionCopyWith<$Res> implements $SubscriptionCopyWi
   factory _$SubscriptionCopyWith(_Subscription value, $Res Function(_Subscription) _then) = __$SubscriptionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Plan plan, SubscriptionStatus estado, SubscriptionOrigin origen, DateTime inicia, DateTime? expira
+ String id, Plan plan, SubscriptionStatus estado,@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin origen, DateTime inicia, DateTime? expira
 });
 
 

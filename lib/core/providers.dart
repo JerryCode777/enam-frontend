@@ -17,6 +17,8 @@ import '../features/session/data/session_repository_offline.dart';
 import '../features/session/domain/session_models.dart';
 import '../features/stats/data/stats_repository.dart';
 import '../features/stats/domain/stats_models.dart';
+import '../features/subscription/data/apple_iap_service.dart';
+import '../features/subscription/data/compras_apple_controller.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/subscription_models.dart';
 import 'config/app_config.dart';
@@ -500,6 +502,31 @@ final dashboardProvider = FutureProvider<DashboardStats>((ref) {
 /// Se recarga sola cuando cambia el usuario, y hay que invalidarla tras pagar
 /// y al volver de segundo plano: el día de prueba puede haber vencido mientras
 /// la app estaba cerrada.
+/// Habla con StoreKit. Falso con mocks, para poder recorrer la pantalla de
+/// planes sin una cuenta de pruebas de Apple ni un iPhone delante.
+final appleIapServiceProvider = Provider<AppleIapService>((ref) {
+  if (AppConfig.useMocks) return MockAppleIapService();
+  return AppleIapServiceImpl();
+});
+
+/// Si esta plataforma puede cobrar por la App Store.
+final cobroPorAppleDisponibleProvider = FutureProvider<bool>((ref) {
+  return ref.watch(appleIapServiceProvider).disponible();
+});
+
+/// Orquesta la compra: Apple cobra, el servidor registra, y solo entonces se le
+/// confirma la compra a Apple.
+///
+/// `autoDispose` no: la escucha de StoreKit tiene que sobrevivir a que la
+/// pantalla se cierre. Si el usuario paga y sale antes de que el servidor
+/// responda, quien termina el trabajo es este controlador.
+final comprasAppleControllerProvider = Provider<ComprasAppleController>((ref) {
+  return ComprasAppleController(
+    tienda: ref.watch(appleIapServiceProvider),
+    suscripciones: ref.watch(subscriptionRepositoryProvider),
+  );
+});
+
 final subscriptionProvider = FutureProvider<Subscription>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) throw StateError('Sin sesión: no hay suscripción');
