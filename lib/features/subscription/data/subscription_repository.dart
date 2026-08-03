@@ -26,6 +26,14 @@ abstract interface class SubscriptionRepository {
 
   /// Detiene la renovación. No quita el acceso ya pagado (RN-07).
   Future<void> cancelar();
+
+  /// Canjea una compra de la App Store por acceso.
+  ///
+  /// Recibe la transacción firmada de StoreKit 2. Si esto lanza, la compra
+  /// **no** se le confirma a Apple: StoreKit la reentregará en el siguiente
+  /// arranque, y así hasta que entre. Es lo que impide que alguien pague y se
+  /// quede sin acceso.
+  Future<Subscription> canjearCompraApple(String jws);
 }
 
 class ApiSubscriptionRepository implements SubscriptionRepository {
@@ -55,6 +63,15 @@ class ApiSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<void> cancelar() async {
     await _client.post<Map<String, dynamic>>(ApiEndpoints.cancelSubscription);
+  }
+
+  @override
+  Future<Subscription> canjearCompraApple(String jws) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.verificarCompraApple,
+      data: {'jws': jws},
+    );
+    return Subscription.fromJson(data);
   }
 }
 
@@ -184,5 +201,13 @@ class MockSubscriptionRepository implements SubscriptionRepository {
               ahora.subtract(const Duration(days: 2)),
         ),
     };
+  }
+
+  @override
+  Future<Subscription> canjearCompraApple(String jws) async {
+    // Con datos falsos no hay App Store: se devuelve el estado de siempre para
+    // poder recorrer la pantalla sin comprar nada de verdad.
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    return current();
   }
 }

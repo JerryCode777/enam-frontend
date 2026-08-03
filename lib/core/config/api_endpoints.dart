@@ -67,11 +67,19 @@ abstract final class ApiEndpoints {
 
   // ---------- Suscripciones (Módulo 6) ----------
   //
-  // No hay `/plans` ni `/checkout`: la app no lista precios ni cobra. Las
-  // tiendas no lo permiten sin su comisión, así que el pago ocurre en la web
-  // (modelo Netflix). Los dos existen en el backend y los usa el cliente web.
+  // No hay `/plans` ni `/checkout`: la app no lista precios propios ni cobra
+  // con nuestra pasarela. En iPhone se cobra con el sistema de Apple, que pone
+  // sus propios precios; en Android el pago sigue ocurriendo en la web, porque
+  // Google es más tolerante y así se evita su comisión.
   static const String subscription = '/subscription';
   static const String cancelSubscription = '/subscription/cancel';
+
+  /// Canjea una compra de la App Store por acceso.
+  ///
+  /// Recibe la transacción firmada de StoreKit 2. Va con sesión: la compra la
+  /// hace Apple contra un Apple ID, y esto es lo único que la ata a una cuenta
+  /// nuestra.
+  static const String verificarCompraApple = '/subscription/apple/verify';
 
   /// Manda al correo el enlace para completar la suscripción en la web.
   ///

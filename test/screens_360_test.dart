@@ -271,6 +271,9 @@ class _InstantSubscription implements SubscriptionRepository {
 
   @override
   Future<void> cancelar() async {}
+
+  @override
+  Future<Subscription> canjearCompraApple(String jws) => current();
 }
 
 /// Sesiones que responden sin latencia.
