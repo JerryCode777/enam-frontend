@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../../core/error/failure.dart';
 import '../../../core/network/conectividad.dart';
 import '../../offline/data/servicio_offline.dart';
@@ -48,10 +50,45 @@ class SessionRepositoryConRespaldo implements SessionRepository {
     }
 
     try {
-      return await _remoto.startPractice(config);
+      final sesion = await _remoto.startPractice(config);
+      preparandoElViaje = _prepararLoQueFalte();
+      unawaited(preparandoElViaje);
+      return sesion;
     } on Failure catch (e) {
       if (!esFalloDeRed(e)) rethrow;
       return _offline.tomarReserva(areasPreferidas: config.areaIds);
+    }
+  }
+
+  /// La reposición que está corriendo en segundo plano, si hay alguna.
+  ///
+  /// La app **no la espera**: por eso existe la reposición en segundo plano. Se
+  /// expone para que una prueba pueda saber cuándo terminó sin dormir un
+  /// número de milisegundos a ver si acierta.
+  Future<void> preparandoElViaje = Future<void>.value();
+
+  /// Deja lista una práctica por cada área descargada que no tenga ninguna.
+  ///
+  /// Va **aquí**, justo después de empezar una práctica con internet, porque
+  /// este es el instante exacto en que hacerlo deja de costar nada: crear una
+  /// sesión arranca las 24 h de la prueba (D-02), y la que el usuario acaba de
+  /// empezar ya las arrancó.
+  ///
+  /// Sin esto quedaba un agujero por el que pasa **todo usuario nuevo**: el
+  /// primer día la prueba no ha empezado, así que descargar un área
+  /// deliberadamente NO reserva práctica —sería regalarle el día a quien solo
+  /// preparaba el viaje—, y la única reposición que existía se disparaba al
+  /// *recuperar* la señal. Es decir, después de que el estudiante ya se hubiera
+  /// quedado sin nada en el metro: descargaba su área, se iba sin cobertura y
+  /// la app le decía «descarga un área cuando vuelvas a tener internet».
+  ///
+  /// Silencioso y sin esperar: quien está empezando una práctica no tiene por
+  /// qué aguantar esto, y si falla, al reconectar se intenta otra vez.
+  Future<void> _prepararLoQueFalte() async {
+    try {
+      await _offline.reponerReservas();
+    } on Object {
+      // Preparar el viaje nunca puede estropear la práctica de ahora.
     }
   }
 

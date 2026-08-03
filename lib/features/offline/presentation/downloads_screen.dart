@@ -107,7 +107,13 @@ class _Contenido extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: DesignTokens.space4),
-        FadeUp(index: 1, child: _ListasParaElViaje(cuantas: reservas)),
+        FadeUp(
+          index: 1,
+          child: _ListasParaElViaje(
+            cuantas: reservas,
+            areasDescargadas: descargadas,
+          ),
+        ),
         if (sync != null && sync.pendientes > 0) ...[
           const SizedBox(height: DesignTokens.space3),
           FadeUp(index: 2, child: _PorEnviar(estado: sync)),
@@ -151,9 +157,19 @@ class _Contenido extends ConsumerWidget {
 /// conexión pasando por el inicio y el selector de áreas depende de pantallas
 /// que piden datos al servidor. Desde aquí se empieza en un toque.
 class _ListasParaElViaje extends ConsumerStatefulWidget {
-  const _ListasParaElViaje({required this.cuantas});
+  const _ListasParaElViaje({
+    required this.cuantas,
+    required this.areasDescargadas,
+  });
 
   final int cuantas;
+
+  /// Cuántas áreas hay guardadas en el teléfono.
+  ///
+  /// Hace falta para no mentir: con áreas descargadas y sin práctica lista, el
+  /// texto de antes —«descarga un área y te dejamos una preparada»— le pedía a
+  /// alguien que hiciera justo lo que acababa de hacer.
+  final int areasDescargadas;
 
   @override
   ConsumerState<_ListasParaElViaje> createState() => _ListasParaElViajeState();
@@ -189,6 +205,7 @@ class _ListasParaElViajeState extends ConsumerState<_ListasParaElViaje> {
     final cuantas = widget.cuantas;
     final states = context.states;
     final hay = cuantas > 0;
+    final yaDescargo = widget.areasDescargadas > 0;
     final color = hay ? states.success : states.info;
 
     return Container(
@@ -216,6 +233,8 @@ class _ListasParaElViajeState extends ConsumerState<_ListasParaElViaje> {
                     Text(
                       hay
                           ? '$cuantas ${cuantas == 1 ? 'práctica lista' : 'prácticas listas'} sin conexión'
+                          : yaDescargo
+                          ? 'Tu práctica se prepara sola'
                           : 'Todavía no hay prácticas listas',
                       style: context.texts.bodyLarge?.copyWith(
                         fontSize: 15,
@@ -228,6 +247,10 @@ class _ListasParaElViajeState extends ConsumerState<_ListasParaElViaje> {
                       hay
                           ? 'Veinte preguntas con corrección al instante, aunque no '
                                 'haya internet.'
+                          : yaDescargo
+                          ? 'Ya tienes el área guardada. En cuanto practiques una '
+                                'vez con internet, te dejamos veinte preguntas '
+                                'listas para el viaje.'
                           : 'Descarga un área y te dejamos una preparada.',
                       style: context.texts.bodySmall?.copyWith(
                         fontSize: 13,

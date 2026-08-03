@@ -57,7 +57,7 @@ void main() {
     }
   }
 
-  Widget pantalla({bool hayRed = true}) {
+  Widget pantalla({bool hayRed = true, Subscription? suscripcion}) {
     return ProviderScope(
       overrides: [
         catalogProvider.overrideWith((_) async => areas),
@@ -66,7 +66,9 @@ void main() {
           ConectividadFalsa(conectado: hayRed),
         ),
         hayRedProvider.overrideWith((_) => Stream.value(hayRed)),
-        subscriptionProvider.overrideWith((_) async => suscripcionActiva),
+        subscriptionProvider.overrideWith(
+          (_) async => suscripcion ?? suscripcionActiva,
+        ),
       ],
       child: const MaterialApp(home: DownloadsScreen()),
     );
@@ -99,6 +101,26 @@ void main() {
     // Y lo que importa de verdad: quedó guardado.
     expect(await servicio.resumenes(), hasLength(1));
     expect(await servicio.cuantasReservas(), 1);
+  });
+
+  testWidgets('con la prueba sin arrancar no promete lo que no da', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pantalla(suscripcion: pruebaSinArrancar));
+    await asentar(tester);
+
+    await tester.tap(find.byTooltip('Descargar').first);
+    await asentar(tester);
+
+    // El área sí baja: lo que no se crea es la práctica, para no gastarle las
+    // 24 h a quien todavía no ha estudiado.
+    expect(await servicio.resumenes(), hasLength(1));
+    expect(await servicio.cuantasReservas(), 0);
+
+    // Y entonces la pantalla no puede pedirle que descargue un área: acaba de
+    // hacerlo. Ese texto era el que dejaba a la gente sin saber qué hacer.
+    expect(find.text('Descarga un área y te dejamos una preparada.'), findsNothing);
+    expect(find.text('Tu práctica se prepara sola'), findsOneWidget);
   });
 
   testWidgets('eliminar pide confirmación antes de borrar', (tester) async {
@@ -179,4 +201,23 @@ final suscripcionActiva = Subscription(
   origen: SubscriptionOrigin.culqi,
   inicia: DateTime(2026, 7),
   expira: DateTime(2026, 12),
+);
+
+/// La prueba de 24 h concedida y **sin arrancar**: el estado de todo usuario
+/// recién registrado, y el que ningún test miraba.
+///
+/// Aquí descargar NO reserva práctica a propósito —crear la sesión arrancaría
+/// el reloj de alguien que solo prepara el viaje (D-02)—, así que la pantalla
+/// tiene que decir la verdad sobre lo que falta.
+final pruebaSinArrancar = Subscription(
+  id: 'sus-2',
+  plan: const Plan(
+    id: 'mensual',
+    nombre: 'Mensual',
+    precioCentimos: 2900,
+    duracionDias: 30,
+  ),
+  estado: SubscriptionStatus.pruebaSinIniciar,
+  origen: SubscriptionOrigin.sistema,
+  inicia: DateTime(2026, 7),
 );
