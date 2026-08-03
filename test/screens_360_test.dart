@@ -270,6 +270,10 @@ class _InstantSubscription implements SubscriptionRepository {
   Future<void> enviarEnlaceDeSuscripcion(String email) async {}
 
   @override
+  Future<String> enlaceDeSuscripcion() async =>
+      'https://enamprep.com/activar?origen=android';
+
+  @override
   Future<void> cancelar() async {}
 }
 

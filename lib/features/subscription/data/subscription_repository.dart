@@ -1,4 +1,5 @@
 import '../../../core/config/api_endpoints.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/subscription_models.dart';
 
@@ -23,6 +24,17 @@ abstract interface class SubscriptionRepository {
   /// En iOS esto no se ofrece: allí la app solo enseña la dirección del sitio.
   /// Ver `widgets/opciones_de_pago.dart`.
   Future<void> enviarEnlaceDeSuscripcion(String email);
+
+  /// El enlace para abrir el navegador **ya identificado**, sin pasar por el
+  /// correo.
+  ///
+  /// Es el camino de Android. La app ya tiene sesión, así que mandar a la
+  /// persona a su bandeja de entrada no añadía seguridad —quien pide el enlace
+  /// ya demostró ser el dueño— y perdía a quien no encontraba el correo, lo
+  /// tenía en otro teléfono o lo veía caer en spam.
+  ///
+  /// Vale una sola vez y 15 minutos, igual que el del correo.
+  Future<String> enlaceDeSuscripcion();
 
   /// Detiene la renovación. No quita el acceso ya pagado (RN-07).
   Future<void> cancelar();
@@ -50,6 +62,14 @@ class ApiSubscriptionRepository implements SubscriptionRepository {
       ApiEndpoints.activationLink,
       data: {'email': email},
     );
+  }
+
+  @override
+  Future<String> enlaceDeSuscripcion() async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.activationLinkDirect,
+    );
+    return data['url'] as String;
   }
 
   @override
@@ -122,6 +142,14 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<void> enviarEnlaceDeSuscripcion(String email) =>
       Future<void>.delayed(const Duration(milliseconds: 700));
+
+  @override
+  Future<String> enlaceDeSuscripcion() async {
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    // Sin token: con mocks no hay servidor que lo canjee, y la web sabe recibir
+    // a quien llega en frío.
+    return '${AppConfig.webUrl}/activar?origen=android';
+  }
 
   @override
   Future<void> cancelar() async {

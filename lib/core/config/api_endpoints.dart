@@ -80,6 +80,11 @@ abstract final class ApiEndpoints {
   /// lo usa todavía no tiene sesión, y por eso el correo va en el cuerpo.
   static const String activationLink = '/billing/activation-link';
 
+  /// El mismo enlace, pero devuelto a quien ya tiene sesión en vez de enviado
+  /// por correo. Es el camino de Android (ver `opciones_de_pago.dart`).
+  static const String activationLinkDirect =
+      '/billing/activation-link/direct';
+
   // ---------- Exámenes pasados (RF-52) ----------
   //
   // Exámenes ENAM reales de años anteriores. El servidor manda todo: nombre,

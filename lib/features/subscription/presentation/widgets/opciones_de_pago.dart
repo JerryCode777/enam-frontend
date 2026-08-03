@@ -31,10 +31,11 @@ import '../../../../shared/widgets/state_banner.dart';
 /// cobra ni enseña precios**, y el pago ocurre en el navegador. Los dos caminos
 /// no son intercambiables:
 ///
-/// - **Android** — se manda un enlace al correo de la cuenta. Al pulsarlo, el
-///   navegador abre `/activar?token=…` con la sesión ya resuelta y el usuario
-///   elige plan sin escribir una contraseña en el teclado del móvil. Es el
-///   mejor de los dos y por eso es el que se ofrece donde se puede.
+/// - **Android** — la app abre el navegador **ya identificado**: pide un enlace
+///   de un solo uso con su propia sesión y lo abre. Antes esto pasaba por el
+///   correo, y la bandeja de entrada era un paso donde se perdía gente —el
+///   correo en otro teléfono, en spam, o simplemente no encontrado—. Mandarlo
+///   por correo sigue estando, de respaldo, para cuando el navegador no abre.
 /// - **iOS** — Apple es más estricta: ni correo ni botón de pago. Solo una nota
 ///   discreta con la dirección del sitio. Al tocarla, el sistema muestra su
 ///   propio aviso de que el pago no pasa por la App Store, y el navegador abre
@@ -69,6 +70,34 @@ class OpcionesDePago extends ConsumerStatefulWidget {
 class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
   bool _enviando = false;
   bool _enviado = false;
+  bool _abriendo = false;
+
+  /// Abre el navegador con la sesión ya resuelta.
+  ///
+  /// Si algo falla —sin red, el servidor no responde, no hay navegador— se cae
+  /// al envío por correo en vez de dejar al usuario mirando un error: el
+  /// objetivo es que llegue a la web, y hay dos caminos para eso.
+  Future<void> _abrirEnElNavegador() async {
+    if (_abriendo) return;
+    setState(() => _abriendo = true);
+
+    try {
+      final url = await ref
+          .read(subscriptionRepositoryProvider)
+          .enlaceDeSuscripcion();
+
+      final abierto = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      ).catchError((_) => false);
+
+      if (!abierto) await _enviarEnlace();
+    } on Failure {
+      await _enviarEnlace();
+    } finally {
+      if (mounted) setState(() => _abriendo = false);
+    }
+  }
 
   Future<void> _enviarEnlace() async {
     if (_enviando) return;
@@ -107,6 +136,7 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
   @override
   Widget build(BuildContext context) {
     final etiqueta = widget.etiquetaWhatsApp;
+    final scheme = context.scheme;
 
     if (enTiendaApple) {
       return Column(
@@ -131,11 +161,22 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         EnamButton(
-          label: 'Continuar por correo',
-          loading: _enviando,
-          onPressed: _enviarEnlace,
+          label: 'Continuar en el navegador',
+          loading: _abriendo,
+          onPressed: _abrirEnElNavegador,
         ),
-        const SizedBox(height: DesignTokens.space3),
+        const SizedBox(height: DesignTokens.space2),
+        TextButton(
+          onPressed: _enviando ? null : _enviarEnlace,
+          child: Text(
+            _enviando ? 'Enviando…' : 'Mejor mándame el enlace por correo',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(height: DesignTokens.space2),
         BotonWhatsApp(label: etiqueta ?? 'Activar por WhatsApp'),
       ],
     );
