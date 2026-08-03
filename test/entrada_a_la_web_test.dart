@@ -41,6 +41,10 @@ class _RepoDePrueba implements SubscriptionRepository {
 
   @override
   Future<void> cancelar() async {}
+
+  @override
+  Future<Subscription> canjearCompraApple(String jws) async =>
+      throw UnimplementedError();
 }
 
 void main() {

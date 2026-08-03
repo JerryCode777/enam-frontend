@@ -187,6 +187,9 @@ class _RepoFalso implements SubscriptionRepository {
   Future<void> cancelar() async {}
 
   @override
+  Future<String> enlaceDeSuscripcion() async => 'https://enamprep.com/activar';
+
+  @override
   Future<void> enviarEnlaceDeSuscripcion(String email) async {}
 
   static const _plan = Plan(
