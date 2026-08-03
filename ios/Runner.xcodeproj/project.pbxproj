@@ -363,7 +363,12 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				// Solo iPhone. Flutter pone "1,2" por defecto, y con el iPad
+				// declarado Apple exige capturas de iPad y revisa la app en uno.
+				// Está diseñada en vertical y para el teléfono: publicarla en iPad
+				// sin haberla probado ahí se rechaza por mala experiencia, y el
+				// público estudia en el móvil. Se puede añadir después con calma.
+				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Profile;
@@ -493,7 +498,12 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				// Solo iPhone. Flutter pone "1,2" por defecto, y con el iPad
+				// declarado Apple exige capturas de iPad y revisa la app en uno.
+				// Está diseñada en vertical y para el teléfono: publicarla en iPad
+				// sin haberla probado ahí se rechaza por mala experiencia, y el
+				// público estudia en el móvil. Se puede añadir después con calma.
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -545,7 +555,12 @@
 				SUPPORTED_PLATFORMS = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				TARGETED_DEVICE_FAMILY = "1,2";
+				// Solo iPhone. Flutter pone "1,2" por defecto, y con el iPad
+				// declarado Apple exige capturas de iPad y revisa la app en uno.
+				// Está diseñada en vertical y para el teléfono: publicarla en iPad
+				// sin haberla probado ahí se rechaza por mala experiencia, y el
+				// público estudia en el móvil. Se puede añadir después con calma.
+				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
