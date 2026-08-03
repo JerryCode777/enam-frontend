@@ -113,3 +113,63 @@ class AppleIapServiceImpl implements AppleIapService {
     }
   }
 }
+
+/// Tienda de mentira, para recorrer la pantalla de planes sin App Store.
+///
+/// Devuelve los tres productos con los precios reales escritos a mano. No es
+/// duplicar la fuente de verdad: son datos de ejemplo para pintar una pantalla,
+/// y en cuanto se apagan los mocks vienen de StoreKit. Lo único que no se puede
+/// simular es la compra, que no hace nada: comprar de verdad exige un iPhone y
+/// una cuenta de pruebas de Apple.
+class MockAppleIapService implements AppleIapService {
+  // Nunca emite nada: con mocks no hay compras que entregar. Existe solo para
+  // que el controlador tenga a qué suscribirse.
+  // ignore: close_sinks
+  final _compras = StreamController<List<PurchaseDetails>>.broadcast();
+
+  @override
+  Future<bool> disponible() async => true;
+
+  @override
+  Future<List<ProductDetails>> productos() async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    return [
+      ProductDetails(
+        id: 'pe.jakstech.enamApp.mensual',
+        title: 'ENAM Prep · 1 mes',
+        description: 'Acceso completo a ENAM Prep durante un mes.',
+        price: 'S/ 59.00',
+        rawPrice: 59,
+        currencyCode: 'PEN',
+      ),
+      ProductDetails(
+        id: 'pe.jakstech.enamApp.trimestral',
+        title: 'ENAM Prep · 3 meses',
+        description: 'Acceso completo a ENAM Prep durante tres meses.',
+        price: 'S/ 129.00',
+        rawPrice: 129,
+        currencyCode: 'PEN',
+      ),
+      ProductDetails(
+        id: 'pe.jakstech.enamApp.semestral',
+        title: 'ENAM Prep · 6 meses',
+        description: 'Acceso completo a ENAM Prep durante seis meses.',
+        price: 'S/ 229.00',
+        rawPrice: 229,
+        currencyCode: 'PEN',
+      ),
+    ];
+  }
+
+  @override
+  Future<void> comprar(ProductDetails producto) async {}
+
+  @override
+  Future<void> restaurar() async {}
+
+  @override
+  Stream<List<PurchaseDetails>> get compras => _compras.stream;
+
+  @override
+  Future<void> completar(PurchaseDetails compra) async {}
+}

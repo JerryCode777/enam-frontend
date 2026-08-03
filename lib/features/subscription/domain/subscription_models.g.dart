@@ -35,7 +35,11 @@ _Subscription _$SubscriptionFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       plan: Plan.fromJson(json['plan'] as Map<String, dynamic>),
       estado: $enumDecode(_$SubscriptionStatusEnumMap, json['estado']),
-      origen: $enumDecode(_$SubscriptionOriginEnumMap, json['origen']),
+      origen: $enumDecode(
+        _$SubscriptionOriginEnumMap,
+        json['origen'],
+        unknownValue: SubscriptionOrigin.desconocido,
+      ),
       inicia: DateTime.parse(json['inicia'] as String),
       expira: json['expira'] == null
           ? null
@@ -66,4 +70,6 @@ const _$SubscriptionOriginEnumMap = {
   SubscriptionOrigin.culqi: 'culqi',
   SubscriptionOrigin.manual: 'manual',
   SubscriptionOrigin.bot: 'bot',
+  SubscriptionOrigin.apple: 'apple',
+  SubscriptionOrigin.desconocido: 'desconocido',
 };

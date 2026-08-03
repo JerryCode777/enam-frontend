@@ -14,6 +14,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../../shared/widgets/enam_button.dart';
 import '../../../../shared/widgets/state_banner.dart';
+import 'planes_de_apple.dart';
 
 /// Cómo se vuelve a tener acceso, según la tienda.
 ///
@@ -112,6 +113,14 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // El cobro dentro de la app va PRIMERO. Es lo que Apple exige —su
+          // sistema de pago no puede quedar por detrás de otra vía— y además es
+          // lo más cómodo: se paga con el Face ID y sin salir de aquí.
+          const PlanesDeApple(),
+          const SizedBox(height: DesignTokens.space4),
+
+          // La nota del sitio se queda, pero debajo y sin precios: no es un
+          // camino de compra alternativo, es dónde gestionar la cuenta.
           const _NotaDelSitio(),
           const SizedBox(height: DesignTokens.space3),
           BotonWhatsApp(label: etiqueta ?? 'Escríbenos si necesitas ayuda'),

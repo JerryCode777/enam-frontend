@@ -17,6 +17,21 @@ enum SubscriptionOrigin {
 
   /// Activada desde el canal de WhatsApp (M10, RF-43).
   bot,
+
+  /// Comprada con el sistema de pagos de la App Store.
+  ///
+  /// Se distingue del resto porque el dinero entra por otro sitio: Apple cobra,
+  /// se queda su comisión y deposita en otra moneda y con otro calendario.
+  apple,
+
+  /// Un medio que este cliente todavía no conoce.
+  ///
+  /// Existe para que la app NO se caiga cuando el servidor añada uno nuevo.
+  /// Sin esto, `apple` reventaba la deserialización de la suscripción entera —y
+  /// la suscripción es lo que decide si alguien entra a la app—, así que un
+  /// medio de pago nuevo dejaba fuera a todo el mundo. Ya pasó con
+  /// `examen_pasado` en las sesiones.
+  desconocido,
 }
 
 /// Estado de la suscripción (RN-03 v2, SSD-ENAM-002 §1).
@@ -85,6 +100,7 @@ abstract class Subscription with _$Subscription {
     required String id,
     required Plan plan,
     required SubscriptionStatus estado,
+    @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)
     required SubscriptionOrigin origen,
     required DateTime inicia,
 
