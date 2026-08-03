@@ -177,7 +177,7 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> verificarConCodigo({
+  Future<User?> verificarConCodigo({
     required String email,
     required String codigo,
   }) async {
@@ -185,6 +185,17 @@ class MockAuthRepository implements AuthRepository {
     if (codigo == '000000') {
       throw const ValidationFailure('Ese código ya venció o no es válido.');
     }
+
+    // Con sesión abierta y el perfil SIN completar: es el estado real de quien
+    // acaba de verificar, y el que lleva a la pantalla de universidad y fecha.
+    // Devolver un perfil completo aquí saltaría ese paso en el modo de ejemplo
+    // y lo dejaría sin probar.
+    return _current = User(
+      id: 'mock-user',
+      email: email,
+      nombre: 'Estudiante de prueba',
+      emailVerificado: true,
+    );
   }
 
   @override

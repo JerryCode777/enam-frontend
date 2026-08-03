@@ -1,6 +1,8 @@
 import 'package:enam_app/core/error/failure.dart';
 import 'package:enam_app/features/auth/data/auth_repository.dart';
 import 'package:enam_app/features/auth/data/mock_auth_repository.dart';
+import 'package:enam_app/shared/widgets/aviso_legal_al_continuar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// El consentimiento tiene que llegar al servidor (RNF-06, Ley 29733).
@@ -95,5 +97,27 @@ void main() {
   // 422, que es lo que hacía la app.
   test('reenviar la verificación exige el correo', () async {
     await repo.reenviarVerificacion('a@unsa.pe');
+  });
+
+  // El aviso legal es lo que convierte el toque en consentimiento previo e
+  // informado. Sin él, entrar con Google crearía la cuenta sin que nadie
+  // hubiera aceptado nada — que es peor que el diálogo que se quitó.
+  group('el aviso junto a los botones', () {
+    testWidgets('dice qué se acepta y enlaza a los términos', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: Center(child: AvisoLegalAlContinuar())),
+        ),
+      );
+
+      final texto = tester.widget<Text>(find.byType(Text)).textSpan!.toPlainText();
+
+      expect(texto, contains('Al continuar, aceptas'));
+      expect(texto, contains('Términos'));
+      expect(texto, contains('Política de datos personales'));
+      // La ley se nombra: es lo que hace que el aviso sea informado y no una
+      // fórmula vacía.
+      expect(texto, contains('29733'));
+    });
   });
 }

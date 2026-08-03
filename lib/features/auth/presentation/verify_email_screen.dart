@@ -68,15 +68,30 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       _codigoError = null;
     });
     try {
-      await ref
+      final usuario = await ref
           .read(authRepositoryProvider)
           .verificarConCodigo(email: email, codigo: _codigo.text);
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tu cuenta quedó verificada.')),
       );
-      // Al login: verificar no abre sesión, y mandar al inicio rebotaría
-      // contra el router con un error que el usuario no entendería.
+
+      // Con sesión: entra directo. Acaba de demostrar que controla el correo y
+      // su contraseña la escribió hace treinta segundos; mandarlo al login a
+      // repetirla es pedirle que demuestre dos veces lo mismo.
+      //
+      // No se navega a mano al inicio: se le dice al controlador quién entró y
+      // el router decide. Desde aquí el destino real es completar el perfil
+      // —universidad, condición y fecha del examen (RF-04)—, y esa regla vive
+      // en la guarda, no repartida por las pantallas.
+      if (usuario != null) {
+        ref.read(authControllerProvider.notifier).setUser(usuario);
+        return;
+      }
+
+      // Sin sesión, la cuenta ya estaba verificada: el servidor no comprobó el
+      // código, así que quién es se decide en el login.
       context.go(Routes.login);
     } on Failure catch (e) {
       if (!mounted) return;

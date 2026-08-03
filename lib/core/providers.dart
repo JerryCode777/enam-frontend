@@ -377,11 +377,15 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// Cancelar deja el estado como estaba y no propaga error: la pantalla no
   /// debe mostrar nada rojo porque alguien cerró el selector de cuentas.
   ///
-  /// [aceptaTerminos] va en falso la primera vez, siempre. Si la cuenta es
-  /// nueva el servidor responde `CONSENT_REQUIRED`, la pantalla enseña los
-  /// términos y vuelve a llamar con `true` (RNF-06, Ley 29733). Mandarlo en
-  /// `true` de entrada sería sellar un consentimiento que nadie dio, y el
-  /// botón de Google vive en el login, que no tiene casilla que marcar.
+  /// [aceptaTerminos] llega en `true` desde la pantalla, y no es un atajo: el
+  /// aviso legal está a la vista junto a los botones, así que pulsar ES el
+  /// consentimiento (RNF-06, Ley 29733).
+  ///
+  /// Antes iba en falso, el servidor respondía `CONSENT_REQUIRED` y salía un
+  /// diálogo pidiendo aceptar. Interrumpía justo al volver de Google, cuando la
+  /// persona ya creía haber terminado, y era el paso donde más gente se caía.
+  /// El parámetro sigue existiendo para que quede explícito quién consiente y
+  /// dónde, en vez de que el cliente lo dé por hecho en silencio.
   Future<bool> signInWithGoogle({bool aceptaTerminos = false}) async {
     // El diálogo nativo se abre **antes** de pasar a cargando: si se pusiera
     // antes, cancelar dejaría un spinner colgado hasta la siguiente acción.
@@ -411,8 +415,8 @@ class AuthController extends AsyncNotifier<AuthState> {
 
   /// Login con Apple. Devuelve `false` si el usuario canceló.
   ///
-  /// [aceptaTerminos] funciona igual que en Google: falso la primera vez, y la
-  /// pantalla reintenta con `true` tras enseñar los términos.
+  /// [aceptaTerminos] funciona igual que en Google: lo da el aviso que está a
+  /// la vista junto a los botones.
   Future<bool> signInWithApple({bool aceptaTerminos = false}) async {
     // Igual que con Google: el diálogo nativo se abre **antes** de pasar a
     // cargando, para que cancelar no deje un spinner colgado.

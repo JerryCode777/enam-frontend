@@ -77,6 +77,22 @@ void main() {
   });
 
   group('Recorrido de arranque, sin sesión', () {
+    // El fallo que este test existe para que no vuelva.
+    //
+    // `POST /auth/register` NO abre sesión: devuelve un mensaje, y la sesión
+    // llega después de meter el código del correo. Con la pantalla de verificar
+    // fuera de las rutas públicas, quien terminaba de registrarse rebotaba al
+    // login sin verla nunca: el código le llegaba al correo y no había dónde
+    // escribirlo. Cuenta creada y sin forma de activarla.
+    test('recién registrado, se puede verificar el correo sin sesión', () async {
+      prefs.visto = true;
+      final c = contenedor();
+      await c.read(startupProvider.future);
+      await c.read(authControllerProvider.future);
+
+      expect(destino(c, desde: Routes.verifyEmail), isNull);
+    });
+
     test('la primera vez va al onboarding', () async {
       final c = contenedor();
       await c.read(startupProvider.future);

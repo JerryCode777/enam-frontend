@@ -74,10 +74,10 @@ class _AuthListo implements AuthRepository {
   }) async {}
 
   @override
-  Future<void> verificarConCodigo({
+  Future<User?> verificarConCodigo({
     required String email,
     required String codigo,
-  }) async {}
+  }) async => null;
 
   @override
   Future<void> cambiarContrasena({

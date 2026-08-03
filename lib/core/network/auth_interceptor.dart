@@ -59,10 +59,33 @@ class AuthInterceptor extends Interceptor {
     ApiEndpoints.refresh,
     ApiEndpoints.forgotPassword,
     ApiEndpoints.resetPassword,
+
+    // Verificar el correo y pedir otro código pasan por aquí, y faltaban.
+    //
+    // Al registrarse no hay sesión —`/auth/register` devuelve un mensaje, no
+    // tokens—, así que el efecto era el mismo que con Google: la petición se
+    // rechazaba en el teléfono con un 401 fabricado y la pantalla decía «Tu
+    // sesión expiró» a alguien que acababa de crear su cuenta y nunca había
+    // tenido una. El servidor no llegaba a enterarse del intento.
+    ApiEndpoints.verifyCode,
+    ApiEndpoints.resendVerification,
+
+    // Pedir el enlace de activación por correo: el correo va en el cuerpo y el
+    // servidor no mira el token. NO confundir con `activationLinkDirect`, que
+    // cuelga de esta misma ruta y **sí** exige sesión — por eso la comparación
+    // de abajo es exacta.
+    ApiEndpoints.activationLink,
   };
 
+  /// Comparación EXACTA, no por prefijo.
+  ///
+  /// Con `startsWith`, añadir `/billing/activation-link` a la lista dejaría
+  /// también sin token a `/billing/activation-link/direct`, que sí necesita
+  /// saber quién llama. Un prefijo que se traga a su propia ruta hija es un
+  /// fallo que no se ve hasta que alguien añade la ruta hija, y ninguna de
+  /// estas rutas lleva parámetros que justifiquen el prefijo.
   bool _needsAuth(RequestOptions options) =>
-      !_skipAuthPaths.any((p) => options.path.startsWith(p));
+      !_skipAuthPaths.contains(options.path);
 
   @override
   Future<void> onRequest(

@@ -91,6 +91,17 @@ const _publicRoutes = {
   Routes.onboarding,
   Routes.login,
   Routes.register,
+
+  // Verificar el correo va aquí porque el registro **no abre sesión**:
+  // `POST /auth/register` devuelve un mensaje, y la sesión llega después de
+  // meter el código. Sin esta ruta abierta, quien acaba de registrarse rebota
+  // al login y no ve nunca la pantalla donde escribir el código que le acaba de
+  // llegar: la cuenta queda creada y sin forma de activarla.
+  //
+  // Estuvo fuera y ese fue exactamente el fallo. Con sesión ya iniciada la
+  // rama de abajo se encarga de mandar aquí a quien no ha verificado.
+  Routes.verifyEmail,
+
   Routes.forgotPassword,
   Routes.resetPassword,
   Routes.terms,

@@ -10,6 +10,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
+import '../../../shared/widgets/aviso_legal_al_continuar.dart';
 import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/brand_gradient.dart';
 import '../../../shared/widgets/brand_mark.dart';
@@ -75,11 +76,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingGoogle = true);
     try {
-      await _conConsentimiento(
-        (acepta) => ref
-            .read(authControllerProvider.notifier)
-            .signInWithGoogle(aceptaTerminos: acepta),
-      );
+      await ref
+          .read(authControllerProvider.notifier)
+          .signInWithGoogle(aceptaTerminos: true);
     } on Object catch (error) {
       // En snackbar y no bajo los campos: el fallo no viene de lo que el
       // usuario escribió, así que señalarle la contraseña sería engañoso.
@@ -99,11 +98,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingApple = true);
     try {
-      await _conConsentimiento(
-        (acepta) => ref
-            .read(authControllerProvider.notifier)
-            .signInWithApple(aceptaTerminos: acepta),
-      );
+      await ref
+          .read(authControllerProvider.notifier)
+          .signInWithApple(aceptaTerminos: true);
     } on Object catch (error) {
       if (mounted) {
         showErrorSnack(
@@ -114,62 +111,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loadingApple = false);
     }
-  }
-
-  /// Entra con Google o Apple, pidiendo el consentimiento solo si hace falta.
-  ///
-  /// El botón vive en el login, que no tiene casilla que marcar, así que el
-  /// consentimiento no se puede pedir por adelantado sin molestar a quien solo
-  /// vuelve a entrar — que es la inmensa mayoría. El camino es al revés: se
-  /// intenta, y **solo si la cuenta es nueva** el servidor responde
-  /// `CONSENT_REQUIRED`; ahí se enseñan los términos y se reintenta.
-  ///
-  /// Marcar el consentimiento de oficio sería inventar una prueba de algo que
-  /// nadie aceptó, y la Ley 29733 pide justo lo contrario.
-  Future<void> _conConsentimiento(
-    Future<bool> Function(bool aceptaTerminos) entrar,
-  ) async {
-    try {
-      await entrar(false);
-    } on Failure catch (error) {
-      if (error.code != 'CONSENT_REQUIRED') rethrow;
-      if (!mounted) return;
-
-      if (await _pedirConsentimiento() != true) return;
-      if (!mounted) return;
-
-      await entrar(true);
-    }
-  }
-
-  Future<bool?> _pedirConsentimiento() {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogo) => AlertDialog(
-        title: const Text('Antes de crear tu cuenta'),
-        content: const Text(
-          'Necesitamos que aceptes los términos del servicio y la política de '
-          'privacidad. Puedes leerlos en cualquier momento desde Ajustes.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogo).pop(false),
-            child: const Text('Ahora no'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogo).pop(false);
-              context.irA(Routes.terms);
-            },
-            child: const Text('Leerlos'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogo).pop(true),
-            child: const Text('Acepto'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _submit() async {
@@ -302,6 +243,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           loading: _loadingApple,
                           onPressed: _ocupado ? null : _submitApple,
                         ),
+                      // Debajo de los botones y siempre a la vista: es lo que
+                      // convierte el toque en consentimiento previo e
+                      // informado, sin sacar a nadie del camino.
+                      if (_hayProveedores) const AvisoLegalAlContinuar(),
                       AuthFooter(
                         pregunta: '¿Primera vez?',
                         accion: 'Crea tu cuenta',

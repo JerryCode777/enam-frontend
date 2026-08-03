@@ -35,10 +35,9 @@ abstract interface class AuthRepository {
   /// cuenta en vez de crear una nueva.
   ///
   /// [aceptaTerminos] solo hace falta si la cuenta es **nueva**: entrar a una ya
-  /// creada no vuelve a pedirlo. Como los botones viven en el login, que no
-  /// tiene casilla, la primera llamada va sin él y el servidor responde
-  /// `CONSENT_REQUIRED`; ahí la app enseña los términos y reintenta con `true`.
-  /// Mandarlo siempre en `true` sería sellar un consentimiento que nadie dio.
+  /// creada no vuelve a pedirlo. Lo da el aviso legal que la pantalla enseña
+  /// junto a los botones —«Al continuar, aceptas…»—, así que el toque es el
+  /// consentimiento y no hace falta un paso aparte.
   Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false});
 
   /// Canjea el `identityToken` de Apple por una sesión propia.
@@ -84,7 +83,17 @@ abstract interface class AuthRepository {
   });
 
   /// Verifica la cuenta con el código del correo (RF-01).
-  Future<void> verificarConCodigo({
+  /// Verifica la cuenta con el código del correo (RF-01).
+  ///
+  /// Devuelve el usuario **con la sesión ya abierta**: quien acaba de escribir
+  /// el código demostró que controla ese correo, y su contraseña la puso hace
+  /// treinta segundos. Mandarlo al login a repetirla es pedirle que demuestre
+  /// dos veces lo mismo, y es donde más gente se cae de un alta.
+  ///
+  /// `null` cuando la cuenta **ya estaba verificada**: esa rama del servidor
+  /// sale antes de mirar el código, así que no puede abrir sesión. Ahí sí toca
+  /// el login.
+  Future<User?> verificarConCodigo({
     required String email,
     required String codigo,
   });
@@ -235,14 +244,27 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> verificarConCodigo({
+  Future<User?> verificarConCodigo({
     required String email,
     required String codigo,
   }) async {
-    await _client.post<Map<String, dynamic>>(
+    final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.verifyCode,
       data: {'email': email, 'codigo': codigo},
     );
+
+    // Sin `accessToken` la cuenta ya estaba verificada: el servidor responde
+    // bien pero no abre sesión, porque en esa rama no llegó a comprobar el
+    // código.
+    if (data['accessToken'] == null) return null;
+
+    final session = AuthSession.fromJson(data);
+    await _tokens.save(
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      expiresAt: session.expiresAt,
+    );
+    return session.user;
   }
 
   @override

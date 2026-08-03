@@ -17,6 +17,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// `/auth/login` y `/auth/register` sí estaban exentas desde el principio. Las
 /// de Google y Apple se añadieron después y nadie las agregó a la lista, así
 /// que entrar con cualquiera de las dos era imposible.
+///
+/// Volvió a pasar con la verificación por código: al registrarse no hay sesión
+/// —`/auth/register` devuelve un mensaje, no tokens—, así que quien acababa de
+/// crear su cuenta pulsaba «Verificar cuenta» y leía «Tu sesión expiró», sin
+/// haber tenido nunca una. Por eso la lista de abajo se recorre entera: es la
+/// misma que la del código, y separarlas es lo que deja huecos.
 void main() {
   late AuthInterceptor interceptor;
 
@@ -48,6 +54,9 @@ void main() {
     ApiEndpoints.refresh,
     ApiEndpoints.forgotPassword,
     ApiEndpoints.resetPassword,
+    ApiEndpoints.verifyCode,
+    ApiEndpoints.resendVerification,
+    ApiEndpoints.activationLink,
   ]) {
     test('sin sesión, $ruta sale igual', () async {
       expect(
@@ -62,6 +71,15 @@ void main() {
     // El contraste importa: si el interceptor dejara pasar todo, los tests de
     // arriba pasarían sin comprobar nada.
     expect(await dejaSalir(ApiEndpoints.me), isFalse);
+  });
+
+  test('una ruta hija de otra exenta no hereda la exención', () async {
+    // `/billing/activation-link` es pública, pero
+    // `/billing/activation-link/direct` cuelga de ella y **sí** necesita saber
+    // quién llama. Con una comparación por prefijo, añadir la madre a la lista
+    // desarmaba a la hija en silencio.
+    expect(await dejaSalir(ApiEndpoints.activationLink), isTrue);
+    expect(await dejaSalir(ApiEndpoints.activationLinkDirect), isFalse);
   });
 }
 

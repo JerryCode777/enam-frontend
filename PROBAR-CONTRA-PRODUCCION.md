@@ -24,22 +24,28 @@ Con el simulador ya abierto:
 
 ```sh
 flutter run --dart-define=USE_MOCKS=false \
-            --dart-define=API_URL=https://api-production-4b34.up.railway.app \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID=776242647673-ftoserm7trib6ab6c47dn2ogholhavfj.apps.googleusercontent.com
+            --dart-define=API_URL=https://api-production-4b34.up.railway.app
 ```
 
-Los tres `--dart-define` son imprescindibles. Sin los dos primeros la app arranca
-con los mocks y no toca el servidor.
+Los dos `--dart-define` son imprescindibles: sin ellos la app arranca con los
+mocks y no toca el servidor.
 
-El tercero es el que más despista si falta, porque el síntoma no parece tener
-que ver: **el botón de Google desaparece**. Con mocks se muestra igual —para
-poder recorrer la pantalla sin credenciales—, así que apagarlos lo esconde a
-menos que se le dé el client ID de verdad. El botón se oculta a propósito
-cuando no puede funcionar, en vez de fallar al tocarlo.
+**Ya no hace falta pasar `GOOGLE_SERVER_CLIENT_ID`.** Estuvo vacío por defecto y
+era el que más despistaba, porque el síntoma no se parecía a la causa: al apagar
+los mocks para probar contra el servidor, **el botón de Google desaparecía**.
+Nadie relaciona «quité los datos falsos» con «se fue un botón», así que costaba
+tardes averiguar que faltaba un parámetro de compilación que solo tenía quien
+hizo la última build.
+
+Ahora el client ID del proyecto viene puesto en `app_config.dart`. Se puede
+seguir sobreescribiendo con `--dart-define=GOOGLE_SERVER_CLIENT_ID=…` para
+apuntar a otro proyecto de Google Cloud.
 
 No es un secreto: es el client ID **web** de OAuth, el mismo que viaja dentro
 del APK y del IPA y que el navegador enseña en cualquier login con Google. Lo
-que sí es secreto es `android/key.properties`, y ese no se comparte.
+que protege el acceso es la huella SHA-1 más el nombre del paquete, registrados
+del lado de Google. Lo que sí es secreto es `android/key.properties`, y ese no
+se comparte.
 
 Falta además un archivo que **no viaja en git** y sin el cual Android no
 compila: `android/app/google-services.json`. Se descarga de la consola de

@@ -86,14 +86,38 @@ abstract final class AppConfig {
   /// que es el que el backend puede verificar. Con el de Android el token no
   /// serviría para nada del lado servidor.
   ///
-  /// Vacío hasta que exista el proyecto en Google Cloud con la huella SHA-1 de
-  /// la firma de la app. Mientras esté vacío, [googleSignInHabilitado] es falso
-  /// y el botón no se muestra, en vez de fallar al tocarlo.
+  /// **Viene con el valor del proyecto puesto, y no es un descuido.** Estuvo
+  /// vacío, y el síntoma no se parecía en nada a la causa: al apagar los mocks
+  /// para probar contra el servidor, el botón de Google **desaparecía**. Nadie
+  /// relaciona «quité los datos falsos» con «se fue un botón», así que se
+  /// perdían tardes en algo que era un parámetro de compilación que solo tenía
+  /// quien hizo la última build.
+  ///
+  /// Un client ID de OAuth **no es un secreto**: viaja dentro de cada copia de
+  /// la app y se saca de un `.apk` en dos minutos. Lo que protege el acceso es
+  /// la huella SHA-1 más el nombre del paquete en Android, y el bundle ID en
+  /// iOS, y eso vive del lado de Google. Lo que sí sería secreto —el *client
+  /// secret*, una clave de cuenta de servicio— no aparece por aquí.
+  ///
+  /// Se puede sobreescribir con `--dart-define=GOOGLE_SERVER_CLIENT_ID=…` para
+  /// apuntar a otro proyecto de Google Cloud.
   static const String googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '776242647673-ftoserm7trib6ab6c47dn2ogholhavfj.apps.googleusercontent.com',
   );
 
-  /// Con mocks se muestra el botón igual, para poder recorrer la pantalla.
+  /// Si el botón de Google tiene sentido en esta build.
+  ///
+  /// Con el client ID por defecto esto es cierto siempre, y ese es el objetivo:
+  /// que `flutter run` a secas enseñe el botón.
+  ///
+  /// Lo que se cede a cambio: antes el botón se escondía cuando no podía
+  /// funcionar. Ahora, si alguien compila Android con un keystore cuya huella
+  /// SHA-1 no esté registrada en Google Cloud, verá el botón y fallará al
+  /// tocarlo en vez de no verlo. Es el precio de que no tropiece todo el que
+  /// clone el repositorio, y el fallo al tocar al menos dice qué pasa; un botón
+  /// que no está no dice nada.
   static bool get googleSignInHabilitado =>
       useMocks || googleServerClientId.isNotEmpty;
 
