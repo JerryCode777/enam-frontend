@@ -3,6 +3,7 @@ import 'package:enam_app/core/network/conectividad.dart';
 import 'package:enam_app/core/storage/base_local.dart';
 import 'package:enam_app/features/offline/data/almacen_offline.dart';
 import 'package:enam_app/features/offline/data/servicio_offline.dart';
+import 'package:enam_app/features/offline/domain/offline_models.dart';
 import 'package:enam_app/features/session/data/session_repository_offline.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -270,6 +271,48 @@ void main() {
       volverLaSenal();
       await servicio.sincronizar();
 
+      expect(servidor.registradas.map((s) => s.id), contains(sesion.id));
+    });
+  });
+
+  // La app puede llegar antes que el despliegue del servidor: una tienda tarda
+  // dias en aprobar. Contra un servidor anterior, lo estudiado en el bus tiene
+  // que quedarse esperando, nunca perderse.
+  group('contra un servidor que aun no sabe de esto', () {
+    test('no se da por entregado lo que el servidor ignoro', () async {
+      await servicio.descargar('medicina', reservar: false);
+      cortarLaSenal();
+
+      final sesion = await repo.startPractice(veinte);
+      final local = await servicio.sesionLocal(sesion.id);
+      await servicio.responderSinConexion(
+        local!,
+        preguntaId: sesion.preguntas.first.id,
+        opcionId: '${sesion.preguntas.first.id}-b',
+        tiempoMs: 3000,
+      );
+
+      volverLaSenal();
+      // Un servidor viejo no manda `sesionesCreadas` y rechaza las respuestas
+      // por apuntar a una sesión que para él no existe.
+      servidor.respuestaDeSync = const ResultadoDeSync(
+        conflictos: [
+          ConflictoDeSync(
+            questionId: 'q',
+            motivo: 'La sesión ya no existe o no es tuya.',
+          ),
+        ],
+      );
+      await servicio.sincronizar();
+
+      // Nada se ha perdido: sigue en la bandeja esperando al servidor bueno.
+      expect(await servicio.cuantasPendientes(), 1);
+
+      // Y cuando el servidor se pone al día, entra todo.
+      servidor.respuestaDeSync = null;
+      await servicio.sincronizar();
+
+      expect(await servicio.cuantasPendientes(), 0);
       expect(servidor.registradas.map((s) => s.id), contains(sesion.id));
     });
   });

@@ -516,6 +516,8 @@ class ServicioOffline {
   ///   reintentarlo dejaría la bandeja llena para siempre.
   /// - Si la petición falla por red, **no se toca nada**: se vuelve a intentar
   ///   cuando haya señal.
+  /// - Si el servidor es anterior a las prácticas creadas en el teléfono,
+  ///   tampoco se toca nada: ver [_entiendeSesiones].
   Future<ResultadoDeSync?> sincronizar({bool reponerReservas = false}) async {
     final pendientes = await _almacen.pendientes(_usuario);
     final nuevas = await _sesionesPorRegistrar();
@@ -528,18 +530,20 @@ class ServicioOffline {
       // todavía no conoce, y las rechazaría todas.
       resultado = await _remoto.sincronizar(pendientes, sesiones: nuevas);
 
-      for (final sesion in nuevas) {
-        await _almacen.quitarPorRegistrar(_usuario, sesion.id);
-      }
+      if (_entiendeSesiones(resultado, nuevas)) {
+        for (final sesion in nuevas) {
+          await _almacen.quitarPorRegistrar(_usuario, sesion.id);
+        }
 
-      for (final sesionId in pendientes.map((r) => r.sesionId).toSet()) {
-        await _almacen.quitarPendientes(
-          _usuario,
-          sesionId,
-          pendientes
-              .where((r) => r.sesionId == sesionId)
-              .map((r) => r.preguntaId),
-        );
+        for (final sesionId in pendientes.map((r) => r.sesionId).toSet()) {
+          await _almacen.quitarPendientes(
+            _usuario,
+            sesionId,
+            pendientes
+                .where((r) => r.sesionId == sesionId)
+                .map((r) => r.preguntaId),
+          );
+        }
       }
     }
 
@@ -551,6 +555,25 @@ class ServicioOffline {
 
     return resultado;
   }
+
+  /// Si el servidor de enfrente sabe recibir prácticas creadas en el teléfono.
+  ///
+  /// La app puede llegar antes que el despliegue del servidor: una tienda tarda
+  /// días en aprobar y el backend se despliega cuando toca. Contra un servidor
+  /// anterior, el campo `sesiones` se ignora en silencio y las respuestas caen
+  /// en «la sesión ya no existe» — y como un conflicto se da por definitivo, la
+  /// bandeja se vaciaría y lo estudiado en el bus **se perdería**.
+  ///
+  /// El servidor nuevo siempre manda `sesionesCreadas`, aunque sea cero; el
+  /// viejo no manda el campo. Esa ausencia es la señal: no se toca nada y se
+  /// reintenta cuando el servidor esté al día.
+  ///
+  /// Sin sesiones que registrar la pregunta no aplica: una sincronización de
+  /// solo respuestas funciona igual contra los dos.
+  static bool _entiendeSesiones(
+    ResultadoDeSync? resultado,
+    List<SesionParaRegistrar> nuevas,
+  ) => nuevas.isEmpty || resultado?.sesionesCreadas != null;
 
   /// Las prácticas que armó el teléfono y el servidor todavía no conoce.
   ///

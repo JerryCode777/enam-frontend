@@ -29,7 +29,7 @@ Map<String, dynamic> _$PaqueteOfflineToJson(_PaqueteOffline instance) =>
 _ResultadoDeSync _$ResultadoDeSyncFromJson(Map<String, dynamic> json) =>
     _ResultadoDeSync(
       aceptadas: (json['aceptadas'] as num?)?.toInt() ?? 0,
-      sesionesCreadas: (json['sesionesCreadas'] as num?)?.toInt() ?? 0,
+      sesionesCreadas: (json['sesionesCreadas'] as num?)?.toInt(),
       conflictos:
           (json['conflictos'] as List<dynamic>?)
               ?.map((e) => ConflictoDeSync.fromJson(e as Map<String, dynamic>))

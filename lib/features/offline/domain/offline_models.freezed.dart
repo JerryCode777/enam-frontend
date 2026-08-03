@@ -294,7 +294,14 @@ as int,
 mixin _$ResultadoDeSync {
 
  int get aceptadas;/// Prácticas hechas sin señal que quedaron registradas en el servidor.
- int get sesionesCreadas; List<ConflictoDeSync> get conflictos;
+///
+/// **Nulo significa que el servidor ni sabe de qué le hablan**, no cero. Un
+/// backend anterior a las prácticas creadas en el teléfono no manda este
+/// campo, y la diferencia decide si lo que se estudió en el bus se puede
+/// dar por entregado o hay que volver a intentarlo: darlo por bueno contra
+/// un servidor que ignoró las sesiones borraría de la bandeja respuestas
+/// que nunca llegaron a ninguna parte.
+ int? get sesionesCreadas; List<ConflictoDeSync> get conflictos;
 /// Create a copy of ResultadoDeSync
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -327,7 +334,7 @@ abstract mixin class $ResultadoDeSyncCopyWith<$Res>  {
   factory $ResultadoDeSyncCopyWith(ResultadoDeSync value, $Res Function(ResultadoDeSync) _then) = _$ResultadoDeSyncCopyWithImpl;
 @useResult
 $Res call({
- int aceptadas, int sesionesCreadas, List<ConflictoDeSync> conflictos
+ int aceptadas, int? sesionesCreadas, List<ConflictoDeSync> conflictos
 });
 
 
@@ -344,11 +351,11 @@ class _$ResultadoDeSyncCopyWithImpl<$Res>
 
 /// Create a copy of ResultadoDeSync
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? aceptadas = null,Object? sesionesCreadas = null,Object? conflictos = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? aceptadas = null,Object? sesionesCreadas = freezed,Object? conflictos = null,}) {
   return _then(_self.copyWith(
 aceptadas: null == aceptadas ? _self.aceptadas : aceptadas // ignore: cast_nullable_to_non_nullable
-as int,sesionesCreadas: null == sesionesCreadas ? _self.sesionesCreadas : sesionesCreadas // ignore: cast_nullable_to_non_nullable
-as int,conflictos: null == conflictos ? _self.conflictos : conflictos // ignore: cast_nullable_to_non_nullable
+as int,sesionesCreadas: freezed == sesionesCreadas ? _self.sesionesCreadas : sesionesCreadas // ignore: cast_nullable_to_non_nullable
+as int?,conflictos: null == conflictos ? _self.conflictos : conflictos // ignore: cast_nullable_to_non_nullable
 as List<ConflictoDeSync>,
   ));
 }
@@ -434,7 +441,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int aceptadas,  int sesionesCreadas,  List<ConflictoDeSync> conflictos)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int aceptadas,  int? sesionesCreadas,  List<ConflictoDeSync> conflictos)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ResultadoDeSync() when $default != null:
 return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
@@ -455,7 +462,7 @@ return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int aceptadas,  int sesionesCreadas,  List<ConflictoDeSync> conflictos)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int aceptadas,  int? sesionesCreadas,  List<ConflictoDeSync> conflictos)  $default,) {final _that = this;
 switch (_that) {
 case _ResultadoDeSync():
 return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
@@ -475,7 +482,7 @@ return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int aceptadas,  int sesionesCreadas,  List<ConflictoDeSync> conflictos)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int aceptadas,  int? sesionesCreadas,  List<ConflictoDeSync> conflictos)?  $default,) {final _that = this;
 switch (_that) {
 case _ResultadoDeSync() when $default != null:
 return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
@@ -490,12 +497,19 @@ return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
 @JsonSerializable()
 
 class _ResultadoDeSync extends ResultadoDeSync {
-  const _ResultadoDeSync({this.aceptadas = 0, this.sesionesCreadas = 0, final  List<ConflictoDeSync> conflictos = const []}): _conflictos = conflictos,super._();
+  const _ResultadoDeSync({this.aceptadas = 0, this.sesionesCreadas, final  List<ConflictoDeSync> conflictos = const []}): _conflictos = conflictos,super._();
   factory _ResultadoDeSync.fromJson(Map<String, dynamic> json) => _$ResultadoDeSyncFromJson(json);
 
 @override@JsonKey() final  int aceptadas;
 /// Prácticas hechas sin señal que quedaron registradas en el servidor.
-@override@JsonKey() final  int sesionesCreadas;
+///
+/// **Nulo significa que el servidor ni sabe de qué le hablan**, no cero. Un
+/// backend anterior a las prácticas creadas en el teléfono no manda este
+/// campo, y la diferencia decide si lo que se estudió en el bus se puede
+/// dar por entregado o hay que volver a intentarlo: darlo por bueno contra
+/// un servidor que ignoró las sesiones borraría de la bandeja respuestas
+/// que nunca llegaron a ninguna parte.
+@override final  int? sesionesCreadas;
  final  List<ConflictoDeSync> _conflictos;
 @override@JsonKey() List<ConflictoDeSync> get conflictos {
   if (_conflictos is EqualUnmodifiableListView) return _conflictos;
@@ -537,7 +551,7 @@ abstract mixin class _$ResultadoDeSyncCopyWith<$Res> implements $ResultadoDeSync
   factory _$ResultadoDeSyncCopyWith(_ResultadoDeSync value, $Res Function(_ResultadoDeSync) _then) = __$ResultadoDeSyncCopyWithImpl;
 @override @useResult
 $Res call({
- int aceptadas, int sesionesCreadas, List<ConflictoDeSync> conflictos
+ int aceptadas, int? sesionesCreadas, List<ConflictoDeSync> conflictos
 });
 
 
@@ -554,11 +568,11 @@ class __$ResultadoDeSyncCopyWithImpl<$Res>
 
 /// Create a copy of ResultadoDeSync
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? aceptadas = null,Object? sesionesCreadas = null,Object? conflictos = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? aceptadas = null,Object? sesionesCreadas = freezed,Object? conflictos = null,}) {
   return _then(_ResultadoDeSync(
 aceptadas: null == aceptadas ? _self.aceptadas : aceptadas // ignore: cast_nullable_to_non_nullable
-as int,sesionesCreadas: null == sesionesCreadas ? _self.sesionesCreadas : sesionesCreadas // ignore: cast_nullable_to_non_nullable
-as int,conflictos: null == conflictos ? _self._conflictos : conflictos // ignore: cast_nullable_to_non_nullable
+as int,sesionesCreadas: freezed == sesionesCreadas ? _self.sesionesCreadas : sesionesCreadas // ignore: cast_nullable_to_non_nullable
+as int?,conflictos: null == conflictos ? _self._conflictos : conflictos // ignore: cast_nullable_to_non_nullable
 as List<ConflictoDeSync>,
   ));
 }

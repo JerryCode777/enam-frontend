@@ -30,7 +30,14 @@ abstract class ResultadoDeSync with _$ResultadoDeSync {
     @Default(0) int aceptadas,
 
     /// Prácticas hechas sin señal que quedaron registradas en el servidor.
-    @Default(0) int sesionesCreadas,
+    ///
+    /// **Nulo significa que el servidor ni sabe de qué le hablan**, no cero. Un
+    /// backend anterior a las prácticas creadas en el teléfono no manda este
+    /// campo, y la diferencia decide si lo que se estudió en el bus se puede
+    /// dar por entregado o hay que volver a intentarlo: darlo por bueno contra
+    /// un servidor que ignoró las sesiones borraría de la bandeja respuestas
+    /// que nunca llegaron a ninguna parte.
+    int? sesionesCreadas,
     @Default([]) List<ConflictoDeSync> conflictos,
   }) = _ResultadoDeSync;
 
