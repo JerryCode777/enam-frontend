@@ -4,6 +4,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:enam_app/core/domain/hora_peru.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/storage/app_prefs.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
@@ -50,7 +51,15 @@ void main() {
   setUpAll(() async {
     await initializeDateFormatting('es');
     await _cargarFuentes();
+
+    // El reloj, quieto. La tarjeta de racha pinta las iniciales de los últimos
+    // siete días, así que sin esto una captura hecha un lunes deja de coincidir
+    // el martes y el banco entero amanece en rojo sin que nadie haya tocado
+    // nada. Un banco que siempre falla es un banco que nadie mira.
+    congelarReloj(DateTime.utc(2026, 7, 30, 17));
   });
+
+  tearDownAll(soltarReloj);
 
   /// Tamaños lógicos de los tres dispositivos de referencia.
   const dispositivos = <({String nombre, Size tamano})>[

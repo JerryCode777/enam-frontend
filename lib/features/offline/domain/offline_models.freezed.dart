@@ -293,7 +293,8 @@ as int,
 /// @nodoc
 mixin _$ResultadoDeSync {
 
- int get aceptadas; List<ConflictoDeSync> get conflictos;
+ int get aceptadas;/// Prácticas hechas sin señal que quedaron registradas en el servidor.
+ int get sesionesCreadas; List<ConflictoDeSync> get conflictos;
 /// Create a copy of ResultadoDeSync
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -306,16 +307,16 @@ $ResultadoDeSyncCopyWith<ResultadoDeSync> get copyWith => _$ResultadoDeSyncCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResultadoDeSync&&(identical(other.aceptadas, aceptadas) || other.aceptadas == aceptadas)&&const DeepCollectionEquality().equals(other.conflictos, conflictos));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResultadoDeSync&&(identical(other.aceptadas, aceptadas) || other.aceptadas == aceptadas)&&(identical(other.sesionesCreadas, sesionesCreadas) || other.sesionesCreadas == sesionesCreadas)&&const DeepCollectionEquality().equals(other.conflictos, conflictos));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,aceptadas,const DeepCollectionEquality().hash(conflictos));
+int get hashCode => Object.hash(runtimeType,aceptadas,sesionesCreadas,const DeepCollectionEquality().hash(conflictos));
 
 @override
 String toString() {
-  return 'ResultadoDeSync(aceptadas: $aceptadas, conflictos: $conflictos)';
+  return 'ResultadoDeSync(aceptadas: $aceptadas, sesionesCreadas: $sesionesCreadas, conflictos: $conflictos)';
 }
 
 
@@ -326,7 +327,7 @@ abstract mixin class $ResultadoDeSyncCopyWith<$Res>  {
   factory $ResultadoDeSyncCopyWith(ResultadoDeSync value, $Res Function(ResultadoDeSync) _then) = _$ResultadoDeSyncCopyWithImpl;
 @useResult
 $Res call({
- int aceptadas, List<ConflictoDeSync> conflictos
+ int aceptadas, int sesionesCreadas, List<ConflictoDeSync> conflictos
 });
 
 
@@ -343,9 +344,10 @@ class _$ResultadoDeSyncCopyWithImpl<$Res>
 
 /// Create a copy of ResultadoDeSync
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? aceptadas = null,Object? conflictos = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? aceptadas = null,Object? sesionesCreadas = null,Object? conflictos = null,}) {
   return _then(_self.copyWith(
 aceptadas: null == aceptadas ? _self.aceptadas : aceptadas // ignore: cast_nullable_to_non_nullable
+as int,sesionesCreadas: null == sesionesCreadas ? _self.sesionesCreadas : sesionesCreadas // ignore: cast_nullable_to_non_nullable
 as int,conflictos: null == conflictos ? _self.conflictos : conflictos // ignore: cast_nullable_to_non_nullable
 as List<ConflictoDeSync>,
   ));
@@ -432,10 +434,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int aceptadas,  List<ConflictoDeSync> conflictos)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int aceptadas,  int sesionesCreadas,  List<ConflictoDeSync> conflictos)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ResultadoDeSync() when $default != null:
-return $default(_that.aceptadas,_that.conflictos);case _:
+return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
   return orElse();
 
 }
@@ -453,10 +455,10 @@ return $default(_that.aceptadas,_that.conflictos);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int aceptadas,  List<ConflictoDeSync> conflictos)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int aceptadas,  int sesionesCreadas,  List<ConflictoDeSync> conflictos)  $default,) {final _that = this;
 switch (_that) {
 case _ResultadoDeSync():
-return $default(_that.aceptadas,_that.conflictos);case _:
+return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -473,10 +475,10 @@ return $default(_that.aceptadas,_that.conflictos);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int aceptadas,  List<ConflictoDeSync> conflictos)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int aceptadas,  int sesionesCreadas,  List<ConflictoDeSync> conflictos)?  $default,) {final _that = this;
 switch (_that) {
 case _ResultadoDeSync() when $default != null:
-return $default(_that.aceptadas,_that.conflictos);case _:
+return $default(_that.aceptadas,_that.sesionesCreadas,_that.conflictos);case _:
   return null;
 
 }
@@ -488,10 +490,12 @@ return $default(_that.aceptadas,_that.conflictos);case _:
 @JsonSerializable()
 
 class _ResultadoDeSync extends ResultadoDeSync {
-  const _ResultadoDeSync({this.aceptadas = 0, final  List<ConflictoDeSync> conflictos = const []}): _conflictos = conflictos,super._();
+  const _ResultadoDeSync({this.aceptadas = 0, this.sesionesCreadas = 0, final  List<ConflictoDeSync> conflictos = const []}): _conflictos = conflictos,super._();
   factory _ResultadoDeSync.fromJson(Map<String, dynamic> json) => _$ResultadoDeSyncFromJson(json);
 
 @override@JsonKey() final  int aceptadas;
+/// Prácticas hechas sin señal que quedaron registradas en el servidor.
+@override@JsonKey() final  int sesionesCreadas;
  final  List<ConflictoDeSync> _conflictos;
 @override@JsonKey() List<ConflictoDeSync> get conflictos {
   if (_conflictos is EqualUnmodifiableListView) return _conflictos;
@@ -513,16 +517,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ResultadoDeSync&&(identical(other.aceptadas, aceptadas) || other.aceptadas == aceptadas)&&const DeepCollectionEquality().equals(other._conflictos, _conflictos));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ResultadoDeSync&&(identical(other.aceptadas, aceptadas) || other.aceptadas == aceptadas)&&(identical(other.sesionesCreadas, sesionesCreadas) || other.sesionesCreadas == sesionesCreadas)&&const DeepCollectionEquality().equals(other._conflictos, _conflictos));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,aceptadas,const DeepCollectionEquality().hash(_conflictos));
+int get hashCode => Object.hash(runtimeType,aceptadas,sesionesCreadas,const DeepCollectionEquality().hash(_conflictos));
 
 @override
 String toString() {
-  return 'ResultadoDeSync(aceptadas: $aceptadas, conflictos: $conflictos)';
+  return 'ResultadoDeSync(aceptadas: $aceptadas, sesionesCreadas: $sesionesCreadas, conflictos: $conflictos)';
 }
 
 
@@ -533,7 +537,7 @@ abstract mixin class _$ResultadoDeSyncCopyWith<$Res> implements $ResultadoDeSync
   factory _$ResultadoDeSyncCopyWith(_ResultadoDeSync value, $Res Function(_ResultadoDeSync) _then) = __$ResultadoDeSyncCopyWithImpl;
 @override @useResult
 $Res call({
- int aceptadas, List<ConflictoDeSync> conflictos
+ int aceptadas, int sesionesCreadas, List<ConflictoDeSync> conflictos
 });
 
 
@@ -550,9 +554,10 @@ class __$ResultadoDeSyncCopyWithImpl<$Res>
 
 /// Create a copy of ResultadoDeSync
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? aceptadas = null,Object? conflictos = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? aceptadas = null,Object? sesionesCreadas = null,Object? conflictos = null,}) {
   return _then(_ResultadoDeSync(
 aceptadas: null == aceptadas ? _self.aceptadas : aceptadas // ignore: cast_nullable_to_non_nullable
+as int,sesionesCreadas: null == sesionesCreadas ? _self.sesionesCreadas : sesionesCreadas // ignore: cast_nullable_to_non_nullable
 as int,conflictos: null == conflictos ? _self._conflictos : conflictos // ignore: cast_nullable_to_non_nullable
 as List<ConflictoDeSync>,
   ));

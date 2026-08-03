@@ -28,6 +28,9 @@ abstract class PaqueteOffline with _$PaqueteOffline {
 abstract class ResultadoDeSync with _$ResultadoDeSync {
   const factory ResultadoDeSync({
     @Default(0) int aceptadas,
+
+    /// Prácticas hechas sin señal que quedaron registradas en el servidor.
+    @Default(0) int sesionesCreadas,
     @Default([]) List<ConflictoDeSync> conflictos,
   }) = _ResultadoDeSync;
 
@@ -110,6 +113,17 @@ typedef RespuestaPendiente = ({
   int tiempoMs,
   bool marcada,
   DateTime respondidaEn,
+});
+
+/// Una práctica que armó el teléfono y el servidor todavía no conoce (RF-31).
+///
+/// Viaja en la misma petición que las respuestas, y antes que ellas: son sus
+/// respuestas las que apuntan a esta sesión.
+typedef SesionParaRegistrar = ({
+  String id,
+  List<String> preguntaIds,
+  List<String> areaIds,
+  DateTime iniciadaEn,
 });
 
 /// En qué punto está una sesión guardada en el teléfono.

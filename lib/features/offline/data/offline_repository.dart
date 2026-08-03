@@ -22,11 +22,19 @@ abstract interface class OfflineRepository {
     void Function(int recibidos, int total)? progreso,
   });
 
-  /// Manda lo respondido sin conexión (RF-32).
+  /// Manda lo respondido sin conexión (RF-32) y da de alta las prácticas que
+  /// armó el teléfono (RF-31).
   ///
   /// El servidor resuelve los choques por marca de tiempo y devuelve cuáles no
   /// pudo aplicar. Los simulacros nacionales los rechaza siempre (RF-33).
-  Future<ResultadoDeSync> sincronizar(List<RespuestaPendiente> respuestas);
+  ///
+  /// Las dos cosas van juntas a propósito: las respuestas apuntan a las
+  /// sesiones, y en dos llamadas una red que se corta en medio dejaría las
+  /// respuestas sin sesión a la que pertenecer.
+  Future<ResultadoDeSync> sincronizar(
+    List<RespuestaPendiente> respuestas, {
+    List<SesionParaRegistrar> sesiones,
+  });
 }
 
 class ApiOfflineRepository implements OfflineRepository {
@@ -50,11 +58,21 @@ class ApiOfflineRepository implements OfflineRepository {
 
   @override
   Future<ResultadoDeSync> sincronizar(
-    List<RespuestaPendiente> respuestas,
-  ) async {
+    List<RespuestaPendiente> respuestas, {
+    List<SesionParaRegistrar> sesiones = const [],
+  }) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.offlineSync,
       data: {
+        'sesiones': [
+          for (final s in sesiones)
+            {
+              'id': s.id,
+              'preguntaIds': s.preguntaIds,
+              'areaIds': s.areaIds,
+              'iniciadaEn': s.iniciadaEn.toUtc().toIso8601String(),
+            },
+        ],
         'respuestas': [
           for (final r in respuestas)
             {
@@ -100,9 +118,13 @@ class MockOfflineRepository implements OfflineRepository {
 
   @override
   Future<ResultadoDeSync> sincronizar(
-    List<RespuestaPendiente> respuestas,
-  ) async {
+    List<RespuestaPendiente> respuestas, {
+    List<SesionParaRegistrar> sesiones = const [],
+  }) async {
     await Future<void>.delayed(_demora);
-    return ResultadoDeSync(aceptadas: respuestas.length);
+    return ResultadoDeSync(
+      aceptadas: respuestas.length,
+      sesionesCreadas: sesiones.length,
+    );
   }
 }

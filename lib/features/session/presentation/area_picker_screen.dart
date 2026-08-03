@@ -9,6 +9,7 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/domain/catalog_models.dart';
+import '../../offline/presentation/offline_providers.dart';
 
 /// Pantalla 4.1b — elegir sobre qué practicar.
 ///
@@ -26,6 +27,12 @@ class AreaPickerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final catalogo = ref.watch(catalogProvider);
+
+    // Sin señal solo se puede practicar lo que está en el teléfono. Se dice
+    // **antes** de elegir y no después de tocar: dejar elegir y luego fallar es
+    // la forma más rápida de que alguien crea que la app está rota.
+    final hayRed = ref.watch(hayRedProvider).value ?? true;
+    final descargadas = ref.watch(areasDescargadasProvider).value ?? const {};
 
     return Scaffold(
       appBar: AppBar(
@@ -49,16 +56,28 @@ class AreaPickerScreen extends ConsumerWidget {
             ),
           ),
         ),
-        data: (areas) => _Lista(areas: areas),
+        data: (areas) => _Lista(
+          areas: areas,
+          soloDescargadas: !hayRed,
+          descargadas: descargadas,
+        ),
       ),
     );
   }
 }
 
 class _Lista extends StatelessWidget {
-  const _Lista({required this.areas});
+  const _Lista({
+    required this.areas,
+    required this.soloDescargadas,
+    required this.descargadas,
+  });
 
   final List<CatalogNode> areas;
+
+  /// Sin conexión: lo que no esté en el teléfono va con candado.
+  final bool soloDescargadas;
+  final Set<String> descargadas;
 
   @override
   Widget build(BuildContext context) {
@@ -70,14 +89,28 @@ class _Lista extends StatelessWidget {
         DesignTokens.space8,
       ),
       children: [
+        if (soloDescargadas) ...[
+          StateBanner(
+            message: descargadas.isEmpty
+                ? 'Estás sin conexión y no tienes áreas descargadas. Cuando '
+                      'vuelvas a tener internet, descarga las que quieras '
+                      'llevarte.'
+                : 'Estás sin conexión: puedes practicar lo que descargaste.',
+          ),
+          const SizedBox(height: DesignTokens.space4),
+        ],
         // Practicar de todo es una opción legítima y frecuente: es lo que hace
         // alguien que solo quiere sumar preguntas hoy.
         _Opcion(
           icono: Symbols.shuffle,
           color: context.states.info.onTint,
-          titulo: 'Todo el temario',
-          detalle: 'Preguntas de todas las áreas, mezcladas',
-          onTap: () => context.pop(const _SinNodo()),
+          titulo: soloDescargadas ? 'Todo lo descargado' : 'Todo el temario',
+          detalle: soloDescargadas
+              ? 'Preguntas de las áreas que tienes en el teléfono'
+              : 'Preguntas de todas las áreas, mezcladas',
+          onTap: soloDescargadas && descargadas.isEmpty
+              ? null
+              : () => context.pop(const _SinNodo()),
         ),
         const SizedBox(height: DesignTokens.space4),
         Text(
@@ -91,7 +124,10 @@ class _Lista extends StatelessWidget {
         ),
         const SizedBox(height: DesignTokens.space2),
         for (final area in areas) ...[
-          _Area(area: area),
+          _Area(
+            area: area,
+            bloqueada: soloDescargadas && !descargadas.contains(area.id),
+          ),
           const SizedBox(height: DesignTokens.space2 + 1),
         ],
       ],
@@ -109,15 +145,24 @@ class _SinNodo {
 /// El peso va visible: 40 preguntas y 2 preguntas no pueden verse igual a la
 /// hora de decidir dónde invertir el tiempo.
 class _Area extends StatelessWidget {
-  const _Area({required this.area});
+  const _Area({required this.area, this.bloqueada = false});
 
   final CatalogNode area;
+
+  /// Sin conexión y sin descargar: se ve, pero no se puede elegir.
+  ///
+  /// Se enseña en vez de esconderla porque esconderla haría creer que el área
+  /// no existe; con el candado se entiende que existe y qué hay que hacer para
+  /// tenerla.
+  final bool bloqueada;
 
   @override
   Widget build(BuildContext context) {
     final color = AreaColors.of(area.id, Theme.of(context).brightness);
-    final hijos = area.hijos.where((h) => h.preguntasDisponibles > 0).toList();
-    final sinPreguntas = area.preguntasDisponibles == 0;
+    final hijos = bloqueada
+        ? const <CatalogNode>[]
+        : area.hijos.where((h) => h.preguntasDisponibles > 0).toList();
+    final sinPreguntas = area.preguntasDisponibles == 0 || bloqueada;
 
     final cabecera = Row(
       children: [
@@ -125,11 +170,19 @@ class _Area extends StatelessWidget {
           width: 4,
           height: 34,
           decoration: BoxDecoration(
-            color: color,
+            color: bloqueada ? context.scheme.outlineVariant : color,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(width: DesignTokens.space3),
+        if (bloqueada) ...[
+          Icon(
+            Symbols.lock,
+            size: 18,
+            color: context.scheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: DesignTokens.space2),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,12 +193,16 @@ class _Area extends StatelessWidget {
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   height: 1.2,
-                  color: context.scheme.onSurface,
+                  color: bloqueada
+                      ? context.scheme.onSurfaceVariant
+                      : context.scheme.onSurface,
                 ),
               ),
               const SizedBox(height: 1),
               Text(
-                sinPreguntas
+                bloqueada
+                    ? 'Descárgala para practicarla sin conexión'
+                    : sinPreguntas
                     ? 'Aún no disponible'
                     : '${area.preguntasDisponibles} preguntas · '
                           '${area.peso ?? 0} en el examen',
@@ -280,7 +337,10 @@ class _Opcion extends StatelessWidget {
   final Color color;
   final String titulo;
   final String detalle;
-  final VoidCallback onTap;
+
+  /// Nulo la deja apagada: sin conexión y sin nada descargado, «todo» no
+  /// lleva a ninguna parte.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

@@ -20,6 +20,10 @@ import 'package:sqflite/sqflite.dart';
 ///   marcas de tiempo, no contenido.
 /// - **`envios_pendientes`** — sesiones terminadas sin señal a las que les
 ///   falta el cierre en el servidor, que es quien pone la nota oficial.
+/// - **`sesiones_por_registrar`** — prácticas que el teléfono armó él mismo sin
+///   señal y que el servidor todavía no conoce. Sin esta lista no se sabría
+///   cuáles hay que dar de alta al reconectar, y las respuestas de esas
+///   prácticas se rechazarían por apuntar a una sesión inexistente.
 /// - **`catalogo`** — el temario, para poder elegir qué practicar sin señal.
 ///
 /// Todo va con `usuario_id`: en un teléfono compartido, lo de una cuenta no se
@@ -33,7 +37,14 @@ class BaseLocal {
   final String? _ruta;
 
   static const archivo = 'enam_offline.db';
-  static const version = 1;
+
+  /// Versión 2: prácticas que arma el propio teléfono sin señal.
+  ///
+  /// Sube de 1 a 2 para quien ya tenía la app instalada, y `onUpgrade` añade la
+  /// tabla nueva **sin tocar** lo descargado. Recrear la base sería más simple
+  /// de escribir y le borraría a alguien las 480 preguntas que se bajó para el
+  /// viaje de mañana.
+  static const version = 2;
 
   Database? _db;
   Future<Database>? _abriendo;
@@ -58,6 +69,7 @@ class BaseLocal {
       options: OpenDatabaseOptions(
         version: version,
         onCreate: (db, _) => _crear(db),
+        onUpgrade: _migrar,
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       ),
     );
@@ -129,6 +141,8 @@ class BaseLocal {
       )
     ''');
 
+    lote.execute(_tablaSesionesPorRegistrar);
+
     // El orden de salida de la bandeja es el de respuesta, no el de inserción:
     // el servidor resuelve conflictos por marca de tiempo (contrato §7).
     lote.execute(
@@ -137,6 +151,29 @@ class BaseLocal {
     );
 
     await lote.commit(noResult: true);
+  }
+
+  /// Prácticas armadas por el propio teléfono que el servidor no conoce todavía.
+  ///
+  /// Es una lista de ids y nada más: el contenido de la sesión ya está en
+  /// `sesiones`. Existe para saber **a cuáles** hay que dar de alta al volver
+  /// la señal, porque una vez dadas de alta dejan de distinguirse de las que
+  /// creó el servidor.
+  static const _tablaSesionesPorRegistrar = '''
+      CREATE TABLE IF NOT EXISTS sesiones_por_registrar (
+        usuario_id TEXT NOT NULL,
+        sesion_id  TEXT NOT NULL,
+        creada_en  TEXT NOT NULL,
+        PRIMARY KEY (usuario_id, sesion_id)
+      )
+    ''';
+
+  static Future<void> _migrar(Database db, int desde, int hasta) async {
+    // Aditivo y con IF NOT EXISTS: una migración que falla a medias deja la app
+    // sin poder abrir la base, y con ella se va todo lo descargado.
+    if (desde < 2) {
+      await db.execute(_tablaSesionesPorRegistrar);
+    }
   }
 
   /// Borra **todo** lo de un usuario. Se llama al cerrar sesión.
@@ -148,6 +185,7 @@ class BaseLocal {
       'sesiones',
       'respuestas_pendientes',
       'envios_pendientes',
+      'sesiones_por_registrar',
       'catalogo',
     ]) {
       lote.delete(tabla, where: 'usuario_id = ?', whereArgs: [usuarioId]);

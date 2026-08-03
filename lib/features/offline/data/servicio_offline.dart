@@ -210,6 +210,146 @@ class ServicioOffline {
 
   // ---------------- Practicar sin señal ----------------
 
+  /// Arma una práctica **en el teléfono**, con lo que hay descargado (RF-31).
+  ///
+  /// Esta es la vía normal de practicar sin señal, y no depende del servidor
+  /// para nada: las preguntas ya están en el teléfono, así que la sesión se
+  /// construye acá, se le pone un id y se apunta para darla de alta cuando
+  /// vuelva la conexión (`sesiones_por_registrar`).
+  ///
+  /// Antes esto no se podía y el resultado era absurdo: se descargaban las 480
+  /// preguntas de un área y la app dejaba hacer **una** práctica de 20, porque
+  /// cada práctica necesitaba una sesión creada por el servidor de antemano. Al
+  /// gastarla decía «no tienes prácticas listas» con el banco entero guardado.
+  ///
+  /// [areasPreferidas] filtra por área; si ninguna de las pedidas está
+  /// descargada se falla en vez de dar otra cosa, porque el estudiante eligió
+  /// esa. Sin filtro se usa todo lo descargado.
+  ///
+  /// Las preguntas ya vistas en otras prácticas locales se dejan para el final:
+  /// hacer cinco prácticas seguidas en un viaje no puede ser ver la misma
+  /// pregunta cinco veces. Si no alcanzan las nuevas, se repiten antes que
+  /// quedarse corto.
+  Future<StudySession> practicarConLoDescargado({
+    List<String> areasPreferidas = const [],
+    List<String> subtemasPreferidos = const [],
+    int cantidad = preguntasPorReserva,
+  }) async {
+    final descargadas = await _almacen.resumenes(_usuario);
+    if (descargadas.isEmpty) throw const SinDescargasFailure();
+
+    // Se abren todos los paquetes y se filtra por pregunta, no por área.
+    //
+    // Es la única forma que funciona con las dos maneras de elegir: la pantalla
+    // manda el nodo en `areaIds` si es un área y en `subtemaIds` si es una sub
+    // área o un tema. Deducir el área a partir del id del subtema —cortando por
+    // el guion— acertaría hoy y se rompería el día que un id no siga esa forma.
+    final todas = <Question>[];
+    for (final resumen in descargadas) {
+      final paquete = await _almacen.paquete(_usuario, resumen.areaId);
+      if (paquete == null) continue;
+      todas.addAll(paquete.preguntas);
+    }
+    if (todas.isEmpty) throw const SinDescargasFailure();
+
+    final sinFiltro = areasPreferidas.isEmpty && subtemasPreferidos.isEmpty;
+    final disponibles = sinFiltro
+        ? todas
+        : [
+            for (final p in todas)
+              if (areasPreferidas.contains(p.areaId) ||
+                  subtemasPreferidos.contains(p.subtemaId))
+                p,
+          ];
+
+    if (disponibles.isEmpty) {
+      throw const SinDescargasFailure(
+        'Eso no está descargado. Bájalo cuando tengas internet y podrás '
+        'practicarlo sin conexión.',
+      );
+    }
+
+    final areas = {
+      for (final p in disponibles)
+        if (p.areaId != null) p.areaId!,
+    }.toList();
+
+    final elegidas = _elegir(disponibles, cantidad, await _yaPracticadas());
+
+    final sesion = StudySession(
+      id: _nuevoIDLocal(),
+      tipo: SessionType.practica,
+      estado: SessionStatus.enCurso,
+      iniciadaEn: DateTime.now(),
+      // Sin clave: el paquete la tiene, pero enseñarla antes de responder sería
+      // regalar la respuesta. `responderSinConexion` la saca del paquete al
+      // corregir, igual que hace el servidor al recibir la respuesta.
+      preguntas: [for (final p in elegidas) _sinClave(p)],
+    );
+
+    await _almacen.guardarSesion(
+      _usuario,
+      areaId: areas.isEmpty ? descargadas.first.areaId : areas.first,
+      estado: EstadoSesionLocal.enCurso,
+      sesion: sesion,
+    );
+    await _almacen.marcarPorRegistrar(_usuario, sesion.id, sesion.iniciadaEn);
+
+    return sesion;
+  }
+
+  /// Ids de preguntas que ya salieron en prácticas hechas en este teléfono.
+  Future<Set<String>> _yaPracticadas() async {
+    final sesiones = await _almacen.sesiones(_usuario);
+    return {
+      for (final local in sesiones)
+        for (final pregunta in local.sesion.preguntas) pregunta.id,
+    };
+  }
+
+  /// Elige [cantidad] preguntas al azar, prefiriendo las que no salieron ya.
+  static List<Question> _elegir(
+    List<Question> disponibles,
+    int cantidad,
+    Set<String> yaVistas,
+  ) {
+    final nuevas = [
+      for (final p in disponibles)
+        if (!yaVistas.contains(p.id)) p,
+    ]..shuffle();
+
+    if (nuevas.length >= cantidad) return nuevas.take(cantidad).toList();
+
+    // No alcanzan las nuevas: se completa con repetidas antes que entregar una
+    // práctica a medias. Repasar no es un fallo; quedarse sin practicar, sí.
+    final repetidas = [
+      for (final p in disponibles)
+        if (yaVistas.contains(p.id)) p,
+    ]..shuffle();
+
+    return [...nuevas, ...repetidas].take(cantidad).toList();
+  }
+
+  static QuestionOption _opcionSinClave(QuestionOption o) =>
+      QuestionOption(id: o.id, texto: o.texto);
+
+  static Question _sinClave(Question p) => p.copyWith(
+    opciones: [for (final o in p.opciones) _opcionSinClave(o)],
+    explicacion: null,
+  );
+
+  /// Un id que el servidor pueda aceptar tal cual al sincronizar.
+  ///
+  /// Lo genera el teléfono porque las respuestas que se hagan en el bus ya
+  /// apuntan a él; renumerar al reconectar obligaría a reescribir la bandeja de
+  /// salida entera. El servidor comprueba la forma, el dueño y que las
+  /// preguntas existan, así que un id inventado no compra nada.
+  static String _nuevoIDLocal() {
+    final ahora = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final azar = (DateTime.now().hashCode & 0xffffff).toRadixString(36);
+    return 'sesion-local-$ahora$azar';
+  }
+
   Future<SesionLocal?> sesionLocal(String sesionId) =>
       _almacen.sesion(_usuario, sesionId);
 
@@ -378,10 +518,19 @@ class ServicioOffline {
   ///   cuando haya señal.
   Future<ResultadoDeSync?> sincronizar({bool reponerReservas = false}) async {
     final pendientes = await _almacen.pendientes(_usuario);
+    final nuevas = await _sesionesPorRegistrar();
 
     ResultadoDeSync? resultado;
-    if (pendientes.isNotEmpty) {
-      resultado = await _remoto.sincronizar(pendientes);
+    if (pendientes.isNotEmpty || nuevas.isNotEmpty) {
+      // Las dos cosas en la MISMA petición y las sesiones primero: las
+      // respuestas apuntan a ellas, así que en dos llamadas una red que se cae
+      // en medio dejaría respuestas apuntando a una práctica que el servidor
+      // todavía no conoce, y las rechazaría todas.
+      resultado = await _remoto.sincronizar(pendientes, sesiones: nuevas);
+
+      for (final sesion in nuevas) {
+        await _almacen.quitarPorRegistrar(_usuario, sesion.id);
+      }
 
       for (final sesionId in pendientes.map((r) => r.sesionId).toSet()) {
         await _almacen.quitarPendientes(
@@ -401,6 +550,33 @@ class ServicioOffline {
     if (reponerReservas) await this.reponerReservas();
 
     return resultado;
+  }
+
+  /// Las prácticas que armó el teléfono y el servidor todavía no conoce.
+  ///
+  /// Se leen de la base para mandarlas con sus preguntas: el servidor las crea
+  /// con exactamente esas, así que las respuestas encajan al llegar.
+  Future<List<SesionParaRegistrar>> _sesionesPorRegistrar() async {
+    final ids = await _almacen.porRegistrar(_usuario);
+
+    final salida = <SesionParaRegistrar>[];
+    for (final id in ids) {
+      final local = await _almacen.sesion(_usuario, id);
+      if (local == null) {
+        // La sesión ya no está —se cerró y se borró, o el usuario limpió— así
+        // que la marca sobra. Dejarla haría reintentar algo imposible en cada
+        // reconexión.
+        await _almacen.quitarPorRegistrar(_usuario, id);
+        continue;
+      }
+      salida.add((
+        id: id,
+        preguntaIds: [for (final p in local.sesion.preguntas) p.id],
+        areaIds: [local.areaId],
+        iniciadaEn: local.sesion.iniciadaEn,
+      ));
+    }
+    return salida;
   }
 
   /// Cierra en el servidor las prácticas que se terminaron sin señal.

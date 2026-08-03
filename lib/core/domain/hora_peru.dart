@@ -21,13 +21,29 @@ library;
 /// zonas horarias.
 const Duration desfasePeru = Duration(hours: 5);
 
+/// De dónde sale «ahora». Las pruebas lo congelan; la app nunca lo toca.
+///
+/// Existe por el banco de capturas: la tarjeta de racha pinta las iniciales de
+/// los últimos siete días, así que una captura hecha un lunes deja de coincidir
+/// el martes. El banco entero amanecía en rojo cada día por un motivo que no
+/// era un fallo, y un banco que siempre falla es un banco que nadie mira.
+///
+/// Se congela con [congelarReloj] y se suelta con [soltarReloj].
+DateTime Function() _reloj = DateTime.now;
+
+/// Fija el instante que verá toda la app. Solo para pruebas.
+void congelarReloj(DateTime instante) => _reloj = () => instante;
+
+/// Devuelve el reloj de verdad.
+void soltarReloj() => _reloj = DateTime.now;
+
 /// El instante actual leído con el reloj de Lima.
 ///
 /// Devuelve un `DateTime` en UTC cuyos campos —`year`, `weekday`, `day`— son
 /// los que se verían en un reloj peruano. No es «la hora UTC»: es la hora de
 /// Lima expresada de forma que `.weekday` responda lo correcto.
 DateTime ahoraEnPeru([DateTime? ahora]) =>
-    (ahora ?? DateTime.now()).toUtc().subtract(desfasePeru);
+    (ahora ?? _reloj()).toUtc().subtract(desfasePeru);
 
 /// El día de la semana de hace [diasAtras] días en Perú. 1 = lunes, 7 = domingo.
 int diaDeLaSemanaEnPeru(int diasAtras, [DateTime? ahora]) =>

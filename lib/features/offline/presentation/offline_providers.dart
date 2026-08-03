@@ -144,6 +144,27 @@ final descargasProvider =
       DescargasNotifier.new,
     );
 
+/// Qué áreas están guardadas en el teléfono.
+///
+/// Es lo que decide qué se puede practicar sin señal, así que las pantallas de
+/// elección lo miran para poner el candado en lo demás. Vacío si no hay sesión
+/// iniciada.
+///
+/// Va aparte de [descargasProvider] a propósito: aquel necesita el catálogo del
+/// servidor para cruzarlo, y sin conexión eso es justo lo que puede faltar.
+final areasDescargadasProvider = FutureProvider<Set<String>>((ref) async {
+  final servicio = ref.watch(servicioOfflineProvider);
+  if (servicio == null) return const {};
+
+  // Se recuenta cuando cambia lo descargado. Se observa el estado y no el
+  // futuro: aquel depende del catálogo del servidor, y si el catálogo falla
+  // —que es justo lo que puede pasar sin señal— esperar su futuro haría fallar
+  // también a esto, y la pantalla acabaría sin saber qué hay descargado
+  // precisamente cuando más importa.
+  ref.watch(descargasProvider);
+  return {for (final r in await servicio.resumenes()) r.areaId};
+});
+
 /// Cuántas prácticas hay listas para usar sin señal.
 final reservasProvider = FutureProvider<int>((ref) async {
   final servicio = ref.watch(servicioOfflineProvider);

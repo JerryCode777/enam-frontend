@@ -91,6 +91,7 @@ class AlmacenEnMemoria implements AlmacenOffline {
   final Map<String, Map<String, SesionLocal>> _sesiones = {};
   final Map<String, List<RespuestaPendiente>> _pendientes = {};
   final Map<String, List<String>> _porEnviar = {};
+  final Map<String, List<String>> _porRegistrar = {};
   final Map<String, List<dynamic>> _catalogo = {};
 
   Map<String, PaqueteOffline> _deUsuario(String id) =>
@@ -206,6 +207,24 @@ class AlmacenEnMemoria implements AlmacenOffline {
       _porEnviar[usuarioId]?.remove(sesionId);
 
   @override
+  Future<void> marcarPorRegistrar(
+    String usuarioId,
+    String sesionId,
+    DateTime creadaEn,
+  ) async {
+    final cola = _porRegistrar.putIfAbsent(usuarioId, () => []);
+    if (!cola.contains(sesionId)) cola.add(sesionId);
+  }
+
+  @override
+  Future<List<String>> porRegistrar(String usuarioId) async =>
+      List.of(_porRegistrar[usuarioId] ?? const []);
+
+  @override
+  Future<void> quitarPorRegistrar(String usuarioId, String sesionId) async =>
+      _porRegistrar[usuarioId]?.remove(sesionId);
+
+  @override
   Future<void> guardarCatalogo(String usuarioId, List<dynamic> arbol) async =>
       _catalogo[usuarioId] = arbol;
 
@@ -219,6 +238,7 @@ class AlmacenEnMemoria implements AlmacenOffline {
     _sesiones.remove(usuarioId);
     _pendientes.remove(usuarioId);
     _porEnviar.remove(usuarioId);
+    _porRegistrar.remove(usuarioId);
     _catalogo.remove(usuarioId);
   }
 }

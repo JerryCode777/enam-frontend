@@ -74,6 +74,18 @@ abstract interface class AlmacenOffline {
 
   Future<void> quitarPorEnviar(String usuarioId, String sesionId);
 
+  /// Apunta que esta práctica la armó el teléfono y el servidor no la conoce.
+  Future<void> marcarPorRegistrar(
+    String usuarioId,
+    String sesionId,
+    DateTime creadaEn,
+  );
+
+  /// Las prácticas que faltan por dar de alta, de la más antigua a la más nueva.
+  Future<List<String>> porRegistrar(String usuarioId);
+
+  Future<void> quitarPorRegistrar(String usuarioId, String sesionId);
+
   /// Guarda el temario para poder elegir qué practicar sin señal.
   Future<void> guardarCatalogo(String usuarioId, List<dynamic> arbol);
 
@@ -360,6 +372,45 @@ class AlmacenOfflineSqlite implements AlmacenOffline {
     final db = await _base.db;
     await db.delete(
       'envios_pendientes',
+      where: 'usuario_id = ? AND sesion_id = ?',
+      whereArgs: [usuarioId, sesionId],
+    );
+  }
+
+  @override
+  Future<void> marcarPorRegistrar(
+    String usuarioId,
+    String sesionId,
+    DateTime creadaEn,
+  ) async {
+    final db = await _base.db;
+    await db.insert('sesiones_por_registrar', {
+      'usuario_id': usuarioId,
+      'sesion_id': sesionId,
+      'creada_en': creadaEn.toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<List<String>> porRegistrar(String usuarioId) async {
+    final db = await _base.db;
+    final filas = await db.query(
+      'sesiones_por_registrar',
+      columns: const ['sesion_id'],
+      where: 'usuario_id = ?',
+      whereArgs: [usuarioId],
+      // En orden de creación: el servidor recibe las prácticas en el orden en
+      // que ocurrieron, que es el que tiene sentido en el historial.
+      orderBy: 'creada_en ASC',
+    );
+    return [for (final fila in filas) fila['sesion_id'] as String];
+  }
+
+  @override
+  Future<void> quitarPorRegistrar(String usuarioId, String sesionId) async {
+    final db = await _base.db;
+    await db.delete(
+      'sesiones_por_registrar',
       where: 'usuario_id = ? AND sesion_id = ?',
       whereArgs: [usuarioId, sesionId],
     );

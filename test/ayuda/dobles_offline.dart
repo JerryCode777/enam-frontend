@@ -23,6 +23,9 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
   /// Respuestas que llegaron por `POST /offline/sync`.
   final List<RespuestaPendiente> sincronizadas = [];
 
+  /// Prácticas armadas en el teléfono que se dieron de alta al sincronizar.
+  final List<SesionParaRegistrar> registradas = [];
+
   /// Sesiones cerradas con `submit`.
   final List<String> cerradas = [];
 
@@ -63,18 +66,32 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
 
   @override
   Future<ResultadoDeSync> sincronizar(
-    List<RespuestaPendiente> respuestas,
-  ) async {
+    List<RespuestaPendiente> respuestas, {
+    List<SesionParaRegistrar> sesiones = const [],
+  }) async {
     _exigirRed();
     sincronizadas.addAll(respuestas);
+
+    // Las sesiones primero, como en el servidor: sin ellas, las respuestas que
+    // vienen en la misma petición no tendrían dónde caer.
+    registradas.addAll(sesiones);
+    for (final s in sesiones) {
+      this.sesiones[s.id] = StudySession(
+        id: s.id,
+        tipo: SessionType.practica,
+        estado: SessionStatus.enCurso,
+        iniciadaEn: s.iniciadaEn,
+        preguntas: [for (final id in s.preguntaIds) preguntaDePrueba(id)],
+      );
+    }
 
     // Aplicarlas de verdad, como hace `Sincronizar` en el servidor: si el doble
     // se limita a acusar recibo, las pruebas no verían que tras sincronizar la
     // sesión del servidor ya trae lo que se respondió en el bus.
     for (final r in respuestas) {
-      final sesion = sesiones[r.sesionId];
+      final sesion = this.sesiones[r.sesionId];
       if (sesion == null) continue;
-      sesiones[r.sesionId] = sesion.copyWith(
+      this.sesiones[r.sesionId] = sesion.copyWith(
         respuestas: {
           ...sesion.respuestas,
           r.preguntaId: Answer(
@@ -89,7 +106,11 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
       );
     }
 
-    return respuestaDeSync ?? ResultadoDeSync(aceptadas: respuestas.length);
+    return respuestaDeSync ??
+        ResultadoDeSync(
+          aceptadas: respuestas.length,
+          sesionesCreadas: sesiones.length,
+        );
   }
 
   @override
