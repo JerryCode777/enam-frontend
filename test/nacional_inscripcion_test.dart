@@ -133,14 +133,10 @@ class _RepoDeSesiones implements SessionRepository {
   ];
 
   @override
-  Future<StudySession> joinNationalMock(String mockId) async {
+  Future<ParticipacionNacional> joinNationalMock(String mockId) async {
     inscritos.add(mockId);
-    return StudySession(
-      id: 'sesion-nacional',
-      tipo: SessionType.simulacroNacional,
-      estado: SessionStatus.enCurso,
-      iniciadaEn: DateTime.now(),
-    );
+    // Apartar sitio: antes de la hora no hay examen que abrir.
+    return (inscrito: true, sesion: null);
   }
 
   @override

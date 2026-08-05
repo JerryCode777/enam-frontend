@@ -210,7 +210,7 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
   Future<List<NationalMock>> nationalMocks() async => throw UnimplementedError();
 
   @override
-  Future<StudySession> joinNationalMock(String mockId) async =>
+  Future<ParticipacionNacional> joinNationalMock(String mockId) async =>
       throw UnimplementedError();
 
   @override

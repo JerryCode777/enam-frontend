@@ -306,7 +306,7 @@ class _InstantSessions implements SessionRepository {
   Future<List<Question>> markedQuestions() async => const [];
 
   @override
-  Future<StudySession> joinNationalMock(String mockId) =>
+  Future<ParticipacionNacional> joinNationalMock(String mockId) =>
       throw UnimplementedError();
 
   @override

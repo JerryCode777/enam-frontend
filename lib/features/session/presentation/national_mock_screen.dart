@@ -176,12 +176,24 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
 
     setState(() => _participando = true);
     try {
-      await ref.read(sessionRepositoryProvider).joinNationalMock(evento.id);
+      final participacion = await ref
+          .read(sessionRepositoryProvider)
+          .joinNationalMock(evento.id);
+
       // Sin esto el botón seguiría diciendo "Participar": quien vuelve a
       // tocarlo se apunta dos veces, que es justo lo que este cambio arregla.
       ref.invalidate(nacionalesProvider);
-
       if (!mounted) return;
+
+      // Si ya es la hora, el servidor devuelve el examen abierto y se entra
+      // directo: hacer tocar un segundo botón cuando el cronómetro ya corre le
+      // cuesta minutos a quien llega justo.
+      final sesion = participacion.sesion;
+      if (sesion != null) {
+        context.irA(Routes.simulacroSessionOf(sesion.id));
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Listo. Te avisamos antes de que empiece.'),

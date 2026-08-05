@@ -204,7 +204,7 @@ class SessionRepositoryConRespaldo implements SessionRepository {
   Future<List<NationalMock>> nationalMocks() => _remoto.nationalMocks();
 
   @override
-  Future<StudySession> joinNationalMock(String mockId) =>
+  Future<ParticipacionNacional> joinNationalMock(String mockId) =>
       _remoto.joinNationalMock(mockId);
 
   @override

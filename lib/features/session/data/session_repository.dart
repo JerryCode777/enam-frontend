@@ -12,6 +12,12 @@ import '../domain/session_models.dart';
 Duration duracionDe(PastExamMode modo) =>
     modo.esCorto ? Blueprint.sampleExamDuration : Blueprint.examDuration;
 
+/// Lo que devuelve apuntarse a un simulacro nacional.
+///
+/// `sesion` viene en nulo mientras el simulacro no ha empezado: el sitio queda
+/// apartado y el examen se abre el domingo, a la hora, igual para todos.
+typedef ParticipacionNacional = ({bool inscrito, StudySession? sesion});
+
 /// Sesiones de práctica y simulacro (Módulos 3 y 4 del SSD).
 abstract interface class SessionRepository {
   /// RF-12. El servidor valida la config contra el plan del usuario (RN-03).
@@ -51,7 +57,12 @@ abstract interface class SessionRepository {
   Future<List<NationalMock>> nationalMocks();
 
   /// Entra a un simulacro nacional y devuelve la sesión ya creada.
-  Future<StudySession> joinNationalMock(String mockId);
+  ///
+  /// Devuelve **dos cosas** porque son dos situaciones distintas: antes de la
+  /// hora se aparta sitio —`sesion` en nulo— y a la hora se entra a rendir. El
+  /// servidor solo sabía lo segundo, así que el botón fallaba toda la semana
+  /// con «el simulacro no está abierto».
+  Future<ParticipacionNacional> joinNationalMock(String mockId);
 
   /// Exámenes ENAM de años anteriores (RF-52).
   ///
@@ -155,11 +166,18 @@ class ApiSessionRepository implements SessionRepository {
   }
 
   @override
-  Future<StudySession> joinNationalMock(String mockId) async {
+  Future<ParticipacionNacional> joinNationalMock(String mockId) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.joinMockExam(mockId),
     );
-    return StudySession.fromJson(data);
+
+    final sesion = data['sesion'];
+    return (
+      inscrito: data['inscrito'] == true,
+      sesion: sesion is Map<String, dynamic>
+          ? StudySession.fromJson(sesion)
+          : null,
+    );
   }
 
   @override
@@ -574,12 +592,10 @@ class MockSessionRepository implements SessionRepository {
   }
 
   @override
-  Future<StudySession> joinNationalMock(String mockId) async {
+  Future<ParticipacionNacional> joinNationalMock(String mockId) async {
     _inscritos.add(mockId);
-    final sesion = await startSimulacro();
-    return _sessions[sesion.id] = sesion.copyWith(
-      tipo: SessionType.simulacroNacional,
-    );
+    // Apartar sitio, que es lo que pasa mientras el simulacro no ha empezado.
+    return (inscrito: true, sesion: null);
   }
 
   /// Los exámenes ENAM que ya se rindieron, del más reciente al más antiguo.

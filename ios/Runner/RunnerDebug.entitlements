@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		Solo para correr en un teléfono propio desde `flutter run`.
+
+		Va vacío a propósito: Sign in with Apple no está permitido en las cuentas
+		personales gratuitas, y con el entitlement puesto la firma falla antes de
+		compilar. La build de la tienda usa Runner.entitlements, que sí lo lleva.
+	-->
+</dict>
+</plist>
