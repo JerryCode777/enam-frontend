@@ -46,6 +46,20 @@ abstract final class Routes {
   static const practiceResults = '/practica/resultados/:id';
   static String practiceResultsOf(String id) => '/practica/resultados/$id';
 
+  // ---------- Modo duelo (M11) ----------
+  //
+  // `/duelo/:codigo` es la que se comparte, así que es la corta y bonita; la
+  // partida cuelga de `/duelo/partida/:id` para no chocar con ella. El orden
+  // en el router importa: la fija va antes que el comodín.
+  static const duelo = '/duelo';
+  static const dueloCodigoManual = '/duelo/codigo';
+
+  static const dueloPartida = '/duelo/partida/:id';
+  static String dueloPartidaOf(String id) => '/duelo/partida/$id';
+
+  static const dueloPorCodigo = '/duelo/:codigo';
+  static String dueloPorCodigoOf(String codigo) => '/duelo/$codigo';
+
   // ---------- Simulacros (Módulo 4) ----------
   static const simulacroSelection = '/simulacro';
   static const simulacroInstructions = '/simulacro/instrucciones';

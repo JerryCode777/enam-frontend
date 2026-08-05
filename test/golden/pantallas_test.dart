@@ -17,6 +17,7 @@ import 'package:enam_app/features/auth/presentation/reset_password_screen.dart';
 import 'package:enam_app/features/auth/presentation/splash_screen.dart';
 import 'package:enam_app/features/auth/presentation/verify_email_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_map_screen.dart';
+import 'package:enam_app/features/duelo/presentation/elegir_oponente_screen.dart';
 import 'package:enam_app/features/home/presentation/home_screen.dart';
 import 'package:enam_app/features/stats/presentation/ranking_screen.dart';
 import 'package:enam_app/features/catalog/presentation/temario_node_screen.dart';
@@ -96,6 +97,11 @@ void main() {
       nombre: '3.3-area-gineco',
       widget: TemarioNodeScreen(nodeId: 'gineco-obstetricia'),
     ),
+    // Modo duelo (M11). Se retrata «elegir oponente» porque es la única de las
+    // suyas que se puede pintar sin un socket detrás — la partida y el
+    // resultado dependen de lo que mande el servidor, y fingirlo aquí
+    // retrataría un montaje, no la pantalla.
+    (nombre: '7.1-duelo-oponente', widget: ElegirOponenteScreen()),
   ];
 
   for (final dispositivo in dispositivos) {

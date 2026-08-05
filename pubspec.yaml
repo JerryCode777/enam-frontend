@@ -20,6 +20,11 @@ dependencies:
   # ---------- Red ----------
   dio: ^5.11.0
 
+  # La línea abierta del modo duelo. Es el único sitio de la app donde el
+  # servidor habla sin que se le pregunte: abre la pregunta, avisa de que el
+  # rival contestó, cierra el tiempo. Eso no cabe en una petición HTTP.
+  web_socket_channel: ^3.0.3
+
   # ---------- Modelos ----------
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
@@ -53,6 +58,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Para poder fabricar un WebSocketChannel falso en los tests del duelo:
+  # `StreamChannelMixin` vive aquí y sin declararlo el análisis lo marca como
+  # dependencia prestada de otro paquete.
+  stream_channel: ^2.1.4
 
   flutter_lints: ^6.0.0
 

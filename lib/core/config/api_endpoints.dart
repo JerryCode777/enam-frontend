@@ -109,4 +109,40 @@ abstract final class ApiEndpoints {
   static const String mockExams = '/mock-exams';
 
   static String joinMockExam(String mockId) => '/mock-exams/$mockId/join';
+
+  // ---------- Modo duelo (SSD-ENAM-004 §6) ----------
+  //
+  // La partida NO pasa por aquí: va por el WebSocket. Todo lo de abajo es el
+  // HTTP normal de antes y después —crear el duelo, entrar por código, pedir
+  // el ticket de conexión—.
+
+  /// Buscar rival al azar. Devuelve un duelo en `esperando` si no había nadie,
+  /// o uno `en_curso` si enganchó con quien ya estaba en la cola.
+  static const String duelRandom = '/duels/random';
+
+  /// Crear un duelo con PIN para compartir.
+  static const String duelLink = '/duels/link';
+
+  /// Cuántos duelos gratuitos le quedan hoy a quien no tiene plan (RF-65).
+  static const String duelPass = '/duels/pass';
+
+  /// Mirar a qué lleva un PIN, sin entrar todavía.
+  static String duelByCode(String codigo) => '/duels/code/$codigo';
+
+  /// Entrar al duelo de un PIN.
+  static String joinDuelByCode(String codigo) => '/duels/code/$codigo/join';
+
+  static String duel(String id) => '/duels/$id';
+
+  /// Meter al bot como rival. Solo vale si el duelo sigue esperando.
+  static String duelBot(String id) => '/duels/$id/bot';
+
+  /// POST crea la revancha; GET dice si el rival ya la pidió (RF-61).
+  static String duelRematch(String id) => '/duels/$id/rematch';
+
+  /// Salir de la sala de espera. No es abandonar: nadie ha entrado todavía.
+  static String duelCancel(String id) => '/duels/$id/cancel';
+
+  /// Canjear la sesión por el permiso de un solo uso que abre el socket.
+  static String duelTicket(String id) => '/duels/$id/ticket';
 }

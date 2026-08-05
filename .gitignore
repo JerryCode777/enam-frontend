@@ -31,6 +31,11 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+
+# Gradle deja su salida aquí al compilar el APK, y `/build/` solo cubre la
+# raíz. Sin esto, un `flutter build apk` mete miles de ficheros al commit.
+android/build/
+android/app/build/
 /coverage/
 
 # Symbolication related

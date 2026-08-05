@@ -23,6 +23,8 @@ import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/subscription_models.dart';
 import 'config/app_config.dart';
 import 'network/api_client.dart';
+import '../features/duelo/data/duelo_repository.dart';
+import '../features/duelo/domain/duelo_models.dart';
 import 'network/conectividad.dart';
 import 'security/cifrado_local.dart';
 import 'storage/base_local.dart';
@@ -135,6 +137,37 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
     offline: offline,
     red: ref.watch(conectividadProvider),
   );
+});
+
+// ==================== MODO DUELO (M11) ====================
+
+/// Los endpoints del duelo.
+///
+/// No tiene respaldo local ni versión de ejemplo: un duelo es dos personas
+/// contra el mismo reloj, así que **sin conexión no hay duelo**. Fingirlo con
+/// datos de mentira sería enseñar un rival que no existe.
+final dueloRepositoryProvider = Provider<DueloRepository>((ref) {
+  return ApiDueloRepository(ref.watch(apiClientProvider));
+});
+
+/// Cuántos duelos gratuitos le quedan hoy a quien no tiene plan (RF-65).
+///
+/// Lo consulta la pantalla de acceso terminado para decidir si enseña el botón.
+/// Que la respuesta venga del servidor —y no de un número escrito aquí— es lo
+/// que hace que apagar `DUELO_GRATIS_POR_DIA` apague también el botón, sin
+/// tener que publicar una versión nueva de la app.
+final paseDeDueloProvider = FutureProvider<PaseDeDuelo>((ref) async {
+  // Quien no ha iniciado sesión no tiene pase que consultar, y preguntarlo
+  // devolvería un 401 que se leería como un fallo.
+  if (ref.watch(currentUserProvider) == null) return const PaseDeDuelo();
+
+  try {
+    return await ref.watch(dueloRepositoryProvider).paseDelDia();
+  } catch (_) {
+    // Un fallo aquí no puede entretener a nadie: esa pantalla existe para
+    // cobrar, y el duelo es un añadido. Sin respuesta, no se enseña el botón.
+    return const PaseDeDuelo();
+  }
 });
 
 // ==================== MODO SIN CONEXIÓN (M7) ====================

@@ -42,6 +42,9 @@ import '../../features/subscription/presentation/my_subscription_screen.dart';
 import '../../features/system/presentation/system_screens.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
+import '../../features/duelo/presentation/duelo_partida_screen.dart';
+import '../../features/duelo/presentation/elegir_oponente_screen.dart';
+import '../../features/duelo/presentation/tengo_un_codigo_screen.dart';
 import '../providers.dart';
 import 'routes.dart';
 import 'transitions.dart';
@@ -140,6 +143,29 @@ const rutasSinAcceso = {
   Routes.help,
   Routes.terms,
 };
+
+/// Prefijo de la partida de duelo, que lleva un id y no cabe en la lista.
+const _prefijoPartidaDeDuelo = '/duelo/partida/';
+
+/// Si esta ruta se puede pintar sin acceso.
+///
+/// Es una función y no solo [rutasSinAcceso] porque la partida del duelo lleva
+/// un id en la URL, y comparar cadenas enteras nunca la encontraría.
+///
+/// # Por qué la partida entra y `/duelo` no
+///
+/// Quien juega con el pase diario (RF-65) va DIRECTO de la pantalla de cobro a
+/// su partida: el botón crea el duelo y navega. Nunca pasa por «elegir
+/// oponente», y dejarlo entrar ahí sería enseñarle dos opciones —el enlace de
+/// retador y el PIN— que el servidor le va a rechazar.
+///
+/// # Y por qué esto no abre ningún agujero
+///
+/// Porque la ruta no es el permiso. Para ver algo de una partida hay que ser
+/// uno de sus dos participantes: el servidor resuelve el lado del usuario al
+/// abrir la sala y, si no juega ahí, no hay nada que enseñar (RNF-04).
+bool alcanzableSinAcceso(String ruta) =>
+    rutasSinAcceso.contains(ruta) || ruta.startsWith(_prefijoPartidaDeDuelo);
 
 String? _redirect(Ref ref, GoRouterState state) => decidirDestino(
   auth: ref.read(authControllerProvider),
@@ -431,6 +457,34 @@ final List<RouteBase> _routes = [
     pageBuilder: (context, state) =>
         slidePage(child: const PastExamsScreen(), state: state),
   ),
+  // ---------- Modo duelo (M11) ----------
+  //
+  // Fuera del shell con barra inferior, como la práctica y el simulacro:
+  // mientras dura una sesión no hay a dónde ir. En el duelo eso además es
+  // literal — **salir de un duelo es perderlo** (RN-11): volviendo dentro de
+  // 60 s se recupera y pasado ese margen ya no, así que la barra ofrecería
+  // cuatro formas de perder una partida sin avisar de nada.
+  //
+  // El ORDEN importa: la ruta estática va antes que el comodín, para que
+  // `/duelo/partida/xxx` no se lea como un código de retador.
+  GoRoute(
+    path: Routes.duelo,
+    pageBuilder: (context, state) =>
+        slidePage(child: const ElegirOponenteScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.dueloCodigoManual,
+    pageBuilder: (context, state) =>
+        slidePage(child: const TengoUnCodigoScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.dueloPartida,
+    pageBuilder: (context, state) => fadePage(
+      child: DueloPartidaScreen(dueloId: state.pathParameters['id']!),
+      state: state,
+    ),
+  ),
+
   GoRoute(
     path: Routes.practiceSession,
     // Desvanece: entrar a responder no es profundizar en una jerarquía.

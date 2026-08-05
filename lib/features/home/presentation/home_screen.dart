@@ -110,6 +110,11 @@ class _Tarjetas extends StatelessWidget {
             diasDeLaSemana: racha.diasDeLaSemana,
             practicoHoy: racha.diasDeLaSemana.lastOrNull ?? false,
           ),
+        // El duelo va DEBAJO de la racha y ENCIMA de practicar, que es donde
+        // se decidió en la web (RF-54): es la única tarjeta del inicio con el
+        // degradado de marca, y no puede competir con «Practicar», que es la
+        // acción principal de la app.
+        const _TarjetaDeDuelo(),
         const _EmpiezaAPracticar(),
         _Metricas(stats: stats),
         const _PorDondeSeguir(),
@@ -117,6 +122,70 @@ class _Tarjetas extends StatelessWidget {
         _AccesosRapidos(stats: stats),
         const _SimulacroNacional(),
       ],
+    );
+  }
+}
+
+/// La entrada al modo duelo (RF-54).
+///
+/// Lleva el degradado de marca y es la **única** tarjeta del inicio que lo
+/// lleva. Si mañana otra lo pidiera, esta vuelve a superficie normal: dos
+/// tarjetas con degradado dejan de destacar y solo hacen ruido.
+class _TarjetaDeDuelo extends StatelessWidget {
+  const _TarjetaDeDuelo();
+
+  @override
+  Widget build(BuildContext context) {
+    final texto = Theme.of(context).textTheme;
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: oscuro
+                ? DesignTokens.headerGradientDark
+                : DesignTokens.headerGradientLight,
+            stops: DesignTokens.headerGradientStops,
+          ),
+        ),
+        child: InkWell(
+          onTap: () => context.irA(Routes.duelo),
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space4),
+            child: Row(
+              children: [
+                const Icon(Symbols.swords, color: Colors.white, size: 28),
+                const SizedBox(width: DesignTokens.space4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Modo duelo',
+                        style: texto.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Diez preguntas contra otra persona, en vivo',
+                        style: texto.bodySmall?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Symbols.chevron_right, color: Colors.white70),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -11,6 +11,7 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/motion.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
+import 'widgets/boton_duelo_gratis.dart';
 import 'widgets/opciones_de_pago.dart';
 
 /// Pantalla de bloqueo — se acabó el acceso (RN-03 v2, D-01).
@@ -113,6 +114,13 @@ class _AccessEndedScreenState extends ConsumerState<AccessEndedScreen> {
             const SizedBox(height: DesignTokens.space5),
             const _AvisoDatosIntactos(),
             const SizedBox(height: DesignTokens.space5),
+
+            // El duelo gratis va DESPUÉS de la explicación y ANTES de los
+            // precios, que es el sitio que le corresponde: no es lo que se
+            // viene a hacer aquí, pero tampoco algo que haya que ir a buscar.
+            // Si el pase está apagado no pinta nada.
+            const BotonDueloGratis(),
+
             AnimatedSize(
               duration: Motion.duration(context, Motion.slow),
               curve: Motion.enter,
