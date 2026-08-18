@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,12 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // El número de atención lo dice el servidor. Se pide aquí, sin esperarlo y
+    // sin bloquear nada: si no llega, la app arranca igual con el compilado,
+    // que es un número que funciona. Nadie debería quedarse fuera de estudiar
+    // porque una preferencia no se pudo leer.
+    unawaited(ref.read(configuracionRemotaProvider).cargar());
   }
 
   @override
@@ -37,6 +45,10 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(subscriptionProvider);
+
+      // Y de paso el número de atención: así un cambio de línea llega a las
+      // apps ya instaladas sin esperar a que alguien las cierre del todo.
+      unawaited(ref.read(configuracionRemotaProvider).cargar());
     }
   }
 

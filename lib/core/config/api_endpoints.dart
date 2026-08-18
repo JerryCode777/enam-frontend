@@ -4,6 +4,12 @@
 /// escrito a mano en un repositorio.
 abstract final class ApiEndpoints {
   // ---------- Autenticación (Módulo 1) ----------
+  /// Configuración del negocio que la app lee al arrancar.
+  ///
+  /// Pública y sin sesión: la pantalla de acceso ya necesita el número de
+  /// atención, y quien está ahí todavía no ha entrado.
+  static const String config = '/config';
+
   static const String register = '/auth/register';
   static const String login = '/auth/login';
 

@@ -380,7 +380,7 @@ class BotonWhatsApp extends StatelessWidget {
         final abierto = await Contacto.abrir(Contacto.activarPlan());
         if (!abierto && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
                 'No pudimos abrir WhatsApp. Escríbenos al '
                 '${Contacto.soporteVisible}.',

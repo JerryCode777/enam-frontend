@@ -177,7 +177,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     );
     if (!abierto && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Escríbenos al ${Contacto.soporteVisible}'),
         ),
       );

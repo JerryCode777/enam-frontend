@@ -22,6 +22,7 @@ import '../features/subscription/data/compras_apple_controller.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/subscription_models.dart';
 import 'config/app_config.dart';
+import 'config/configuracion_remota.dart';
 import 'network/api_client.dart';
 import '../features/duelo/data/duelo_repository.dart';
 import '../features/duelo/domain/duelo_models.dart';
@@ -63,6 +64,14 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     onSessionExpired: () =>
         ref.read(sessionExpiredProvider.notifier).notifyExpired(),
   );
+});
+
+/// La configuración del negocio que sirve el servidor.
+///
+/// Existe para que cambiar el número de atención sea tocar una variable de
+/// entorno y no publicar una versión en dos tiendas y esperar sus revisiones.
+final configuracionRemotaProvider = Provider<ConfiguracionRemota>((ref) {
+  return ConfiguracionRemota(ref.watch(apiClientProvider));
 });
 
 // ==================== REPOSITORIOS ====================

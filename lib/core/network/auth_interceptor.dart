@@ -52,6 +52,12 @@ class AuthInterceptor extends Interceptor {
   /// Se notaba solo cuando de verdad no había sesión —instalación nueva, o la
   /// anterior ya vencida—, que es justo cuando alguien pulsa el botón.
   static const _skipAuthPaths = {
+    // La configuración pública del negocio se pide al arrancar, antes de que
+    // nadie haya entrado. Si pasara por aquí, el interceptor la rechazaría con
+    // un 401 fabricado en el propio teléfono y la app se quedaría siempre con
+    // el número de atención compilado, sin llegar nunca a preguntar.
+    ApiEndpoints.config,
+
     ApiEndpoints.login,
     ApiEndpoints.register,
     ApiEndpoints.google,
