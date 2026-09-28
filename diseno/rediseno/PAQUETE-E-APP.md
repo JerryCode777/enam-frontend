@@ -152,3 +152,23 @@ La pantalla nunca dice «sincronizado»: lo pendiente sale de la bandeja local y
 desaparece solo cuando el servidor lo acepta.
 
 **Se comprueba con:** `test/descargas_pantalla_test.dart`.
+
+## 7. Presentación (onboarding)
+
+**Antes.** Un carrusel de tres pasos con viñetas; crear la cuenta pedía pasar
+por los tres.
+
+**Ahora.** Una pantalla: el beneficio en una frase, tres líneas de qué ofrece
+la app (explicaciones, simulacro de 180 preguntas y 3 horas, estudio sin
+señal), un **ejemplo rotulado como tal** de pregunta respondida y dos
+acciones fijas abajo: «Crear cuenta gratis» y «Ya tengo cuenta». Dice la regla
+real de la prueba: las 24 horas empiezan con la primera práctica, no al
+registrarse.
+
+El ejemplo es deliberadamente de manual (adrenalina intramuscular en la
+anafilaxia) para no enseñar nada discutible. No es una pregunta del banco.
+
+El perfil obligatorio (universidad, condición, fecha objetivo) se mantiene:
+quitarlo es un cambio de negocio que el plan deja fuera.
+
+**Se comprueba con:** `test/onboarding_test.dart` y la captura `1.2`.
