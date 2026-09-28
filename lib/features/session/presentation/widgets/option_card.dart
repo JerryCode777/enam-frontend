@@ -55,26 +55,30 @@ class OptionCard extends StatelessWidget {
         scheme.onSurfaceVariant,
         null,
       ),
+      // El círculo de la letra se rellena con el color que se lee (onPrimary,
+      // onTint) y lleva encima el del fondo. Con blanco sobre el color base, la
+      // letra y el icono se quedaban en 2,5:1, y en oscuro la letra blanca
+      // sobre la acción aclarada no se veía.
       OptionVisual.seleccionada => (
         states.info.tint,
         scheme.primary,
         2.0,
-        Colors.white,
+        scheme.onPrimary,
         scheme.primary,
       ),
       OptionVisual.correcta => (
         states.success.tint,
         states.success.base,
         2.0,
-        Colors.white,
-        states.success.base,
+        states.success.tint,
+        states.success.onTint,
       ),
       OptionVisual.incorrecta => (
         states.error.tint,
         states.error.base,
         2.0,
-        Colors.white,
-        states.error.base,
+        states.error.tint,
+        states.error.onTint,
       ),
       OptionVisual.descartada => (
         scheme.surface,
@@ -96,6 +100,44 @@ class OptionCard extends StatelessWidget {
       OptionVisual.incorrecta => Symbols.close,
       _ => null,
     };
+
+    // El lector de pantalla tiene que oír lo mismo que se ve: qué letra es, si
+    // está elegida y, ya respondida, si era la correcta o la tuya.
+    return Semantics(
+      button: onTap != null,
+      selected: visual == OptionVisual.seleccionada,
+      label: [
+        'Alternativa $letra',
+        ?switch (visual) {
+          OptionVisual.correcta => 'correcta',
+          OptionVisual.incorrecta => 'tu respuesta, incorrecta',
+          _ => null,
+        },
+      ].join(', '),
+      child: _tarjeta(
+        context,
+        fondo: fondo,
+        borde: borde,
+        anchoBorde: anchoBorde,
+        colorLetra: colorLetra,
+        fondoLetra: fondoLetra,
+        etiqueta: etiqueta,
+        icono: icono,
+      ),
+    );
+  }
+
+  Widget _tarjeta(
+    BuildContext context, {
+    required Color fondo,
+    required Color borde,
+    required double anchoBorde,
+    required Color colorLetra,
+    required Color? fondoLetra,
+    required String? etiqueta,
+    required IconData? icono,
+  }) {
+    final states = context.states;
 
     return AnimatedContainer(
       duration: Motion.duration(context, Motion.fast),
@@ -133,6 +175,8 @@ class OptionCard extends StatelessWidget {
                     ? Icon(icono, size: 17, color: colorLetra)
                     : Text(
                         letra,
+                        // Excluida: la letra ya la dice la etiqueta semántica.
+                        semanticsLabel: '',
                         style: context.texts.bodySmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: colorLetra,
@@ -143,13 +187,16 @@ class OptionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   opcion.texto,
+                  // 16 como el cuerpo, y 600 y no 700 al elegirla: una
+                  // alternativa de tres líneas en negrita cansa y deja de
+                  // parecer elegida para parecer gritada.
                   style: context.texts.bodyLarge?.copyWith(
-                    fontSize: 15,
+                    fontSize: DesignTokens.fontSizeMd,
                     height: 1.5,
                     fontWeight: visual == OptionVisual.normal ||
                             visual == OptionVisual.descartada
                         ? FontWeight.w400
-                        : FontWeight.w700,
+                        : FontWeight.w600,
                   ),
                 ),
               ),
@@ -159,6 +206,7 @@ class OptionCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 3),
                   child: Text(
                     etiqueta,
+                    semanticsLabel: '',
                     style: context.texts.bodySmall?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,

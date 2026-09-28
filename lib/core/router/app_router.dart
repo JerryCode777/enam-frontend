@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ import '../../features/stats/presentation/ranking_screen.dart';
 import '../../features/subscription/domain/subscription_models.dart';
 import '../../features/subscription/presentation/access_ended_screen.dart';
 import '../../features/subscription/presentation/my_subscription_screen.dart';
+import '../../features/system/presentation/galeria_componentes_screen.dart';
 import '../../features/system/presentation/system_screens.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
@@ -110,6 +112,8 @@ const _publicRoutes = {
   Routes.terms,
   Routes.maintenance,
   Routes.updateRequired,
+  // Solo existe fuera de release; ver `_routes`.
+  Routes.componentes,
 };
 
 /// Pantallas de acceso que dejan de tener sentido con la sesión ya lista.
@@ -279,6 +283,13 @@ GoRoute _stub(
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final List<RouteBase> _routes = [
+  // Galería interna del sistema visual. En release la ruta no se registra, así
+  // que `/dev/componentes` cae en la pantalla de «ruta no encontrada».
+  if (!kReleaseMode)
+    GoRoute(
+      path: Routes.componentes,
+      builder: (context, state) => const GaleriaComponentesScreen(),
+    ),
   // ==================== ACCESO (sin barra inferior) ====================
   GoRoute(
     path: Routes.splash,
