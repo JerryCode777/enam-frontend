@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart' show CancelToken;
 import '../../../core/config/api_endpoints.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/offline_models.dart';
@@ -17,9 +19,13 @@ abstract interface class OfflineRepository {
   /// [progreso] recibe los bytes recibidos y el total. El total llega en `-1`
   /// cuando el servidor no manda `content-length`, así que quien pinta la barra
   /// tiene que estar preparado para no saber cuánto falta.
+  ///
+  /// [cancelar] corta la descarga a medias: se lanza [DescargaCancelada] y no
+  /// se guarda nada.
   Future<PaqueteOffline> paquete(
     String areaId, {
     void Function(int recibidos, int total)? progreso,
+    CancelToken? cancelar,
   });
 
   /// Manda lo respondido sin conexión (RF-32) y da de alta las prácticas que
@@ -46,14 +52,23 @@ class ApiOfflineRepository implements OfflineRepository {
   Future<PaqueteOffline> paquete(
     String areaId, {
     void Function(int recibidos, int total)? progreso,
+    CancelToken? cancelar,
   }) async {
-    final data = await _client.get<Map<String, dynamic>>(
-      ApiEndpoints.offlinePackage(areaId),
-      onReceiveProgress: progreso == null
-          ? null
-          : (recibidos, total) => progreso(recibidos, total),
-    );
-    return PaqueteOffline.fromJson(data);
+    try {
+      final data = await _client.get<Map<String, dynamic>>(
+        ApiEndpoints.offlinePackage(areaId),
+        cancelToken: cancelar,
+        onReceiveProgress: progreso == null
+            ? null
+            : (recibidos, total) => progreso(recibidos, total),
+      );
+      return PaqueteOffline.fromJson(data);
+    } on Failure {
+      // El cliente traduce la cancelación a un fallo genérico; aquí se
+      // distingue, porque cancelar no es un error que haya que contar.
+      if (cancelar?.isCancelled ?? false) throw const DescargaCancelada();
+      rethrow;
+    }
   }
 
   @override
@@ -100,10 +115,12 @@ class MockOfflineRepository implements OfflineRepository {
   Future<PaqueteOffline> paquete(
     String areaId, {
     void Function(int recibidos, int total)? progreso,
+    CancelToken? cancelar,
   }) async {
     // Se simula la descarga por partes para poder ver la barra avanzar.
     for (var parte = 1; parte <= 4; parte++) {
       await Future<void>.delayed(_demora ~/ 4);
+      if (cancelar?.isCancelled ?? false) throw const DescargaCancelada();
       progreso?.call(parte * 250, 1000);
     }
     return PaqueteOffline(

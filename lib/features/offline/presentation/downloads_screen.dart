@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
@@ -414,15 +415,22 @@ class _FilaPaquete extends ConsumerWidget {
     final color = AreaColors.of(paquete.areaId, Theme.of(context).brightness);
 
     final (icono, colorIcono, tooltip) = switch (paquete.estado) {
+      _ when paquete.fallo => (
+        Symbols.refresh,
+        states.error.onTint,
+        'Reintentar la descarga',
+      ),
       EstadoDescarga.descargada => (
         Symbols.delete,
         context.scheme.onSurfaceVariant,
         'Eliminar del teléfono',
       ),
+      // Mientras baja, el botón la corta: una descarga larga con mala señal
+      // no puede quedar sin salida.
       EstadoDescarga.descargando => (
-        Symbols.hourglass_top,
+        Symbols.close,
         context.scheme.onSurfaceVariant,
-        'Descargando',
+        'Cancelar la descarga',
       ),
       EstadoDescarga.actualizable => (
         Symbols.sync,
@@ -436,9 +444,17 @@ class _FilaPaquete extends ConsumerWidget {
       ),
     };
 
+    final fecha = paquete.actualizadaEn;
     final detalle = switch (paquete.estado) {
-      EstadoDescarga.descargada =>
-        '${paquete.guardadas} preguntas · ${formatearTamano(paquete.bytes)} · al día',
+      _ when paquete.fallo => 'No se pudo descargar. Toca para reintentar.',
+      // La fecha del paquete y no «al día»: al día respecto de qué. Lo que
+      // cuenta es cuándo se generó lo que hay en el teléfono.
+      EstadoDescarga.descargada => [
+        '${paquete.guardadas} preguntas',
+        formatearTamano(paquete.bytes),
+        if (fecha != null)
+          'actualizada el ${DateFormat('d MMM', 'es').format(fecha)}',
+      ].join(' · '),
       EstadoDescarga.descargando =>
         paquete.progreso > 0
             ? 'Descargando · ${(paquete.progreso * 100).round()} %'
@@ -489,10 +505,13 @@ class _FilaPaquete extends ConsumerWidget {
                       style: context.texts.bodySmall?.copyWith(
                         fontSize: 13,
                         fontWeight:
-                            paquete.estado == EstadoDescarga.actualizable
+                            paquete.fallo ||
+                                paquete.estado == EstadoDescarga.actualizable
                             ? FontWeight.w700
                             : null,
-                        color: paquete.estado == EstadoDescarga.actualizable
+                        color: paquete.fallo
+                            ? states.error.onTint
+                            : paquete.estado == EstadoDescarga.actualizable
                             ? states.warning.onTint
                             : null,
                       ),
@@ -514,7 +533,11 @@ class _FilaPaquete extends ConsumerWidget {
               IconButton(
                 icon: Icon(icono, size: 22, color: colorIcono),
                 tooltip: tooltip,
-                onPressed: descargando ? null : () => _actuar(context, ref),
+                onPressed: descargando
+                    ? () => ref
+                          .read(descargasProvider.notifier)
+                          .cancelar(paquete.areaId)
+                    : () => _actuar(context, ref),
               ),
             ],
           ),

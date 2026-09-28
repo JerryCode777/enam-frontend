@@ -133,3 +133,22 @@ progreso dicen ahora lo mismo, «Aún sin práctica», donde antes alternaban
 con preguntas vistas pero sin respuestas contadas decía «acierto 0 %».
 
 **Se comprueba con:** `test/temario_sin_practica_test.dart`.
+
+## 6. Descargas
+
+Ya mostraba el tamaño real, el progreso cuando el servidor dice cuánto pesa, y
+lo pendiente de enviar. Faltaba:
+
+- **Cancelar.** Mientras un área baja, su botón la corta. Lo recibido se
+  descarta y no cuenta como fallo. Por dentro viaja un `CancelToken` desde la
+  pantalla hasta dio.
+- **Reintentar a la vista.** Si falla, la fila lo dice («No se pudo descargar.
+  Toca para reintentar.») y su botón reintenta. Antes solo había un aviso que
+  desaparecía. Si lo que falta es el plan, se sigue llevando al pago.
+- **Fecha.** «actualizada el 20 jul» (cuándo generó el servidor el paquete) en
+  lugar de un «al día» sin referencia.
+
+La pantalla nunca dice «sincronizado»: lo pendiente sale de la bandeja local y
+desaparece solo cuando el servidor lo acepta.
+
+**Se comprueba con:** `test/descargas_pantalla_test.dart`.
