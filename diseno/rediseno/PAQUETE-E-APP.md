@@ -201,3 +201,18 @@ quitarlo es un cambio de negocio que el plan deja fuera.
   entrar» o «Ver resultados» para el nacional.
 
 **Se comprueba con:** `test/simulacros_hub_test.dart`.
+
+## 10. Mi suscripción (solo lo visual; el flujo de App Store no se toca)
+
+- Con una suscripción de **App Store**, la fila «Renovación» decía «Manual»,
+  aunque se renueva sola (lo dice la letra pequeña de la compra). Ahora dice
+  «Automática, por App Store».
+- Para esas suscripciones, «Cancelar renovación» llamaba a nuestro servidor,
+  que **no puede detener el cobro de Apple**: quien lo pulsaba creía haber
+  cancelado y Apple seguía cobrando. Ahora la pantalla dice dónde se gestiona
+  (Ajustes → tu nombre → Suscripciones) y enlaza a la página de suscripciones
+  de Apple. Para los demás medios el botón sigue como estaba.
+- No se tocan StoreKit, la verificación ni la restauración, ni se enlaza a
+  pagar en la web desde iPhone.
+
+**Se comprueba con:** `test/mi_suscripcion_test.dart`.
