@@ -124,3 +124,12 @@ aparece si no hay. Una sola acción principal: repasar las incorrectas si las
 hay, otra práctica si no.
 
 **Se comprueba con:** `test/resumen_practica_test.dart` y la captura `4.4`.
+
+## 5. Temario sin práctica
+
+Sin respuestas no hay dominio que medir. El temario, las prioridades y el
+progreso dicen ahora lo mismo, «Aún sin práctica», donde antes alternaban
+«Sin empezar» y «sin datos». Se corrige además un caso que sí mentía: un tema
+con preguntas vistas pero sin respuestas contadas decía «acierto 0 %».
+
+**Se comprueba con:** `test/temario_sin_practica_test.dart`.

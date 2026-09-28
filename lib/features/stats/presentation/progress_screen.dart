@@ -551,7 +551,7 @@ class _FilaArea extends StatelessWidget {
                 ),
               ),
               Text(
-                acierto == null ? 'sin datos' : '${(acierto * 100).round()} %',
+                acierto == null ? 'aún sin práctica' : '${(acierto * 100).round()} %',
                 style: context.texts.bodySmall?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

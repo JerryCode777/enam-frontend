@@ -226,7 +226,7 @@ class _PrioridadCard extends StatelessWidget {
                     _Dato(
                       etiqueta: 'tu acierto',
                       valor: acierto == null
-                          ? 'sin datos'
+                          ? 'aún sin práctica'
                           : '${(acierto * 100).round()} %',
                     ),
                     if (densidad != null)
