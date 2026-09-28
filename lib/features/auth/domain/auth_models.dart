@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/domain/hora_peru.dart';
+
 part 'auth_models.freezed.dart';
 part 'auth_models.g.dart';
 
@@ -53,8 +55,12 @@ abstract class User with _$User {
   int? get diasParaExamen {
     final objetivo = fechaObjetivo;
     if (objetivo == null) return null;
-    final hoy = DateTime.now();
-    return objetivo.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    // El día de hoy en Perú, que es donde se rinde el examen, y por el reloj
+    // de la app (las pruebas lo congelan). Se comparan fechas sin hora.
+    final hoy = ahoraEnPeru();
+    return DateTime.utc(objetivo.year, objetivo.month, objetivo.day)
+        .difference(DateTime.utc(hoy.year, hoy.month, hoy.day))
+        .inDays;
   }
 }
 

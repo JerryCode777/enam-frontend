@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/domain/taxonomy.dart';
@@ -98,7 +99,7 @@ class MockStatsRepository implements StatsRepository {
         for (var i = 4; i >= 0; i--)
           GradePoint(
             // Fechas relativas a hoy, hacia atrás cada 12 días.
-            fecha: DateTime.now().subtract(Duration(days: i * 12)),
+            fecha: ahora().subtract(Duration(days: i * 12)),
             nota: 9.4 + (4 - i) * 0.55 + _random.nextDouble() * 0.5,
             sessionId: 'sim-${5 - i}',
             // El primero es la muestra de 40, que es como empieza casi todo el

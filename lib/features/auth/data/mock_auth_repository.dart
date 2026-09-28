@@ -1,3 +1,4 @@
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/error/failure.dart';
 import '../domain/auth_models.dart';
 import 'auth_repository.dart';
@@ -76,7 +77,7 @@ class MockAuthRepository implements AuthRepository {
       condicion: email == 'nuevo2@enam.pe' ? null : StudentCondition.interno,
       fechaObjetivo: email == 'nuevo2@enam.pe'
           ? null
-          : DateTime.now().add(const Duration(days: 96)),
+          : ahora().add(const Duration(days: 96)),
     );
   }
 
