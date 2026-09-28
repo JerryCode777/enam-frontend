@@ -458,6 +458,10 @@ final List<RouteBase> _routes = [
         // Llega desde el temario con el nodo puesto (RF-38).
         nodoId: state.uri.queryParameters['nodo'],
         origenInicial: state.uri.queryParameters['origen'],
+        // El inicio propone una primera práctica corta (plan §5).
+        cantidadInicial: int.tryParse(
+          state.uri.queryParameters['cantidad'] ?? '',
+        ),
       ),
       state: state,
     ),

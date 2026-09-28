@@ -599,6 +599,11 @@ typedef ResumableSession = ({
   bool esSimulacro,
   String titulo,
   String detalle,
+
+  /// Cuántas lleva respondidas y de cuántas. Alimentan la barra de avance del
+  /// inicio; salen del servidor, no de una estimación.
+  int respondidas,
+  int total,
 });
 
 /// Las sesiones a medio hacer, de `GET /sessions/open`.
@@ -629,15 +634,16 @@ final resumableSessionProvider = Provider<ResumableSession?>((ref) {
   return (
     sessionId: sesion.id,
     esSimulacro: sesion.esSimulacro,
-    titulo: sesion.esSimulacro
-        ? 'Termina tu simulacro'
-        : 'Continuar donde quedaste',
+    // Los mismos titulares que la web (acordados para el inicio contextual).
+    titulo: sesion.esSimulacro ? 'Termina tu simulacro' : 'Continúa tu práctica',
     // La que toca es la siguiente sin responder, pero nunca una más allá del
     // total: con la última ya contestada, "pregunta 21 de 20" no significa
     // nada.
     detalle:
         'Pregunta ${(sesion.respondidas + 1).clamp(1, sesion.totalPreguntas)} '
         'de ${sesion.totalPreguntas}',
+    respondidas: sesion.respondidas,
+    total: sesion.totalPreguntas,
   );
 });
 

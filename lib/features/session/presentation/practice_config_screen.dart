@@ -26,7 +26,12 @@ import 'area_picker_screen.dart';
 /// nodo. Muestra cuántas preguntas hay disponibles en el nodo elegido: pedir 50
 /// donde solo hay 12 tiene que verse antes de empezar, no después.
 class PracticeConfigScreen extends ConsumerStatefulWidget {
-  const PracticeConfigScreen({this.nodoId, this.origenInicial, super.key});
+  const PracticeConfigScreen({
+    this.nodoId,
+    this.origenInicial,
+    this.cantidadInicial,
+    super.key,
+  });
 
   /// Nodo preseleccionado desde el temario.
   final String? nodoId;
@@ -34,13 +39,21 @@ class PracticeConfigScreen extends ConsumerStatefulWidget {
   /// Origen preseleccionado. Un nodo agotado llega con `falladas`.
   final String? origenInicial;
 
+  /// Cantidad con la que arranca el selector. El inicio manda 10 a quien
+  /// todavía no ha practicado nunca: una primera práctica corta. Sigue siendo
+  /// editable.
+  final int? cantidadInicial;
+
   @override
   ConsumerState<PracticeConfigScreen> createState() =>
       _PracticeConfigScreenState();
 }
 
 class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
-  late int _cantidad = 20;
+  late int _cantidad = (widget.cantidadInicial ?? 20).clamp(
+    Blueprint.practiceMinQuestions,
+    Blueprint.practiceMaxQuestions,
+  );
   late QuestionSource _origen = QuestionSource.values.firstWhere(
     (o) => o.name == widget.origenInicial,
     orElse: () => QuestionSource.todas,
