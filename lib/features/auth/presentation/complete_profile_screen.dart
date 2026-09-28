@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -113,12 +114,15 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
 
     setState(() => _loading = true);
     try {
-      final user = await ref.read(authRepositoryProvider).updateProfile(
-        nombre: _nombre.text.trim(),
-        universidad: _universidad,
-        condicion: _condicion,
-        fechaObjetivo: _fechaObjetivo,
-      );
+      final user = await ref
+          .read(authRepositoryProvider)
+          .updateProfile(
+            nombre: _nombre.text.trim(),
+            universidad: _universidad,
+            condicion: _condicion,
+            fechaObjetivo: _fechaObjetivo,
+          );
+      ref.read(analiticaProvider).registrar(Evento.profileCompleted);
       // Refresca el estado de auth: el router ve el perfil completo y deja pasar.
       if (mounted) ref.read(authControllerProvider.notifier).setUser(user);
     } on Failure catch (e) {
@@ -142,17 +146,19 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
   }
 
   Future<void> _pickFecha() async {
-    final elegida = await showModalBottomSheet<({String? label, DateTime fecha})>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => _FechaSheet(oficiales: _fechasOficiales),
-    );
+    final elegida =
+        await showModalBottomSheet<({String? label, DateTime fecha})>(
+          context: context,
+          showDragHandle: true,
+          builder: (context) => _FechaSheet(oficiales: _fechasOficiales),
+        );
     if (elegida == null || !mounted) return;
 
     if (elegida.label == null) {
       final libre = await showDatePicker(
         context: context,
-        initialDate: _fechaObjetivo ?? DateTime.now().add(const Duration(days: 90)),
+        initialDate:
+            _fechaObjetivo ?? DateTime.now().add(const Duration(days: 90)),
         firstDate: DateTime.now(),
         lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
         helpText: 'Fecha de tu examen',
@@ -316,7 +322,9 @@ class _PickerField extends StatelessWidget {
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd + 2),
           child: Container(
             height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space4,
+            ),
             decoration: BoxDecoration(
               color: scheme.surface,
               border: Border.all(color: scheme.outline),
@@ -446,9 +454,8 @@ class _FechaSheet extends StatelessWidget {
           ListTile(
             leading: const Icon(Symbols.edit_calendar),
             title: const Text('Otra fecha'),
-            onTap: () => Navigator.of(
-              context,
-            ).pop((label: null, fecha: DateTime.now())),
+            onTap: () =>
+                Navigator.of(context).pop((label: null, fecha: DateTime.now())),
           ),
           const SizedBox(height: DesignTokens.space2),
         ],

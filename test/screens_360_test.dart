@@ -181,6 +181,12 @@ void main() {
       const RegisterScreen(),
       const CompleteProfileScreen(),
       const ResetPasswordScreen(email: 'valeria@unmsm.edu.pe'),
+      // Las del rediseño que más texto concentran en poco ancho.
+      const HomeScreen(),
+      const OnboardingScreen(),
+      const SplashScreen(),
+      const DownloadsScreen(),
+      const SimulacroHubScreen(),
     ]) {
       await tester.pumpWidget(
         _harness(pantalla, Brightness.light, textScale: 1.4),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
@@ -70,6 +71,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (_loading || !_acepta || !_validate()) return;
 
     setState(() => _loading = true);
+    ref
+        .read(analiticaProvider)
+        .registrar(Evento.signupStarted, propiedades: {'pantalla': 'registro'});
     try {
       await ref
           .read(authRepositoryProvider)

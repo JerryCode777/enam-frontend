@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -71,6 +72,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       final usuario = await ref
           .read(authRepositoryProvider)
           .verificarConCodigo(email: email, codigo: _codigo.text);
+      ref.read(analiticaProvider).registrar(Evento.signupVerified);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,7 +196,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                             color: Colors.white,
                           ),
                         ),
-                        const TextSpan(text: '\nEscríbelo aquí para continuar.'),
+                        const TextSpan(
+                          text: '\nEscríbelo aquí para continuar.',
+                        ),
                       ],
                     ),
                     textAlign: TextAlign.center,
@@ -335,9 +339,7 @@ class _PildoraVidrio extends StatelessWidget {
         disabledBackgroundColor: Colors.white.withValues(alpha: 0.16),
         foregroundColor: Colors.white,
         side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       ),
       child: Text(
         label,
@@ -414,7 +416,9 @@ class _CampoCodigo extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.35),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -422,7 +426,9 @@ class _CampoCodigo extends StatelessWidget {
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
             ),
           ),
         ),
