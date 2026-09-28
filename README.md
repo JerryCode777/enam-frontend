@@ -11,9 +11,9 @@ Publicada en App Store (solo iPhone) y Google Play. Tiene práctica, simulacros,
 exámenes pasados, simulacro nacional, progreso, ranking, modo duelo, descargas
 para estudiar sin conexión y compra por App Store en iPhone.
 
-En curso, en la rama `rediseno-ui`: el rediseño de `PLAN-UI-SEO-PARA-OPUS.md`
-(carpeta superior del workspace). Lo hecho y lo pendiente, paquete por paquete,
-está en [`diseno/rediseno/`](diseno/rediseno/).
+En la rama `rediseno-ui`: el rediseño de `PLAN-UI-SEO-PARA-OPUS.md` (carpeta
+superior del workspace). El resumen, con lo validado, lo pendiente y cómo
+revertir, está en [`diseno/rediseno/INFORME-APP.md`](diseno/rediseno/INFORME-APP.md).
 
 ## Diseño
 
