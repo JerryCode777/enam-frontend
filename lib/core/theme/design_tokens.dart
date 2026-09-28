@@ -24,7 +24,7 @@ abstract final class DesignTokens {
   // El relleno del botón principal y el texto de marca que se puede leer. Antes
   // el botón era un degradado que terminaba en [brand], y el texto blanco caía a
   // 3,1:1 en ese extremo. Ahora es un color plano que cumple AA en los dos
-  // temas, con los mismos valores que la web (docs/TOKENS.md).
+  // temas, con los mismos valores que la web (diseno/TOKENS.md).
 
   /// Claro: blanco encima da 6,35:1.
   static const Color actionLight = Color(0xFF176497);

@@ -26,7 +26,7 @@ class LegalScreen extends StatelessWidget {
       parrafos: [
 // PENDIENTE(titular): el operador pasa a ser AidaSoft (AIDA SOFT SACS).
         // Falta la razón social exacta, el RUC y la dirección; no inventarlos.
-        // Ver docs/rediseno/LINEA-BASE.md.
+        // Ver diseno/rediseno/LINEA-BASE.md.
         'ENAM Prep es operado por Jaks Tech SAC (RUC 20614811804), que actúa '
             'como responsable del tratamiento de tus datos personales.',
         'Para cualquier consulta sobre tus datos puedes escribirnos desde la '

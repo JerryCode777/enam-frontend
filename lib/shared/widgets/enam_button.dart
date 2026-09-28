@@ -8,7 +8,7 @@ import '../../core/theme/design_tokens.dart';
 /// Ya no lleva degradado. El de antes terminaba en el azul de marca, y ahí el
 /// texto blanco bajaba a 3,1:1; un botón que se lee a medias en su mitad
 /// derecha no es un botón principal. El color plano cumple AA en los dos temas
-/// y es el mismo que usa la web (docs/TOKENS.md).
+/// y es el mismo que usa la web (diseno/TOKENS.md).
 ///
 /// Cuando [loading] es `true` queda deshabilitado y muestra un spinner, para que
 /// no se pueda enviar el mismo formulario dos veces.

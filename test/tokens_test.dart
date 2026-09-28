@@ -10,7 +10,7 @@ import 'ayuda/contraste.dart';
 /// Dos cosas distintas se fijan aquí:
 ///
 /// 1. **Los valores exactos.** La web usa los mismos, con los mismos nombres
-///    (docs/TOKENS.md). Si alguien cambia uno aquí sin tocar la tabla y la web,
+///    (diseno/TOKENS.md). Si alguien cambia uno aquí sin tocar la tabla y la web,
 ///    las dos plataformas empiezan a divergir sin que nadie lo note. Este test
 ///    obliga a que el cambio sea deliberado.
 /// 2. **Los contrastes.** WCAG 2.2 AA: 4,5:1 para texto normal y 3:1 para el

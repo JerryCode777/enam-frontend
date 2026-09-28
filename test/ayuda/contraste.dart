@@ -6,7 +6,7 @@ import 'package:flutter/painting.dart';
 ///
 /// Se calcula aquí y no con `Color.computeLuminance` a secas para que la
 /// fórmula completa quede a la vista: es la que usa la tabla de
-/// docs/TOKENS.md y la misma que aplica la web.
+/// diseno/TOKENS.md y la misma que aplica la web.
 double contraste(Color a, Color b) {
   final la = _luminancia(a);
   final lb = _luminancia(b);

@@ -399,7 +399,7 @@ class _Version extends StatelessWidget {
           ),
           // PENDIENTE(titular): el operador pasa a ser AidaSoft (AIDA SOFT SACS).
           // Falta la razón social exacta, el RUC y la dirección; no inventarlos.
-          // Ver docs/rediseno/LINEA-BASE.md.
+          // Ver diseno/rediseno/LINEA-BASE.md.
           Text(
             'Jaks Tech SAC',
             style: context.texts.bodySmall?.copyWith(fontSize: 13),

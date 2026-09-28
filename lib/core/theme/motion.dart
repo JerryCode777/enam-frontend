@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 abstract final class Motion {
   // ==================== DURACIONES ====================
 
-  // Los mismos valores que la web (docs/TOKENS.md, plan §8).
+  // Los mismos valores que la web (diseno/TOKENS.md, plan §8).
 
   /// Micro-reacciones: una opción que se selecciona, un icono que cambia.
   static const fast = Duration(milliseconds: 140);

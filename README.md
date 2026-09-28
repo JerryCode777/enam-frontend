@@ -13,11 +13,11 @@ para estudiar sin conexión y compra por App Store en iPhone.
 
 En curso, en la rama `rediseno-ui`: el rediseño de `PLAN-UI-SEO-PARA-OPUS.md`
 (carpeta superior del workspace). Lo hecho y lo pendiente, paquete por paquete,
-está en [`docs/rediseno/`](docs/rediseno/).
+está en [`diseno/rediseno/`](diseno/rediseno/).
 
 ## Diseño
 
-- **Tokens:** [`docs/TOKENS.md`](docs/TOKENS.md) es la tabla fuente compartida
+- **Tokens:** [`diseno/TOKENS.md`](diseno/TOKENS.md) es la tabla fuente compartida
   con la web: colores, tipografía, radios, espaciado y movimiento, con sus
   contrastes medidos. `test/tokens_test.dart` la hace cumplir.
 - **Galería de componentes:** `/dev/componentes`, solo fuera de release. Cada

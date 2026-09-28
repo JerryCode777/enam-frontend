@@ -10,7 +10,7 @@ import 'state_banner.dart';
 ///
 /// Son los del sistema visual del rediseño (plan §3): cada uno existe una vez
 /// y todas las pantallas lo toman de aquí. Sus equivalentes web tienen el mismo
-/// nombre en `src/components/ui/` y los mismos tokens (docs/TOKENS.md). La
+/// nombre en `src/components/ui/` y los mismos tokens (diseno/TOKENS.md). La
 /// galería interna (`/dev/componentes`) los muestra en todos sus estados.
 
 // ==================== ETIQUETA DE ESTADO ====================
