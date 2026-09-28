@@ -87,7 +87,9 @@ identificadores internos («medicina-infecciosos»). «Reportar» agradecía
 **Ahora.**
 
 - Enunciado a **17 px con interlineado 1,6**, en una columna de 720 px como
-  máximo.
+  máximo. Es el mismo estilo (`AppTheme.clinicalCase`) en práctica,
+  simulacro, revisión y duelo; el duelo pintaba el caso entero en negrita de
+  18.
 - Al confirmar, la pantalla baja sola hasta el **veredicto** («Correcto. Elegiste
   la A» / «Incorrecto. La correcta es la C»), dicho con texto, icono y color y
   anunciado al lector de pantalla. Después, la correcta, tu respuesta si

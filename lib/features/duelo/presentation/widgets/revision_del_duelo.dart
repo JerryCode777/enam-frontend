@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../session/domain/session_models.dart';
@@ -53,7 +54,7 @@ class RevisionDelDuelo extends StatelessWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space2),
-            Text(p.enunciado, style: texto.bodyLarge?.copyWith(height: 1.4)),
+            Text(p.enunciado, style: AppTheme.clinicalCase(context)),
             const SizedBox(height: DesignTokens.space3),
             for (var j = 0; j < p.opciones.length; j++) ...[
               OptionCard(
