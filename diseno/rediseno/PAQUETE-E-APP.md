@@ -108,3 +108,19 @@ motivo ya están en `_BarraAccion.motivos`.
 
 **Se comprueba con:** `test/pregunta_test.dart` y las capturas `4.2` y `4.3` de
 `test/golden/estudio_test.dart`.
+
+## 4. Resultado de la práctica
+
+**Antes.** «Fallaste 8» y «Dejaste en blanco 3» con 2 correctas de 10: las en
+blanco se contaban dos veces. El tiempo era la diferencia entre el inicio y el
+fin de la sesión (retomar al día siguiente daba «1 440 min»), y con tiempos
+cortos decía «0 s por pregunta». El anillo se pintaba de verde o ámbar según
+si esas diez preguntas «aprobarían» el ENAM, una comparación engañosa.
+
+**Ahora.** Dice qué fue («Resultado de tu práctica · 10 preguntas»). El
+anillo va en el color de acción. El desglose es correctas / incorrectas / en
+blanco, sin solaparse. El tiempo sale de lo registrado en cada pregunta y no
+aparece si no hay. Una sola acción principal: repasar las incorrectas si las
+hay, otra práctica si no.
+
+**Se comprueba con:** `test/resumen_practica_test.dart` y la captura `4.4`.
