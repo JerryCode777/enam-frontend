@@ -98,6 +98,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             children: [
               FadeUp(child: _Cabecera(user: user)),
+              const _EstadoDeEnvio(),
               const SizedBox(height: DesignTokens.space5),
               FadeUp(
                 index: 1,
@@ -231,6 +232,39 @@ class _Avatar extends StatelessWidget {
         .take(2)
         .map((p) => p[0].toUpperCase())
         .join();
+  }
+}
+
+/// Lo respondido sin señal que aún no llegó al servidor, dicho en una línea.
+///
+/// Discreto a propósito (plan §7): no es algo que la persona tenga que
+/// resolver, se envía solo al volver la red. Pero tiene que poder saberlo, y
+/// nunca se dice «sincronizado» hasta que el servidor lo aceptó: la cifra sale
+/// de la bandeja local y baja solo cuando llega la confirmación.
+class _EstadoDeEnvio extends ConsumerWidget {
+  const _EstadoDeEnvio();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(sincronizacionProvider).value;
+    if (sync == null || sync.pendientes == 0) return const SizedBox.shrink();
+
+    final n = sync.pendientes;
+    return Padding(
+      padding: const EdgeInsets.only(top: DesignTokens.space3),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: EtiquetaEstado(
+          texto: sync.enMarcha
+              ? 'Enviando tus respuestas…'
+              : n == 1
+              ? '1 respuesta por enviar'
+              : '$n respuestas por enviar',
+          tipo: BannerKind.warning,
+          icono: Symbols.cloud_upload,
+        ),
+      ),
+    );
   }
 }
 

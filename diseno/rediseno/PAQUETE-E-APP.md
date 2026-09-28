@@ -63,7 +63,10 @@ mismos titulares que la web:
 | Dashboard o catálogo caídos | «Elige un área para practicar» | Configurar, sin porcentajes |
 
 El acceso vencido lo sigue resolviendo la guarda del router, antes de pintar
-el inicio. Mientras se carga por primera vez hay un esqueleto con la geometría
+el inicio. Si hay respuestas hechas sin señal que aún no llegaron al
+servidor, bajo el saludo aparece una etiqueta discreta («2 respuestas por
+enviar», «Enviando tus respuestas…»); nunca dice «sincronizado» antes de que
+el servidor lo acepte. Mientras se carga por primera vez hay un esqueleto con la geometría
 del bloque; en una recarga el bloque se queda y solo cambia su contenido.
 
 **Se comprueba con:** `test/siguiente_accion_test.dart` (la regla),

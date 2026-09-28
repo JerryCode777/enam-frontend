@@ -9,6 +9,8 @@ import 'package:enam_app/features/session/presentation/national_mock_screen.dart
 import 'package:enam_app/features/stats/domain/stats_models.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 
+import 'offline.dart';
+
 /// Los estados del inicio contextual (plan §5), listos para montar.
 ///
 /// Los usan el banco de capturas y las pruebas de comportamiento, para que
@@ -22,7 +24,10 @@ enum EstadoInicio {
   sinConexion,
 }
 
-List<Override> overridesDeInicio(EstadoInicio estado) {
+List<Override> overridesDeInicio(
+  EstadoInicio estado, {
+  AlmacenEnMemoria? almacen,
+}) {
   final conHistorial =
       estado == EstadoInicio.areaPrioritaria ||
       estado == EstadoInicio.retomar ||
@@ -30,6 +35,9 @@ List<Override> overridesDeInicio(EstadoInicio estado) {
 
   return [
     authControllerProvider.overrideWith(_ConSesion.new),
+    // La bandeja de lo que falta enviar vive en la base local; en las pruebas,
+    // en memoria.
+    almacenOfflineProvider.overrideWithValue(almacen ?? AlmacenEnMemoria()),
     hayRedProvider.overrideWith(
       (ref) => Stream.value(estado != EstadoInicio.sinConexion),
     ),

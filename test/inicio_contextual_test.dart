@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'ayuda/inicio.dart';
+import 'ayuda/offline.dart';
 
 /// El inicio pinta una siguiente acción distinta en cada estado (plan §5), y
 /// nunca una cifra que no venga de los datos.
@@ -15,7 +16,11 @@ import 'ayuda/inicio.dart';
 void main() {
   setUpAll(() => initializeDateFormatting('es'));
 
-  Future<void> montar(WidgetTester tester, EstadoInicio estado) async {
+  Future<void> montar(
+    WidgetTester tester,
+    EstadoInicio estado, {
+    AlmacenEnMemoria? almacen,
+  }) async {
     tester.view
       ..physicalSize = const Size(390, 844) * 3
       ..devicePixelRatio = 3;
@@ -23,7 +28,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: overridesDeInicio(estado),
+        overrides: overridesDeInicio(estado, almacen: almacen),
         child: MaterialApp(theme: AppTheme.light, home: const HomeScreen()),
       ),
     );
@@ -40,7 +45,8 @@ void main() {
     EstadoInicio.sinConexion: ('Practica sin conexión', 'Ver lo descargado'),
   };
 
-  for (final MapEntry(key: estado, value: (titulo, boton)) in esperado.entries) {
+  for (final MapEntry(key: estado, value: (titulo, boton))
+      in esperado.entries) {
     testWidgets('${estado.name}: «$titulo»', (tester) async {
       await montar(tester, estado);
       expect(find.text(titulo), findsOneWidget);
@@ -86,5 +92,26 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -1200));
     await tester.pump();
     expect(find.text('Nota proyectada'), findsNothing);
+  });
+
+  testWidgets('lo respondido sin señal se anuncia, sin decir «sincronizado»', (
+    tester,
+  ) async {
+    final almacen = AlmacenEnMemoria();
+    for (final p in ['p1', 'p2']) {
+      await almacen.encolar('u1', (
+        sesionId: 's1',
+        preguntaId: p,
+        opcionId: 'a',
+        tiempoMs: 1000,
+        marcada: false,
+        respondidaEn: DateTime(2026, 7, 30),
+      ));
+    }
+
+    await montar(tester, EstadoInicio.sinConexion, almacen: almacen);
+
+    expect(find.text('2 respuestas por enviar'), findsOneWidget);
+    expect(find.textContaining('sincronizad'), findsNothing);
   });
 }
