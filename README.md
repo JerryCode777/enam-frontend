@@ -143,7 +143,8 @@ flutter build apk --release --dart-define=ENV=prod
    cliente: requieren cuenta y configuración de un proveedor. No se añaden sin
    aprobación del negocio.
 2. Persistir el tema elegido en `shared_preferences`.
-3. Enviar los reportes de preguntas al servidor cuando exista su endpoint.
-   Mientras tanto van por el WhatsApp de soporte.
+3. Los reportes de preguntas van a `POST /questions/{id}/reports`, que aún no
+   está desplegado (enam-backend#4). Hasta entonces caen al WhatsApp de
+   soporte.
 4. Actualizar el titular legal a AidaSoft cuando estén la razón social y el
    RUC. Los textos afectados están marcados con `PENDIENTE(titular)`.

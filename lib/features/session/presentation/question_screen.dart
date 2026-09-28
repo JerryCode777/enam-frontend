@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/config/contacto.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
@@ -796,7 +797,7 @@ class _MigasPregunta extends ConsumerWidget {
   }
 }
 
-class _BarraAccion extends StatelessWidget {
+class _BarraAccion extends ConsumerWidget {
   const _BarraAccion({
     required this.sessionId,
     required this.estado,
@@ -808,7 +809,7 @@ class _BarraAccion extends StatelessWidget {
   final SessionController control;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.space5,
@@ -830,7 +831,7 @@ class _BarraAccion extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: OutlinedButton.icon(
-                    onPressed: () => _reportar(context),
+                    onPressed: () => _reportar(context, ref),
                     icon: const Icon(Symbols.flag, size: 18),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 56),
@@ -893,14 +894,16 @@ class _BarraAccion extends StatelessWidget {
 
   /// Reportar una pregunta con posible clave errónea (RN-06).
   ///
-  /// **Todavía no hay endpoint de reportes en el servidor.** Antes esto
-  /// enseñaba «Gracias. Un editor va a revisarla.» y no mandaba nada a nadie:
-  /// el reporte se perdía y la persona creía haberlo enviado. Mientras el
-  /// endpoint no exista, el reporte va por el WhatsApp de soporte con el
-  /// identificador de la pregunta y el motivo ya escritos, y la hoja dice
-  /// exactamente eso. Cuando exista (`POST /questions/{id}/reports`, pedido
-  /// al backend), se cambia el destino y los textos.
-  Future<void> _reportar(BuildContext context) async {
+  /// Va a `POST /questions/{id}/reports`. Si el servidor todavía no tiene el
+  /// endpoint (responde 404) o no se puede llegar a él, el reporte cae al
+  /// WhatsApp de soporte con el código de la pregunta y el motivo ya escritos:
+  /// así funciona igual antes y después de desplegar el backend, y ningún
+  /// reporte se pierde en silencio.
+  ///
+  /// Hubo un tiempo en que esto enseñaba «Gracias. Un editor va a revisarla.»
+  /// sin mandar nada a nadie. Lo que se dice ahora es lo que pasó: «Reporte
+  /// enviado» solo si el servidor respondió que lo recibió.
+  Future<void> _reportar(BuildContext context, WidgetRef ref) async {
     final motivo = await showModalBottomSheet<(String, String)>(
       context: context,
       showDragHandle: true,
@@ -929,8 +932,7 @@ class _BarraAccion extends StatelessWidget {
                 DesignTokens.space2,
               ),
               child: Text(
-                'Se abrirá WhatsApp con el reporte ya escrito para que lo '
-                'envíes a soporte.',
+                'Lo enviamos a soporte con el código de la pregunta.',
                 style: context.texts.bodyMedium,
               ),
             ),
@@ -948,9 +950,39 @@ class _BarraAccion extends StatelessWidget {
 
     if (motivo == null || !context.mounted) return;
 
+    try {
+      await ref
+          .read(reportesRepositoryProvider)
+          .reportar(
+            preguntaId: estado.pregunta.id,
+            motivo: motivo.$1,
+            sessionId: sessionId,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(content: Text('Reporte enviado. Gracias por avisar.')),
+        );
+      return;
+    } on RateLimitFailure catch (e) {
+      // Varios seguidos: no es un fallo del canal, es esperar. Mandarlo por
+      // WhatsApp saltaría el límite que puso el servidor.
+      if (context.mounted) showErrorSnack(context, e.message);
+      return;
+    } on Failure {
+      // Backend sin el endpoint, sin red, caído: se sigue por WhatsApp.
+    }
+
+    if (!context.mounted) return;
+    await _reportarPorWhatsApp(context, motivo.$2);
+  }
+
+  /// El canal de respaldo: WhatsApp de soporte con el reporte escrito.
+  Future<void> _reportarPorWhatsApp(BuildContext context, String motivo) async {
     final enlace = Contacto.soporte(
       mensaje:
-          'Reporte de pregunta ${estado.pregunta.id}: ${motivo.$2}. '
+          'Reporte de pregunta ${estado.pregunta.id}: $motivo. '
           '(Sesión $sessionId)',
     );
     final abierto = await Contacto.abrir(enlace);
@@ -958,8 +990,8 @@ class _BarraAccion extends StatelessWidget {
     if (!abierto && context.mounted) {
       showErrorSnack(
         context,
-        'No pudimos abrir WhatsApp. Escríbenos a ${Contacto.soporteVisible} '
-        'con el código ${estado.pregunta.id}.',
+        'No pudimos enviar el reporte. Escríbenos a '
+        '${Contacto.soporteVisible} con el código ${estado.pregunta.id}.',
       );
     }
   }

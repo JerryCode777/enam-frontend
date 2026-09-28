@@ -100,18 +100,22 @@ identificadores internos («medicina-infecciosos»). «Reportar» agradecía
 - Reportar, marcar y avanzar son tres controles distintos: el marcador en la
   cabecera, «Reportar» con borde e icono a un lado, «Siguiente» como botón
   principal.
-- **Reportar** abre el WhatsApp de soporte con el código de la pregunta y el
-  motivo ya escritos, y la hoja lo dice antes de elegir. Si WhatsApp no se
-  puede abrir, lo dice y deja el código. La ayuda dejó de prometer la revisión
-  de un editor.
+- **Reportar** va a `POST /api/v1/questions/{id}/reports` con el motivo
+  (`clave|texto|imagen|explicacion`) y la sesión, y dice «Reporte enviado»
+  solo si el servidor responde que lo recibió. Si responde 404 (un backend
+  todavía sin el endpoint) o no se puede llegar, **cae al WhatsApp de
+  soporte** con el código y el motivo escritos; si tampoco hay WhatsApp, lo
+  dice y deja el código. Con 429 pide esperar y no lo salta por WhatsApp.
+  La hoja avisa antes de a dónde va. La ayuda dejó de prometer la revisión de
+  un editor.
 
-**Pendiente de backend.** `POST /api/v1/questions/{id}/reports` (motivo
-`clave|texto|imagen|explicacion`, comentario opcional, `sessionId` opcional;
-201, 404, 429). Está acordado con la sesión del backend y en cola detrás de
-Mercado Pago. Cuando exista, `_reportar` cambia de destino; los códigos de
-motivo ya están en `_BarraAccion.motivos`.
+**Backend.** El endpoint está en
+[enam-backend#4](https://github.com/JerryCode777/enam-backend/pull/4),
+todavía sin desplegar. Por eso el respaldo: la app funciona igual antes y
+después del despliegue.
 
-**Se comprueba con:** `test/pregunta_test.dart` y las capturas `4.2` y `4.3` de
+**Se comprueba con:** `test/pregunta_test.dart`, `test/reportes_contrato_test.dart`
+y las capturas `4.2` y `4.3` de
 `test/golden/estudio_test.dart`.
 
 ## 4. Resultado de la práctica

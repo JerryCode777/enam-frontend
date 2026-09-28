@@ -1,7 +1,9 @@
 import 'package:enam_app/core/config/contacto.dart';
+import 'package:enam_app/core/error/failure.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/core/theme/design_tokens.dart';
+import 'package:enam_app/features/session/data/reportes_repository.dart';
 import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:enam_app/features/session/presentation/question_screen.dart';
@@ -15,7 +17,10 @@ void main() {
   late MockSessionRepository repo;
   late String sesionId;
 
-  Future<void> montar(WidgetTester tester) async {
+  Future<void> montar(
+    WidgetTester tester, {
+    ReportesRepository? reportes,
+  }) async {
     tester.view
       ..physicalSize = const Size(393, 852) * 3
       ..devicePixelRatio = 3;
@@ -31,7 +36,12 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sessionRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          sessionRepositoryProvider.overrideWithValue(repo),
+          reportesRepositoryProvider.overrideWithValue(
+            reportes ?? MockReportesRepository(),
+          ),
+        ],
         child: MaterialApp(
           theme: AppTheme.light,
           home: QuestionScreen(sessionId: sesionId),
@@ -104,10 +114,12 @@ void main() {
   group('Reportar', () {
     late List<Uri> abiertos;
     late bool puedeAbrir;
+    late _ReportesFalsos reportes;
 
     setUp(() {
       abiertos = [];
       puedeAbrir = true;
+      reportes = _ReportesFalsos();
       Contacto.lanzador = (uri) async {
         abiertos.add(uri);
         return puedeAbrir;
@@ -117,41 +129,91 @@ void main() {
     tearDown(() => Contacto.lanzador = (_) async => false);
 
     Future<void> reportar(WidgetTester tester) async {
-      await montar(tester);
+      await montar(tester, reportes: reportes);
       await responder(tester);
 
       await tester.tap(find.text('Reportar'));
       await tester.pumpAndSettle();
-      // La hoja dice a dónde va el reporte antes de elegir el motivo.
-      expect(find.textContaining('Se abrirá WhatsApp'), findsOneWidget);
+      expect(find.textContaining('Lo enviamos a soporte'), findsOneWidget);
 
       await tester.tap(find.text('La clave me parece equivocada'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('abre soporte con el código de la pregunta y el motivo', (
+    testWidgets('va al servidor con el motivo y lo confirma', (tester) async {
+      await reportar(tester);
+
+      expect(reportes.recibidos, hasLength(1));
+      final r = reportes.recibidos.single;
+      expect(r.motivo, 'clave');
+      expect(r.sessionId, sesionId);
+      expect(find.text('Reporte enviado. Gracias por avisar.'), findsOneWidget);
+      // Llegó por la app: no hace falta abrir WhatsApp.
+      expect(abiertos, isEmpty);
+    });
+
+    testWidgets('con un backend sin el endpoint, cae al WhatsApp', (
       tester,
     ) async {
+      reportes.fallo = const NotFoundFailure();
       await reportar(tester);
 
       expect(abiertos, hasLength(1));
       final mensaje = abiertos.single.queryParameters['text']!;
-      final pregunta = (await tester.runAsync(
-        () => repo.session(sesionId),
-      ))!.preguntas.first;
-      expect(mensaje, contains(pregunta.id));
+      expect(mensaje, contains(reportes.intentos.single));
       expect(mensaje, contains('La clave me parece equivocada'));
-      // No agradece un envío que no hizo la app: lo envía la persona.
-      expect(find.textContaining('Un editor va a revisarla'), findsNothing);
+      expect(find.textContaining('Reporte enviado'), findsNothing);
     });
 
-    testWidgets('sin WhatsApp, lo dice y deja el código para escribir', (
+    testWidgets('sin red, también cae al WhatsApp', (tester) async {
+      reportes.fallo = const NetworkFailure();
+      await reportar(tester);
+      expect(abiertos, hasLength(1));
+    });
+
+    testWidgets('si el servidor pide esperar, no lo salta por WhatsApp', (
       tester,
     ) async {
+      reportes.fallo = const RateLimitFailure('Espera un momento.');
+      await reportar(tester);
+
+      expect(abiertos, isEmpty);
+      expect(find.text('Espera un momento.'), findsOneWidget);
+    });
+
+    testWidgets('sin endpoint y sin WhatsApp, lo dice y deja el código', (
+      tester,
+    ) async {
+      reportes.fallo = const NetworkFailure();
       puedeAbrir = false;
       await reportar(tester);
 
-      expect(find.textContaining('No pudimos abrir WhatsApp'), findsOneWidget);
+      expect(
+        find.textContaining('No pudimos enviar el reporte'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Un editor va a revisarla'), findsNothing);
     });
   });
+}
+
+class _ReportesFalsos implements ReportesRepository {
+  Failure? fallo;
+  final recibidos = <({String motivo, String? sessionId})>[];
+
+  /// Ids de pregunta de todos los intentos, hayan llegado o no.
+  final intentos = <String>[];
+
+  @override
+  Future<ReporteRecibido> reportar({
+    required String preguntaId,
+    required String motivo,
+    String? comentario,
+    String? sessionId,
+  }) async {
+    intentos.add(preguntaId);
+    if (fallo case final f?) throw f;
+    recibidos.add((motivo: motivo, sessionId: sessionId));
+    return (id: 'r1', estado: 'recibido');
+  }
 }

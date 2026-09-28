@@ -61,6 +61,11 @@ abstract final class ApiEndpoints {
   static String sessionAnswers(String id) => '/sessions/$id/answers';
   static String sessionSubmit(String id) => '/sessions/$id/submit';
 
+  /// Reportar un problema con una pregunta (RN-06): clave dudosa, error en el
+  /// texto, imagen rota o explicación confusa.
+  static String reportarPregunta(String questionId) =>
+      '/questions/$questionId/reports';
+
   // ---------- Estadísticas y ranking (Módulo 5) ----------
   static const String statsDashboard = '/stats/dashboard';
   static const String rankingGeneral = '/rankings/general';

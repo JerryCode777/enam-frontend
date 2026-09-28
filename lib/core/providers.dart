@@ -12,6 +12,7 @@ import '../features/catalog/domain/catalog_models.dart';
 import '../features/offline/data/almacen_offline.dart';
 import '../features/offline/data/offline_repository.dart';
 import '../features/offline/data/servicio_offline.dart';
+import '../features/session/data/reportes_repository.dart';
 import '../features/session/data/session_repository.dart';
 import '../features/session/data/session_repository_offline.dart';
 import '../features/session/domain/session_models.dart';
@@ -146,6 +147,12 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
     offline: offline,
     red: ref.watch(conectividadProvider),
   );
+});
+
+/// Reportes de preguntas (RN-06).
+final reportesRepositoryProvider = Provider<ReportesRepository>((ref) {
+  if (AppConfig.useMocks) return MockReportesRepository();
+  return ApiReportesRepository(ref.watch(apiClientProvider));
 });
 
 // ==================== MODO DUELO (M11) ====================

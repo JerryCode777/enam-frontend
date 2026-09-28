@@ -34,7 +34,8 @@ y los contrastes de cada par.
    conexión, primera práctica, área prioritaria o elegir área), con la misma
    regla y los mismos titulares que la web.
 3. **Pregunta.** Enunciado a 17 px, columna de lectura, el veredicto a la vista
-   al responder y la explicación ordenada. «Reportar» abre el WhatsApp de
+   al responder y la explicación ordenada. «Reportar» va al endpoint de
+   reportes y, si el backend aún no lo tiene o no hay red, al WhatsApp de
    soporte con el código de la pregunta.
 4. **Resultado de práctica** con cifras que cuadran y una siguiente acción.
 5. **Temario.** «Aún sin práctica» en vez de 0 %.
@@ -53,7 +54,7 @@ y los contrastes de cada par.
 |---|---|---|
 | Inicio, nota proyectada | «+0.60 esta semana», escrito en el código | Sin variación hasta que el servidor la mande |
 | Simulacros, nacional | «dom 16 ago · 1,847 participantes», sin convocatoria | La convocatoria de `GET /mock-exams`, o «no hay» |
-| Pregunta, reportar | «Gracias. Un editor va a revisarla.», sin enviar nada | WhatsApp de soporte con el código, y lo dice antes |
+| Pregunta, reportar | «Gracias. Un editor va a revisarla.», sin enviar nada | `POST /questions/{id}/reports`; WhatsApp de respaldo |
 | Ayuda | Prometía la revisión de un editor | Explica que se envía por WhatsApp |
 | Resultado de práctica | Las en blanco contadas también como falladas | Correctas, incorrectas y en blanco por separado |
 | Resultado de práctica | Anillo de «aprobado» por 10 preguntas | Color neutro y «Resultado de tu práctica» |
@@ -104,7 +105,7 @@ teclado abierto y el texto al 140 % en 360 px.
 
 | Pendiente | Quién |
 |---|---|
-| `POST /api/v1/questions/{id}/reports`, luego conectar «Reportar» | Backend (acordado, en cola tras Mercado Pago) |
+| Desplegar `POST /api/v1/questions/{id}/reports` (enam-backend#4); la app ya lo usa, con WhatsApp de respaldo mientras tanto | Backend |
 | Emitir `first_practice_completed`, `payment_confirmed`, `access_granted` | Backend |
 | Elegir proveedor de analítica y comprobar la recepción | Negocio |
 | Crashlytics y notificaciones push | Negocio: requieren cuentas y configuración |

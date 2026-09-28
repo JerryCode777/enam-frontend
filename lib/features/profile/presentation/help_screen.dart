@@ -84,11 +84,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     (
       pregunta: 'Encontré una pregunta con la clave equivocada',
       respuesta:
-          // Sin prometer una revisión automática: el reporte llega por
-          // WhatsApp a soporte mientras el servidor no tenga su endpoint.
-          'Toca "Reportar" después de responderla. Se abre WhatsApp con el '
-          'código de la pregunta y el motivo ya escritos para que lo envíes '
-          'a soporte.',
+          // Sin prometer plazos ni una corrección: llega a soporte, por la
+          // app o, si no se puede, por WhatsApp.
+          'Toca "Reportar" después de responderla y elige el motivo. El '
+          'reporte llega a soporte con el código de la pregunta.',
     ),
     (
       pregunta: '¿Puedo usar la app sin internet?',
