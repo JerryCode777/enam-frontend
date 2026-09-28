@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:url_launcher/url_launcher.dart';
 
 /// Los canales de WhatsApp por donde se cierra el cobro (M10).
@@ -84,9 +85,17 @@ abstract final class Contacto {
   /// capturar ahí es la peor forma de perder una venta.
   static Future<bool> abrir(Uri enlace) async {
     try {
-      return await launchUrl(enlace, mode: LaunchMode.externalApplication);
+      return await lanzador(enlace);
     } on Exception {
       return false;
     }
   }
+
+  /// Lo que de verdad abre el enlace. Se puede sustituir en las pruebas, donde
+  /// no hay WhatsApp ni plugin de sistema al que llamar.
+  @visibleForTesting
+  static Future<bool> Function(Uri) lanzador = _lanzar;
+
+  static Future<bool> _lanzar(Uri enlace) =>
+      launchUrl(enlace, mode: LaunchMode.externalApplication);
 }

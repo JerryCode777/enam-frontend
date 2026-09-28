@@ -70,3 +70,41 @@ del bloque; en una recarga el bloque se queda y solo cambia su contenido.
 `test/inicio_contextual_test.dart` (la pantalla en cada estado, que la acción
 quepa en 390 × 844 y que no haya cifras inventadas) y
 `test/golden/inicio_test.dart` (capturas de los seis estados).
+
+## 3. Pregunta y explicación
+
+**Antes.** Enunciado a 16 px. Al responder, la pantalla se quedaba donde
+estaba: en un caso clínico largo, lo primero que se veía era otra vez el
+enunciado, con el veredicto y la explicación debajo del borde. En la
+explicación, tu respuesta errada iba antes que la correcta, y los distractores
+a 12 px pegados al texto de la alternativa. Las etiquetas de área enseñaban
+identificadores internos («medicina-infecciosos»). «Reportar» agradecía
+(«Un editor va a revisarla») sin enviar nada.
+
+**Ahora.**
+
+- Enunciado a **17 px con interlineado 1,6**, en una columna de 720 px como
+  máximo.
+- Al confirmar, la pantalla baja sola hasta el **veredicto** («Correcto. Elegiste
+  la A» / «Incorrecto. La correcta es la C»), dicho con texto, icono y color y
+  anunciado al lector de pantalla. Después, la correcta, tu respuesta si
+  fallaste, el porqué, y «Por qué no las demás» a tamaño de lectura con la
+  letra delante. Las etiquetas muestran el nombre del temario.
+- Seleccionar sigue sin responder; confirmar da una vibración corta, la única
+  de la pantalla.
+- Reportar, marcar y avanzar son tres controles distintos: el marcador en la
+  cabecera, «Reportar» con borde e icono a un lado, «Siguiente» como botón
+  principal.
+- **Reportar** abre el WhatsApp de soporte con el código de la pregunta y el
+  motivo ya escritos, y la hoja lo dice antes de elegir. Si WhatsApp no se
+  puede abrir, lo dice y deja el código. La ayuda dejó de prometer la revisión
+  de un editor.
+
+**Pendiente de backend.** `POST /api/v1/questions/{id}/reports` (motivo
+`clave|texto|imagen|explicacion`, comentario opcional, `sessionId` opcional;
+201, 404, 429). Está acordado con la sesión del backend y en cola detrás de
+Mercado Pago. Cuando exista, `_reportar` cambia de destino; los códigos de
+motivo ya están en `_BarraAccion.motivos`.
+
+**Se comprueba con:** `test/pregunta_test.dart` y las capturas `4.2` y `4.3` de
+`test/golden/estudio_test.dart`.
