@@ -230,7 +230,15 @@ final servicioOfflineProvider = Provider<ServicioOffline?>((ref) {
   );
 });
 
+/// Atado al **id** del usuario, y no porque el repositorio lo use.
+///
+/// El dashboard y el ranking cuelgan de aquí. Sin este `watch`, quien cerraba
+/// sesión y dejaba entrar a otra persona en el mismo teléfono le enseñaba sus
+/// propias cifras hasta que algo forzara una recarga: resultados personales en
+/// la cuenta de otro (plan de rediseño §5). Se observa solo el id para que
+/// editar el nombre no tire las estadísticas.
 final statsRepositoryProvider = Provider<StatsRepository>((ref) {
+  ref.watch(currentUserProvider.select((u) => u?.id));
   if (AppConfig.useMocks) return MockStatsRepository();
   return ApiStatsRepository(ref.watch(apiClientProvider));
 });
@@ -314,30 +322,21 @@ typedef Startup = ({bool onboardingVisto});
 
 /// Estado de arranque de la app. `null` mientras no está resuelto.
 ///
-/// Dos cosas conviven aquí:
+/// Guarda si el onboarding ya se vio. El router lo necesita de forma
+/// **síncrona** para decidir a dónde mandar al usuario sin sesión, así que no
+/// puede ser un `FutureProvider` que se consulte en el momento de redirigir.
 ///
-/// 1. Si el onboarding ya se vio. El router lo necesita de forma **síncrona**
-///    para decidir a dónde mandar al usuario sin sesión, así que no puede ser
-///    un `FutureProvider` que se consulte en el momento de redirigir.
-///
-/// 2. Un tiempo mínimo en el splash. El diseño pide una animación de logo, ECG
-///    y barra; leer el storage tarda ~200 ms, así que sin esto la pantalla
-///    aparecía y desaparecía como un parpadeo y la animación no se veía nunca.
-///    El diseño marca 2.5 s como techo; 1.8 s deja ver la animación sin que
-///    se haga lento.
+/// Ya no impone un tiempo mínimo en el splash. Durante un tiempo esperaba
+/// 1,8 s para que se viera la animación del logo, aunque las preferencias y la
+/// sesión estuvieran listas en ~200 ms: cada arranque costaba un segundo y
+/// medio de espera que no traía nada. Ahora la app entra en cuanto sabe a
+/// dónde ir (plan de rediseño §5), y es el splash el que, si algo tarda de
+/// verdad, lo dice.
 class StartupNotifier extends AsyncNotifier<Startup> {
-  static const minimoEnSplash = Duration(milliseconds: 1800);
-
   @override
   Future<Startup> build() async {
-    // Las dos se lanzan antes del primer await, así que corren en paralelo: la
-    // espera mínima no se suma a la lectura del storage.
-    final visto = ref.read(appPrefsProvider).onboardingVisto();
-    final espera = Future<void>.delayed(minimoEnSplash);
-
-    final resultado = await visto;
-    await espera;
-    return (onboardingVisto: resultado);
+    final visto = await ref.read(appPrefsProvider).onboardingVisto();
+    return (onboardingVisto: visto);
   }
 
   /// Marca el onboarding como visto y actualiza el estado en memoria, para que

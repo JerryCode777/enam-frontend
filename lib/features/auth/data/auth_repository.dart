@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/network/api_client.dart';
@@ -157,7 +159,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -173,7 +175,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -197,7 +199,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -208,9 +210,46 @@ class ApiAuthRepository implements AuthRepository {
     if (!await _tokens.hasSession()) return null;
     try {
       final data = await _client.get<Map<String, dynamic>>(ApiEndpoints.me);
-      return User.fromJson(data);
+      return _recordar(User.fromJson(data));
     } on UnauthorizedFailure {
       await _tokens.clear();
+      return null;
+    } on NetworkFailure {
+      // Sin red se entra con el último perfil conocido: lo descargado sigue
+      // sirviendo, y en cuanto vuelva la señal el primer 401 cerrará la sesión
+      // si ya no vale. Sin perfil guardado no hay con qué entrar.
+      final ultimo = await _ultimoConocido();
+      if (ultimo != null) return ultimo;
+      rethrow;
+    } on TimeoutFailure {
+      final ultimo = await _ultimoConocido();
+      if (ultimo != null) return ultimo;
+      rethrow;
+    }
+  }
+
+  /// Guarda el perfil para poder arrancar sin red, y lo devuelve.
+  ///
+  /// Un fallo al guardar no impide entrar: sin copia, lo único que se pierde es
+  /// abrir la app la próxima vez sin señal.
+  Future<User> _recordar(User user) async {
+    try {
+      await _tokens.guardarUsuario(jsonEncode(user.toJson()));
+    } catch (_) {}
+    return user;
+  }
+
+  /// El perfil de la última vez que hubo red, si lo hay y se puede leer.
+  ///
+  /// Solo se usa cuando **no se pudo preguntar**. Si el servidor responde y
+  /// dice que la sesión no vale, eso manda: ese caso es el 401 de arriba, que
+  /// borra todo.
+  Future<User?> _ultimoConocido() async {
+    try {
+      final json = await _tokens.leerUsuario();
+      if (json == null) return null;
+      return User.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    } catch (_) {
       return null;
     }
   }
@@ -264,7 +303,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -302,6 +341,6 @@ class ApiAuthRepository implements AuthRepository {
         'ocultoEnRanking': ?ocultoEnRanking,
       },
     );
-    return User.fromJson(data);
+    return _recordar(User.fromJson(data));
   }
 }
