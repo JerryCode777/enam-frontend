@@ -172,3 +172,15 @@ El perfil obligatorio (universidad, condición, fecha objetivo) se mantiene:
 quitarlo es un cambio de negocio que el plan deja fuera.
 
 **Se comprueba con:** `test/onboarding_test.dart` y la captura `1.2`.
+
+## 8. Progreso
+
+- «Dónde invertir tu tiempo» usa el mismo dato y el mismo texto que el inicio
+  («Pesa N preguntas en el ENAM y vas en X % de acierto»). Antes tomaba el
+  acierto del catálogo, que el servidor manda todavía en cero, y podía
+  contradecir al inicio sobre el mismo área.
+- La evolución de la nota tiene **alternativa en tabla** («Ver como tabla») y
+  un resumen para lector de pantalla. El trazo solo no se lee sin vista.
+- Se mantiene el umbral de 50 respuestas para la nota proyectada.
+
+**Se comprueba con:** `test/progreso_test.dart`.
