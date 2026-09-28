@@ -21,7 +21,7 @@ elegido por el negocio los reciba y se haya comprobado la recepción.
 | `profile_completed` | App y web | El servidor guarda el perfil obligatorio | Una por cuenta (en el servidor) |
 | `first_practice_completed` | **Backend** | Primera sesión de práctica cerrada de la cuenta | Una por cuenta: solo el servidor lo sabe con certeza |
 | `plans_viewed` | App y web | Se abre la pantalla de planes o de acceso terminado | Ninguna |
-| `checkout_started` | Web (Android paga en la web) | Se inicia el cobro | Ninguna |
+| `checkout_started` | Web (Android paga en la web) | Se inicia el cobro | Ninguna: cada intento cuenta |
 | `payment_confirmed` | **Backend** | Pago validado o conciliado | Una por pago |
 | `access_granted` | **Backend** | Se concede acceso de pago | Una por concesión |
 
@@ -33,17 +33,27 @@ Abrir WhatsApp no es pagar: ningún evento de pago nace de un clic.
 
 ## Propiedades
 
-Solo estas, filtradas antes de salir (`propiedadesPermitidas`):
+Cada cliente filtra contra su propia lista cerrada antes de enviar.
 
-| Propiedad | Valores |
-|---|---|
-| `plataforma` | `android`, `iOS`, `web` |
-| `version_visual` | `rediseno-2026-09` (compara cohortes antes y después) |
-| `pantalla` | Nombre corto de la pantalla, p. ej. `registro`, `acceso_terminado` |
-| `origen` | Campaña o canal, cuando se conozca |
+| Propiedad | App | Web | Valores |
+|---|---|---|---|
+| `plataforma` | Sí | Sí | `android`, `iOS`, `web` |
+| `version_visual` | Sí | Sí | `rediseno-2026-09` (compara cohortes antes y después) |
+| `origen` | Sí | Sí | En el registro: `correo` o `google`. En la app solo se emite `correo`: con Google o Apple el teléfono no sabe si la cuenta es nueva |
+| `pantalla` | Sí | No | Nombre corto de la pantalla, p. ej. `registro`, `acceso_terminado` |
+| `medio` | No | Sí | En `checkout_started`: `mercadopago` o `yape` |
+| `plan_id` | No | Sí | En `checkout_started` |
+| `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` | No | Sí | Leídos una vez al cargar la web |
 
-**Nunca** nombres, correos, tokens ni texto de preguntas. La prueba
-`test/analitica_test.dart` lo comprueba.
+**Nunca** nombres, correos, tokens ni texto de preguntas. Lo comprueban
+`test/analitica_test.dart` en la app y el test de la web.
+
+## Sin proveedor: qué pasa hoy con cada evento
+
+| Cliente | Release | Desarrollo |
+|---|---|---|
+| App | `AnaliticaNula`: se descarta | Se escribe en la consola (`[evento] …`) |
+| Web | Se descarta | `CustomEvent('enam:analitica')` en `window` (un test del repo prohíbe `console.debug`) |
 
 ## Pendiente, fuera de este repositorio
 

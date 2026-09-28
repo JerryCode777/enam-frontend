@@ -73,7 +73,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() => _loading = true);
     ref
         .read(analiticaProvider)
-        .registrar(Evento.signupStarted, propiedades: {'pantalla': 'registro'});
+        .registrar(
+          Evento.signupStarted,
+          // Mismos valores que la web: 'correo' | 'google'. El alta con
+          // Google o Apple no se emite: desde el teléfono no se sabe si la
+          // cuenta es nueva o ya existía.
+          propiedades: {'pantalla': 'registro', 'origen': 'correo'},
+        );
     try {
       await ref
           .read(authRepositoryProvider)
