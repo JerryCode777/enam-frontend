@@ -184,3 +184,17 @@ quitarlo es un cambio de negocio que el plan deja fuera.
 - Se mantiene el umbral de 50 respuestas para la nota proyectada.
 
 **Se comprueba con:** `test/progreso_test.dart`.
+
+## 9. Simulacros
+
+- La tarjeta del **Simulacro Nacional** tenía escrito «dom 16 ago, 8:00 a.m. ·
+  1,847 participantes»: se veía aunque no hubiera convocatoria, con una cifra
+  de inscritos que no salía de ningún sitio. Ahora usa la convocatoria real
+  de `GET /mock-exams` y, si no hay, dice «No hay una convocatoria programada
+  por ahora».
+- Cada tarjeta dice lo que hará según el estado real: «Comenzar» o «A medias ·
+  continuar en la pregunta N de 180» para el completo (y al tocarla continúa
+  en vez de empezar otro), «Inscribirme», «Ya estás inscrito», «En curso ·
+  entrar» o «Ver resultados» para el nacional.
+
+**Se comprueba con:** `test/simulacros_hub_test.dart`.
