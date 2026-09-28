@@ -21,7 +21,8 @@ abstract final class Contacto {
   /// Asistente de WhatsApp: suscripciones, planes y pagos.
   static const String botNumero = '51906944489';
 
-  /// Soporte humano (Jaks Tech SAC): problemas y dudas que necesitan persona.
+  /// Soporte humano (operador de ENAM Prep; PENDIENTE(titular): pasa a
+  /// AidaSoft): problemas y dudas que necesitan persona.
   ///
   /// Lo pisa [aplicar] con lo que responda el servidor.
   static String soporteNumero = _soportePorDefecto;
