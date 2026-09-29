@@ -148,6 +148,10 @@ class AnaliticaDeConsola implements Analitica {
 
 /// La de verdad: encola en el teléfono y manda por lotes a `POST /eventos`.
 ///
+/// Las [comunes] se fijan al registrar, con el evento: si espera en la cola y
+/// la app se actualiza, sale con la versión con la que se generó (contrato,
+/// §4).
+///
 /// Registrar es instantáneo y no espera a la red. Lo encolado se manda poco
 /// después, al volver del segundo plano y al recuperar la conexión, y si no
 /// se puede, sigue en la cola hasta siete días.
@@ -155,17 +159,20 @@ class AnaliticaConCola implements Analitica {
   AnaliticaConCola({
     required ColaDeEventos cola,
     required EmisorDeEventos emisor,
+    required Future<Map<String, Object>> Function() comunes,
     required String plataforma,
     DateTime Function()? reloj,
     Duration demora = const Duration(seconds: 2),
   }) : _cola = cola,
        _emisor = emisor,
+       _comunes = comunes,
        _plataforma = plataforma,
        _reloj = reloj ?? DateTime.now,
        _demora = demora;
 
   final ColaDeEventos _cola;
   final EmisorDeEventos _emisor;
+  final Future<Map<String, Object>> Function() _comunes;
   final String _plataforma;
   final DateTime Function() _reloj;
   final Duration _demora;
@@ -184,14 +191,19 @@ class AnaliticaConCola implements Analitica {
     );
     if (limpias == null) return;
 
-    _guardando = _guardando.then(
-      (_) => _cola.agregar((
-        eventoId: uuidV4(),
-        tipo: evento.nombre,
-        ocurridoEn: _reloj().toUtc(),
-        propiedades: limpias,
-      )),
-    );
+    final ocurridoEn = _reloj().toUtc();
+    _guardando = _guardando.then((_) async {
+      // Un fallo aquí pierde este evento, no los que vengan detrás.
+      try {
+        await _cola.agregar((
+          eventoId: uuidV4(),
+          tipo: evento.nombre,
+          ocurridoEn: ocurridoEn,
+          propiedades: limpias,
+          comunes: await _comunes(),
+        ));
+      } catch (_) {}
+    });
     _programado?.cancel();
     _programado = Timer(_demora, () => unawaited(enviarPendientes()));
   }
@@ -246,10 +258,10 @@ final analiticaProvider = Provider<Analitica>((ref) {
   return AnaliticaConCola(
     cola: ref.watch(colaDeEventosProvider),
     plataforma: plataformaDeLaApp,
+    comunes: () => comunesDeLaApp(identidad),
     emisor: EmisorDeEventos(
       cola: ref.watch(colaDeEventosProvider),
       transporte: ref.watch(transporteDeEventosProvider),
-      comunes: () => comunesDeLaApp(identidad),
       // Con sesión, el token; si venció, se renueva antes de mandar. Sin
       // sesión, el evento sale anónimo.
       token: () async {

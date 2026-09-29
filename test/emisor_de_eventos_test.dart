@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:enam_app/core/analitica/analitica.dart';
@@ -14,19 +15,21 @@ void main() {
   var reloj = DateTime.utc(2026, 9, 29, 12);
   DateTime ahora() => reloj;
 
-  EventoEnCola evento(int i, {DateTime? cuando}) => (
+  Map<String, Object> comunesDe(String version) => {
+    'plataforma': 'android',
+    'version_app': version,
+    'version_visual': 'rediseno-2026-09',
+    'anonimo_id': '3f0c9a1e-6b2d-4e8f-9a51-2c7d8e4b1f60',
+  };
+  final comunes = comunesDe('1.0.0+7-dev');
+
+  EventoEnCola evento(int i, {DateTime? cuando, String? version}) => (
     eventoId: uuidV4(Random(i)),
     tipo: 'plans_viewed',
     ocurridoEn: cuando ?? reloj,
     propiedades: const {'pantalla': 'planes'},
+    comunes: version == null ? comunes : comunesDe(version),
   );
-
-  const comunes = <String, Object>{
-    'plataforma': 'android',
-    'version_app': '1.0.0+7-dev',
-    'version_visual': 'rediseno-2026-09',
-    'anonimo_id': '3f0c9a1e-6b2d-4e8f-9a51-2c7d8e4b1f60',
-  };
 
   ({EmisorDeEventos emisor, ColaDeEventos cola, _Servidor servidor}) montar({
     String? token,
@@ -37,7 +40,6 @@ void main() {
     final emisor = EmisorDeEventos(
       cola: cola,
       transporte: servidor,
-      comunes: () async => comunes,
       token: () async => token,
       renovarToken: () async => renovado,
       reloj: ahora,
@@ -81,6 +83,97 @@ void main() {
     });
   });
 
+  group('Comunes de cuando se generó (contrato, §4)', () {
+    test('una cola con dos versiones sale en dos sobres', () async {
+      final m = montar();
+      // Mezcladas en la cola, como tras actualizar con eventos pendientes.
+      await m.cola.agregar(evento(1, version: '1.0.0+7'));
+      await m.cola.agregar(evento(2, version: '1.0.0+8'));
+      await m.cola.agregar(evento(3, version: '1.0.0+7'));
+      await m.emisor.vaciar();
+
+      expect(m.servidor.lotes, hasLength(2));
+      final [viejo, nuevo] = m.servidor.lotes;
+      expect(viejo.cuerpo['comunes'], comunesDe('1.0.0+7'));
+      expect(viejo.ids, [evento(1).eventoId, evento(3).eventoId]);
+      expect(nuevo.cuerpo['comunes'], comunesDe('1.0.0+8'));
+      expect(nuevo.ids, [evento(2).eventoId]);
+      expect(await m.cola.pendientes(), isEmpty);
+    });
+
+    test('las comunes sobreviven a cerrar y abrir la app', () async {
+      await ColaDeEventos(
+        AlmacenDeColaPrefs(),
+        reloj: ahora,
+      ).agregar(evento(1, version: '1.0.0+7'));
+
+      final despues = ColaDeEventos(AlmacenDeColaPrefs(), reloj: ahora);
+      expect((await despues.pendientes()).single.comunes, comunesDe('1.0.0+7'));
+    });
+
+    test('los guardados sin comunes (formato anterior) se descartan', () async {
+      final viejo = {
+        'evento_id': evento(1).eventoId,
+        'tipo': 'plans_viewed',
+        'ocurrido_en': reloj.toIso8601String(),
+        'propiedades': {'pantalla': 'planes'},
+      };
+      SharedPreferences.setMockInitialValues({
+        'analitica.cola.v1': jsonEncode([
+          viejo,
+          {...viejo, 'evento_id': evento(2).eventoId, 'comunes': comunes},
+        ]),
+      });
+
+      final m = montar();
+      expect((await m.cola.pendientes()).single.eventoId, evento(2).eventoId);
+      await m.emisor.vaciar();
+      expect(m.servidor.lotes.single.ids, [evento(2).eventoId]);
+    });
+
+    test('la app actualizada manda lo encolado con su versión', () async {
+      final m = montar();
+      AnaliticaConCola app({required String version}) => AnaliticaConCola(
+        cola: m.cola,
+        emisor: m.emisor,
+        comunes: () async => comunesDe(version),
+        plataforma: 'android',
+        reloj: ahora,
+        demora: const Duration(days: 1),
+      );
+
+      // Sin red: lo de la 7 se queda en la cola.
+      m.servidor.status = 0;
+      final v7 = app(version: '1.0.0+7')
+        ..registrar(
+          Evento.plansViewed,
+          propiedades: const {'pantalla': 'planes'},
+        );
+      await v7.enviarPendientes();
+
+      // Se actualiza la app y vuelve la red.
+      reloj = reloj.add(const Duration(minutes: 2));
+      m.servidor.status = 200;
+      final v8 = app(version: '1.0.0+8')
+        ..registrar(
+          Evento.plansViewed,
+          propiedades: const {'pantalla': 'perfil'},
+        );
+      await v8.enviarPendientes();
+
+      final enviados = {
+        for (final l in m.servidor.lotes.skip(1))
+          (l.cuerpo['comunes']! as Map)['version_app']: [
+            for (final e in l.eventos) (e['propiedades']! as Map)['pantalla'],
+          ],
+      };
+      expect(enviados, {
+        '1.0.0+7': ['planes'],
+        '1.0.0+8': ['perfil'],
+      });
+    });
+  });
+
   group('Envío', () {
     test('lotes de 50 como máximo', () async {
       final m = montar();
@@ -102,6 +195,7 @@ void main() {
       expect(cuerpo['version_contrato'], 1);
       expect(cuerpo['comunes'], comunes);
       expect(cuerpo.toString(), isNot(contains('usuario_id')));
+      // Las comunes van en el sobre, no repetidas en cada evento.
       final e = (cuerpo['eventos']! as List).single as Map;
       expect(e.keys, {'evento_id', 'tipo', 'ocurrido_en', 'propiedades'});
       expect(e['ocurrido_en'].toString(), endsWith('Z'));
@@ -198,6 +292,7 @@ void main() {
         AnaliticaConCola(
             cola: m.cola,
             emisor: m.emisor,
+            comunes: () async => comunes,
             plataforma: 'android',
             reloj: ahora,
             demora: Duration.zero,

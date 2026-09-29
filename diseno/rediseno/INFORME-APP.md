@@ -99,7 +99,7 @@ y los contrastes de cada par.
 | Comprobación | Antes (`01b95a8`) | Ahora (tras §17) |
 |---|---|---|
 | `flutter analyze` | Sin problemas | Sin problemas |
-| `flutter test` (todo) | 530 | **777**, todos aprobados |
+| `flutter test` (todo) | 530 | **781**, todos aprobados |
 | Capturas (golden) | 84 | 176 |
 
 Las pruebas nuevas son de comportamiento, no copias de widgets: la regla del

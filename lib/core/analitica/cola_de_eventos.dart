@@ -4,11 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Un evento esperando a salir. Lleva su `evento_id` desde que nace: un
 /// reintento manda **el mismo**, y el servidor lo reconoce como duplicado.
+///
+/// También lleva sus [comunes] (plataforma, versión de la app, versión
+/// visual, `anonimo_id`) **de cuando se generó** (contrato, §4). Si la app se
+/// actualiza con eventos en cola, esos salen con la versión que tenían.
 typedef EventoEnCola = ({
   String eventoId,
   String tipo,
   DateTime ocurridoEn,
   Map<String, Object> propiedades,
+  Map<String, Object> comunes,
 });
 
 /// Dónde vive la cola entre ejecuciones.
@@ -87,12 +92,16 @@ class AlmacenDeColaPrefs implements AlmacenDeCola {
       return [
         for (final e
             in (jsonDecode(crudo) as List).cast<Map<String, dynamic>>())
-          (
-            eventoId: e['evento_id'] as String,
-            tipo: e['tipo'] as String,
-            ocurridoEn: DateTime.parse(e['ocurrido_en'] as String),
-            propiedades: (e['propiedades'] as Map).cast<String, Object>(),
-          ),
+          // Los guardados sin sus comunes (formato anterior) se descartan:
+          // ponerles las de ahora cambiaría su versión (contrato, §4).
+          if (e['comunes'] case final Map<String, dynamic> comunes)
+            (
+              eventoId: e['evento_id'] as String,
+              tipo: e['tipo'] as String,
+              ocurridoEn: DateTime.parse(e['ocurrido_en'] as String),
+              propiedades: (e['propiedades'] as Map).cast<String, Object>(),
+              comunes: comunes.cast<String, Object>(),
+            ),
       ];
     } catch (_) {
       // Una cola ilegible no puede romper nada: se empieza de nuevo.
@@ -105,13 +114,16 @@ class AlmacenDeColaPrefs implements AlmacenDeCola {
     try {
       await (await SharedPreferences.getInstance()).setString(
         _clave,
-        jsonEncode([for (final e in eventos) aJson(e)]),
+        jsonEncode([
+          for (final e in eventos) {...aJson(e), 'comunes': e.comunes},
+        ]),
       );
     } catch (_) {}
   }
 }
 
-/// Un evento tal como viaja en el lote del contrato.
+/// Un evento tal como viaja en el lote del contrato. Sus comunes van en el
+/// sobre, no en el evento.
 Map<String, Object> aJson(EventoEnCola e) => {
   'evento_id': e.eventoId,
   'tipo': e.tipo,

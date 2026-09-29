@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 
 import '../config/api_endpoints.dart';
 import '../config/app_config.dart';
@@ -73,6 +74,9 @@ class TransporteDio implements TransporteDeEventos {
 
 /// Manda la cola al servidor en lotes (contrato de eventos, §4).
 ///
+/// Un sobre por cada combinación distinta de comunes: cada evento sale con
+/// las que tenía al generarse, no con las de quien lo envía.
+///
 /// **Nunca rompe el producto.** No lanza, no muestra nada y no se reporta a sí
 /// mismo como error: si no puede mandar, lo deja en la cola y lo intenta
 /// después.
@@ -80,14 +84,12 @@ class EmisorDeEventos {
   EmisorDeEventos({
     required ColaDeEventos cola,
     required TransporteDeEventos transporte,
-    required Future<Map<String, Object>> Function() comunes,
     required Future<String?> Function() token,
     required Future<String?> Function() renovarToken,
     DateTime Function()? reloj,
     Random? azar,
   }) : _cola = cola,
        _transporte = transporte,
-       _comunes = comunes,
        _token = token,
        _renovar = renovarToken,
        _reloj = reloj ?? DateTime.now,
@@ -99,7 +101,6 @@ class EmisorDeEventos {
 
   final ColaDeEventos _cola;
   final TransporteDeEventos _transporte;
-  final Future<Map<String, Object>> Function() _comunes;
   final Future<String?> Function() _token;
   final Future<String?> Function() _renovar;
   final DateTime Function() _reloj;
@@ -124,8 +125,13 @@ class EmisorDeEventos {
         final pendientes = await _cola.pendientes();
         if (pendientes.isEmpty) return;
 
-        final lote = pendientes.take(tamano).toList();
-        final cuerpo = await _cuerpo(lote);
+        // Las comunes del más viejo, y solo los que las comparten.
+        final comunes = pendientes.first.comunes;
+        final lote = pendientes
+            .where((e) => mapEquals(e.comunes, comunes))
+            .take(tamano)
+            .toList();
+        final cuerpo = _cuerpo(comunes, lote);
 
         // Un cuerpo de más de 64 KiB se parte antes de salir.
         if (utf8.encode(jsonEncode(cuerpo)).length > bytesPorCuerpo &&
@@ -189,9 +195,12 @@ class EmisorDeEventos {
     return _transporte.enviar(cuerpo);
   }
 
-  Future<Map<String, Object>> _cuerpo(List<EventoEnCola> lote) async => {
+  Map<String, Object> _cuerpo(
+    Map<String, Object> comunes,
+    List<EventoEnCola> lote,
+  ) => {
     'version_contrato': versionContrato,
-    'comunes': await _comunes(),
+    'comunes': comunes,
     'eventos': [for (final e in lote) aJson(e)],
   };
 

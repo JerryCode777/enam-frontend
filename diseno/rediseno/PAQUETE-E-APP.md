@@ -400,7 +400,9 @@ resumen:
   de la app.
 - **Propiedades comunes:** plataforma, `version_app` (con `-dev` fuera de la
   tienda), versión visual y un `anonimo_id` del dispositivo. Nunca
-  `usuario_id`.
+  `usuario_id`. Se fijan al generar el evento y viajan con él en la cola: al
+  vaciarla sale un sobre por cada combinación, así que lo encolado antes de
+  una actualización conserva su versión (contrato, §4, `4beea62`).
 - **Envío:** cola persistente (500 eventos, 7 días), lotes de 50, reintentos
   con los mismos `evento_id` y token opcional que se renueva una vez.
 - **Altas:** registro, Google y Apple llevan `anonimoId`, y todas las

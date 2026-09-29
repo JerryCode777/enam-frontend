@@ -21,7 +21,8 @@ servidor. Tampoco `account_created`, `trial_started`,
 
 ## Propiedades comunes
 
-Van en el sobre (`comunes`) de cada lote:
+Van en el sobre (`comunes`) de cada lote y **se fijan al generar el evento,
+no al enviarlo** (contrato, §4):
 
 | Propiedad | Valor |
 |---|---|
@@ -29,6 +30,12 @@ Van en el sobre (`comunes`) de cada lote:
 | `version_app` | La de pubspec (`1.0.0+7`). Fuera de una compilación de tienda, con `-dev` al final (`1.0.0+7-dev`): el servidor la cuenta como **prueba**, no como gente |
 | `version_visual` | `rediseno-2026-09` |
 | `anonimo_id` | UUID v4 aleatorio generado la primera vez y guardado en el teléfono (`shared_preferences`, `enam.anonimo`). Sobrevive a cerrar sesión |
+
+Cada evento se guarda en la cola con sus comunes. Al vaciarla, la app arma
+**un sobre por cada combinación distinta**, así que si se actualiza con
+eventos pendientes, esos salen con la versión con la que se generaron y no
+con la de quien los envía. Los eventos guardados por una versión anterior,
+sin sus comunes, se descartan en vez de ponerles las de ahora.
 
 **Nunca `usuario_id`**: lo pone el servidor desde el token. Nada de datos
 personales, IP ni texto libre: cada propiedad se filtra contra la lista
@@ -39,9 +46,11 @@ encola.
 
 - **Cola local persistente** (`cola_de_eventos.dart`): hasta 500 eventos y 7
   días. Se guarda **antes** de mandar, así que cerrar la app no pierde nada.
+  Cada evento lleva sus comunes de cuando se generó.
   Cada evento nace con su `evento_id` y un reintento manda el mismo: el
   servidor lo marca como duplicado.
-- **Lotes** (`emisor_de_eventos.dart`) de hasta 50 eventos y 64 KiB, a
+- **Lotes** (`emisor_de_eventos.dart`) de hasta 50 eventos y 64 KiB, uno por
+  cada combinación de comunes, a
   `POST /api/v1/eventos` con un cliente HTTP propio, sin el interceptor de
   sesión: un 401 de la analítica no puede cerrar la sesión de nadie.
 - **Respuestas**, según la tabla del contrato:
@@ -77,6 +86,9 @@ falla en silencio y los eventos esperan en la cola hasta siete días.
   - la cola sobrevive a reiniciar, con 500 como máximo y 7 días de vigencia;
   - lotes de 50;
   - las comunes van, y nunca `usuario_id`;
+  - una cola con dos versiones sale en dos sobres, cada uno con la suya;
+  - la app actualizada manda lo encolado con su versión de antes;
+  - los guardados sin comunes se descartan;
   - sin red no se pierde nada y se reintenta con los mismos ids;
   - retiro parcial, 400, 429 y renovación de token.
 - `test/analitica_test.dart`:
