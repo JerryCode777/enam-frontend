@@ -182,9 +182,37 @@ class _Cabecera extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: DesignTokens.space3),
+        const SizedBox(width: DesignTokens.space2),
+        const BotonTema(),
+        const SizedBox(width: DesignTokens.space1),
         _Avatar(user: user),
       ],
+    );
+  }
+}
+
+/// Cambia entre claro y oscuro de un toque (el mismo `BotonTema` que la web).
+///
+/// Luna en claro —lo que se consigue al tocarla— y sol en oscuro. El claro es
+/// el predeterminado, así que el oscuro tiene que poder encontrarse sin ir a
+/// Ajustes.
+class BotonTema extends ConsumerWidget {
+  const BotonTema({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    return IconButton(
+      onPressed: () => ref
+          .read(themeModeProvider.notifier)
+          .alternar(oscuroAhora: oscuro),
+      tooltip: oscuro ? 'Usar tema claro' : 'Usar tema oscuro',
+      icon: Icon(oscuro ? Symbols.light_mode : Symbols.dark_mode),
+      color: context.scheme.onSurfaceVariant,
+      constraints: const BoxConstraints(
+        minWidth: DesignTokens.minTouchTarget,
+        minHeight: DesignTokens.minTouchTarget,
+      ),
     );
   }
 }

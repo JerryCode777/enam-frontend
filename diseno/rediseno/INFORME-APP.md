@@ -45,6 +45,8 @@ y los contrastes de cada par.
 9. **Simulacros.** Convocatoria nacional real y acciones según el estado.
 10. **Mi suscripción.** Las de App Store se renuevan solas y se cancelan en
     Apple.
+11. **Tema.** Claro por defecto, botón sol/luna en el inicio, la elección se
+    guarda y las pantallas de acceso van siempre en claro.
 
 **Eventos (F).** Interfaz y disparadores sin proveedor. Ver `EVENTOS.md`.
 

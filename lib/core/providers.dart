@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,6 +33,7 @@ import 'network/conectividad.dart';
 import 'security/cifrado_local.dart';
 import 'storage/base_local.dart';
 import 'storage/app_prefs.dart';
+import 'storage/tema_guardado.dart';
 import 'storage/token_storage.dart';
 
 /// Inyección de dependencias de la app.
@@ -642,7 +645,9 @@ final resumableSessionProvider = Provider<ResumableSession?>((ref) {
     sessionId: sesion.id,
     esSimulacro: sesion.esSimulacro,
     // Los mismos titulares que la web (acordados para el inicio contextual).
-    titulo: sesion.esSimulacro ? 'Termina tu simulacro' : 'Continúa tu práctica',
+    titulo: sesion.esSimulacro
+        ? 'Termina tu simulacro'
+        : 'Continúa tu práctica',
     // La que toca es la siguiente sin responder, pero nunca una más allá del
     // total: con la última ya contestada, "pregunta 21 de 20" no significa
     // nada.
@@ -656,14 +661,49 @@ final resumableSessionProvider = Provider<ResumableSession?>((ref) {
 
 // ==================== TEMA ====================
 
-/// Tema elegido por el usuario. Arranca en `system` y se persiste en
-/// `shared_preferences` (no es dato sensible) cuando exista la pantalla de
-/// ajustes.
-class ThemeModeNotifier extends Notifier<ThemeMode> {
-  @override
-  ThemeMode build() => ThemeMode.system;
+final temaGuardadoProvider = Provider<TemaGuardado>((ref) => TemaGuardado());
 
-  void set(ThemeMode mode) => state = mode;
+/// Tema elegido por el usuario.
+///
+/// **Claro por defecto**, aunque el sistema esté en oscuro: es una decisión
+/// del producto, igual en la web. El oscuro se elige con el botón de sol y
+/// luna del inicio o en Ajustes, donde «Sistema» queda como opción explícita.
+/// La elección se guarda y sobrevive a cerrar la app.
+///
+/// Arranca en claro y, si había una elección guardada, la aplica en cuanto
+/// la lee. Esperarla en el arranque retrasaría la primera pantalla por una
+/// preferencia visual.
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  bool _elegidoEnEstaSesion = false;
+
+  @override
+  ThemeMode build() {
+    unawaited(_cargar());
+    return ThemeMode.light;
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final guardado = await ref.read(temaGuardadoProvider).leer();
+      // Si la persona ya tocó el botón mientras se leía, manda lo que tocó.
+      if (guardado != null && !_elegidoEnEstaSesion && ref.mounted) {
+        state = guardado;
+      }
+    } catch (_) {
+      // Sin preferencias legibles se queda en claro, que es el predeterminado.
+    }
+  }
+
+  void set(ThemeMode mode) {
+    _elegidoEnEstaSesion = true;
+    state = mode;
+    unawaited(ref.read(temaGuardadoProvider).guardar(mode).catchError((_) {}));
+  }
+
+  /// Pasa al otro tema según el que **se ve** ahora. Con «Sistema» elegido,
+  /// el que se ve es el del sistema, y alternar lo fija al contrario.
+  void alternar({required bool oscuroAhora}) =>
+      set(oscuroAhora ? ThemeMode.light : ThemeMode.dark);
 }
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(

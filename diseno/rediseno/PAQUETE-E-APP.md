@@ -222,3 +222,20 @@ quitarlo es un cambio de negocio que el plan deja fuera.
   pagar en la web desde iPhone.
 
 **Se comprueba con:** `test/mi_suscripcion_test.dart`.
+
+## 11. Tema claro por defecto
+
+Pedido del producto, igual que en la web:
+
+- **Claro por defecto**, aunque el sistema esté en oscuro. Antes seguía al
+  sistema. «Sistema» queda como opción explícita en Ajustes (Claro · Oscuro ·
+  Sistema).
+- **Botón sol/luna** junto al avatar del inicio: luna en claro, sol en
+  oscuro. Alterna al contrario de lo que se ve.
+- La elección **se guarda** (`shared_preferences`, clave `tema`) y se aplica al
+  volver a abrir la app. Antes se perdía al cerrarla.
+- Las pantallas de acceso (presentación, login, registro, verificar correo,
+  recuperar y nueva contraseña) van **siempre en claro**, con `SiempreClaro`
+  en el router.
+
+**Se comprueba con:** `test/tema_test.dart`.

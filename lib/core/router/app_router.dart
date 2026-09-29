@@ -48,6 +48,7 @@ import '../../features/duelo/presentation/duelo_partida_screen.dart';
 import '../../features/duelo/presentation/elegir_oponente_screen.dart';
 import '../../features/duelo/presentation/tengo_un_codigo_screen.dart';
 import '../providers.dart';
+import '../theme/app_theme.dart';
 import 'routes.dart';
 import 'transitions.dart';
 
@@ -214,7 +215,9 @@ String? decidirDestino({
         startup.requireValue.onboardingVisto ? Routes.login : Routes.onboarding,
 
       // Si ya se vio, volver a entrar por onboarding no tiene sentido.
-      _ when here == Routes.onboarding && startup.requireValue.onboardingVisto =>
+      _
+          when here == Routes.onboarding &&
+              startup.requireValue.onboardingVisto =>
         Routes.login,
 
       _ when _publicRoutes.contains(here) => null,
@@ -280,6 +283,19 @@ GoRoute _stub(
   );
 }
 
+/// Las pantallas de acceso van siempre en claro, elija lo que elija el
+/// usuario: son la primera impresión de la app y están diseñadas sobre la
+/// marca en claro. Mismo criterio que la web.
+class SiempreClaro extends StatelessWidget {
+  const SiempreClaro({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Theme(data: AppTheme.light, child: child);
+}
+
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final List<RouteBase> _routes = [
@@ -297,33 +313,40 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.onboarding,
-    builder: (context, state) => const OnboardingScreen(),
+    builder: (context, state) => const SiempreClaro(child: OnboardingScreen()),
   ),
-  GoRoute(path: Routes.login, builder: (context, state) => const LoginScreen()),
+  GoRoute(
+    path: Routes.login,
+    builder: (context, state) => const SiempreClaro(child: LoginScreen()),
+  ),
   GoRoute(
     path: Routes.register,
-    builder: (context, state) => const RegisterScreen(),
+    builder: (context, state) => const SiempreClaro(child: RegisterScreen()),
   ),
   GoRoute(
     path: Routes.verifyEmail,
     // El correo llega por `extra` desde el registro; si se entra directo, la
     // pantalla lo lee del usuario en sesión.
-    builder: (context, state) => VerifyEmailScreen(email: state.extra as String?),
+    builder: (context, state) =>
+        SiempreClaro(child: VerifyEmailScreen(email: state.extra as String?)),
   ),
   GoRoute(
     path: Routes.forgotPassword,
     // El correo viaja desde el login: quien ya lo escribió no debería tener
     // que volver a escribirlo, y menos si lo que pasó es que no recuerda algo.
-    builder: (context, state) =>
-        ForgotPasswordScreen(email: state.extra as String?),
+    builder: (context, state) => SiempreClaro(
+      child: ForgotPasswordScreen(email: state.extra as String?),
+    ),
   ),
   GoRoute(
     path: Routes.resetPassword,
     // El correo llega desde la pantalla anterior; el código lo escribe el
     // usuario. Se acepta también por query para poder abrir la pantalla desde
     // un enlace de soporte.
-    builder: (context, state) => ResetPasswordScreen(
-      email: (state.extra as String?) ?? state.uri.queryParameters['email'],
+    builder: (context, state) => SiempreClaro(
+      child: ResetPasswordScreen(
+        email: (state.extra as String?) ?? state.uri.queryParameters['email'],
+      ),
     ),
   ),
   GoRoute(
@@ -363,9 +386,7 @@ final List<RouteBase> _routes = [
               GoRoute(
                 path: ':id',
                 pageBuilder: (context, state) => slidePage(
-                  child: TemarioNodeScreen(
-                    nodeId: state.pathParameters['id']!,
-                  ),
+                  child: TemarioNodeScreen(nodeId: state.pathParameters['id']!),
                   state: state,
                 ),
               ),
@@ -400,7 +421,9 @@ final List<RouteBase> _routes = [
                 path: 'sesion/:id',
                 // Desvanece: entrar al examen no es profundizar en una jerarquía.
                 pageBuilder: (context, state) => fadePage(
-                  child: SimulacroScreen(sessionId: state.pathParameters['id']!),
+                  child: SimulacroScreen(
+                    sessionId: state.pathParameters['id']!,
+                  ),
                   state: state,
                 ),
               ),

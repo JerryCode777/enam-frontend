@@ -278,9 +278,11 @@ class _Apariencia extends ConsumerWidget {
             ),
             SegmentedButton<ThemeMode>(
               segments: const [
+                // Claro primero: es el predeterminado. «Sistema» queda como
+                // elección explícita, no como lo que pasa si no se elige.
                 ButtonSegment(value: ThemeMode.light, label: Text('Claro')),
-                ButtonSegment(value: ThemeMode.system, label: Text('Sistema')),
                 ButtonSegment(value: ThemeMode.dark, label: Text('Oscuro')),
+                ButtonSegment(value: ThemeMode.system, label: Text('Sistema')),
               ],
               selected: {modo},
               showSelectedIcon: false,
