@@ -235,7 +235,7 @@ Pedido del producto, igual que en la web:
 - La elección **se guarda** (`shared_preferences`, clave `tema`) y se aplica al
   volver a abrir la app. Antes se perdía al cerrarla.
 - Las pantallas de acceso (presentación, login, registro, verificar correo,
-  recuperar y nueva contraseña) van **siempre en claro**, con `SiempreClaro`
-  en el router.
+  recuperar y nueva contraseña, completar perfil) van **siempre en claro**,
+  con `SiempreClaro` en el router. Es la misma lista que la web.
 
 **Se comprueba con:** `test/tema_test.dart`.

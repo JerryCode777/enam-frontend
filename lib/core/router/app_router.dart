@@ -351,7 +351,8 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.completeProfile,
-    builder: (context, state) => const CompleteProfileScreen(),
+    builder: (context, state) =>
+        const SiempreClaro(child: CompleteProfileScreen()),
   ),
   // ==================== SECCIONES PRINCIPALES ====================
   StatefulShellRoute.indexedStack(
