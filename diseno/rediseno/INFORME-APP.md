@@ -47,6 +47,9 @@ y los contrastes de cada par.
     Apple.
 11. **Tema.** Claro por defecto, botón sol/luna en el inicio, la elección se
     guarda y las pantallas de acceso van siempre en claro.
+12. **Medios de pago.** Solo App Store en iPhone y la web con Mercado Pago en
+    Android. Se retiraron el pago manual por Yape, la activación por WhatsApp y
+    el enlace a la web desde iPhone.
 
 **Eventos (F).** Interfaz y disparadores sin proveedor. Ver `EVENTOS.md`.
 

@@ -68,11 +68,15 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           'con ASPEFAM ni con tu inscripción al ENAM real.',
     ),
     (
-      pregunta: 'Yapeé y sigo sin Premium',
+      // El mismo texto que la web. El pago manual por Yape ya no existe: se
+      // cobra con Mercado Pago (web) o con App Store (iPhone).
+      pregunta: 'Pagué y todavía no tengo acceso',
       respuesta:
-          'La verificación de Yape es manual y suele tomar menos de 2 horas en '
-          'horario de atención. Si pasó más tiempo, escríbenos con la captura '
-          'de tu operación y lo activamos.',
+          'Con Mercado Pago el acceso se activa solo en cuanto el pago se '
+          'confirma, normalmente en segundos. Si el pago quedó en proceso, se '
+          'activa cuando Mercado Pago lo apruebe, sin que tengas que hacer '
+          'nada. Si pasaron más de unos minutos, escríbenos por WhatsApp con el '
+          'número de operación de Mercado Pago y lo revisamos.',
     ),
     (
       pregunta: '¿Por qué las preguntas tienen mi correo encima?',

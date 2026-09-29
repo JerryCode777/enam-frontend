@@ -1,6 +1,5 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -37,14 +36,13 @@ import 'planes_de_apple.dart';
 ///   correo, y la bandeja de entrada era un paso donde se perdía gente —el
 ///   correo en otro teléfono, en spam, o simplemente no encontrado—. Mandarlo
 ///   por correo sigue estando, de respaldo, para cuando el navegador no abre.
-/// - **iOS** — Apple es más estricta: ni correo ni botón de pago. Solo una nota
-///   discreta con la dirección del sitio. Al tocarla, el sistema muestra su
-///   propio aviso de que el pago no pasa por la App Store, y el navegador abre
-///   `/activar?origen=ios` **en frío**, sin saber quién llega; por eso esa
-///   pantalla pregunta a qué viene en vez de suponerlo.
+/// - **iOS** — solo la compra dentro de la app, con App Store. Ni correo, ni
+///   botón de pago, ni enlace a la web: hubo una nota con la dirección del
+///   sitio que abría `/activar`, la pantalla desde la que se paga en la web, y
+///   en iPhone eso es ofrecer un medio de pago que no es App Store (guía 3.1.1).
 ///
-/// Ninguna de las dos variantes enseña un precio. Los precios viven en la web y
-/// en el correo, que además es donde pueden cambiar sin publicar una versión.
+/// En las dos, WhatsApp queda solo como ayuda. Fue el canal del pago manual por
+/// Yape, que ya no existe.
 
 /// Si toca la variante de App Store.
 ///
@@ -53,15 +51,18 @@ import 'planes_de_apple.dart';
 bool get enTiendaApple => switch (AppConfig.tiendaForzada) {
   'apple' => true,
   'android' => false,
-  _ => !kIsWeb && Platform.isIOS,
+  // `defaultTargetPlatform` y no `Platform.isIOS`: en el teléfono dicen lo
+  // mismo, pero este se puede simular en las pruebas, que es donde se
+  // comprueba qué ofrece cada tienda.
+  _ => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
 };
 
 /// Las opciones de pago que corresponden a esta tienda.
 class OpcionesDePago extends ConsumerStatefulWidget {
   const OpcionesDePago({super.key, this.etiquetaWhatsApp});
 
-  /// Texto del botón de WhatsApp. En el bloqueo es «Activar por WhatsApp»; en
-  /// «Mi suscripción» quien llega ya es cliente y el texto tiene que cambiar.
+  /// Texto del botón de WhatsApp, que es solo de ayuda. Por defecto,
+  /// «Escríbenos si necesitas ayuda».
   final String? etiquetaWhatsApp;
 
   @override
@@ -148,11 +149,6 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
           // lo más cómodo: se paga con el Face ID y sin salir de aquí.
           const PlanesDeApple(),
           const SizedBox(height: DesignTokens.space4),
-
-          // La nota del sitio se queda, pero debajo y sin precios: no es un
-          // camino de compra alternativo, es dónde gestionar la cuenta.
-          const _NotaDelSitio(),
-          const SizedBox(height: DesignTokens.space3),
           BotonWhatsApp(label: etiqueta ?? 'Escríbenos si necesitas ayuda'),
         ],
       );
@@ -186,7 +182,7 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
           ),
         ),
         const SizedBox(height: DesignTokens.space2),
-        BotonWhatsApp(label: etiqueta ?? 'Activar por WhatsApp'),
+        BotonWhatsApp(label: etiqueta ?? 'Escríbenos si necesitas ayuda'),
       ],
     );
   }
@@ -295,79 +291,15 @@ class _EnlaceEnviado extends StatelessWidget {
   }
 }
 
-/// Lo que se ve en iOS.
+/// Abre el WhatsApp de soporte con un pedido de ayuda ya escrito.
 ///
-/// Sin precio, sin botón de pago y sin prometer nada: solo la dirección del
-/// sitio. Al tocarla, el sistema muestra su propio aviso de que el pago no pasa
-/// por Apple antes de abrir el navegador.
-class _NotaDelSitio extends StatelessWidget {
-  const _NotaDelSitio();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
-    // Se enseña el dominio a secas —sin la ruta ni los parámetros— porque es lo
-    // que la persona tiene que reconocer; pero se ABRE la pantalla de
-    // activación, que es la que sabe recibir a alguien que llega sin sesión.
-    // Abrir la raíz dejaba al usuario en el splash y de ahí en el login, sin
-    // ninguna pista de a qué había ido.
-    final destino = Uri.parse(AppConfig.urlActivar);
-
-    return InkWell(
-      onTap: () => launchUrl(destino, mode: LaunchMode.externalApplication),
-      borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-      child: Container(
-        padding: const EdgeInsets.all(DesignTokens.space4),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Gestiona tu cuenta de ENAM Prep y mucho más',
-              style: context.texts.bodyLarge?.copyWith(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                height: 1.3,
-                color: scheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space2),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    destino.host,
-                    style: context.texts.bodyMedium?.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: context.states.info.onTint,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Symbols.open_in_new,
-                  size: 18,
-                  color: context.states.info.onTint,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Abre WhatsApp con el mensaje ya escrito (M10).
-///
-/// No es una integración: es un enlace `wa.me`, igual que en la app hermana.
+/// No es una integración: es un enlace `wa.me`, igual que en la app hermana. Y
+/// no es un medio de pago: ver [OpcionesDePago].
 class BotonWhatsApp extends StatelessWidget {
-  const BotonWhatsApp({super.key, this.label = 'Activar por WhatsApp'});
+  const BotonWhatsApp({
+    super.key,
+    this.label = 'Escríbenos si necesitas ayuda',
+  });
 
   final String label;
 
@@ -377,7 +309,7 @@ class BotonWhatsApp extends StatelessWidget {
 
     return OutlinedButton.icon(
       onPressed: () async {
-        final abierto = await Contacto.abrir(Contacto.activarPlan());
+        final abierto = await Contacto.abrir(Contacto.ayudaConElAcceso());
         if (!abierto && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

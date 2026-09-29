@@ -239,3 +239,33 @@ Pedido del producto, igual que en la web:
   con `SiempreClaro` en el router. Es la misma lista que la web.
 
 **Se comprueba con:** `test/tema_test.dart`.
+
+## 12. Medios de pago: solo App Store (iPhone) y la web con Mercado Pago (Android)
+
+El producto pasa a AIDA SOFT SACS y la cuenta de Yape era del operador
+anterior. El pago manual por Yape se retiró de la web y de la portada, y el
+cobro va solo por Mercado Pago. En la app:
+
+- **Ayuda.** La pregunta «Yapeé y sigo sin Premium» se reemplaza por «Pagué y
+  todavía no tengo acceso», con el mismo texto que la web: con Mercado Pago el
+  acceso se activa solo, y si tarda se escribe por WhatsApp con el número de
+  operación.
+- **Android.** «Activar por WhatsApp» era el canal del pago manual: abría un
+  chat con «quiero activar mi cuenta». Ahora el botón es solo de ayuda
+  («Escríbenos si necesitas ayuda», mensaje «necesito ayuda con mi acceso»).
+  El pago es «Continuar en el navegador», con la sesión ya iniciada, y ahí
+  Mercado Pago.
+- **iPhone.** Se quitó la nota con la dirección del sitio: abría `/activar`,
+  la pantalla desde la que se paga en la web, y en iPhone eso es ofrecer un
+  medio de pago que no es App Store (guía 3.1.1). Queda solo la compra por
+  App Store y el WhatsApp de ayuda. StoreKit, la verificación y la
+  restauración no se tocan.
+- Se borran del código el número y el texto del «asistente de ventas» por
+  WhatsApp, que ya no se usaban.
+
+Los textos legales marcados `PENDIENTE(titular)` siguen como estaban.
+
+**Se comprueba con:** `test/cobro_por_tienda_test.dart`. La variante de
+iPhone se simula con `debugDefaultTargetPlatformOverride`: `enTiendaApple` usa
+ahora `defaultTargetPlatform`, que en el teléfono dice lo mismo que
+`Platform.isIOS`.

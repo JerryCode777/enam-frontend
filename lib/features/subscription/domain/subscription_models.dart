@@ -12,7 +12,8 @@ enum SubscriptionOrigin {
   /// Cobro recurrente por la API de suscripciones de Culqi.
   culqi,
 
-  /// Pago por Yape QR verificado a mano por un admin.
+  /// Activada a mano por un admin. Es como quedaron los pagos por Yape, que ya
+  /// no se aceptan; las suscripciones antiguas siguen llegando con este origen.
   manual,
 
   /// Activada desde el canal de WhatsApp (M10, RF-43).
