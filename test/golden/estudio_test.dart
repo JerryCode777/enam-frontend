@@ -186,6 +186,8 @@ void main() {
             // terminado» aparece a los 2,2 s— se retrata ya llegado.
             await tester.pump(const Duration(seconds: 3));
 
+            await precargarImagenes(tester);
+
             await expectLater(
               find.byType(MaterialApp),
               matchesGoldenFile(

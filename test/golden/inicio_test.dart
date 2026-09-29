@@ -52,6 +52,8 @@ void main() {
               await tester.pump(const Duration(milliseconds: 600));
             }
 
+            await precargarImagenes(tester);
+
             await expectLater(
               find.byType(MaterialApp),
               matchesGoldenFile(

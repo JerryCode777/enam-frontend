@@ -2,6 +2,7 @@
 library;
 
 import 'package:enam_app/core/domain/hora_peru.dart';
+import 'package:enam_app/core/router/app_router.dart';
 import 'package:enam_app/features/auth/presentation/complete_profile_screen.dart';
 import 'package:enam_app/features/auth/presentation/forgot_password_screen.dart';
 import 'package:enam_app/features/auth/presentation/login_screen.dart';
@@ -58,18 +59,27 @@ void main() {
 
   const pantallas = <({String nombre, Widget widget})>[
     (nombre: '1.1-splash', widget: SplashScreen()),
-    (nombre: '1.2-onboarding', widget: OnboardingScreen()),
-    (nombre: '1.3-registro', widget: RegisterScreen()),
+    // Las de acceso, envueltas como en el router: van siempre en claro, así
+    // que la captura «oscura» tiene que retratar eso mismo.
+    (nombre: '1.2-onboarding', widget: SiempreClaro(child: OnboardingScreen())),
+    (nombre: '1.3-registro', widget: SiempreClaro(child: RegisterScreen())),
     // Con correo de muestra: sin él la pantalla se captura con el hueco vacío
     // y no se ve si el texto entra.
     (
       nombre: '1.4-verificacion',
-      widget: VerifyEmailScreen(email: 'valeria.rojas@unmsm.edu.pe'),
+      widget: SiempreClaro(
+        child: VerifyEmailScreen(email: 'valeria.rojas@unmsm.edu.pe'),
+      ),
     ),
-    (nombre: '1.5-login', widget: LoginScreen()),
-    (nombre: '1.6-recuperar', widget: ForgotPasswordScreen()),
-    (nombre: '1.7-perfil', widget: CompleteProfileScreen()),
-    (nombre: '1.8-nueva-contrasena', widget: ResetPasswordScreen(email: 'valeria.rojas@unmsm.edu.pe')),
+    (nombre: '1.5-login', widget: SiempreClaro(child: LoginScreen())),
+    (nombre: '1.6-recuperar', widget: SiempreClaro(child: ForgotPasswordScreen())),
+    (nombre: '1.7-perfil', widget: SiempreClaro(child: CompleteProfileScreen())),
+    (
+      nombre: '1.8-nueva-contrasena',
+      widget: SiempreClaro(
+        child: ResetPasswordScreen(email: 'valeria.rojas@unmsm.edu.pe'),
+      ),
+    ),
     // El inicio es la pantalla con más piezas y donde antes se rompió el ancho:
     // las tarjetas de Temario y Marcadas quedaban en dos columnas de ~160 px y
     // los títulos salían como «Tem…» y «Marc…».
@@ -127,6 +137,8 @@ void main() {
             for (var i = 0; i < 3; i++) {
               await tester.pump(const Duration(milliseconds: 600));
             }
+
+            await precargarImagenes(tester);
 
             await expectLater(
               find.byType(MaterialApp),

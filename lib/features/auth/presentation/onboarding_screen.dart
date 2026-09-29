@@ -10,6 +10,7 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/brand_gradient.dart';
 import '../../../shared/widgets/brand_mark.dart';
+import '../../../shared/widgets/figura_de_marca.dart';
 
 /// Pantalla 1.2 — presentación, **una sola pantalla**.
 ///
@@ -59,7 +60,7 @@ class OnboardingScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _Presentacion(),
-                      SizedBox(height: DesignTokens.space5),
+                      SizedBox(height: _separacionEjemplo),
                       _Ejemplo(),
                     ],
                   ),
@@ -84,6 +85,13 @@ class OnboardingScreen extends ConsumerWidget {
     );
   }
 }
+
+/// Hueco entre los beneficios y la tarjeta de ejemplo.
+const _separacionEjemplo = DesignTokens.space5;
+
+/// Cuánto baja la figura: cruza el hueco y queda 16 px por detrás de la
+/// tarjeta, que la tapa. Así no se ve el corte recto de la imagen.
+const solapeFigura = _separacionEjemplo + 16;
 
 class _Presentacion extends StatelessWidget {
   const _Presentacion();
@@ -126,36 +134,83 @@ class _Presentacion extends StatelessWidget {
           ),
         ),
         const SizedBox(height: DesignTokens.space4),
-        for (final (icono, texto) in [
-          (Symbols.quiz, 'Preguntas con la explicación de cada alternativa'),
-          (
-            Symbols.timer,
-            'Simulacros de ${Blueprint.totalQuestions} preguntas y '
-                '${Blueprint.examDuration.inHours} horas, como el examen',
-          ),
-          (Symbols.download, 'Áreas descargadas para estudiar sin señal'),
-        ])
-          Padding(
-            padding: const EdgeInsets.only(bottom: DesignTokens.space2),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icono, size: 20, color: suave),
-                const SizedBox(width: DesignTokens.space3),
-                Expanded(
-                  child: Text(
-                    texto,
-                    style: TextStyle(
-                      fontFamily: DesignTokens.fontFamily,
-                      fontSize: 16,
-                      height: 1.4,
-                      color: suave,
+        // Los beneficios a la izquierda y la figura a la derecha, apoyada
+        // abajo. Su borde inferior es un corte a la cintura: se esconde detrás
+        // de la tarjeta de ejemplo, que se pinta después y la tapa.
+        LayoutBuilder(
+          builder: (context, c) {
+            // Más grande solo donde sobra alto: en un teléfono normal, una
+            // figura mayor empuja el ejemplo por debajo de los botones fijos.
+            final holgado = MediaQuery.sizeOf(context).height >= 900;
+            final ancho = (c.maxWidth * (holgado ? 0.4 : 0.32)).clamp(
+              104.0,
+              190.0,
+            );
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final (icono, texto) in [
+                          (
+                            Symbols.quiz,
+                            'Preguntas con la explicación de cada alternativa',
+                          ),
+                          (
+                            Symbols.timer,
+                            'Simulacros de ${Blueprint.totalQuestions} preguntas y '
+                                '${Blueprint.examDuration.inHours} horas, como el examen',
+                          ),
+                          (
+                            Symbols.download,
+                            'Áreas descargadas para estudiar sin señal',
+                          ),
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: DesignTokens.space2,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(icono, size: 20, color: suave),
+                                const SizedBox(width: DesignTokens.space3),
+                                Expanded(
+                                  child: Text(
+                                    texto,
+                                    style: TextStyle(
+                                      fontFamily: DesignTokens.fontFamily,
+                                      fontSize: 16,
+                                      height: 1.4,
+                                      color: suave,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(width: DesignTokens.space2),
+                  SizedBox(
+                    width: ancho,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Transform.translate(
+                        offset: const Offset(0, solapeFigura),
+                        child: FiguraDeMarca.brazosCruzados(ancho: ancho),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ],
     );
   }

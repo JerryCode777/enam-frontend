@@ -7,6 +7,7 @@ import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 
 /// Piezas compartidas por los bancos de capturas.
@@ -157,4 +158,19 @@ class PrefsEnMemoria implements AppPrefs {
   Future<void> reiniciarPrueba() async => _inicioPrueba = null;
 
   final _nacionales = <String>{};
+}
+
+/// Decodifica de verdad las imágenes que haya en pantalla antes de capturar.
+///
+/// En las pruebas el reloj es falso y la decodificación de una imagen es E/S
+/// real: sin esto, la figura de marca ocupa su hueco pero sale en blanco.
+Future<void> precargarImagenes(WidgetTester tester) async {
+  final elementos = find.byType(Image).evaluate().toList();
+  if (elementos.isEmpty) return;
+  await tester.runAsync(() async {
+    for (final e in elementos) {
+      await precacheImage((e.widget as Image).image, e);
+    }
+  });
+  await tester.pump();
 }

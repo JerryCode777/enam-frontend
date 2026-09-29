@@ -79,6 +79,9 @@ flutter:
   uses-material-design: true
 
   assets:
+    # Incluye la figura de marca (doctora_brazos_cruzados.webp y
+    # doctora_senala.webp): ilustración generada con IA, WebP con alfa, 46 KB
+    # entre las dos. Reglas de uso en lib/shared/widgets/figura_de_marca.dart.
     - assets/images/
 
   # Nunito va empaquetada, no descargada en el primer arranque.

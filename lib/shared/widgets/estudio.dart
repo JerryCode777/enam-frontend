@@ -147,6 +147,7 @@ class BloqueSiguienteAccion extends StatelessWidget {
     this.secundaria,
     this.onSecundaria,
     this.acento,
+    this.figura,
     super.key,
   });
 
@@ -170,6 +171,17 @@ class BloqueSiguienteAccion extends StatelessWidget {
   /// Color del acento lateral. Por defecto, el de acción.
   final Color? acento;
 
+  /// Una figura decorativa a la derecha, que recibe su ancho. **Solo se pinta
+  /// si sobra sitio** ([anchoParaFigura]): en un teléfono normal no entra sin
+  /// apretar el texto o el botón, y entonces no se pone.
+  final Widget Function(double ancho)? figura;
+
+  /// Ancho de contenido a partir del cual cabe la figura: un teléfono de unos
+  /// 430 dp en adelante, o una tableta.
+  static const anchoParaFigura = 340.0;
+
+  static const _anchoFigura = 108.0;
+
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
@@ -189,22 +201,32 @@ class BloqueSiguienteAccion extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // El acento: una franja, no un fondo de color. Marca que este es el
-            // bloque que importa sin teñir el texto que hay que leer.
-            Container(width: 6, color: color),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space5,
-                  DesignTokens.space5,
-                  DesignTokens.space5,
-                  DesignTokens.space5,
-                ),
-                child: Column(
+      // Un Stack y no un Row con IntrinsicHeight: el contenido decide con un
+      // LayoutBuilder si cabe la figura, y LayoutBuilder no admite medidas
+      // intrínsecas.
+      child: Stack(
+        children: [
+          // El acento: una franja, no un fondo de color. Marca que este es el
+          // bloque que importa sin teñir el texto que hay que leer.
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+            child: ColoredBox(color: color),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5 + 6,
+              DesignTokens.space5,
+              DesignTokens.space5,
+              DesignTokens.space5,
+            ),
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final conFigura =
+                    figura != null && c.maxWidth >= anchoParaFigura;
+                final arriba = Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
@@ -277,6 +299,40 @@ class BloqueSiguienteAccion extends StatelessWidget {
                         ],
                       ),
                     ],
+                  ],
+                );
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (conFigura)
+                      // La figura a la derecha del texto, señalándolo, y
+                      // apoyada detrás del botón: baja hasta tocarlo y el
+                      // botón, que se pinta después, tapa su corte.
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: arriba),
+                            const SizedBox(width: DesignTokens.space2),
+                            SizedBox(
+                              width: _anchoFigura,
+                              child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Transform.translate(
+                                  offset: const Offset(
+                                    0,
+                                    DesignTokens.space4 + 8,
+                                  ),
+                                  child: figura!(_anchoFigura),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      arriba,
                     const SizedBox(height: DesignTokens.space4),
                     EnamButton(label: accion, onPressed: onAccion),
                     if (secundaria != null) ...[
@@ -287,11 +343,11 @@ class BloqueSiguienteAccion extends StatelessWidget {
                       ),
                     ],
                   ],
-                ),
-              ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

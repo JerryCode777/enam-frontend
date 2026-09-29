@@ -269,3 +269,39 @@ Los textos legales marcados `PENDIENTE(titular)` siguen como estaban.
 iPhone se simula con `debugDefaultTargetPlatformOverride`: `enTiendaApple` usa
 ahora `defaultTargetPlatform`, que en el teléfono dice lo mismo que
 `Platform.isIOS`.
+
+## 13. Figura de marca
+
+Una doctora **ilustrada con IA** (ChatGPT), sin nombre ni identidad real. La
+revisó y aprobó la dirección del proyecto. No es una persona del equipo ni
+una médica real, y no se presenta como tal.
+
+**Recursos.** `assets/images/doctora_brazos_cruzados.webp` (400 × 592) y
+`assets/images/doctora_senala.webp` (300 × 451): recortados al contorno,
+WebP con transparencia a ~2× del tamaño en pantalla, **46 KB entre los dos**
+(presupuesto: 200 KB). Se decodifican al tamaño en que se pintan
+(`cacheWidth`). Los originales, `foto01.png` y `foto02.png` de 1024 × 1536,
+**no se versionan** (el repositorio es público y pesan 1,8 MB cada uno); los
+tiene la dirección del proyecto y la web usa los mismos.
+
+**Dónde.**
+
+| Pantalla | Figura | Cuándo |
+|---|---|---|
+| Presentación | Brazos cruzados, a la derecha de los beneficios, de pie detrás de la tarjeta de ejemplo (que tapa el corte a la cintura) | Siempre. Más grande (40 % del ancho) solo si la pantalla mide 900 dp de alto o más; si no, 32 %, para que el ejemplo no quede bajo los botones |
+| Inicio, bloque «Tu primer paso» / «Tu siguiente paso» / «Elige un área» | Señalando el texto, de pie detrás del botón | Solo si el contenido del bloque mide 340 dp o más: teléfonos de ~430 dp (17 Pro Max) y tabletas. En 393 dp no aparece: apretaría el texto |
+
+No aparece al retomar una sesión ni sin conexión, donde el aviso tiene que
+leerse sin adornos, ni en pantallas de pago, ni como testimonio.
+
+**Reglas** (`FiguraDeMarca`, `lib/shared/widgets/figura_de_marca.dart`):
+decorativa (`excludeFromSemantics`, sin etiqueta); sin nombre, cargo ni
+frase; siempre apoyada en un borde que tape el corte.
+
+Las capturas de acceso del banco se envuelven ahora en `SiempreClaro`, como
+en el router: la «oscura» de la presentación retrataba un tema que el usuario
+nunca ve.
+
+**Se comprueba con:** `test/figura_de_marca_test.dart` (dónde aparece y dónde
+no, texto al 140 %, semántica, peso de los recursos) y las capturas. Antes y
+después: `antes-despues/figura-*.png`.

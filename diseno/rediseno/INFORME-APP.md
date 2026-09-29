@@ -50,6 +50,9 @@ y los contrastes de cada par.
 12. **Medios de pago.** Solo App Store en iPhone y la web con Mercado Pago en
     Android. Se retiraron el pago manual por Yape, la activación por WhatsApp y
     el enlace a la web desde iPhone.
+13. **Figura de marca** (ilustración generada con IA): en la presentación y,
+    solo en pantallas anchas, en el bloque de siguiente acción del inicio.
+    Decorativa, 46 KB.
 
 **Eventos (F).** Interfaz y disparadores sin proveedor. Ver `EVENTOS.md`.
 

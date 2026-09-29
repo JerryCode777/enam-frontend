@@ -12,6 +12,7 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/estudio.dart';
+import '../../../shared/widgets/figura_de_marca.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../auth/domain/auth_models.dart';
 import '../../catalog/presentation/catalog_providers.dart';
@@ -353,6 +354,7 @@ class _SiguienteAccion extends ConsumerWidget {
             'Puedes cambiar el área y la cantidad antes de empezar.',
         icono: Symbols.flag,
         accion: 'Empezar',
+        figura: _figura,
         onAccion: () => context.irA(
           '${Routes.practiceConfig}?cantidad=${PrimeraPractica.cantidad}',
         ),
@@ -364,6 +366,7 @@ class _SiguienteAccion extends ConsumerWidget {
         criterio: p.criterio,
         icono: Symbols.target,
         accion: 'Practicar ${area.nombre}',
+        figura: _figura,
         onAccion: () => context.irA(
           '${Routes.practiceConfig}?nodo=${Uri.encodeQueryComponent(area.id)}',
         ),
@@ -377,11 +380,17 @@ class _SiguienteAccion extends ConsumerWidget {
         detalle: 'Escoge el área y cuántas preguntas quieres resolver.',
         icono: Symbols.quiz,
         accion: 'Elegir área',
+        figura: _figura,
         onAccion: () => context.irA(Routes.practiceConfig),
       ),
     };
   }
 }
+
+/// La figura de marca que señala la acción. El bloque decide si cabe: solo en
+/// pantallas anchas, y nunca en retomar ni sin conexión, donde el aviso tiene
+/// que leerse sin adornos.
+Widget _figura(double ancho) => FiguraDeMarca.senala(ancho: ancho);
 
 // ==================== ESTUDIAR ====================
 
