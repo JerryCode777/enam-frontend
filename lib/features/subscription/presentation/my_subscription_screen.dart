@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/analitica/analitica.dart';
+import '../../../core/analitica/evento_al_aparecer.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -40,14 +42,22 @@ class MySubscriptionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sub = ref.watch(subscriptionProvider).value;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const GradientHeader(titulo: 'Mi suscripción'),
-          Expanded(
-            child: sub == null ? const _SinSuscripcion() : _Contenido(sub: sub),
-          ),
-        ],
+    // Esta pantalla presenta el plan y su renovación: cuenta como vista de
+    // planes, desde el perfil.
+    return EventoAlAparecer(
+      evento: Evento.plansViewed,
+      propiedades: const {'pantalla': 'perfil'},
+      child: Scaffold(
+        body: Column(
+          children: [
+            const GradientHeader(titulo: 'Mi suscripción'),
+            Expanded(
+              child: sub == null
+                  ? const _SinSuscripcion()
+                  : _Contenido(sub: sub),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -75,10 +75,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         .read(analiticaProvider)
         .registrar(
           Evento.signupStarted,
-          // Mismos valores que la web: 'correo' | 'google'. El alta con
-          // Google o Apple no se emite: desde el teléfono no se sabe si la
-          // cuenta es nueva o ya existía.
-          propiedades: {'pantalla': 'registro', 'origen': 'correo'},
+          // El contrato lo llama `metodo` (antes `origen`). En la app el
+          // formulario es solo el de correo; el alta con Google o Apple la
+          // cuenta el servidor, que es quien sabe si la cuenta es nueva.
+          propiedades: {'metodo': 'correo'},
         );
     try {
       await ref

@@ -385,3 +385,32 @@ archivos existen y pesan menos de 200 KB.
 
 **Límite.** Probado con reproductores simulados. Falta escucharlo en un
 teléfono: el modo silencio, la mezcla con música y el volumen real.
+
+## 16. Eventos del embudo conectados
+
+La interfaz de analítica, que estaba sin proveedor, ahora manda a
+`POST /api/v1/eventos` según el contrato de eventos v1 de
+`enam-business/contrato/`. El detalle está en [`EVENTOS.md`](EVENTOS.md). En
+resumen:
+
+- **Solo los eventos de cliente de la app:** `signup_started` (con `metodo`,
+  antes `origen`), `plans_viewed` (con `pantalla`, ahora también en «Mi
+  suscripción») y, en iOS, `checkout_started` al pulsar comprar.
+  `signup_verified` y `profile_completed` pasaron al servidor y se quitaron
+  de la app.
+- **Propiedades comunes:** plataforma, `version_app` (con `-dev` fuera de la
+  tienda), versión visual y un `anonimo_id` del dispositivo. Nunca
+  `usuario_id`.
+- **Envío:** cola persistente (500 eventos, 7 días), lotes de 50, reintentos
+  con los mismos `evento_id` y token opcional que se renueva una vez.
+- **Altas:** registro, Google y Apple llevan `anonimoId`, y todas las
+  peticiones llevan `X-Plataforma`, para que el servidor una la visita con la
+  cuenta.
+- El envío va por un cliente propio, sin el interceptor de sesión: un fallo
+  de la analítica no puede cerrar la sesión de nadie ni mostrar nada.
+
+**Se comprueba con:** `test/emisor_de_eventos_test.dart`,
+`test/analitica_test.dart` y `test/alta_con_anonimo_test.dart`.
+
+**Límite.** El backend todavía no tiene el endpoint. Hasta entonces el envío
+falla en silencio y los eventos esperan en la cola, sin que nada lo note.

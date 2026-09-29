@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
-import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -73,7 +72,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       final usuario = await ref
           .read(authRepositoryProvider)
           .verificarConCodigo(email: email, codigo: _codigo.text);
-      ref.read(analiticaProvider).registrar(Evento.signupVerified);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -24,6 +24,7 @@ import '../features/subscription/data/apple_iap_service.dart';
 import '../features/subscription/data/compras_apple_controller.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/subscription_models.dart';
+import 'analitica/identidad_anonima.dart';
 import 'config/app_config.dart';
 import 'config/configuracion_remota.dart';
 import 'network/api_client.dart';
@@ -85,6 +86,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return ApiAuthRepository(
     client: ref.watch(apiClientProvider),
     tokens: ref.watch(tokenStorageProvider),
+    anonimoId: ref.watch(identidadAnonimaProvider).id,
   );
 });
 

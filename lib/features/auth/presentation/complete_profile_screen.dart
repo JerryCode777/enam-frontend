@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
-import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -122,7 +121,6 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
             condicion: _condicion,
             fechaObjetivo: _fechaObjetivo,
           );
-      ref.read(analiticaProvider).registrar(Evento.profileCompleted);
       // Refresca el estado de auth: el router ve el perfil completo y deja pasar.
       if (mounted) ref.read(authControllerProvider.notifier).setUser(user);
     } on Failure catch (e) {

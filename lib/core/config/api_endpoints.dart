@@ -66,6 +66,10 @@ abstract final class ApiEndpoints {
   static String reportarPregunta(String questionId) =>
       '/questions/$questionId/reports';
 
+  /// Eventos del embudo (contrato de eventos, `enam-business/contrato/`).
+  /// Autenticación opcional: sin token, el evento es anónimo.
+  static const String eventos = '/eventos';
+
   // ---------- Estadísticas y ranking (Módulo 5) ----------
   static const String statsDashboard = '/stats/dashboard';
   static const String rankingGeneral = '/rankings/general';

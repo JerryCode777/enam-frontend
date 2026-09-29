@@ -121,12 +121,29 @@ abstract interface class AuthRepository {
 
 /// Implementación real contra la API.
 class ApiAuthRepository implements AuthRepository {
-  ApiAuthRepository({required ApiClient client, required TokenStorage tokens})
-    : _client = client,
-      _tokens = tokens;
+  ApiAuthRepository({
+    required ApiClient client,
+    required TokenStorage tokens,
+    Future<String> Function()? anonimoId,
+  }) : _client = client,
+       _tokens = tokens,
+       _anonimoId = anonimoId;
 
   final ApiClient _client;
   final TokenStorage _tokens;
+
+  /// El `anonimo_id` del dispositivo (contrato de eventos). Viaja en el cuerpo
+  /// de las altas —registro, Google y Apple— para que el servidor una la
+  /// visita anónima con la cuenta en `account_created`. No identifica a nadie.
+  final Future<String> Function()? _anonimoId;
+
+  Future<String?> _anonimo() async {
+    try {
+      return await _anonimoId?.call();
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Future<void> register({
@@ -142,6 +159,7 @@ class ApiAuthRepository implements AuthRepository {
         'password': password,
         'nombre': nombre,
         'aceptaTerminos': aceptaTerminos,
+        'anonimoId': ?await _anonimo(),
       },
     );
   }
@@ -166,7 +184,11 @@ class ApiAuthRepository implements AuthRepository {
   Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.google,
-      data: {'idToken': idToken, 'aceptaTerminos': aceptaTerminos},
+      data: {
+        'idToken': idToken,
+        'aceptaTerminos': aceptaTerminos,
+        'anonimoId': ?await _anonimo(),
+      },
     );
 
     final session = AuthSession.fromJson(data);
@@ -190,6 +212,7 @@ class ApiAuthRepository implements AuthRepository {
         'identityToken': identityToken,
         'nombre': ?nombre,
         'aceptaTerminos': aceptaTerminos,
+        'anonimoId': ?await _anonimo(),
       },
     );
 

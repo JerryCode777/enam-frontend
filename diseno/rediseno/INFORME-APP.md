@@ -60,8 +60,11 @@ y los contrastes de cada par.
 15. **Sonidos**: los siete de Rumbo (142 KB), al elegir, al cambiar de
     pestaña, al empezar, al acertar o fallar solo donde se revela la clave, y
     al ver el resultado. Con interruptor y volumen en Ajustes.
+16. **Eventos del embudo** conectados a `POST /eventos` según el contrato de
+    BI: cola persistente, lotes, `anonimo_id` y nunca `usuario_id`.
 
-**Eventos (F).** Interfaz y disparadores sin proveedor. Ver `EVENTOS.md`.
+**Eventos (F).** Conectados a `POST /api/v1/eventos` según el contrato de
+`enam-business/contrato/` (§16 de `PAQUETE-E-APP.md`). Ver `EVENTOS.md`.
 
 ## Datos falsos o engañosos que había y ya no
 
