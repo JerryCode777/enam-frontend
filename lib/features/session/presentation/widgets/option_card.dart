@@ -1,6 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/sonido/proveedor_sonidos.dart';
+import '../../../../core/sonido/sonidos.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/state_colors.dart';
@@ -28,7 +34,7 @@ enum OptionVisual {
 ///
 /// La letra va en un círculo a la izquierda, como en el examen impreso. El área
 /// táctil es de toda la tarjeta y nunca baja de 48 px de alto.
-class OptionCard extends StatelessWidget {
+class OptionCard extends ConsumerWidget {
   const OptionCard({
     required this.opcion,
     required this.letra,
@@ -43,7 +49,7 @@ class OptionCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = context.scheme;
     final states = context.states;
 
@@ -116,6 +122,7 @@ class OptionCard extends StatelessWidget {
       ].join(', '),
       child: _tarjeta(
         context,
+        ref,
         fondo: fondo,
         borde: borde,
         anchoBorde: anchoBorde,
@@ -128,7 +135,8 @@ class OptionCard extends StatelessWidget {
   }
 
   Widget _tarjeta(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
     required Color fondo,
     required Color borde,
     required double anchoBorde,
@@ -148,7 +156,15 @@ class OptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       ),
       child: InkWell(
-        onTap: onTap,
+        // Elegir una alternativa suena y se nota en la mano, como en Rumbo. Es
+        // el toque neutro: no dice nada de si es la correcta.
+        onTap: onTap == null
+            ? null
+            : () {
+                unawaited(ref.read(sonidosProvider).sonar(Sonido.toque));
+                unawaited(HapticFeedback.selectionClick());
+                onTap!();
+              },
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
           // Mínimo 48 de alto con el padding: una alternativa de una línea no
@@ -193,7 +209,8 @@ class OptionCard extends StatelessWidget {
                   style: context.texts.bodyLarge?.copyWith(
                     fontSize: DesignTokens.fontSizeMd,
                     height: 1.5,
-                    fontWeight: visual == OptionVisual.normal ||
+                    fontWeight:
+                        visual == OptionVisual.normal ||
                             visual == OptionVisual.descartada
                         ? FontWeight.w400
                         : FontWeight.w600,

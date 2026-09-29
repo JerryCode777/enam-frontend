@@ -9,6 +9,8 @@ import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -192,6 +194,8 @@ class _ListasParaElViajeState extends ConsumerState<_ListasParaElViaje> {
       await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
       ref.invalidate(reservasProvider);
+      // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
+      ref.sonar(Sonido.empiezaQuiz);
 
       if (mounted) context.irA(Routes.practiceSessionOf(sesion.id));
     } on Failure catch (e) {

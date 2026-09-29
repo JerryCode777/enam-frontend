@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../core/providers.dart';
 import '../../core/router/routes.dart';
+import '../../core/sonido/proveedor_sonidos.dart';
+import '../../core/sonido/sonidos.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/theme/state_colors.dart';
 import '../../features/offline/presentation/offline_providers.dart';
@@ -51,11 +56,18 @@ class AppShell extends ConsumerWidget {
           if (!hayRed) const _SinConexion(),
           NavigationBar(
             selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (index) => navigationShell.goBranch(
-              index,
-              // Tocar la pestaña activa vuelve a su raíz, como espera Android.
-              initialLocation: index == navigationShell.currentIndex,
-            ),
+            onDestinationSelected: (index) {
+              // El sonido y la vibración de cambiar de pestaña, como Rumbo:
+              // más cortos que los de decidir algo.
+              unawaited(ref.read(sonidosProvider).sonar(Sonido.pestana));
+              unawaited(HapticFeedback.selectionClick());
+              navigationShell.goBranch(
+                index,
+                // Tocar la pestaña activa vuelve a su raíz, como espera
+                // Android.
+                initialLocation: index == navigationShell.currentIndex,
+              );
+            },
             destinations: [
               for (final tab in ShellTab.values)
                 NavigationDestination(

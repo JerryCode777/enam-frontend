@@ -7,10 +7,13 @@ import '../../../core/domain/blueprint.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/sonar_al_aparecer.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
@@ -35,11 +38,19 @@ class SessionSummaryScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
             const Center(child: Text('No pudimos cargar el resumen.')),
-        data: (s) => _Contenido(session: s.session),
+        // El sonido del resultado, una vez: bueno con 11 o más, malo si no.
+        data: (s) => SonarAlAparecer(
+          sonido: sonidoDeResultado(nota: _notaDe(s.session)),
+          child: _Contenido(session: s.session),
+        ),
       ),
     );
   }
 }
+
+/// La nota vigesimal de la sesión: la del servidor si la hay, calculada si no.
+double _notaDe(StudySession s) =>
+    s.nota ?? Blueprint.toVigesimal(s.correctas, total: s.totalPreguntas);
 
 class _Contenido extends ConsumerStatefulWidget {
   const _Contenido({required this.session});
@@ -140,6 +151,7 @@ class _ContenidoState extends ConsumerState<_Contenido> {
           );
 
       if (!mounted) return;
+      ref.sonar(Sonido.empiezaQuiz);
       context.pushReplacement(Routes.practiceSessionOf(sesion.id));
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);

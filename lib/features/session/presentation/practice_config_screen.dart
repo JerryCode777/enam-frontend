@@ -8,6 +8,8 @@ import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
@@ -205,6 +207,8 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
 
       // Hay una sesión abierta nueva: el inicio tiene que poder ofrecerla.
       ref.invalidate(sesionesAbiertasProvider);
+      // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
+      ref.sonar(Sonido.empiezaQuiz);
 
       if (mounted) context.pushReplacement(Routes.practiceSessionOf(session.id));
     } on ForbiddenFailure catch (e) {

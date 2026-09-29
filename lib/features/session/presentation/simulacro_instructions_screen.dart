@@ -7,6 +7,8 @@ import '../../../core/domain/blueprint.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
@@ -166,6 +168,8 @@ class _SimulacroInstructionsScreenState
       // D-02: el reloj de las 24 h arranca aquí también.
       await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
+      // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
+      ref.sonar(Sonido.empiezaQuiz);
       if (mounted) {
         context.pushReplacement(Routes.simulacroSessionOf(session.id));
       }

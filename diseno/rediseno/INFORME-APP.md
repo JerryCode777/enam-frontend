@@ -57,6 +57,9 @@ y los contrastes de cada par.
     recuperar y nueva contraseña y completar perfil, sobre el fondo claro con
     halos de marca, como la web. La tarjeta de ejemplo cabe entera en los
     teléfonos bajos.
+15. **Sonidos**: los siete de Rumbo (142 KB), al elegir, al cambiar de
+    pestaña, al empezar, al acertar o fallar solo donde se revela la clave, y
+    al ver el resultado. Con interruptor y volumen en Ajustes.
 
 **Eventos (F).** Interfaz y disparadores sin proveedor. Ver `EVENTOS.md`.
 

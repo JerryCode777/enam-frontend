@@ -341,3 +341,47 @@ y la muesca del teléfono mide que el ejemplo termina por encima del botón en
 13 mini, 14 Pro y 17 Pro Max. Antes y después:
 `antes-despues/acceso-claro-presentacion-*.png` y
 `antes-despues/acceso-claro-login-*.png`.
+
+## 15. Sonidos
+
+Pedido del usuario: la app no tenía sonidos y sus otras apps sí. El plan (§7)
+decía «sin efectos sonoros nuevos»; este pedido explícito lo cambia.
+
+**Origen.** Los siete sonidos de **Rumbo** (`rumboapp`, del mismo dueño), con
+el mismo catálogo y la misma lógica (`rumboapp/mobile/lib/nucleo/sonido/`).
+Los WAV se pasaron a MP3 mono de 96 kbps (el formato de la web); el clic y el
+de pestaña se copiaron tal cual. **142 KB en total** (los originales sumaban
+2,1 MB), en `assets/sonidos/`. El motor es `audioplayers` ^6.8.1, el mismo que
+Rumbo.
+
+| Sonido | Archivo | Dónde suena |
+|---|---|---|
+| `toque` | `click_normal.mp3` | Al elegir una alternativa (práctica, simulacro, duelo) |
+| `pestana` | `select_002.m4a` | Al cambiar de pestaña |
+| `empiezaQuiz` | `start_quiz.mp3` | Al empezar una práctica, un simulacro, un examen pasado, el nacional, una práctica descargada, «repasar las incorrectas» y la primera pregunta de un duelo |
+| `acierto` / `fallo` | `good_answer.mp3` / `bad_answer.mp3` | **Solo** cuando la pantalla revela si se acertó: la práctica con corrección inmediata y el cierre de cada pregunta del duelo (en blanco no suena). **Nunca** en un simulacro ni en un examen pasado: la clave está oculta hasta el final y el sonido la delataría (RF-16) |
+| `buenResultado` / `malResultado` | `good_score.mp3` / `bad_score.mp3` | Al ver el resultado, una vez: nota ≥ 11 o duelo ganado → bueno; si no (empate incluido), malo |
+
+**Vibración** como Rumbo: `selectionClick` al elegir una alternativa y al
+cambiar de pestaña; nada al acertar ni al fallar. Se mantiene la vibración
+corta de «Responder».
+
+**Preferencia** en Ajustes → Sonidos: interruptor y volumen, guardados en
+`shared_preferences` con las claves de Rumbo (`sonido_activo`,
+`sonido_volumen`). Por defecto, activos a 0,6.
+
+**Silencio y música.** En iOS, categoría `ambient`: respeta el interruptor de
+silencio y se mezcla con la música del usuario sin cortarla. En Android, uso
+de «sonido de interfaz» y sin pedir el foco de audio.
+
+Nada suena en la presentación ni en las pantallas de acceso. En `flutter test`
+los reproductores son mudos (no hay plugin de audio); las pruebas del sonido
+inyectan uno que anota lo que suena (`reproductoresDeSonido`).
+
+**Se comprueba con:** `test/sonidos_test.dart`: umbral de 11, activos a 0,6
+por defecto, apagados no suena nada, el volumen elegido es el que suena y se
+guarda, acierto o fallo en la práctica y **nunca** en el simulacro, y los siete
+archivos existen y pesan menos de 200 KB.
+
+**Límite.** Probado con reproductores simulados. Falta escucharlo en un
+teléfono: el modo silencio, la mezcla con música y el volumen real.

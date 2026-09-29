@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -41,6 +43,9 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: DesignTokens.space5),
                 const _Titulo('APARIENCIA'),
                 FadeUp(index: 2, child: _Apariencia(modo: tema)),
+                const SizedBox(height: DesignTokens.space5),
+                const _Titulo('SONIDOS'),
+                const FadeUp(index: 2, child: _Sonidos()),
                 const SizedBox(height: DesignTokens.space5),
                 const _Titulo('CUENTA Y PRIVACIDAD'),
                 FadeUp(index: 3, child: _Cuenta(user: user)),
@@ -293,6 +298,61 @@ class _Apariencia extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// El interruptor y el volumen de los sonidos, como en Rumbo.
+///
+/// Se guardan en el teléfono. Al soltar el volumen suena un toque, para oír
+/// cómo quedó sin tener que salir a buscar un sonido.
+class _Sonidos extends ConsumerWidget {
+  const _Sonidos();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prefs = ref.watch(preferenciasSonidoProvider);
+    final control = ref.read(preferenciasSonidoProvider.notifier);
+
+    return Card(
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: Icon(prefs.activo ? Symbols.volume_up : Symbols.volume_off),
+            title: const Text('Sonidos'),
+            subtitle: const Text(
+              'Al elegir, al acertar o fallar en la práctica y al ver tu '
+              'resultado. Respetan el modo silencio del teléfono.',
+            ),
+            value: prefs.activo,
+            onChanged: control.cambiarActivo,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              0,
+              DesignTokens.space4,
+              DesignTokens.space3,
+            ),
+            child: Row(
+              children: [
+                Text('Volumen', style: context.texts.bodyMedium),
+                Expanded(
+                  child: Slider(
+                    value: prefs.volumen,
+                    label: '${(prefs.volumen * 100).round()} %',
+                    divisions: 10,
+                    semanticFormatterCallback: (v) =>
+                        'Volumen ${(v * 100).round()} por ciento',
+                    onChanged: prefs.activo ? control.cambiarVolumen : null,
+                    onChangeEnd: (_) => ref.sonar(Sonido.toque),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
