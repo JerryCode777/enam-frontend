@@ -288,7 +288,7 @@ tiene la dirección del proyecto y la web usa los mismos.
 
 | Pantalla | Figura | Cuándo |
 |---|---|---|
-| Presentación | Brazos cruzados, a la derecha de los beneficios, de pie detrás de la tarjeta de ejemplo (que tapa el corte a la cintura) | Siempre. Más grande (40 % del ancho) solo si la pantalla mide 900 dp de alto o más; si no, 32 %, para que el ejemplo no quede bajo los botones |
+| Presentación | Brazos cruzados, a la derecha de los beneficios, de pie detrás de la tarjeta de ejemplo (que tapa el corte a la cintura) | Siempre. 40 % del ancho con 800 dp de alto útil o más; 33 % por debajo (13 mini, 14 Pro), para que el ejemplo quepa entero (§14) |
 | Inicio, bloque «Tu primer paso» / «Tu siguiente paso» / «Elige un área» | Señalando el texto, de pie detrás del botón | Solo si el contenido del bloque mide 340 dp o más: teléfonos de ~430 dp (17 Pro Max) y tabletas. En 393 dp no aparece: apretaría el texto |
 
 No aparece al retomar una sesión ni sin conexión, donde el aviso tiene que
@@ -304,4 +304,40 @@ nunca ve.
 
 **Se comprueba con:** `test/figura_de_marca_test.dart` (dónde aparece y dónde
 no, texto al 140 %, semántica, peso de los recursos) y las capturas. Antes y
-después: `antes-despues/figura-*.png`.
+después: `antes-despues/figura-inicio-*.png` y, para la presentación,
+`antes-despues/acceso-claro-presentacion-*.png`.
+
+## 14. Acceso en el tema claro
+
+**Antes.** `SiempreClaro` fijaba los tokens en claro, pero la presentación, el
+login, el registro, verificar correo, recuperar y nueva contraseña y
+completar perfil seguían pintando a mano el degradado azul marino a pantalla
+completa, con títulos y botones en blanco. Además, en el 14 Pro la tarjeta de
+ejemplo de la presentación quedaba cortada por los botones fijos.
+
+**Ahora**, igual que la web (`cc94b56`):
+
+- **Fondo** `FondoClaro`: el fondo de la app (`#F5F7FA`) con dos halos suaves
+  del azul de marca, al 16 % arriba a la izquierda y al 12 % abajo a la
+  derecha. Lo usan `AuthScaffold` (registro, recuperar, nueva contraseña,
+  completar perfil), el login, verificar correo y la presentación.
+- **Marca y textos en tinta**: el azulejo de marca (la cruz blanca sobre su
+  fondo azul), títulos en `text`, bajadas en `text-secondary`.
+- **Botones**: el principal sólido de acción («Crear cuenta gratis»,
+  «Ingresar», «Verificar cuenta»), el secundario con borde («Ya tengo
+  cuenta», «Reenviar código»). El campo del código de verificación es el
+  campo claro de la app, en grande.
+- La **pantalla de carga** conserva el degradado de marca, como se pidió.
+
+**La tarjeta de ejemplo nunca se corta.** En pantallas de menos de 800 dp de
+alto útil (13 mini, 14 Pro) la presentación se compacta: título de 26, marca y
+huecos algo menores, los beneficios con textos más cortos y el porqué del
+ejemplo en una frase. Si aun así no cabe (letra del sistema ampliada), la zona
+de botones muestra un borde arriba, para que se lea como el límite de algo que
+se desplaza y no como una tarjeta partida.
+
+**Se comprueba con:** `test/onboarding_test.dart`, que con la tipografía real
+y la muesca del teléfono mide que el ejemplo termina por encima del botón en
+13 mini, 14 Pro y 17 Pro Max. Antes y después:
+`antes-despues/acceso-claro-presentacion-*.png` y
+`antes-despues/acceso-claro-login-*.png`.

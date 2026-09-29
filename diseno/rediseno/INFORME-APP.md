@@ -53,6 +53,10 @@ y los contrastes de cada par.
 13. **Figura de marca** (ilustración generada con IA): en la presentación y,
     solo en pantallas anchas, en el bloque de siguiente acción del inicio.
     Decorativa, 46 KB.
+14. **Acceso en el tema claro**: presentación, login, registro, verificación,
+    recuperar y nueva contraseña y completar perfil, sobre el fondo claro con
+    halos de marca, como la web. La tarjeta de ejemplo cabe entera en los
+    teléfonos bajos.
 
 **Eventos (F).** Interfaz y disparadores sin proveedor. Ver `EVENTOS.md`.
 

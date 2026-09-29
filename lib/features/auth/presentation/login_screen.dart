@@ -12,7 +12,7 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/auth_footer.dart';
 import '../../../shared/widgets/aviso_legal_al_continuar.dart';
 import '../../../shared/widgets/auth_scaffold.dart';
-import '../../../shared/widgets/brand_gradient.dart';
+import '../../../shared/widgets/fondo_claro.dart';
 import '../../../shared/widgets/brand_mark.dart';
 import '../../../shared/widgets/ecg_line.dart';
 import '../../../shared/widgets/enam_button.dart';
@@ -158,7 +158,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BrandGradient(
+      body: FondoClaro(
         child: SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -290,8 +290,8 @@ class _CabeceraMarca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(
         DesignTokens.space5,
         DesignTokens.space6,
         DesignTokens.space5,
@@ -302,41 +302,38 @@ class _CabeceraMarca extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Center(child: BrandMark(size: 26)),
-              ),
-              const SizedBox(width: DesignTokens.space3),
-              const Text(
+              // El azulejo de marca: sobre el fondo claro, la cruz blanca
+              // necesita su propio fondo azul para verse.
+              BrandMarkTile(size: 52, radio: 16),
+              SizedBox(width: DesignTokens.space3),
+              Text(
                 'ENAM Prep',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: DesignTokens.textPrimaryLight,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: DesignTokens.space5),
-          const Text(
+          SizedBox(height: DesignTokens.space5),
+          Text(
             'Hola de nuevo',
             style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: DesignTokens.textPrimaryLight,
             ),
           ),
-          const SizedBox(height: DesignTokens.space3),
+          SizedBox(height: DesignTokens.space3),
           // El mismo trazo del splash, aquí más pequeño y discreto.
-          const EcgLine(width: 170, height: 22, opacity: 0.7, strokeWidth: 2),
+          EcgLine(
+            width: 170,
+            height: 22,
+            opacity: 0.7,
+            strokeWidth: 2,
+            color: DesignTokens.actionLight,
+          ),
         ],
       ),
     );

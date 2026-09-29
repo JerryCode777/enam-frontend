@@ -8,9 +8,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'golden/_comun.dart';
+
 /// La presentación es una pantalla, no un carrusel (plan §6): crear la cuenta
 /// o entrar está a un toque, sin pasar por pasos.
 void main() {
+  // La fuente real: con la de pruebas los textos miden otra cosa y la
+  // comprobación de que el ejemplo cabe no diría nada del teléfono.
+  setUpAll(cargarFuentes);
+
   Future<_Prefs> montar(WidgetTester tester) async {
     final prefs = _Prefs();
     final router = GoRouter(
@@ -68,6 +74,48 @@ void main() {
     expect(find.text('pantalla de acceso'), findsOneWidget);
     expect(prefs.visto, isTrue);
   });
+
+  for (final (nombre, tamano) in const [
+    ('13 mini', Size(375, 812)),
+    ('14 Pro', Size(393, 852)),
+    ('17 Pro Max', Size(440, 956)),
+  ]) {
+    testWidgets('en el $nombre, el ejemplo cabe entero sobre los botones', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = tamano * 3
+        ..devicePixelRatio = 3
+        // La muesca y el indicador de inicio, como en el teléfono.
+        ..padding = const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appPrefsProvider.overrideWithValue(_Prefs())],
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: const OnboardingScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tarjeta = tester.getRect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              (w.properties.label ?? '').startsWith('Ejemplo de pregunta'),
+        ),
+      );
+      final boton = tester.getRect(
+        find.widgetWithText(FilledButton, 'Crear cuenta gratis'),
+      );
+      // Antes, en el 14 Pro, el borde inferior de la tarjeta quedaba debajo
+      // de la zona de botones fijos.
+      expect(tarjeta.bottom, lessThan(boton.top));
+    });
+  }
 }
 
 class _Prefs implements AppPrefs {

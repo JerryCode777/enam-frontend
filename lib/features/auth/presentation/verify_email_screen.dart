@@ -11,7 +11,8 @@ import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/motion.dart';
-import '../../../shared/widgets/brand_gradient.dart';
+import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/fondo_claro.dart';
 import '../../../shared/widgets/state_banner.dart';
 
 /// Pantalla 1.4 — verificación de correo con código.
@@ -154,102 +155,104 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     final puedeReenviar = _restante == 0 && !_enviando;
 
     // Sin tarjeta flotante, a diferencia del resto del bloque: aquí no hay
-    // formulario, solo un mensaje, y el diseño lo pone centrado sobre el
-    // degradado.
+    // formulario, solo un mensaje y el código, centrados sobre el fondo claro.
     return Scaffold(
-      body: BrandGradient(
-        circuloSecundarioArriba: false,
-        formaInferior: false,
+      body: FondoClaro(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
-                horizontal: DesignTokens.space7 + 2,
+                horizontal: DesignTokens.space6,
                 vertical: DesignTokens.space6,
               ),
-              child: Column(
-                children: [
-                  const _SobreFlotando(),
-                  const SizedBox(height: DesignTokens.space4 + 2),
-                  const Text(
-                    'Revisa tu correo',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: DesignTokens.space4 + 2),
-                  Text.rich(
-                    TextSpan(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(child: _SobreFlotando()),
+                    const SizedBox(height: DesignTokens.space5),
+                    const Text(
+                      'Revisa tu correo',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 15,
-                        height: 1.55,
-                        color: Colors.white.withValues(alpha: 0.88),
-                      ),
-                      children: [
-                        const TextSpan(text: 'Enviamos un código a\n'),
-                        TextSpan(
-                          text: email,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const TextSpan(
-                          text: '\nEscríbelo aquí para continuar.',
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: DesignTokens.space5),
-                  _CampoCodigo(
-                    controller: _codigo,
-                    error: _codigoError,
-                    largo: _largoCodigo,
-                    enabled: !_verificando,
-                    onChanged: () => setState(() => _codigoError = null),
-                    onSubmit: () => _verificar(email),
-                  ),
-                  const SizedBox(height: DesignTokens.space4),
-                  _PildoraVidrio(
-                    label: _verificando ? 'Verificando…' : 'Verificar cuenta',
-                    onPressed: _verificando ? null : () => _verificar(email),
-                  ),
-                  const SizedBox(height: DesignTokens.space3),
-                  _PildoraVidrio(
-                    label: puedeReenviar ? 'Reenviar código' : _cooldownLabel,
-                    onPressed: puedeReenviar ? _reenviar : null,
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  TextButton(
-                    onPressed: () => context.go(Routes.register),
-                    style: TextButton.styleFrom(foregroundColor: Colors.white),
-                    child: const Text(
-                      'Cambiar el correo',
-                      style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 30,
                         fontWeight: FontWeight.w800,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.white,
+                        color: DesignTokens.textPrimaryLight,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: DesignTokens.space5),
-                  // Salida de emergencia: sin esto, quien no recibe el código
-                  // queda encerrado en esta pantalla.
-                  TextButton(
-                    onPressed: () =>
-                        ref.read(authControllerProvider.notifier).signOut(),
-                    child: Text(
-                      'Cerrar sesión',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
+                    const SizedBox(height: DesignTokens.space3),
+                    Text.rich(
+                      TextSpan(
+                        style: const TextStyle(
+                          fontSize: 16,
+                          height: 1.5,
+                          color: DesignTokens.textSecondaryLight,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Enviamos un código a\n'),
+                          TextSpan(
+                            text: email,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: DesignTokens.textPrimaryLight,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: '\nEscríbelo aquí para continuar.',
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: DesignTokens.space5),
+                    _CampoCodigo(
+                      controller: _codigo,
+                      error: _codigoError,
+                      largo: _largoCodigo,
+                      enabled: !_verificando,
+                      onChanged: () => setState(() => _codigoError = null),
+                      onSubmit: () => _verificar(email),
+                    ),
+                    const SizedBox(height: DesignTokens.space4),
+                    // El principal, sólido; el reenvío, con borde (el mismo
+                    // reparto que la web).
+                    EnamButton(
+                      label: 'Verificar cuenta',
+                      loading: _verificando,
+                      onPressed: () => _verificar(email),
+                    ),
+                    const SizedBox(height: DesignTokens.space3),
+                    EnamOutlinedButton(
+                      label: puedeReenviar ? 'Reenviar código' : _cooldownLabel,
+                      onPressed: puedeReenviar ? _reenviar : null,
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
+                    TextButton(
+                      onPressed: () => context.go(Routes.register),
+                      child: const Text(
+                        'Cambiar el correo',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: DesignTokens.space3),
+                    // Salida de emergencia: sin esto, quien no recibe el
+                    // código queda encerrado en esta pantalla.
+                    TextButton(
+                      onPressed: () =>
+                          ref.read(authControllerProvider.notifier).signOut(),
+                      child: const Text(
+                        'Cerrar sesión',
+                        style: TextStyle(
+                          color: DesignTokens.textSecondaryLight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -259,7 +262,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   }
 }
 
-/// El sobre en caja de vidrio, subiendo y bajando en bucle.
+/// El sobre en su caja, subiendo y bajando en bucle.
 class _SobreFlotando extends StatefulWidget {
   const _SobreFlotando();
 
@@ -289,18 +292,17 @@ class _SobreFlotandoState extends State<_SobreFlotando>
   @override
   Widget build(BuildContext context) {
     final caja = Container(
-      width: 110,
-      height: 110,
+      width: 104,
+      height: 104,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        color: DesignTokens.brandSubtle,
         borderRadius: BorderRadius.circular(32),
       ),
       child: const Icon(
         Symbols.mark_email_unread,
-        size: 54,
+        size: 52,
         fill: 1,
-        color: Colors.white,
+        color: DesignTokens.actionLight,
       ),
     );
 
@@ -319,47 +321,7 @@ class _SobreFlotandoState extends State<_SobreFlotando>
   }
 }
 
-/// Botón en cristal sobre el degradado, para el reenvío.
-class _PildoraVidrio extends StatelessWidget {
-  const _PildoraVidrio({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final habilitado = onPressed != null;
-
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(64, 52),
-        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space7),
-        backgroundColor: Colors.white.withValues(alpha: 0.16),
-        disabledBackgroundColor: Colors.white.withValues(alpha: 0.16),
-        foregroundColor: Colors.white,
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-          // Deshabilitado se atenúa, pero sigue legible: el usuario tiene que
-          // poder leer cuánto falta para reenviar.
-          color: Colors.white.withValues(alpha: habilitado ? 1 : 0.75),
-        ),
-      ),
-    );
-  }
-}
-
-/// Campo de los 6 dígitos, sobre el fondo degradado de la pantalla.
-///
-/// Va en blanco translúcido y no con el campo normal de la app porque aquí el
-/// fondo es la marca a pantalla completa: un campo claro con borde gris se ve
-/// pegado encima, no dentro.
+/// Campo de los 6 dígitos: el campo claro de la app, en grande.
 class _CampoCodigo extends StatelessWidget {
   const _CampoCodigo({
     required this.controller,
@@ -379,7 +341,14 @@ class _CampoCodigo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    OutlineInputBorder borde(Color color, [double ancho = 1]) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          borderSide: BorderSide(color: color, width: ancho),
+        );
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
           controller: controller,
@@ -395,41 +364,30 @@ class _CampoCodigo extends StatelessWidget {
             fontSize: 30,
             fontWeight: FontWeight.w800,
             letterSpacing: 12,
-            color: Colors.white,
+            color: DesignTokens.textPrimaryLight,
           ),
-          cursorColor: Colors.white,
+          cursorColor: DesignTokens.actionLight,
           onChanged: (_) => onChanged(),
           onSubmitted: (_) => onSubmit(),
           decoration: InputDecoration(
             counterText: '',
             hintText: '000000',
-            hintStyle: TextStyle(
+            hintStyle: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
               letterSpacing: 12,
-              color: Colors.white.withValues(alpha: 0.35),
+              // Texto grande: 3,5:1 le basta y no se confunde con un código
+              // ya escrito.
+              color: DesignTokens.borderLight,
             ),
             filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.15),
+            fillColor: DesignTokens.surfaceLight,
             contentPadding: const EdgeInsets.symmetric(
               vertical: DesignTokens.space4,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.35),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              borderSide: const BorderSide(color: Colors.white, width: 2),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
-            ),
+            enabledBorder: borde(DesignTokens.borderLight),
+            focusedBorder: borde(DesignTokens.actionLight, 2),
+            disabledBorder: borde(DesignTokens.borderSubtleLight),
           ),
         ),
         if (error != null) ...[
