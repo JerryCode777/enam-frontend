@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
@@ -18,6 +19,12 @@ class DescargasNotifier extends AsyncNotifier<List<PaqueteEnPantalla>> {
   /// Descargas en marcha: área → progreso de 0 a 1, o `null` si el servidor no
   /// dice cuánto pesa.
   final Map<String, double?> _bajando = {};
+
+  /// Cómo cortar cada descarga en marcha.
+  final Map<String, CancelToken> _cancelar = {};
+
+  /// Áreas cuyo último intento falló. Se limpian al reintentar.
+  final Set<String> _fallidas = {};
 
   @override
   Future<List<PaqueteEnPantalla>> build() async {
@@ -54,6 +61,8 @@ class DescargasNotifier extends AsyncNotifier<List<PaqueteEnPantalla>> {
       disponibles: disponibles,
       bytes: guardado?.bytes ?? 0,
       progreso: _bajando[area.id] ?? 0,
+      actualizadaEn: guardado?.generadoEn,
+      fallo: !bajando && _fallidas.contains(area.id),
     );
   }
 
@@ -66,10 +75,13 @@ class DescargasNotifier extends AsyncNotifier<List<PaqueteEnPantalla>> {
     if (_bajando.containsKey(areaId)) return null;
 
     _bajando[areaId] = null;
+    _fallidas.remove(areaId);
+    final cancelar = _cancelar[areaId] = CancelToken();
     _repintar();
 
     try {
       await servicio.descargar(
+        cancelar: cancelar,
         areaId,
         // Crear la práctica lista arranca las 24 h de prueba, así que a quien
         // todavía no las gastó no se le tocan: descarga el banco y la reserva
@@ -86,13 +98,25 @@ class DescargasNotifier extends AsyncNotifier<List<PaqueteEnPantalla>> {
         },
       );
       return null;
+    } on DescargaCancelada {
+      // Cancelar no es un fallo: no se marca la fila ni se avisa.
+      return null;
     } on Failure catch (e) {
+      // Sin plan no hay nada que reintentar: lo resuelve el pago.
+      if (!(e is ForbiddenFailure && e.requiereSuscripcion)) {
+        _fallidas.add(areaId);
+      }
       return e;
     } finally {
       _bajando.remove(areaId);
+      _cancelar.remove(areaId);
       if (ref.mounted) ref.invalidateSelf();
     }
   }
+
+  /// Corta una descarga en marcha. Lo ya recibido se descarta: un paquete a
+  /// medias no se guarda.
+  void cancelar(String areaId) => _cancelar[areaId]?.cancel();
 
   Future<bool?> _pruebaSinEmpezar() async {
     try {
@@ -132,6 +156,8 @@ class DescargasNotifier extends AsyncNotifier<List<PaqueteEnPantalla>> {
             disponibles: p.disponibles,
             bytes: p.bytes,
             progreso: _bajando[p.areaId] ?? 0,
+            actualizadaEn: p.actualizadaEn,
+            fallo: false,
           )
         else
           p,

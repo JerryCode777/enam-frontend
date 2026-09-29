@@ -14,6 +14,9 @@ import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../auth/domain/auth_models.dart';
+import '../../universidades/domain/universidad.dart';
+import '../../universidades/presentation/buscador_de_universidad.dart';
+import '../../universidades/presentation/universidades_providers.dart';
 
 /// Editar perfil (RF-04).
 ///
@@ -28,7 +31,8 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _nombre;
-  String? _universidad;
+  EleccionDeUniversidad? _universidad;
+  bool _universidadCambiada = false;
   StudentCondition? _condicion;
   DateTime? _fechaObjetivo;
 
@@ -42,25 +46,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     StudentCondition.repitiente: 'Voy a rendirlo de nuevo',
   };
 
-  static const _universidades = [
-    'UNMSM',
-    'UNSA',
-    'UPCH',
-    'UNT',
-    'UNFV',
-    'USMP',
-    'UCSM',
-    'UNAP',
-    'UNC',
-    'Otra',
-  ];
-
   @override
   void initState() {
     super.initState();
     final user = ref.read(currentUserProvider);
     _nombre = TextEditingController(text: user?.nombre ?? '');
-    _universidad = user?.universidad;
+    _universidad = switch ((user?.universidadId, user?.universidad)) {
+      (final id?, final nombre) => (id: id, nombre: nombre ?? id),
+      (null, final nombre?) => (id: '', nombre: nombre),
+      _ => null,
+    };
     _condicion = user?.condicion;
     _fechaObjetivo = user?.fechaObjetivo;
   }
@@ -106,7 +101,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   index: 1,
                   child: _Selector(
                     label: 'Universidad',
-                    valor: _universidad ?? 'Elige tu universidad',
+                    valor:
+                        nombreDeUniversidad(
+                          ref.watch(universidadesProvider).value,
+                          id: _universidad?.id,
+                          texto: _universidad?.nombre,
+                        ) ??
+                        'Elige tu universidad',
                     placeholder: _universidad == null,
                     icon: Symbols.arrow_drop_down,
                     onTap: _guardando ? null : _elegirUniversidad,
@@ -192,24 +193,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _elegirUniversidad() async {
-    final elegida = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final u in _universidades)
-              ListTile(
-                title: Text(u),
-                trailing: _universidad == u ? const Icon(Symbols.check) : null,
-                onTap: () => Navigator.of(context).pop(u),
-              ),
-          ],
-        ),
-      ),
+    final elegida = await elegirUniversidad(
+      context,
+      idActual: _universidad?.id,
+      nombreActual: _universidad?.nombre,
     );
-    if (elegida != null) setState(() => _universidad = elegida);
+    if (elegida != null) {
+      setState(() {
+        _universidad = elegida;
+        _universidadCambiada = true;
+      });
+    }
   }
 
   Future<void> _elegirFecha() async {
@@ -236,7 +230,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final user = await ref.read(authRepositoryProvider).updateProfile(
         nombre: _nombre.text.trim(),
-        universidad: _universidad,
+        // El id del catálogo, o «otra» con el nombre escrito. Nunca siglas.
+        universidadId: _universidadCambiada ? _universidad?.id : null,
+        universidad: _universidadCambiada ? _universidad?.nombre : null,
         condicion: _condicion,
         fechaObjetivo: _fechaObjetivo,
       );

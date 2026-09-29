@@ -28,8 +28,11 @@ class NodeStateChip extends StatelessWidget {
         scheme.surfaceContainerHighest,
         scheme.onSurfaceVariant,
       ),
+      // El mismo texto en todo el temario, el inicio y el progreso (plan §6):
+      // sin respuestas no hay dominio que medir, y un 0 % se leería como un
+      // mal resultado.
       NodeState.sinEmpezar => (
-        'Sin empezar',
+        'Aún sin práctica',
         scheme.surfaceContainerHighest,
         scheme.onSurfaceVariant,
       ),
@@ -570,10 +573,12 @@ class NodeRow extends StatelessWidget {
     final partes = <String>[
       if (nodo.peso != null) '${nodo.peso} pts',
       if (nodo.totalTemas > 0) '${nodo.totalTemas} temas',
-      if (nodo.preguntasVistas == 0)
-        'sin empezar'
+      // Por el acierto y no por las vistas: con preguntas vistas pero sin
+      // respuestas contadas, esto decía «acierto 0 %».
+      if (nodo.porcentajeAcierto case final acierto?)
+        'acierto ${(acierto * 100).round()} %'
       else
-        'acierto ${((nodo.porcentajeAcierto ?? 0) * 100).round()} %',
+        'aún sin práctica',
     ];
     return partes.join(' · ');
   }
@@ -663,7 +668,7 @@ class _MetaFila extends StatelessWidget {
   final states = context.states;
   return switch (estado) {
     NodeState.sinContenido => ('Disponible pronto', null),
-    NodeState.sinEmpezar => ('Sin empezar', null),
+    NodeState.sinEmpezar => ('Aún sin práctica', null),
     NodeState.enCurso => ('En curso', states.warning.onTint),
     NodeState.dominado => ('Dominado', states.success.onTint),
     NodeState.agotado => ('Lo viste todo', states.info.onTint),

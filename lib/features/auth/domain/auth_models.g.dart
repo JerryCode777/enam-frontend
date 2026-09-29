@@ -14,6 +14,7 @@ _User _$UserFromJson(Map<String, dynamic> json) => _User(
       $enumDecodeNullable(_$UserRoleEnumMap, json['rol']) ??
       UserRole.estudiante,
   universidad: json['universidad'] as String?,
+  universidadId: json['universidadId'] as String?,
   condicion: $enumDecodeNullable(_$StudentConditionEnumMap, json['condicion']),
   fechaObjetivo: json['fechaObjetivo'] == null
       ? null
@@ -28,6 +29,7 @@ Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
   'nombre': instance.nombre,
   'rol': _$UserRoleEnumMap[instance.rol]!,
   'universidad': instance.universidad,
+  'universidadId': instance.universidadId,
   'condicion': _$StudentConditionEnumMap[instance.condicion],
   'fechaObjetivo': instance.fechaObjetivo?.toIso8601String(),
   'emailVerificado': instance.emailVerificado,

@@ -154,6 +154,12 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
+  /// Renueva el access token desde fuera del interceptor, compartiendo el
+  /// mismo candado: si una petición normal ya está renovando, se espera a esa.
+  /// Lo usa el emisor de eventos, que va por su propio cliente (un 401 de la
+  /// analítica no puede pasar por aquí y cerrar la sesión de nadie).
+  Future<String?> renovar() => _refreshToken();
+
   /// Renueva el access token. Devuelve `null` si la sesión ya no es válida.
   Future<String?> _refreshToken() {
     // Si ya hay un refresh en curso, súmate a ese en vez de lanzar otro.

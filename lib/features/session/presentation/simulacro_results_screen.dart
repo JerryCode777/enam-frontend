@@ -4,14 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/domain/blueprint.dart';
-import '../../../features/catalog/presentation/catalog_providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../features/catalog/presentation/catalog_providers.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/sonar_al_aparecer.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 
@@ -35,11 +37,19 @@ class SimulacroResultsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
             const Center(child: Text('No pudimos cargar los resultados.')),
-        data: (s) => _Contenido(session: s.session),
+        // El sonido del resultado, una vez: bueno con 11 o más, malo si no.
+        data: (s) => SonarAlAparecer(
+          sonido: sonidoDeResultado(nota: _notaDe(s.session)),
+          child: _Contenido(session: s.session),
+        ),
       ),
     );
   }
 }
+
+/// La nota vigesimal de la sesión: la del servidor si la hay, calculada si no.
+double _notaDe(StudySession s) =>
+    s.nota ?? Blueprint.toVigesimal(s.correctas, total: s.totalPreguntas);
 
 class _Contenido extends StatelessWidget {
   const _Contenido({required this.session});

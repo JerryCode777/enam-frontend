@@ -94,6 +94,13 @@ typedef PaqueteEnPantalla = ({
 
   /// Progreso de 0 a 1 mientras baja.
   double progreso,
+
+  /// Cuándo generó el servidor el paquete guardado. Nulo si no hay.
+  DateTime? actualizadaEn,
+
+  /// El último intento de bajarla falló. Se ofrece reintentar en la propia
+  /// fila, no solo en un aviso que desaparece.
+  bool fallo,
 });
 
 /// El resumen de un paquete guardado, **sin descifrar su contenido**.

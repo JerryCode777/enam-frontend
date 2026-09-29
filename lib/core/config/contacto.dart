@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:url_launcher/url_launcher.dart';
 
-/// Los canales de WhatsApp por donde se cierra el cobro (M10).
+/// El WhatsApp de soporte.
 ///
-/// El bot no es parte de la app: es el canal donde se vende. La app da un día,
-/// corta, y empuja aquí. Del otro lado se atiende, se cobra y se activa el plan.
+/// **Ya no es un canal de cobro.** Lo fue: por aquí se pagaba con Yape y se
+/// activaba el plan a mano. Ahora se cobra con App Store en iPhone y con
+/// Mercado Pago en la web, y el acceso se activa solo. WhatsApp queda para
+/// ayudar: un pago que no se refleja, una duda, un reporte.
 ///
 /// El número de soporte lo **sirve el servidor** (`GET /config`) y lo que hay
 /// aquí es solo el valor de respaldo. Es lo que evita que cambiar de línea
@@ -18,17 +21,12 @@ import 'package:url_launcher/url_launcher.dart';
 /// Los números viven aquí y no repartidos por las pantallas: cuando cambien —y
 /// van a cambiar— se toca un archivo, no ocho.
 abstract final class Contacto {
-  /// Asistente de WhatsApp: suscripciones, planes y pagos.
-  static const String botNumero = '51906944489';
-
-  /// Soporte humano (Jaks Tech SAC): problemas y dudas que necesitan persona.
+  /// Soporte humano (operador de ENAM Prep; PENDIENTE(titular): pasa a
+  /// AidaSoft): problemas y dudas que necesitan persona.
   ///
   /// Lo pisa [aplicar] con lo que responda el servidor.
   static String soporteNumero = _soportePorDefecto;
   static const String _soportePorDefecto = '51964235124';
-
-  /// Para mostrar: `+51 906 944 489`.
-  static const String botVisible = '+51 906 944 489';
 
   static String soporteVisible = _soporteVisiblePorDefecto;
   static const String _soporteVisiblePorDefecto = '+51 964 235 124';
@@ -63,17 +61,12 @@ abstract final class Contacto {
     return Uri.parse('$base?text=${Uri.encodeComponent(mensaje)}');
   }
 
-  /// Activar la cuenta: va al **soporte humano**, no al bot.
+  /// Pedir ayuda con el acceso o la suscripción.
   ///
-  /// Del otro lado se cobra y se activa a mano, así que quien contesta tiene
-  /// que poder hacerlo. El bot todavía no cierra el cobro.
-  static Uri activarPlan({String? codigoDescuento}) => _enlace(
-    soporteNumero,
-    codigoDescuento == null
-        ? 'hola, quiero activar mi cuenta de ENAM Prep'
-        : 'hola, quiero activar mi cuenta de ENAM Prep con mi código de '
-              'descuento: $codigoDescuento',
-  );
+  /// Solo ayuda, no cobro: el mensaje no pide activar nada, porque el pago y la
+  /// activación ya no pasan por aquí.
+  static Uri ayudaConElAcceso() =>
+      _enlace(soporteNumero, 'hola, necesito ayuda con mi acceso a ENAM Prep');
 
   static Uri soporte({String? mensaje}) => _enlace(soporteNumero, mensaje);
 
@@ -83,9 +76,17 @@ abstract final class Contacto {
   /// capturar ahí es la peor forma de perder una venta.
   static Future<bool> abrir(Uri enlace) async {
     try {
-      return await launchUrl(enlace, mode: LaunchMode.externalApplication);
+      return await lanzador(enlace);
     } on Exception {
       return false;
     }
   }
+
+  /// Lo que de verdad abre el enlace. Se puede sustituir en las pruebas, donde
+  /// no hay WhatsApp ni plugin de sistema al que llamar.
+  @visibleForTesting
+  static Future<bool> Function(Uri) lanzador = _lanzar;
+
+  static Future<bool> _lanzar(Uri enlace) =>
+      launchUrl(enlace, mode: LaunchMode.externalApplication);
 }

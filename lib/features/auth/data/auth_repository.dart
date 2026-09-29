@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/token_storage.dart';
+import '../../universidades/domain/universidad.dart';
 import '../domain/auth_models.dart';
 
 /// Contrato de autenticación (Módulo 1 del SSD).
@@ -108,8 +111,14 @@ abstract interface class AuthRepository {
   });
 
   /// RF-04. Completa o actualiza el perfil.
+  ///
+  /// La universidad va por [universidadId], el id del catálogo. Con
+  /// `universidadId: 'otra'`, [universidad] es el nombre que escribió la
+  /// persona; con cualquier otro id, el texto no se manda (lo pone el
+  /// servidor con el nombre oficial).
   Future<User> updateProfile({
     String? nombre,
+    String? universidadId,
     String? universidad,
     StudentCondition? condicion,
     DateTime? fechaObjetivo,
@@ -119,12 +128,29 @@ abstract interface class AuthRepository {
 
 /// Implementación real contra la API.
 class ApiAuthRepository implements AuthRepository {
-  ApiAuthRepository({required ApiClient client, required TokenStorage tokens})
-    : _client = client,
-      _tokens = tokens;
+  ApiAuthRepository({
+    required ApiClient client,
+    required TokenStorage tokens,
+    Future<String> Function()? anonimoId,
+  }) : _client = client,
+       _tokens = tokens,
+       _anonimoId = anonimoId;
 
   final ApiClient _client;
   final TokenStorage _tokens;
+
+  /// El `anonimo_id` del dispositivo (contrato de eventos). Viaja en el cuerpo
+  /// de las altas —registro, Google y Apple— para que el servidor una la
+  /// visita anónima con la cuenta en `account_created`. No identifica a nadie.
+  final Future<String> Function()? _anonimoId;
+
+  Future<String?> _anonimo() async {
+    try {
+      return await _anonimoId?.call();
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Future<void> register({
@@ -140,6 +166,7 @@ class ApiAuthRepository implements AuthRepository {
         'password': password,
         'nombre': nombre,
         'aceptaTerminos': aceptaTerminos,
+        'anonimoId': ?await _anonimo(),
       },
     );
   }
@@ -157,14 +184,18 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
   Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.google,
-      data: {'idToken': idToken, 'aceptaTerminos': aceptaTerminos},
+      data: {
+        'idToken': idToken,
+        'aceptaTerminos': aceptaTerminos,
+        'anonimoId': ?await _anonimo(),
+      },
     );
 
     final session = AuthSession.fromJson(data);
@@ -173,7 +204,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -188,6 +219,7 @@ class ApiAuthRepository implements AuthRepository {
         'identityToken': identityToken,
         'nombre': ?nombre,
         'aceptaTerminos': aceptaTerminos,
+        'anonimoId': ?await _anonimo(),
       },
     );
 
@@ -197,7 +229,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -208,9 +240,46 @@ class ApiAuthRepository implements AuthRepository {
     if (!await _tokens.hasSession()) return null;
     try {
       final data = await _client.get<Map<String, dynamic>>(ApiEndpoints.me);
-      return User.fromJson(data);
+      return _recordar(User.fromJson(data));
     } on UnauthorizedFailure {
       await _tokens.clear();
+      return null;
+    } on NetworkFailure {
+      // Sin red se entra con el último perfil conocido: lo descargado sigue
+      // sirviendo, y en cuanto vuelva la señal el primer 401 cerrará la sesión
+      // si ya no vale. Sin perfil guardado no hay con qué entrar.
+      final ultimo = await _ultimoConocido();
+      if (ultimo != null) return ultimo;
+      rethrow;
+    } on TimeoutFailure {
+      final ultimo = await _ultimoConocido();
+      if (ultimo != null) return ultimo;
+      rethrow;
+    }
+  }
+
+  /// Guarda el perfil para poder arrancar sin red, y lo devuelve.
+  ///
+  /// Un fallo al guardar no impide entrar: sin copia, lo único que se pierde es
+  /// abrir la app la próxima vez sin señal.
+  Future<User> _recordar(User user) async {
+    try {
+      await _tokens.guardarUsuario(jsonEncode(user.toJson()));
+    } catch (_) {}
+    return user;
+  }
+
+  /// El perfil de la última vez que hubo red, si lo hay y se puede leer.
+  ///
+  /// Solo se usa cuando **no se pudo preguntar**. Si el servidor responde y
+  /// dice que la sesión no vale, eso manda: ese caso es el 401 de arriba, que
+  /// borra todo.
+  Future<User?> _ultimoConocido() async {
+    try {
+      final json = await _tokens.leerUsuario();
+      if (json == null) return null;
+      return User.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    } catch (_) {
       return null;
     }
   }
@@ -264,7 +333,7 @@ class ApiAuthRepository implements AuthRepository {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
     );
-    return session.user;
+    return _recordar(session.user);
   }
 
   @override
@@ -281,6 +350,7 @@ class ApiAuthRepository implements AuthRepository {
   @override
   Future<User> updateProfile({
     String? nombre,
+    String? universidadId,
     String? universidad,
     StudentCondition? condicion,
     DateTime? fechaObjetivo,
@@ -292,7 +362,12 @@ class ApiAuthRepository implements AuthRepository {
       // omitir un campo lo deja intacto en el servidor.
       data: {
         'nombre': ?nombre,
-        'universidad': ?universidad,
+        'universidadId': ?universidadId,
+        // El texto solo acompaña a «otra»: con un id del catálogo, el nombre
+        // lo pone el servidor. Nunca siglas sueltas.
+        'universidad': ?(universidadId == idOtraUniversidad
+            ? universidad
+            : null),
         'condicion': ?condicion?.name,
         // toUtc() antes de serializar: un DateTime local sale sin zona
         // ("2026-12-12T00:00:00.000") y el servidor exige ISO 8601 con hora y
@@ -302,6 +377,6 @@ class ApiAuthRepository implements AuthRepository {
         'ocultoEnRanking': ?ocultoEnRanking,
       },
     );
-    return User.fromJson(data);
+    return _recordar(User.fromJson(data));
   }
 }

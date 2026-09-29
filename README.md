@@ -2,14 +2,29 @@
 
 App Flutter de preparación para el Examen Nacional de Medicina del Perú.
 
-Referencia normativa: **SSD-ENAM-001** (Jaks Tech SAC). Los comentarios del código
-citan sus requerimientos como `RF-xx`, `RN-xx` y `RNF-xx`.
+Referencia normativa: **SSD-ENAM-001**. Los comentarios del código citan sus
+requerimientos como `RF-xx`, `RN-xx` y `RNF-xx`.
 
 ## Estado
 
-Andamiaje completo, **sin pantallas diseñadas**. La app compila, navega por sus
-~40 rutas y responde con datos falsos. Cada pantalla es un marcador que dice qué
-irá en ella y qué requerimientos cubre.
+Publicada en App Store (solo iPhone) y Google Play. Tiene práctica, simulacros,
+exámenes pasados, simulacro nacional, progreso, ranking, modo duelo, descargas
+para estudiar sin conexión y compra por App Store en iPhone.
+
+En la rama `rediseno-ui`: el rediseño de `PLAN-UI-SEO-PARA-OPUS.md` (carpeta
+superior del workspace). El resumen, con lo validado, lo pendiente y cómo
+revertir, está en [`diseno/rediseno/INFORME-APP.md`](diseno/rediseno/INFORME-APP.md).
+
+## Diseño
+
+- **Tokens:** [`diseno/TOKENS.md`](diseno/TOKENS.md) es la tabla fuente compartida
+  con la web: colores, tipografía, radios, espaciado y movimiento, con sus
+  contrastes medidos. `test/tokens_test.dart` la hace cumplir.
+- **Galería de componentes:** `/dev/componentes`, solo fuera de release. Cada
+  pieza del sistema en sus estados y en los dos temas.
+- **Capturas:** `test/golden/` retrata las pantallas en tres tamaños de iPhone
+  y en claro y oscuro. Se regeneran con
+  `flutter test --update-goldens test/golden`.
 
 ## Empezar
 
@@ -108,23 +123,27 @@ Se toman como corrección explícita a la deuda técnica de la app hermana
 - **Nunca se loguean headers** — ahí viaja el Bearer.
 - **El servidor manda** (RN-03): la app muestra los límites del plan, pero no
   decide. Un 403 se traduce a paywall; nada de contenido premium en el cliente.
-- **Marca de agua** con el ID del usuario en preguntas premium (RNF-05), pendiente
-  de implementar junto con la pantalla de pregunta.
-- **Eliminación de cuenta** por Ley 29733 (RNF-06), ruta ya reservada.
+- **Marca de agua** con el ID del usuario en el enunciado de cada pregunta
+  (RNF-05).
+- **Eliminación de cuenta** por Ley 29733 (RNF-06), desde Ajustes.
 
 ## Comandos
 
 ```sh
 flutter analyze                     # debe salir limpio
-flutter test                        # 27 tests
+flutter test                        # toda la batería, capturas incluidas
+flutter test --exclude-tags golden  # sin las capturas, más rápido
 dart run build_runner build         # regenerar modelos
 flutter build apk --release --dart-define=ENV=prod
 ```
 
 ## Pendiente
 
-1. Reemplazar los marcadores por las pantallas reales cuando lleguen los diseños.
-2. Modo offline con SQLite (RF-30 a RF-33): la dependencia está, falta la capa.
-3. Notificaciones con FCM (RF-34).
-4. Culqi y Yape (RF-26 a RF-28).
-5. Persistir el tema elegido en `shared_preferences`.
+1. Notificaciones push (RF-34), analítica de producto y registro de errores de
+   cliente: requieren cuenta y configuración de un proveedor. No se añaden sin
+   aprobación del negocio.
+2. Los reportes de preguntas van a `POST /questions/{id}/reports`, que aún no
+   está desplegado (enam-backend#4). Hasta entonces caen al WhatsApp de
+   soporte.
+3. Actualizar el titular legal a AidaSoft cuando estén la razón social y el
+   RUC. Los textos afectados están marcados con `PENDIENTE(titular)`.

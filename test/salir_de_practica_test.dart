@@ -88,6 +88,7 @@ class _AuthListo implements AuthRepository {
   @override
   Future<User> updateProfile({
     String? nombre,
+    String? universidadId,
     String? universidad,
     StudentCondition? condicion,
     DateTime? fechaObjetivo,

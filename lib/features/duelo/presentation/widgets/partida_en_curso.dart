@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../session/domain/session_models.dart';
@@ -166,10 +167,9 @@ class _Pregunta extends StatelessWidget {
           ),
         ),
         const SizedBox(height: DesignTokens.space2),
-        Text(
-          pregunta.enunciado,
-          style: texto.titleMedium?.copyWith(height: 1.4),
-        ),
+        // Un caso clínico entero en negrita de 18 se leía gritado. El mismo
+        // estilo que la práctica: 17/1,6, peso normal.
+        Text(pregunta.enunciado, style: AppTheme.clinicalCase(context)),
         const SizedBox(height: DesignTokens.space5),
         for (var i = 0; i < pregunta.opciones.length; i++) ...[
           OptionCard(
@@ -236,7 +236,10 @@ class _ResultadoDeLaPregunta extends StatelessWidget {
           Container(
             width: 88,
             height: 88,
-            decoration: BoxDecoration(color: color.base, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.base,
+              shape: BoxShape.circle,
+            ),
             child: Icon(icono, size: 48, color: Colors.white),
           ),
           const SizedBox(height: DesignTokens.space5),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
@@ -227,11 +228,13 @@ class _TarjetaRevisionState extends State<_TarjetaRevision> {
                             widget.pregunta.enunciado,
                             maxLines: _abierta ? null : 2,
                             overflow: _abierta ? null : TextOverflow.ellipsis,
-                            style: context.texts.bodyMedium?.copyWith(
-                              height: _abierta
-                                  ? DesignTokens.lineHeightRelaxed
-                                  : 1.4,
-                            ),
+                            // Plegada es un extracto; abierta se lee como el
+                            // enunciado de la práctica, a 17/1,6.
+                            style: _abierta
+                                ? AppTheme.clinicalCase(context)
+                                : context.texts.bodyMedium?.copyWith(
+                                    height: 1.4,
+                                  ),
                           ),
                         ],
                       ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../domain/session_models.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers.dart';
@@ -134,49 +135,54 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
                 onMarcar: control.alternarMarca,
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                    DesignTokens.space5,
-                    DesignTokens.space2,
-                    DesignTokens.space5,
-                    DesignTokens.space4,
-                  ),
-                  children: [
-                    Watermark(
-                      texto: _marca(usuario?.id, usuario?.email),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(
-                            DesignTokens.space4 + 2,
-                          ),
-                          child: Text(
-                            pregunta.enunciado,
-                            style: context.texts.bodyLarge?.copyWith(
-                              fontSize: DesignTokens.fontSizeMd,
-                              height: DesignTokens.lineHeightRelaxed,
-                              letterSpacing: 0.1,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  // Columna de lectura, como en la práctica (plan §6).
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space5,
+                        DesignTokens.space2,
+                        DesignTokens.space5,
+                        DesignTokens.space4,
+                      ),
+                      children: [
+                        Watermark(
+                          texto: _marca(usuario?.id, usuario?.email),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(
+                                DesignTokens.space4 + 2,
+                              ),
+                              // El mismo estilo clínico que la práctica: 17/1,6.
+                              child: Text(
+                                pregunta.enunciado,
+                                style: AppTheme.clinicalCase(context),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: DesignTokens.space4),
+                        for (var i = 0; i < pregunta.opciones.length; i++) ...[
+                          if (i > 0)
+                            const SizedBox(height: DesignTokens.space2 + 2),
+                          OptionCard(
+                            opcion: pregunta.opciones[i],
+                            letra: const ['A', 'B', 'C', 'D'][i],
+                            visual:
+                                (estado.seleccion ??
+                                        estado.respuesta?.optionId) ==
+                                    pregunta.opciones[i].id
+                                ? OptionVisual.seleccionada
+                                : OptionVisual.normal,
+                            onTap: () =>
+                                control.seleccionar(pregunta.opciones[i].id),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: DesignTokens.space4),
-                    for (var i = 0; i < pregunta.opciones.length; i++) ...[
-                      if (i > 0)
-                        const SizedBox(height: DesignTokens.space2 + 2),
-                      OptionCard(
-                        opcion: pregunta.opciones[i],
-                        letra: const ['A', 'B', 'C', 'D'][i],
-                        visual:
-                            (estado.seleccion ?? estado.respuesta?.optionId) ==
-                                pregunta.opciones[i].id
-                            ? OptionVisual.seleccionada
-                            : OptionVisual.normal,
-                        onTap: () =>
-                            control.seleccionar(pregunta.opciones[i].id),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
               _BarraNavegacion(

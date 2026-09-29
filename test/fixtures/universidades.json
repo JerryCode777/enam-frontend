@@ -1,0 +1,1289 @@
+[
+ {
+  "id": "uac",
+  "nombre": "Universidad Andina del Cusco",
+  "siglas": "UAC",
+  "region": "Cusco",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "ucsm",
+  "nombre": "Universidad Católica de Santa María",
+  "siglas": "UCSM",
+  "region": "Arequipa",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "usat",
+  "nombre": "Universidad Católica Santo Toribio de Mogrovejo",
+  "siglas": "USAT",
+  "region": "Lambayeque",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "ucv",
+  "nombre": "Universidad César Vallejo",
+  "siglas": "UCV",
+  "region": "La Libertad",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "ucsur",
+  "nombre": "Universidad Científica del Sur",
+  "siglas": "UCSUR",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "ucontinental",
+  "nombre": "Universidad Continental",
+  "siglas": "UCONTINENTAL",
+  "region": "Junín",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "udep",
+  "nombre": "Universidad de Piura",
+  "siglas": "UDEP",
+  "region": "Piura",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "usmp",
+  "nombre": "Universidad de San Martín de Porres",
+  "siglas": "USMP",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "undac",
+  "nombre": "Universidad Nacional Daniel Alcides Carrión",
+  "siglas": "UNDAC",
+  "region": "Pasco",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unc",
+  "nombre": "Universidad Nacional de Cajamarca",
+  "siglas": "UNC",
+  "region": "Cajamarca",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unap",
+  "nombre": "Universidad Nacional de la Amazonía Peruana",
+  "siglas": "UNAP",
+  "region": "Loreto",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "una",
+  "nombre": "Universidad Nacional del Altiplano",
+  "siglas": "UNA",
+  "region": "Puno",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "uncp",
+  "nombre": "Universidad Nacional del Centro del Perú",
+  "siglas": "UNCP",
+  "region": "Junín",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "uns",
+  "nombre": "Universidad Nacional del Santa",
+  "siglas": "UNS",
+  "region": "Áncash",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unam",
+  "nombre": "Universidad Nacional de Moquegua",
+  "siglas": "UNAM",
+  "region": "Moquegua",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unp",
+  "nombre": "Universidad Nacional de Piura",
+  "siglas": "UNP",
+  "region": "Piura",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unsa",
+  "nombre": "Universidad Nacional de San Agustín de Arequipa",
+  "siglas": "UNSA",
+  "region": "Arequipa",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unsaac",
+  "nombre": "Universidad Nacional de San Antonio Abad del Cusco",
+  "siglas": "UNSAAC",
+  "region": "Cusco",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unsch",
+  "nombre": "Universidad Nacional de San Cristóbal de Huamanga",
+  "siglas": "UNSCH",
+  "region": "Ayacucho",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unsm",
+  "nombre": "Universidad Nacional de San Martín",
+  "siglas": "UNSM",
+  "region": "San Martín",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unt",
+  "nombre": "Universidad Nacional de Trujillo",
+  "siglas": "UNT",
+  "region": "La Libertad",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "untumbes",
+  "nombre": "Universidad Nacional de Tumbes",
+  "siglas": "UNTUMBES",
+  "region": "Tumbes",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unu",
+  "nombre": "Universidad Nacional de Ucayali",
+  "siglas": "UNU",
+  "region": "Ucayali",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unfv",
+  "nombre": "Universidad Nacional Federico Villarreal",
+  "siglas": "UNFV",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unheval",
+  "nombre": "Universidad Nacional Hermilio Valdizán de Huánuco",
+  "siglas": "UNHEVAL",
+  "region": "Huánuco",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unjbg",
+  "nombre": "Universidad Nacional Jorge Basadre Grohmann",
+  "siglas": "UNJBG",
+  "region": "Tacna",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unjfsc",
+  "nombre": "Universidad Nacional José Faustino Sánchez Carrión",
+  "siglas": "UNJFSC",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unmsm",
+  "nombre": "Universidad Nacional Mayor de San Marcos",
+  "siglas": "UNMSM",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unprg",
+  "nombre": "Universidad Nacional Pedro Ruiz Gallo",
+  "siglas": "UNPRG",
+  "region": "Lambayeque",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "unica",
+  "nombre": "Universidad Nacional San Luis Gonzaga",
+  "siglas": "UNICA",
+  "region": "Ica",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "untrma",
+  "nombre": "Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas",
+  "siglas": "UNTRMA",
+  "region": "Amazonas",
+  "gestion": "publica",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upch",
+  "nombre": "Universidad Peruana Cayetano Heredia",
+  "siglas": "UPCH",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upc",
+  "nombre": "Universidad Peruana de Ciencias Aplicadas",
+  "siglas": "UPC",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upla",
+  "nombre": "Universidad Peruana Los Andes",
+  "siglas": "UPLA",
+  "region": "Junín",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upeu",
+  "nombre": "Universidad Peruana Unión",
+  "siglas": "UPeU",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upao",
+  "nombre": "Universidad Privada Antenor Orrego",
+  "siglas": "UPAO",
+  "region": "La Libertad",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upt",
+  "nombre": "Universidad Privada de Tacna",
+  "siglas": "UPT",
+  "region": "Tacna",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "uwiener",
+  "nombre": "Universidad Privada Norbert Wiener",
+  "siglas": "UWIENER",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "upsjb",
+  "nombre": "Universidad Privada San Juan Bautista",
+  "siglas": "UPSJB",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "urp",
+  "nombre": "Universidad Ricardo Palma",
+  "siglas": "URP",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "usil",
+  "nombre": "Universidad San Ignacio de Loyola",
+  "siglas": "USIL",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "uss",
+  "nombre": "Universidad Señor de Sipán",
+  "siglas": "USS",
+  "region": "Lambayeque",
+  "gestion": "privada",
+  "medicina": true,
+  "licenciada": true
+ },
+ {
+  "id": "uch",
+  "nombre": "Asociación Civil Universidad de Ciencias y Humanidades",
+  "siglas": "UCH",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "ftpcl",
+  "nombre": "Facultad de Teología Pontificia y Civil de Lima",
+  "siglas": "FTPCL",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "grupo-educativo-universidad-privada-de-ica",
+  "nombre": "Grupo Educativo Universidad Privada de Ica",
+  "siglas": null,
+  "region": "Ica",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "pucp",
+  "nombre": "Pontificia Universidad Católica del Perú",
+  "siglas": "PUCP",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "alas-peruanas",
+  "nombre": "Universidad Alas Peruanas",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "andina-nestor-caceres-velasquez",
+  "nombre": "Universidad Andina Néstor Cáceres Velásquez",
+  "siglas": null,
+  "region": "Puno",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "uarm",
+  "nombre": "Universidad Antonio Ruiz de Montoya",
+  "siglas": "UARM",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "autonomadeica",
+  "nombre": "Universidad Autónoma de Ica",
+  "siglas": "AUTONOMADEICA",
+  "region": "Ica",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "ua",
+  "nombre": "Universidad Autónoma del Perú",
+  "siglas": "UA",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "autonoma-municipal-de-los-olivos",
+  "nombre": "Universidad Autónoma Municipal de Los Olivos",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "autonoma-san-francisco",
+  "nombre": "Universidad Autónoma San Francisco",
+  "siglas": null,
+  "region": "Arequipa",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "uct",
+  "nombre": "Universidad Católica de Trujillo Benedicto XVI",
+  "siglas": "UCT",
+  "region": "La Libertad",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "catolica-los-angeles-de-chimbote",
+  "nombre": "Universidad Católica Los Ángeles de Chimbote",
+  "siglas": null,
+  "region": "Áncash",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "ucsp",
+  "nombre": "Universidad Católica San Pablo",
+  "siglas": "UCSP",
+  "region": "Arequipa",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "ucss",
+  "nombre": "Universidad Católica Sedes Sapientiae",
+  "siglas": "UCSS",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "ciencias-de-la-salud",
+  "nombre": "Universidad Ciencias de la Salud",
+  "siglas": null,
+  "region": "Arequipa",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "cientifica-del-peru",
+  "nombre": "Universidad Científica del Perú",
+  "siglas": null,
+  "region": "Loreto",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "de-ayacucho-federico-froebel",
+  "nombre": "Universidad de Ayacucho Federico Froebel",
+  "siglas": null,
+  "region": "Ayacucho",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "ucal",
+  "nombre": "Universidad de Ciencias y Artes de América Latina",
+  "siglas": "UCAL",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "udh",
+  "nombre": "Universidad de Huánuco",
+  "siglas": "UDH",
+  "region": "Huánuco",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "utec",
+  "nombre": "Universidad de Ingeniería y Tecnología",
+  "siglas": "UTEC",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "de-lambayeque",
+  "nombre": "Universidad de Lambayeque",
+  "siglas": null,
+  "region": "Lambayeque",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "ul",
+  "nombre": "Universidad de Lima",
+  "siglas": "UL",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "up",
+  "nombre": "Universidad del Pacífico",
+  "siglas": "UP",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "ue",
+  "nombre": "Universidad ESAN",
+  "siglas": "UE",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unife",
+  "nombre": "Universidad Femenina del Sagrado Corazón",
+  "siglas": "UNIFE",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "global-del-cusco",
+  "nombre": "Universidad Global del Cusco",
+  "siglas": null,
+  "region": "Cusco",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "inca-garcilaso-de-la-vega-asociacion-civil",
+  "nombre": "Universidad Inca Garcilaso de la Vega Asociación Civil",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "interamericana-para-el-desarrollo",
+  "nombre": "Universidad Interamericana para el Desarrollo",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "ub",
+  "nombre": "Universidad Jaime Bausate y Meza",
+  "siglas": "UB",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "jose-carlos-mariategui",
+  "nombre": "Universidad José Carlos Mariátegui",
+  "siglas": null,
+  "region": "Moquegua",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "ulasalle",
+  "nombre": "Universidad La Salle",
+  "siglas": "ULASALLE",
+  "region": "Arequipa",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "latinoamericana-cima",
+  "nombre": "Universidad Latinoamericana CIMA",
+  "siglas": null,
+  "region": "Tacna",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "ulcb",
+  "nombre": "Universidad Le Cordon Bleu",
+  "siglas": "ULCB",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "umch",
+  "nombre": "Universidad Marcelino Champagnat",
+  "siglas": "UMCH",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "uma",
+  "nombre": "Universidad María Auxiliadora",
+  "siglas": "UMA",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "maritima-del-peru",
+  "nombre": "Universidad Marítima del Perú",
+  "siglas": null,
+  "region": "Callao",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "unas",
+  "nombre": "Universidad Nacional Agraria de la Selva",
+  "siglas": "UNAS",
+  "region": "Huánuco",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unalm",
+  "nombre": "Universidad Nacional Agraria La Molina",
+  "siglas": "UNALM",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unamd",
+  "nombre": "Universidad Nacional Amazónica de Madre de Dios",
+  "siglas": "UNAMD",
+  "region": "Madre de Dios",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unaat",
+  "nombre": "Universidad Nacional Autónoma Altoandina de Tarma",
+  "siglas": "UNAAT",
+  "region": "Junín",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unaaa",
+  "nombre": "Universidad Nacional Autónoma de Alto Amazonas",
+  "siglas": "UNAAA",
+  "region": "Loreto",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unach",
+  "nombre": "Universidad Nacional Autónoma de Chota",
+  "siglas": "UNACH",
+  "region": "Cajamarca",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unah",
+  "nombre": "Universidad Nacional Autónoma de Huanta",
+  "siglas": "UNAH",
+  "region": "Ayacucho",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unat",
+  "nombre": "Universidad Nacional Autónoma de Tayacaja Daniel Hernández Morillo",
+  "siglas": "UNAT",
+  "region": "Huancavelica",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unca",
+  "nombre": "Universidad Nacional Ciro Alegría",
+  "siglas": "UNCA",
+  "region": "La Libertad",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unab",
+  "nombre": "Universidad Nacional de Barranca",
+  "siglas": "UNAB",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "undc",
+  "nombre": "Universidad Nacional de Cañete",
+  "siglas": "UNDC",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "une",
+  "nombre": "Universidad Nacional de Educación Enrique Guzmán y Valle",
+  "siglas": "UNE",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unf",
+  "nombre": "Universidad Nacional de Frontera",
+  "siglas": "UNF",
+  "region": "Piura",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unh",
+  "nombre": "Universidad Nacional de Huancavelica",
+  "siglas": "UNH",
+  "region": "Huancavelica",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "uni",
+  "nombre": "Universidad Nacional de Ingeniería",
+  "siglas": "UNI",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unj",
+  "nombre": "Universidad Nacional de Jaén",
+  "siglas": "UNJ",
+  "region": "Cajamarca",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unaj",
+  "nombre": "Universidad Nacional de Juliaca",
+  "siglas": "UNAJ",
+  "region": "Puno",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unac",
+  "nombre": "Universidad Nacional del Callao",
+  "siglas": "UNAC",
+  "region": "Callao",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unia",
+  "nombre": "Universidad Nacional Intercultural de la Amazonía",
+  "siglas": "UNIA",
+  "region": "Ucayali",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "uniscjsa",
+  "nombre": "Universidad Nacional Intercultural de la Selva Central Juan Santos Atahualpa",
+  "siglas": "UNISCJSA",
+  "region": "Junín",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "uniq",
+  "nombre": "Universidad Nacional Intercultural de Quillabamba",
+  "siglas": "UNIQ",
+  "region": "Cusco",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unibagua",
+  "nombre": "Universidad Nacional Intercultural Fabiola Salazar Leguía de Bagua",
+  "siglas": "UNIBAGUA",
+  "region": "Amazonas",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unjma",
+  "nombre": "Universidad Nacional José María Arguedas",
+  "siglas": "UNJMA",
+  "region": "Apurímac",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unamba",
+  "nombre": "Universidad Nacional Micaela Bastidas de Apurímac",
+  "siglas": "UNAMBA",
+  "region": "Apurímac",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "unasam",
+  "nombre": "Universidad Nacional Santiago Antúnez de Mayolo",
+  "siglas": "UNASAM",
+  "region": "Áncash",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "untels",
+  "nombre": "Universidad Nacional Tecnológica de Lima Sur",
+  "siglas": "UNTELS",
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "nacional-tecnologica-de-san-juan-de-lurigancho",
+  "nombre": "Universidad Nacional Tecnológica de San Juan de Lurigancho",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "publica",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "udea",
+  "nombre": "Universidad para el Desarrollo Andino",
+  "siglas": "UDEA",
+  "region": "Huancavelica",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "particular-de-chiclayo",
+  "nombre": "Universidad Particular de Chiclayo",
+  "siglas": null,
+  "region": "Lambayeque",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-austral-del-cusco",
+  "nombre": "Universidad Peruana Austral del Cusco",
+  "siglas": null,
+  "region": "Cusco",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-de-arte-orval",
+  "nombre": "Universidad Peruana de Arte Orval",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-de-ciencias-e-informatica",
+  "nombre": "Universidad Peruana de Ciencias e Informática",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-de-integracion-global",
+  "nombre": "Universidad Peruana de Integración Global",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-de-investigacion-y-negocios",
+  "nombre": "Universidad Peruana de Investigación y Negocios",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-de-las-americas",
+  "nombre": "Universidad Peruana de las Américas",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "upecen",
+  "nombre": "Universidad Peruana del Centro",
+  "siglas": "UPECEN",
+  "region": "Junín",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "peruana-del-oriente",
+  "nombre": "Universidad Peruana del Oriente",
+  "siglas": null,
+  "region": "Loreto",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-santo-tomas-de-aquino-de-ciencia-e-integracion",
+  "nombre": "Universidad Peruana Santo Tomás de Aquino de Ciencia e Integración",
+  "siglas": null,
+  "region": "Junín",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "peruana-simon-bolivar",
+  "nombre": "Universidad Peruana Simón Bolívar",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "politecnica-amazonica",
+  "nombre": "Universidad Politécnica Amazónica",
+  "siglas": null,
+  "region": "Amazonas",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-antonio-guillermo-urrelo",
+  "nombre": "Universidad Privada Antonio Guillermo Urrelo",
+  "siglas": null,
+  "region": "Cajamarca",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-arzobispo-loayza",
+  "nombre": "Universidad Privada Arzobispo Loayza",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-autonoma-del-sur",
+  "nombre": "Universidad Privada Autónoma del Sur",
+  "siglas": null,
+  "region": "Arequipa",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "uroosevelt",
+  "nombre": "Universidad Privada de Huancayo Franklin Roosevelt",
+  "siglas": "UROOSEVELT",
+  "region": "Junín",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "privada-de-la-selva-peruana",
+  "nombre": "Universidad Privada de la Selva Peruana",
+  "siglas": null,
+  "region": "Loreto",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "upn",
+  "nombre": "Universidad Privada del Norte",
+  "siglas": "UPN",
+  "region": "La Libertad",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "privada-de-pucallpa",
+  "nombre": "Universidad Privada de Pucallpa",
+  "siglas": null,
+  "region": "Ucayali",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-de-trujillo",
+  "nombre": "Universidad Privada de Trujillo",
+  "siglas": null,
+  "region": "La Libertad",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-juan-mejia-baca",
+  "nombre": "Universidad Privada Juan Mejía Baca",
+  "siglas": null,
+  "region": "Lambayeque",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-juan-pablo-ii",
+  "nombre": "Universidad Privada Juan Pablo II",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-leonardo-da-vinci",
+  "nombre": "Universidad Privada Leonardo da Vinci",
+  "siglas": null,
+  "region": "La Libertad",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-lider-peruana",
+  "nombre": "Universidad Privada Líder Peruana",
+  "siglas": null,
+  "region": "Cusco",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "upal",
+  "nombre": "Universidad Privada Peruano Alemana",
+  "siglas": "UPAL",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "privada-san-carlos",
+  "nombre": "Universidad Privada San Carlos",
+  "siglas": null,
+  "region": "Puno",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-sergio-bernales",
+  "nombre": "Universidad Privada Sergio Bernales",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-sise",
+  "nombre": "Universidad Privada SISE",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "privada-telesup",
+  "nombre": "Universidad Privada TELESUP",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "san-andres",
+  "nombre": "Universidad San Andrés",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "san-pedro",
+  "nombre": "Universidad San Pedro",
+  "siglas": null,
+  "region": "Áncash",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "santo-domingo-de-guzman",
+  "nombre": "Universidad Santo Domingo de Guzmán",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "seminario-biblico-andino",
+  "nombre": "Universidad Seminario Bíblico Andino",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "seminario-evangelico-de-lima",
+  "nombre": "Universidad Seminario Evangélico de Lima",
+  "siglas": null,
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": false
+ },
+ {
+  "id": "utea",
+  "nombre": "Universidad Tecnológica de Los Andes",
+  "siglas": "UTEA",
+  "region": "Apurímac",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ },
+ {
+  "id": "utp",
+  "nombre": "Universidad Tecnológica del Perú",
+  "siglas": "UTP",
+  "region": "Lima",
+  "gestion": "privada",
+  "medicina": false,
+  "licenciada": true
+ }
+]

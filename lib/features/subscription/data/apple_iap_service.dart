@@ -16,6 +16,16 @@ const productosApple = <String>[
   'pe.jakstech.enamApp.semestral',
 ];
 
+/// El `plan_id` del servidor para cada producto de App Store. Explícito, como
+/// en el backend (`apple_service.go`): el trimestral se llama `intensivo` por
+/// historia. `null` si el producto no se conoce.
+String? planIdDeApple(String productId) => switch (productId) {
+  'pe.jakstech.enamApp.mensual' => 'mensual',
+  'pe.jakstech.enamApp.trimestral' => 'intensivo',
+  'pe.jakstech.enamApp.semestral' => 'semestral',
+  _ => null,
+};
+
 /// Compras dentro de la app, en iOS.
 ///
 /// Habla con StoreKit y **nada más**: no decide si alguien tiene acceso, no

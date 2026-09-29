@@ -68,11 +68,15 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           'con ASPEFAM ni con tu inscripción al ENAM real.',
     ),
     (
-      pregunta: 'Yapeé y sigo sin Premium',
+      // El mismo texto que la web. El pago manual por Yape ya no existe: se
+      // cobra con Mercado Pago (web) o con App Store (iPhone).
+      pregunta: 'Pagué y todavía no tengo acceso',
       respuesta:
-          'La verificación de Yape es manual y suele tomar menos de 2 horas en '
-          'horario de atención. Si pasó más tiempo, escríbenos con la captura '
-          'de tu operación y lo activamos.',
+          'Con Mercado Pago el acceso se activa solo en cuanto el pago se '
+          'confirma, normalmente en segundos. Si el pago quedó en proceso, se '
+          'activa cuando Mercado Pago lo apruebe, sin que tengas que hacer '
+          'nada. Si pasaron más de unos minutos, escríbenos por WhatsApp con el '
+          'número de operación de Mercado Pago y lo revisamos.',
     ),
     (
       pregunta: '¿Por qué las preguntas tienen mi correo encima?',
@@ -84,9 +88,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     (
       pregunta: 'Encontré una pregunta con la clave equivocada',
       respuesta:
-          'Repórtala desde el botón "Reportar" en la pantalla de '
-          'retroalimentación. Un editor la revisa y, si corresponde, la '
-          'corrige o la retira.',
+          // Sin prometer plazos ni una corrección: llega a soporte, por la
+          // app o, si no se puede, por WhatsApp.
+          'Toca "Reportar" después de responderla y elige el motivo. El '
+          'reporte llega a soporte con el código de la pregunta.',
     ),
     (
       pregunta: '¿Puedo usar la app sin internet?',
@@ -397,6 +402,9 @@ class _Version extends StatelessWidget {
             'ENAM Prep${version.isEmpty ? "" : " · $version"}',
             style: context.texts.bodySmall?.copyWith(fontSize: 13),
           ),
+          // PENDIENTE(titular): el operador pasa a ser AidaSoft (AIDA SOFT SACS).
+          // Falta la razón social exacta, el RUC y la dirección; no inventarlos.
+          // Ver diseno/rediseno/LINEA-BASE.md.
           Text(
             'Jaks Tech SAC',
             style: context.texts.bodySmall?.copyWith(fontSize: 13),

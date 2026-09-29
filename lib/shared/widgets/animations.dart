@@ -14,7 +14,7 @@ class FadeUp extends StatefulWidget {
     required this.child,
     this.index = 0,
     this.delay = Duration.zero,
-    this.offset = 10,
+    this.offset = 8,
     super.key,
   });
 
@@ -22,7 +22,8 @@ class FadeUp extends StatefulWidget {
   final int index;
   final Duration delay;
 
-  /// Cuántos pixeles sube al entrar.
+  /// Cuántos pixeles sube al entrar. Ocho como máximo (plan §8): más que eso
+  /// se lee como que el bloque llega de otro sitio.
   final double offset;
 
   @override
@@ -126,10 +127,12 @@ class StaggeredColumn extends StatelessWidget {
   }
 }
 
-/// Un número que cuenta hasta su valor en vez de aparecer de golpe.
+/// Un número que se lee **correcto desde el primer fotograma**.
 ///
-/// Se usa en la nota proyectada y en los resultados: ver el número subir
-/// comunica progreso mejor que verlo ya puesto.
+/// Antes contaba desde cero: durante casi un segundo la nota proyectada decía
+/// 3,41 o 9,80, y una captura o una mirada rápida se llevaban una cifra falsa.
+/// Ahora aparece ya en su valor, y solo si cambia mientras está en pantalla
+/// —al recargar— se desliza del valor anterior al nuevo.
 class AnimatedNumber extends StatelessWidget {
   const AnimatedNumber({
     required this.value,
@@ -148,8 +151,11 @@ class AnimatedNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // `begin == end`: el primer fotograma ya es el valor. En las
+    // actualizaciones, TweenAnimationBuilder parte del valor que estaba
+    // mostrando, no de `begin`.
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: value),
+      tween: Tween(begin: value, end: value),
       duration: Motion.duration(context, duration ?? Motion.counter),
       curve: Motion.enter,
       builder: (context, v, _) => Text(
@@ -244,10 +250,15 @@ class AnimatedRing extends StatelessWidget {
   }
 }
 
-/// Efecto de brillo que recorre un bloque gris. Para los estados de carga.
+/// Pulso tenue para los estados de carga.
 ///
-/// Se detiene solo si el sistema pidió reducir el movimiento: en ese caso queda
-/// el bloque gris, que sigue comunicando "cargando" sin animación.
+/// Sustituye al brillo que recorría el bloque: un barrido constante es
+/// movimiento perpetuo, y el plan (§8) pide un sólido o un pulso suave. Este
+/// oscila la opacidad entre 0,55 y 1 en 1,2 s.
+///
+/// Con el movimiento reducido queda el bloque quieto, que sigue diciendo
+/// «cargando» por su forma. El ticker solo corre mientras se pinta: fuera de
+/// pantalla `TickerMode` lo silencia.
 class Shimmer extends StatefulWidget {
   const Shimmer({required this.child, super.key});
 
@@ -260,19 +271,24 @@ class Shimmer extends StatefulWidget {
 class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: const Duration(milliseconds: 1200),
   );
 
-  // El ticker se arranca aquí, no en el inicializador del campo: con
-  // reduce-motion no debe correr nunca. Un shimmer que repite indefinidamente
-  // sin pintarse es el peor caso de gasto de batería.
+  late final Animation<double> _opacidad = Tween<double>(
+    begin: 1,
+    end: 0.55,
+  ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
+
+  // Se decide aquí y no al crear el controlador porque hace falta el contexto,
+  // y se vuelve a decidir si la preferencia cambia con la app abierta.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (Motion.reduced(context)) {
       if (_c.isAnimating) _c.stop();
+      _c.value = 0;
     } else if (!_c.isAnimating) {
-      _c.repeat();
+      unawaited(_c.repeat(reverse: true));
     }
   }
 
@@ -285,35 +301,12 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (Motion.reduced(context)) return widget.child;
-
-    final base = Theme.of(context).colorScheme.surfaceContainerHighest;
-    final brillo = Theme.of(context).brightness == Brightness.light
-        ? Colors.white.withValues(alpha: 0.55)
-        : Colors.white.withValues(alpha: 0.06);
-
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, child) => ShaderMask(
-        blendMode: BlendMode.srcATop,
-        shaderCallback: (bounds) => LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [base, brillo, base],
-          // El punto de brillo recorre de izquierda a derecha y vuelve a entrar.
-          stops: [
-            (_c.value - 0.3).clamp(0.0, 1.0),
-            _c.value.clamp(0.0, 1.0),
-            (_c.value + 0.3).clamp(0.0, 1.0),
-          ],
-        ).createShader(bounds),
-        child: child,
-      ),
-      child: widget.child,
-    );
+    return FadeTransition(opacity: _opacidad, child: widget.child);
   }
 }
 
-/// Bloque gris con shimmer, del tamaño que se le pida. Para armar esqueletos.
+/// Bloque con pulso, del tamaño que se le pida. Para armar esqueletos con la
+/// misma geometría que el contenido que reemplazan.
 class SkeletonBox extends StatelessWidget {
   const SkeletonBox({
     this.width,
@@ -333,7 +326,9 @@ class SkeletonBox extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          // El fondo hundido y no la superficie elevada: sobre el fondo claro
+          // la elevada casi no se distinguía y la carga parecía un hueco.
+          color: Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(radius),
         ),
       ),
@@ -360,7 +355,8 @@ class _PopState extends State<Pop> with SingleTickerProviderStateMixin {
     vsync: this,
     duration: Motion.fast,
     lowerBound: 0,
-    upperBound: 0.18,
+    // Un 6 %: se nota como confirmación sin que el icono salte.
+    upperBound: 0.06,
   );
 
   @override

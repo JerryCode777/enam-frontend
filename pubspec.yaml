@@ -41,6 +41,11 @@ dependencies:
   # / Keystore vía flutter_secure_storage, nunca en el binario.
   pointycastle: ^4.0.0
 
+  # ---------- Sonido ----------
+  # El mismo paquete y la misma versión que Rumbo, del que vienen los sonidos:
+  # un segundo motor de audio solo para siete efectos no se justifica.
+  audioplayers: ^6.8.1
+
   # ---------- UI ----------
   cached_network_image: ^3.4.1
 
@@ -79,7 +84,13 @@ flutter:
   uses-material-design: true
 
   assets:
+    # Incluye la figura de marca (doctora_brazos_cruzados.webp y
+    # doctora_senala.webp): ilustración generada con IA, WebP con alfa, 46 KB
+    # entre las dos. Reglas de uso en lib/shared/widgets/figura_de_marca.dart.
     - assets/images/
+    # Los siete sonidos de la interfaz, los de Rumbo. 142 KB en total: los WAV
+    # originales se pasaron a MP3 mono de 96 kbps. Ver lib/core/sonido/.
+    - assets/sonidos/
 
   # Nunito va empaquetada, no descargada en el primer arranque.
   #

@@ -10,6 +10,8 @@ import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
@@ -190,6 +192,7 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
       // cuesta minutos a quien llega justo.
       final sesion = participacion.sesion;
       if (sesion != null) {
+        ref.sonar(Sonido.empiezaQuiz);
         context.irA(Routes.simulacroSessionOf(sesion.id));
         return;
       }

@@ -6,6 +6,9 @@ import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:enam_app/features/stats/data/stats_repository.dart';
 import 'package:enam_app/features/stats/domain/stats_models.dart';
+import 'package:enam_app/features/universidades/data/universidades_repository.dart';
+import 'package:enam_app/features/universidades/domain/universidad.dart';
+import 'package:enam_app/features/universidades/presentation/universidades_providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
 import 'package:enam_app/features/auth/presentation/complete_profile_screen.dart';
@@ -105,7 +108,9 @@ void main() {
     'Registro': const RegisterScreen(),
     'Verificar correo': const VerifyEmailScreen(email: 'valeria@unmsm.edu.pe'),
     'Recuperar contraseña': const ForgotPasswordScreen(),
-    'Nueva contraseña': const ResetPasswordScreen(email: 'valeria@unmsm.edu.pe'),
+    'Nueva contraseña': const ResetPasswordScreen(
+      email: 'valeria@unmsm.edu.pe',
+    ),
     'Perfil inicial': const CompleteProfileScreen(),
     'Inicio': const HomeScreen(),
 
@@ -181,12 +186,43 @@ void main() {
       const RegisterScreen(),
       const CompleteProfileScreen(),
       const ResetPasswordScreen(email: 'valeria@unmsm.edu.pe'),
+      // Las del rediseño que más texto concentran en poco ancho.
+      const HomeScreen(),
+      const OnboardingScreen(),
+      const SplashScreen(),
+      const DownloadsScreen(),
+      const SimulacroHubScreen(),
     ]) {
       await tester.pumpWidget(
         _harness(pantalla, Brightness.light, textScale: 1.4),
       );
       await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('los formularios aguantan el teclado abierto', (tester) async {
+    // Plan §14: en móvil, además de tamaños y letra ampliada, con el teclado
+    // abierto. 300 px es lo que ocupa un teclado con barra de sugerencias.
+    tester.view
+      ..physicalSize = const Size(anchoMinimo * 3, altoBajo * 3)
+      ..devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    for (final pantalla in [
+      const LoginScreen(),
+      const RegisterScreen(),
+      const CompleteProfileScreen(),
+      const ForgotPasswordScreen(),
+      const ResetPasswordScreen(email: 'valeria@unmsm.edu.pe'),
+      const VerifyEmailScreen(email: 'valeria@unmsm.edu.pe'),
+      const ChangePasswordScreen(),
+    ]) {
+      await tester.pumpWidget(
+        _harness(pantalla, Brightness.light, teclado: 300),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.takeException(), isNull, reason: '$pantalla');
     }
   });
 }
@@ -200,7 +236,12 @@ final _almacen = AlmacenEnMemoria();
 /// producción simulan latencia con `Future.delayed`, y dentro de `testWidgets` el
 /// tiempo es simulado, así que dejarían temporizadores pendientes al terminar.
 /// Este test mide layout, no latencia.
-Widget _harness(Widget screen, Brightness brightness, {double textScale = 1.0}) {
+Widget _harness(
+  Widget screen,
+  Brightness brightness, {
+  double textScale = 1.0,
+  double teclado = 0,
+}) {
   return ProviderScope(
     overrides: [
       // Un usuario con perfil completo, para que el Home tenga qué mostrar.
@@ -214,11 +255,18 @@ Widget _harness(Widget screen, Brightness brightness, {double textScale = 1.0}) 
       // Sin esto la base local intentaría abrir SQLite, que en las pruebas no
       // existe, y la pantalla de descargas se mediría en su estado de error.
       almacenOfflineProvider.overrideWithValue(_almacen),
+      universidadesRepositoryProvider.overrideWithValue(
+        const _InstantUniversidades(),
+      ),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,
       home: MediaQuery(
-        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+        data: MediaQueryData(
+          textScaler: TextScaler.linear(textScale),
+          // El teclado del sistema ocupa la parte de abajo de la pantalla.
+          viewInsets: EdgeInsets.only(bottom: teclado),
+        ),
         child: screen,
       ),
     ),
@@ -240,7 +288,6 @@ class _FakeAuthController extends AuthController {
     ),
   );
 }
-
 
 /// Suscripción que responde sin latencia.
 ///
@@ -344,6 +391,14 @@ class _InstantSessions implements SessionRepository {
 }
 
 /// Catálogo que responde sin latencia.
+class _InstantUniversidades implements UniversidadesRepository {
+  const _InstantUniversidades();
+
+  @override
+  Future<List<Universidad>> catalogo() async =>
+      MockUniversidadesRepository.catalogoDeEjemplo;
+}
+
 class _InstantCatalog implements CatalogRepository {
   static final _arbol = MockData.catalog();
 

@@ -116,4 +116,8 @@ abstract final class Routes {
   static const maintenance = '/mantenimiento';
   static const updateRequired = '/actualizar';
   static const offline = '/sin-conexion';
+
+  // ---------- Desarrollo ----------
+  /// Galería de componentes. Solo existe fuera de release (ver el router).
+  static const componentes = '/dev/componentes';
 }

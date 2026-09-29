@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ import '../../features/stats/presentation/ranking_screen.dart';
 import '../../features/subscription/domain/subscription_models.dart';
 import '../../features/subscription/presentation/access_ended_screen.dart';
 import '../../features/subscription/presentation/my_subscription_screen.dart';
+import '../../features/system/presentation/galeria_componentes_screen.dart';
 import '../../features/system/presentation/system_screens.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
@@ -46,6 +48,7 @@ import '../../features/duelo/presentation/duelo_partida_screen.dart';
 import '../../features/duelo/presentation/elegir_oponente_screen.dart';
 import '../../features/duelo/presentation/tengo_un_codigo_screen.dart';
 import '../providers.dart';
+import '../theme/app_theme.dart';
 import 'routes.dart';
 import 'transitions.dart';
 
@@ -110,6 +113,8 @@ const _publicRoutes = {
   Routes.terms,
   Routes.maintenance,
   Routes.updateRequired,
+  // Solo existe fuera de release; ver `_routes`.
+  Routes.componentes,
 };
 
 /// Pantallas de acceso que dejan de tener sentido con la sesión ya lista.
@@ -210,7 +215,9 @@ String? decidirDestino({
         startup.requireValue.onboardingVisto ? Routes.login : Routes.onboarding,
 
       // Si ya se vio, volver a entrar por onboarding no tiene sentido.
-      _ when here == Routes.onboarding && startup.requireValue.onboardingVisto =>
+      _
+          when here == Routes.onboarding &&
+              startup.requireValue.onboardingVisto =>
         Routes.login,
 
       _ when _publicRoutes.contains(here) => null,
@@ -276,9 +283,29 @@ GoRoute _stub(
   );
 }
 
+/// Las pantallas de acceso van siempre en claro, elija lo que elija el
+/// usuario: son la primera impresión de la app y están diseñadas sobre la
+/// marca en claro. Mismo criterio que la web.
+class SiempreClaro extends StatelessWidget {
+  const SiempreClaro({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Theme(data: AppTheme.light, child: child);
+}
+
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final List<RouteBase> _routes = [
+  // Galería interna del sistema visual. En release la ruta no se registra, así
+  // que `/dev/componentes` cae en la pantalla de «ruta no encontrada».
+  if (!kReleaseMode)
+    GoRoute(
+      path: Routes.componentes,
+      builder: (context, state) => const GaleriaComponentesScreen(),
+    ),
   // ==================== ACCESO (sin barra inferior) ====================
   GoRoute(
     path: Routes.splash,
@@ -286,38 +313,46 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.onboarding,
-    builder: (context, state) => const OnboardingScreen(),
+    builder: (context, state) => const SiempreClaro(child: OnboardingScreen()),
   ),
-  GoRoute(path: Routes.login, builder: (context, state) => const LoginScreen()),
+  GoRoute(
+    path: Routes.login,
+    builder: (context, state) => const SiempreClaro(child: LoginScreen()),
+  ),
   GoRoute(
     path: Routes.register,
-    builder: (context, state) => const RegisterScreen(),
+    builder: (context, state) => const SiempreClaro(child: RegisterScreen()),
   ),
   GoRoute(
     path: Routes.verifyEmail,
     // El correo llega por `extra` desde el registro; si se entra directo, la
     // pantalla lo lee del usuario en sesión.
-    builder: (context, state) => VerifyEmailScreen(email: state.extra as String?),
+    builder: (context, state) =>
+        SiempreClaro(child: VerifyEmailScreen(email: state.extra as String?)),
   ),
   GoRoute(
     path: Routes.forgotPassword,
     // El correo viaja desde el login: quien ya lo escribió no debería tener
     // que volver a escribirlo, y menos si lo que pasó es que no recuerda algo.
-    builder: (context, state) =>
-        ForgotPasswordScreen(email: state.extra as String?),
+    builder: (context, state) => SiempreClaro(
+      child: ForgotPasswordScreen(email: state.extra as String?),
+    ),
   ),
   GoRoute(
     path: Routes.resetPassword,
     // El correo llega desde la pantalla anterior; el código lo escribe el
     // usuario. Se acepta también por query para poder abrir la pantalla desde
     // un enlace de soporte.
-    builder: (context, state) => ResetPasswordScreen(
-      email: (state.extra as String?) ?? state.uri.queryParameters['email'],
+    builder: (context, state) => SiempreClaro(
+      child: ResetPasswordScreen(
+        email: (state.extra as String?) ?? state.uri.queryParameters['email'],
+      ),
     ),
   ),
   GoRoute(
     path: Routes.completeProfile,
-    builder: (context, state) => const CompleteProfileScreen(),
+    builder: (context, state) =>
+        const SiempreClaro(child: CompleteProfileScreen()),
   ),
   // ==================== SECCIONES PRINCIPALES ====================
   StatefulShellRoute.indexedStack(
@@ -352,9 +387,7 @@ final List<RouteBase> _routes = [
               GoRoute(
                 path: ':id',
                 pageBuilder: (context, state) => slidePage(
-                  child: TemarioNodeScreen(
-                    nodeId: state.pathParameters['id']!,
-                  ),
+                  child: TemarioNodeScreen(nodeId: state.pathParameters['id']!),
                   state: state,
                 ),
               ),
@@ -389,7 +422,9 @@ final List<RouteBase> _routes = [
                 path: 'sesion/:id',
                 // Desvanece: entrar al examen no es profundizar en una jerarquía.
                 pageBuilder: (context, state) => fadePage(
-                  child: SimulacroScreen(sessionId: state.pathParameters['id']!),
+                  child: SimulacroScreen(
+                    sessionId: state.pathParameters['id']!,
+                  ),
                   state: state,
                 ),
               ),
@@ -447,6 +482,10 @@ final List<RouteBase> _routes = [
         // Llega desde el temario con el nodo puesto (RF-38).
         nodoId: state.uri.queryParameters['nodo'],
         origenInicial: state.uri.queryParameters['origen'],
+        // El inicio propone una primera práctica corta (plan §5).
+        cantidadInicial: int.tryParse(
+          state.uri.queryParameters['cantidad'] ?? '',
+        ),
       ),
       state: state,
     ),

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:enam_app/core/error/failure.dart';
 import 'package:enam_app/features/offline/data/offline_repository.dart';
 import 'package:enam_app/features/offline/domain/offline_models.dart';
@@ -35,6 +38,10 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
   /// Preguntas que devuelve un paquete descargado.
   int preguntasPorPaquete = 40;
 
+  /// Si está puesto, la descarga de un paquete espera a que se complete: deja
+  /// probar lo que pasa mientras baja, como cancelarla.
+  Completer<void>? retenerDescarga;
+
   /// Qué contestar en el próximo `sincronizar`. Por defecto, todo bien.
   ResultadoDeSync? respuestaDeSync;
 
@@ -48,8 +55,11 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
   Future<PaqueteOffline> paquete(
     String areaId, {
     void Function(int recibidos, int total)? progreso,
+    CancelToken? cancelar,
   }) async {
     _exigirRed();
+    if (retenerDescarga case final r?) await r.future;
+    if (cancelar?.isCancelled ?? false) throw const DescargaCancelada();
     progreso?.call(500, 1000);
     progreso?.call(1000, 1000);
 
@@ -207,7 +217,8 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
   Future<List<Question>> markedQuestions() async => throw UnimplementedError();
 
   @override
-  Future<List<NationalMock>> nationalMocks() async => throw UnimplementedError();
+  Future<List<NationalMock>> nationalMocks() async =>
+      throw UnimplementedError();
 
   @override
   Future<ParticipacionNacional> joinNationalMock(String mockId) async =>

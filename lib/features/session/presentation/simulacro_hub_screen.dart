@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -10,8 +11,12 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
+import '../../../shared/widgets/estudio.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/state_banner.dart';
 import '../../stats/domain/stats_models.dart';
+import '../domain/session_models.dart';
+import 'national_mock_screen.dart';
 
 /// Pantallas 5.1 y 5.9 — hub de simulacros e historial.
 ///
@@ -61,12 +66,15 @@ class SimulacroHubScreen extends ConsumerWidget {
   }
 }
 
-class _TarjetaCompleto extends StatelessWidget {
+class _TarjetaCompleto extends ConsumerWidget {
   const _TarjetaCompleto();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
+    // Un simulacro a medias se continúa; no se empieza otro encima.
+    final retomar = ref.watch(resumableSessionProvider);
+    final aMedias = retomar != null && retomar.esSimulacro ? retomar : null;
 
     return FadeUp(
       child: Card(
@@ -75,7 +83,11 @@ class _TarjetaCompleto extends StatelessWidget {
           side: BorderSide(color: context.scheme.primary, width: 2),
         ),
         child: InkWell(
-          onTap: () => context.irA(Routes.simulacroInstructions),
+          // `go` para continuar: la sesión de simulacro vive dentro de las
+          // pestañas y apilarla duplicaría el Navigator.
+          onTap: () => aMedias != null
+              ? context.go(Routes.simulacroSessionOf(aMedias.sessionId))
+              : context.irA(Routes.simulacroInstructions),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4 + 2),
@@ -100,6 +112,14 @@ class _TarjetaCompleto extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                EtiquetaEstado(
+                  texto: aMedias != null
+                      ? 'A medias · continuar en la ${aMedias.detalle.toLowerCase()}'
+                      : 'Comenzar',
+                  tipo: aMedias != null ? BannerKind.warning : BannerKind.info,
+                  icono: aMedias != null ? Symbols.play_circle : Symbols.flag,
                 ),
                 const SizedBox(height: DesignTokens.space3),
                 Text(
@@ -131,8 +151,7 @@ class _TarjetaMuestra extends ConsumerWidget {
       index: 1,
       child: Card(
         child: InkWell(
-          onTap: () =>
-              context.irA('${Routes.simulacroInstructions}?muestra=1'),
+          onTap: () => context.irA('${Routes.simulacroInstructions}?muestra=1'),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
@@ -176,12 +195,42 @@ class _TarjetaMuestra extends ConsumerWidget {
   }
 }
 
-class _TarjetaNacional extends StatelessWidget {
+/// El simulacro nacional, con los datos de la convocatoria real.
+///
+/// Llevaba escrito «dom 16 ago, 8:00 a.m. · 1,847 participantes»: una fecha
+/// y una cifra de inscritos que no salían de ningún sitio, visibles aunque no
+/// hubiera convocatoria. Ahora salen de `GET /mock-exams`, y sin convocatoria
+/// se dice que no la hay.
+class _TarjetaNacional extends ConsumerWidget {
   const _TarjetaNacional();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
+    final evento = ref.watch(nacionalProvider);
+
+    final detalle = evento == null
+        ? 'No hay una convocatoria programada por ahora.'
+        : '${DateFormat("EEE d MMM", 'es').format(evento.inicio)}, '
+              '${DateFormat('h:mm', 'es').format(evento.inicio)} '
+              '${evento.inicio.hour < 12 ? "a.m." : "p.m."} · '
+              '${NumberFormat.decimalPattern('es_PE').format(evento.participantes)} '
+              'inscritos';
+
+    // Lo que el botón haría, dicho según el estado real (plan §6).
+    final (estado, tipo) = switch (evento) {
+      null => (null, BannerKind.info),
+      final e when e.estado == NationalMockStatus.enCurso => (
+        'En curso · entrar',
+        BannerKind.warning,
+      ),
+      final e when e.inscrito => ('Ya estás inscrito', BannerKind.success),
+      final e when e.estado == NationalMockStatus.programado => (
+        'Inscribirme',
+        BannerKind.info,
+      ),
+      _ => ('Ver resultados', BannerKind.info),
+    };
 
     return FadeUp(
       index: 2,
@@ -210,10 +259,11 @@ class _TarjetaNacional extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      Text(
-                        'dom 16 ago, 8:00 a.m. · 1,847 participantes',
-                        style: context.texts.bodySmall,
-                      ),
+                      Text(detalle, style: context.texts.bodyMedium),
+                      if (estado != null) ...[
+                        const SizedBox(height: DesignTokens.space1 + 2),
+                        EtiquetaEstado(texto: estado, tipo: tipo),
+                      ],
                     ],
                   ),
                 ),

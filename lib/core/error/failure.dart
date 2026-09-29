@@ -41,6 +41,12 @@ final class SinDescargasFailure extends Failure {
   ]);
 }
 
+/// Quien descargaba un área la canceló. No es un error que haya que mostrar:
+/// la persona sabe lo que hizo.
+final class DescargaCancelada extends Failure {
+  const DescargaCancelada([super.message = 'Descarga cancelada.']);
+}
+
 /// La petición tardó demasiado.
 final class TimeoutFailure extends Failure {
   const TimeoutFailure([

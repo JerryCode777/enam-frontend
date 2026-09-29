@@ -6,11 +6,13 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/analitica/analitica.dart';
 import '../../../../core/providers.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../../shared/widgets/enam_button.dart';
 import '../../../../shared/widgets/state_banner.dart';
+import '../../data/apple_iap_service.dart' show planIdDeApple;
 import '../../data/compras_apple_controller.dart';
 
 /// Los planes, comprables con el sistema de pagos de Apple.
@@ -155,6 +157,15 @@ class _PlanesDeAppleState extends ConsumerState<PlanesDeApple> {
                 ? null
                 : () {
                     setState(() => _comprando = p.id);
+                    // Solo la medición: la compra sigue exactamente igual.
+                    if (planIdDeApple(p.id) case final plan?) {
+                      ref
+                          .read(analiticaProvider)
+                          .registrar(
+                            Evento.checkoutStarted,
+                            propiedades: {'plan_id': plan, 'medio': 'apple'},
+                          );
+                    }
                     unawaited(_compras.comprar(p));
                   },
           ),

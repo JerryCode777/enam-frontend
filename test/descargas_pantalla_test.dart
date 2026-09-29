@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:enam_app/core/network/conectividad.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/features/catalog/domain/catalog_models.dart';
@@ -7,6 +9,7 @@ import 'package:enam_app/features/subscription/domain/subscription_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'ayuda/dobles_offline.dart';
 import 'ayuda/offline.dart';
@@ -34,6 +37,9 @@ void main() {
       preguntasDisponibles: 40,
     ),
   ];
+
+  // La fila dice la fecha del paquete en español, como en la app.
+  setUpAll(() => initializeDateFormatting('es'));
 
   setUp(() {
     servidor = ServidorFalso();
@@ -94,7 +100,9 @@ void main() {
     await asentar(tester);
 
     expect(find.textContaining('40 preguntas'), findsWidgets);
-    expect(find.textContaining('al día'), findsOneWidget);
+    // La fecha en que el servidor generó el paquete, no un «al día» sin
+    // referencia.
+    expect(find.textContaining('actualizada el 20 jul'), findsOneWidget);
     expect(find.text('1 práctica lista sin conexión'), findsOneWidget);
     expect(find.text('Empezar una práctica'), findsOneWidget);
 
@@ -119,7 +127,10 @@ void main() {
 
     // Y entonces la pantalla no puede pedirle que descargue un área: acaba de
     // hacerlo. Ese texto era el que dejaba a la gente sin saber qué hacer.
-    expect(find.text('Descarga un área y te dejamos una preparada.'), findsNothing);
+    expect(
+      find.text('Descarga un área y te dejamos una preparada.'),
+      findsNothing,
+    );
     expect(find.text('Tu práctica se prepara sola'), findsOneWidget);
   });
 
@@ -184,6 +195,48 @@ void main() {
     await asentar(tester);
 
     expect(find.textContaining('1 respuesta por enviar'), findsOneWidget);
+  });
+
+  testWidgets('si la descarga falla, la fila lo dice y deja reintentar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pantalla());
+    await asentar(tester);
+
+    // El teléfono cree tener señal, pero el servidor no responde.
+    servidor.hayRed = false;
+    await tester.tap(find.byTooltip('Descargar').first);
+    await asentar(tester);
+
+    expect(
+      find.text('No se pudo descargar. Toca para reintentar.'),
+      findsOneWidget,
+    );
+
+    servidor.hayRed = true;
+    await tester.tap(find.byTooltip('Reintentar la descarga'));
+    await asentar(tester);
+
+    expect(find.textContaining('No se pudo descargar'), findsNothing);
+    expect(find.textContaining('actualizada el'), findsOneWidget);
+  });
+
+  testWidgets('una descarga en marcha se puede cancelar', (tester) async {
+    await tester.pumpWidget(pantalla());
+    await asentar(tester);
+
+    final retener = servidor.retenerDescarga = Completer<void>();
+    await tester.tap(find.byTooltip('Descargar').first);
+    await tester.pump(const Duration(milliseconds: 250));
+
+    await tester.tap(find.byTooltip('Cancelar la descarga'));
+    retener.complete();
+    await asentar(tester);
+
+    // Nada guardado y sin aviso de error: cancelar no es fallar.
+    expect(find.textContaining('actualizada el'), findsNothing);
+    expect(find.textContaining('No se pudo descargar'), findsNothing);
+    expect(find.byTooltip('Descargar'), findsNWidgets(2));
   });
 }
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/analitica/analitica.dart';
 import 'core/config/app_config.dart';
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
@@ -27,6 +28,15 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
     // que es un número que funciona. Nadie debería quedarse fuera de estudiar
     // porque una preferencia no se pudo leer.
     unawaited(ref.read(configuracionRemotaProvider).cargar());
+
+    // Los eventos que quedaron en la cola de la vez anterior, y cada vez que
+    // vuelve la red: sin señal se guardan hasta siete días.
+    unawaited(ref.read(analiticaProvider).enviarPendientes());
+    ref.listenManual(hayRedProvider, (_, red) {
+      if (red.value == true) {
+        unawaited(ref.read(analiticaProvider).enviarPendientes());
+      }
+    });
   }
 
   @override
@@ -49,6 +59,7 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
       // Y de paso el número de atención: así un cambio de línea llega a las
       // apps ya instaladas sin esperar a que alguien las cierre del todo.
       unawaited(ref.read(configuracionRemotaProvider).cargar());
+      unawaited(ref.read(analiticaProvider).enviarPendientes());
     }
   }
 

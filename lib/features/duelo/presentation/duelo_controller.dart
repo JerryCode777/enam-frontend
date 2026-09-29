@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../data/duelo_socket.dart';
+import '../domain/duelo_models.dart';
 
 /// Conecta el motor del duelo con las pantallas.
 ///
@@ -37,7 +40,10 @@ class DueloController extends Notifier<EstadoDelDuelo> {
     );
     _motor = motor;
 
-    final escucha = motor.estados.listen((nuevo) => state = nuevo);
+    final escucha = motor.estados.listen((nuevo) {
+      _sonarSegun(nuevo);
+      state = nuevo;
+    });
 
     // El orden importa: primero se corta la escucha y después se cierra el
     // motor. Al revés, el cierre emite y la escucha intenta tocar un provider
@@ -49,6 +55,49 @@ class DueloController extends Notifier<EstadoDelDuelo> {
 
     unawaited(motor.conectar());
     return motor.estado;
+  }
+
+  bool _empezo = false;
+  int? _ultimaRevelada;
+  bool _terminado = false;
+
+  /// Los sonidos del duelo, uno por momento y una sola vez cada uno: la
+  /// conexión puede volver a mandar el mismo estado al reconectar, y un
+  /// «acierto» repetido por una reconexión sería mentira.
+  ///
+  /// - La primera pregunta: empieza.
+  /// - Cada pregunta al cerrarse: acierto o fallo, que en el duelo sí se
+  ///   revela en el momento. En blanco no suena nada.
+  /// - El final: bueno si ganaste; malo si no (empate incluido).
+  void _sonarSegun(EstadoDelDuelo nuevo) {
+    final sonidos = ref.read(sonidosProvider);
+
+    if (!_empezo && nuevo.pregunta != null) {
+      _empezo = true;
+      unawaited(sonidos.sonar(Sonido.empiezaQuiz));
+    }
+
+    final resultado = nuevo.resultado;
+    if (resultado != null && resultado.orden != _ultimaRevelada) {
+      _ultimaRevelada = resultado.orden;
+      if (resultado.acertaste) {
+        unawaited(sonidos.sonar(Sonido.acierto));
+      } else if (resultado.tuOpcionId != null) {
+        unawaited(sonidos.sonar(Sonido.fallo));
+      }
+    }
+
+    final finalDelDuelo = nuevo.finalDelDuelo;
+    if (finalDelDuelo != null && !_terminado) {
+      _terminado = true;
+      unawaited(
+        sonidos.sonar(
+          finalDelDuelo.desenlace == Desenlace.ganaste
+              ? Sonido.buenResultado
+              : Sonido.malResultado,
+        ),
+      );
+    }
   }
 
   /// Manda la respuesta y devuelve **si salió de verdad**.

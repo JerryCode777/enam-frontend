@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart' show CancelToken;
+
 import '../../../core/domain/blueprint.dart';
 import '../../../core/error/failure.dart';
 import '../../session/data/session_repository.dart';
@@ -73,8 +75,13 @@ class ServicioOffline {
     String areaId, {
     required bool reservar,
     void Function(int recibidos, int total)? progreso,
+    CancelToken? cancelar,
   }) async {
-    final paquete = await _remoto.paquete(areaId, progreso: progreso);
+    final paquete = await _remoto.paquete(
+      areaId,
+      progreso: progreso,
+      cancelar: cancelar,
+    );
     await _almacen.guardarPaquete(_usuario, paquete);
 
     if (reservar && !await tieneReservaDe(areaId)) {
