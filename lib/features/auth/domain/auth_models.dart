@@ -32,7 +32,16 @@ abstract class User with _$User {
     required String email,
     required String nombre,
     @Default(UserRole.estudiante) UserRole rol,
+
+    /// El nombre de la universidad **para mostrar**. Con el catálogo, el
+    /// servidor lo rellena con el nombre oficial; con «Otra», es lo que la
+    /// persona escribió.
     String? universidad,
+
+    /// El id del catálogo (`GET /catalog/universidades`), o `null` si es
+    /// «Otra» o si el servidor todavía no lo resolvió. Es lo que se manda al
+    /// guardar: las siglas sueltas rompían las estadísticas por universidad.
+    String? universidadId,
     StudentCondition? condicion,
 
     /// Fecha objetivo de examen (RF-04). Alimenta la cuenta regresiva del home.

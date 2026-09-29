@@ -11,6 +11,9 @@ import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../universidades/domain/universidad.dart';
+import '../../universidades/presentation/buscador_de_universidad.dart';
+import '../../universidades/presentation/universidades_providers.dart';
 import '../domain/auth_models.dart';
 
 /// Pantalla 1.7 — perfil inicial (RF-04).
@@ -29,7 +32,10 @@ class CompleteProfileScreen extends ConsumerStatefulWidget {
 class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
   final _nombre = TextEditingController();
 
-  String? _universidad;
+  /// La universidad elegida, y si se cambió en esta pantalla: una que ya venía
+  /// guardada (quizá como siglas de la app antigua) no se vuelve a mandar.
+  EleccionDeUniversidad? _universidad;
+  bool _universidadCambiada = false;
   StudentCondition? _condicion;
   DateTime? _fechaObjetivo;
   String? _fechaEtiqueta;
@@ -51,26 +57,17 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
     (label: 'ENAM Extraordinario', fecha: DateTime(2027, 4, 17)),
   ];
 
-  static const _universidades = [
-    'UNMSM',
-    'UNSA',
-    'UPCH',
-    'UNT',
-    'UNFV',
-    'USMP',
-    'UCSM',
-    'UNAP',
-    'UNC',
-    'Otra',
-  ];
-
   @override
   void initState() {
     super.initState();
     final user = ref.read(currentUserProvider);
     if (user != null) {
       _nombre.text = user.nombre;
-      _universidad = user.universidad;
+      _universidad = switch ((user.universidadId, user.universidad)) {
+        (final id?, final nombre) => (id: id, nombre: nombre ?? id),
+        (null, final nombre?) => (id: '', nombre: nombre),
+        _ => null,
+      };
       _condicion = user.condicion;
       _fechaObjetivo = user.fechaObjetivo;
     }
@@ -117,7 +114,9 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
           .read(authRepositoryProvider)
           .updateProfile(
             nombre: _nombre.text.trim(),
-            universidad: _universidad,
+            // El id del catálogo, o «otra» con el nombre escrito. Nunca siglas.
+            universidadId: _universidadCambiada ? _universidad?.id : null,
+            universidad: _universidadCambiada ? _universidad?.nombre : null,
             condicion: _condicion,
             fechaObjetivo: _fechaObjetivo,
           );
@@ -131,16 +130,17 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
   }
 
   Future<void> _pickUniversidad() async {
-    final elegida = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => _UniversidadSheet(
-        opciones: _universidades,
-        seleccionada: _universidad,
-      ),
+    final elegida = await elegirUniversidad(
+      context,
+      idActual: _universidad?.id,
+      nombreActual: _universidad?.nombre,
     );
-    if (elegida != null) setState(() => _universidad = elegida);
+    if (elegida != null) {
+      setState(() {
+        _universidad = elegida;
+        _universidadCambiada = true;
+      });
+    }
   }
 
   Future<void> _pickFecha() async {
@@ -201,7 +201,14 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
         ),
         _PickerField(
           label: 'Universidad',
-          value: _universidad ?? 'Elige tu universidad',
+          // Por id, con el nombre del catálogo si está cargado.
+          value:
+              nombreDeUniversidad(
+                ref.watch(universidadesProvider).value,
+                id: _universidad?.id,
+                texto: _universidad?.nombre,
+              ) ??
+              'Elige tu universidad',
           placeholder: _universidad == null,
           icon: Symbols.arrow_drop_down,
           onTap: _loading ? null : _pickUniversidad,
@@ -348,70 +355,6 @@ class _PickerField extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _UniversidadSheet extends StatefulWidget {
-  const _UniversidadSheet({required this.opciones, this.seleccionada});
-
-  final List<String> opciones;
-  final String? seleccionada;
-
-  @override
-  State<_UniversidadSheet> createState() => _UniversidadSheetState();
-}
-
-class _UniversidadSheetState extends State<_UniversidadSheet> {
-  String _filtro = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final visibles = widget.opciones
-        .where((u) => u.toLowerCase().contains(_filtro.toLowerCase()))
-        .toList();
-
-    return Padding(
-      padding: EdgeInsets.only(
-        left: DesignTokens.space4,
-        right: DesignTokens.space4,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + DesignTokens.space4,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Tu universidad',
-            style: context.texts.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: DesignTokens.space3),
-          TextField(
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Buscar',
-              prefixIcon: Icon(Symbols.search),
-            ),
-            onChanged: (v) => setState(() => _filtro = v),
-          ),
-          const SizedBox(height: DesignTokens.space2),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: visibles.length,
-              itemBuilder: (context, i) => ListTile(
-                title: Text(visibles[i]),
-                trailing: widget.seleccionada == visibles[i]
-                    ? const Icon(Symbols.check)
-                    : null,
-                onTap: () => Navigator.of(context).pop(visibles[i]),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

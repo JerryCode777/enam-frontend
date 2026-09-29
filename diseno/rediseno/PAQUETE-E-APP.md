@@ -414,3 +414,35 @@ resumen:
 
 **Límite.** El backend todavía no tiene el endpoint. Hasta entonces el envío
 falla en silencio y los eventos esperan en la cola, sin que nada lo note.
+
+## 17. Universidad con buscador
+
+Completar perfil y Editar perfil tenían cada uno su lista fija de siglas, y
+se guardaba el texto suelto («UNSA», «U. San Agustín»…). Ahora las dos
+pantallas abren el mismo buscador sobre `GET /api/v1/catalog/universidades`,
+que es público (`lib/features/universidades/`).
+
+- **Buscador.** Por nombre o siglas, sin tildes ni mayúsculas, con las
+  palabras en cualquier orden. Arriba «Con Medicina» y debajo «Otras
+  universidades», en el orden del catálogo.
+- **Qué se guarda.** `PATCH /me` recibe solo `universidadId`. Si no está en
+  la lista, «Mi universidad no está en la lista» pasa a un campo de texto
+  (hasta 120 caracteres, con lo buscado ya escrito) y se manda
+  `universidadId: "otra"` con el nombre. Si la universidad no se tocó, no se
+  manda.
+- **Lo que se muestra.** El perfil trae `universidadId`. Con el catálogo a
+  mano se muestra el nombre del catálogo; sin él, el texto guardado. Los
+  perfiles viejos con siglas los traduce el backend (su mapeo de siglas y
+  nombres heredados).
+- **Caché.** El catálogo se guarda en el teléfono un día, como su
+  `Cache-Control`. Sin red se usa la copia aunque sea vieja. Sin red y sin
+  copia, el buscador lo dice, deja reintentar y deja escribir «Otra».
+- **Ranking.** El podio acorta a las siglas cuando las hay, venga el nombre
+  largo o las siglas viejas. La fila admite el nombre en dos líneas.
+
+**Se comprueba con:** `test/universidades_test.dart` (búsqueda, nombre
+mostrado, caché y cuerpo del `PATCH`) y `test/buscador_de_universidad_test.dart`
+(buscar, elegir, «Otra», sin red, y Editar perfil guarda el id).
+`test/fixtures/universidades.json` es la respuesta real de producción
+(143 universidades, 42 con Medicina), tomada con un solo `GET` público; no se
+hizo ningún `PATCH` contra producción.

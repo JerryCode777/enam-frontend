@@ -6,6 +6,9 @@ import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:enam_app/features/stats/data/stats_repository.dart';
 import 'package:enam_app/features/stats/domain/stats_models.dart';
+import 'package:enam_app/features/universidades/data/universidades_repository.dart';
+import 'package:enam_app/features/universidades/domain/universidad.dart';
+import 'package:enam_app/features/universidades/presentation/universidades_providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
 import 'package:enam_app/features/auth/presentation/complete_profile_screen.dart';
@@ -252,6 +255,9 @@ Widget _harness(
       // Sin esto la base local intentaría abrir SQLite, que en las pruebas no
       // existe, y la pantalla de descargas se mediría en su estado de error.
       almacenOfflineProvider.overrideWithValue(_almacen),
+      universidadesRepositoryProvider.overrideWithValue(
+        const _InstantUniversidades(),
+      ),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,
@@ -385,6 +391,14 @@ class _InstantSessions implements SessionRepository {
 }
 
 /// Catálogo que responde sin latencia.
+class _InstantUniversidades implements UniversidadesRepository {
+  const _InstantUniversidades();
+
+  @override
+  Future<List<Universidad>> catalogo() async =>
+      MockUniversidadesRepository.catalogoDeEjemplo;
+}
+
 class _InstantCatalog implements CatalogRepository {
   static final _arbol = MockData.catalog();
 

@@ -44,6 +44,10 @@ abstract final class ApiEndpoints {
   /// Taxonomía completa con el progreso del usuario.
   static const String catalogAreas = '/catalog/areas';
 
+  /// Las universidades del Perú, Medicina primero. Público y cacheable un
+  /// día. Lo que se guarda en el perfil es su `id`.
+  static const String universidades = '/catalog/universidades';
+
   // ---------- Sesiones (Módulos 3 y 4) ----------
   static const String practiceSession = '/sessions/practice';
   static const String simulacroSession = '/sessions/simulacro';

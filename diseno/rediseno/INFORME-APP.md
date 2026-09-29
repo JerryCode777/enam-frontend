@@ -62,6 +62,10 @@ y los contrastes de cada par.
     al ver el resultado. Con interruptor y volumen en Ajustes.
 16. **Eventos del embudo** conectados a `POST /eventos` según el contrato de
     BI: cola persistente, lotes, `anonimo_id` y nunca `usuario_id`.
+17. **Universidad con buscador** sobre el catálogo del backend (143, con
+    Medicina primero), en completar perfil y en editar perfil. Se guarda el
+    `universidadId`, nunca siglas sueltas; si no está, «Otra» con el nombre
+    escrito.
 
 **Eventos (F).** Conectados a `POST /api/v1/eventos` según el contrato de
 `enam-business/contrato/` (§16 de `PAQUETE-E-APP.md`). Ver `EVENTOS.md`.
@@ -92,10 +96,10 @@ y los contrastes de cada par.
 
 ## Validación
 
-| Comprobación | Antes (`01b95a8`) | Ahora (`1ed726d`) |
+| Comprobación | Antes (`01b95a8`) | Ahora (tras §17) |
 |---|---|---|
 | `flutter analyze` | Sin problemas | Sin problemas |
-| `flutter test` (todo) | 530 | **710**, todos aprobados |
+| `flutter test` (todo) | 530 | **777**, todos aprobados |
 | Capturas (golden) | 84 | 176 |
 
 Las pruebas nuevas son de comportamiento, no copias de widgets: la regla del

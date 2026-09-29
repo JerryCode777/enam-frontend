@@ -4,6 +4,7 @@ import '../../../core/config/api_endpoints.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/token_storage.dart';
+import '../../universidades/domain/universidad.dart';
 import '../domain/auth_models.dart';
 
 /// Contrato de autenticación (Módulo 1 del SSD).
@@ -110,8 +111,14 @@ abstract interface class AuthRepository {
   });
 
   /// RF-04. Completa o actualiza el perfil.
+  ///
+  /// La universidad va por [universidadId], el id del catálogo. Con
+  /// `universidadId: 'otra'`, [universidad] es el nombre que escribió la
+  /// persona; con cualquier otro id, el texto no se manda (lo pone el
+  /// servidor con el nombre oficial).
   Future<User> updateProfile({
     String? nombre,
+    String? universidadId,
     String? universidad,
     StudentCondition? condicion,
     DateTime? fechaObjetivo,
@@ -343,6 +350,7 @@ class ApiAuthRepository implements AuthRepository {
   @override
   Future<User> updateProfile({
     String? nombre,
+    String? universidadId,
     String? universidad,
     StudentCondition? condicion,
     DateTime? fechaObjetivo,
@@ -354,7 +362,12 @@ class ApiAuthRepository implements AuthRepository {
       // omitir un campo lo deja intacto en el servidor.
       data: {
         'nombre': ?nombre,
-        'universidad': ?universidad,
+        'universidadId': ?universidadId,
+        // El texto solo acompaña a «otra»: con un id del catálogo, el nombre
+        // lo pone el servidor. Nunca siglas sueltas.
+        'universidad': ?(universidadId == idOtraUniversidad
+            ? universidad
+            : null),
         'condicion': ?condicion?.name,
         // toUtc() antes de serializar: un DateTime local sale sin zona
         // ("2026-12-12T00:00:00.000") y el servidor exige ISO 8601 con hora y

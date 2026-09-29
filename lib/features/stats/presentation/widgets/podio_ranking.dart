@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
+import '../../../universidades/presentation/universidades_providers.dart';
 import '../../domain/stats_models.dart';
 
 /// Los tres metales del podio.
@@ -87,7 +89,7 @@ class PodioRanking extends StatelessWidget {
   }
 }
 
-class _Puesto extends StatelessWidget {
+class _Puesto extends ConsumerWidget {
   const _Puesto({required this.entrada});
 
   final RankingEntry entrada;
@@ -115,7 +117,7 @@ class _Puesto extends StatelessWidget {
   static const _altoCirculo = 54.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final esPrimero = entrada.posicion == 1;
     final metal = Metales.de(entrada.posicion) ?? Metales.bronce;
     final diametro = esPrimero ? 50.0 : 40.0;
@@ -195,7 +197,12 @@ class _Puesto extends StatelessWidget {
               ),
               if (entrada.universidad != null)
                 Text(
-                  entrada.universidad!,
+                  // Las siglas: en el podio no cabe un nombre largo, y todos
+                  // empezarían por «Universidad Nacional…».
+                  etiquetaCortaDeUniversidad(
+                    ref.watch(universidadesProvider).value,
+                    entrada.universidad!,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
