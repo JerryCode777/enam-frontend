@@ -18,6 +18,9 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../subscription/presentation/widgets/etiqueta_premium.dart';
 import '../domain/session_models.dart';
 
 /// Los exámenes ENAM que ya se rindieron (RF-52).
@@ -116,19 +119,28 @@ class _Lista extends StatelessWidget {
   }
 }
 
-class _FilaExamen extends StatelessWidget {
+class _FilaExamen extends ConsumerWidget {
   const _FilaExamen({required this.examen});
 
   final PastExam examen;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = context.scheme;
     final states = context.states;
+    // En gratis la lista es la vista previa: se ven todos, con su etiqueta, y
+    // tocar uno abre el muro en vez de la hoja del modo.
+    final gratis = ref.watch(cupoGratisProvider) != null;
 
     return Card(
       child: InkWell(
-        onTap: () => _elegirModo(context, examen),
+        onTap: () => gratis
+            ? abrirMuro(
+                context,
+                ref,
+                const FuncionDePago(FuncionPremium.examenPasado),
+              )
+            : _elegirModo(context, examen),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space4),
@@ -198,7 +210,9 @@ class _FilaExamen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: DesignTokens.space2),
-              if (examen.resuelto)
+              if (gratis)
+                const EtiquetaPremium()
+              else if (examen.resuelto)
                 Icon(
                   Symbols.check_circle,
                   size: 20,
@@ -316,7 +330,11 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
         context.irA(Routes.practiceSessionOf(sesion.id));
       }
     } on Failure catch (e) {
-      if (mounted) showErrorSnack(context, e.message);
+      // En gratis, `FUNCION_PREMIUM`: el muro encima de esta hoja, que sigue
+      // ahí al cerrarlo.
+      if (mounted && !atenderFaltaDeAcceso(context, ref, e)) {
+        showErrorSnack(context, e.message);
+      }
     } finally {
       if (mounted) setState(() => _empezando = false);
     }

@@ -71,7 +71,8 @@ final class ForbiddenFailure extends Failure {
   const ForbiddenFailure([
     super.message = 'Tu plan actual no incluye este contenido.',
     String? code,
-  ]) : super(code: code);
+    Object? details,
+  ]) : super(code: code, details: details);
 
   /// Si el 403 viene de no tener acceso: la prueba venció o el plan expiró
   /// (RN-03 v2).

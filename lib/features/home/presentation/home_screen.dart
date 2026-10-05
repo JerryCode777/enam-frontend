@@ -19,6 +19,9 @@ import '../../catalog/presentation/catalog_providers.dart';
 import '../../offline/presentation/offline_providers.dart';
 import '../../session/presentation/national_mock_screen.dart';
 import '../../stats/domain/stats_models.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../subscription/presentation/widgets/etiqueta_premium.dart';
 import '../domain/siguiente_accion.dart';
 
 /// Lo que el inicio propone ahora, o `null` mientras no hay con qué decidirlo.
@@ -40,6 +43,7 @@ final siguienteAccionProvider = Provider<SiguienteAccion?>((ref) {
 
   final retomar = ref.watch(resumableSessionProvider);
   final prioridades = ref.watch(prioridadEstudioProvider);
+  final gratis = ref.watch(cupoGratisProvider);
 
   return decidirSiguienteAccion(
     sesionAbierta: retomar == null
@@ -56,6 +60,9 @@ final siguienteAccionProvider = Provider<SiguienteAccion?>((ref) {
     prioridades: [
       for (final p in prioridades) (area: p.area, acierto: p.acierto),
     ],
+    gratis: gratis == null
+        ? null
+        : (restantes: gratis.restantesHoy, porDia: gratis.preguntasPorDia),
   );
 });
 
@@ -89,7 +96,8 @@ class HomeScreen extends ConsumerWidget {
             ..invalidate(dashboardProvider)
             // Tirar hacia abajo también relee lo que quedó a medias: es el
             // gesto con el que la gente pregunta "¿esto está al día?".
-            ..invalidate(sesionesAbiertasProvider),
+            ..invalidate(sesionesAbiertasProvider)
+            ..invalidate(subscriptionProvider),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
               DesignTokens.space5,
@@ -98,7 +106,12 @@ class HomeScreen extends ConsumerWidget {
               DesignTokens.space8,
             ),
             children: [
-              FadeUp(child: _Cabecera(user: user)),
+              FadeUp(
+                child: _Cabecera(
+                  user: user,
+                  gratis: ref.watch(cupoGratisProvider),
+                ),
+              ),
               const _EstadoDeEnvio(),
               const SizedBox(height: DesignTokens.space5),
               FadeUp(
@@ -116,6 +129,8 @@ class HomeScreen extends ConsumerWidget {
               FadeUp(
                 index: 3,
                 child: _TuProgreso(
+                  // La nota proyectada es Premium.
+                  conNota: ref.watch(cupoGratisProvider) == null,
                   stats: stats.value,
                   cargando: !stats.hasValue && !stats.hasError,
                   fallo: stats.hasError && !stats.hasValue,
@@ -140,9 +155,13 @@ class HomeScreen extends ConsumerWidget {
 /// que se viene a buscar, y la acción principal tiene que caber en el primer
 /// vistazo de un teléfono de 390 × 844 (plan §6).
 class _Cabecera extends StatelessWidget {
-  const _Cabecera({this.user});
+  const _Cabecera({this.user, this.gratis});
 
   final User? user;
+
+  /// El cupo de hoy, en gratis. Se anuncia aquí, siempre a la vista: en
+  /// gratis limitado el límite es parte de la venta (deja sin efecto RP-01).
+  final AccesoGratis? gratis;
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +197,19 @@ class _Cabecera extends StatelessWidget {
                       ? cuenta
                       : '$cuenta · ${DateFormat('d MMM', 'es').format(fecha)}',
                   style: context.texts.bodyMedium,
+                ),
+              ],
+              if (gratis case final g?) ...[
+                const SizedBox(height: 2),
+                Text(
+                  g.agotado
+                      ? 'Usaste tus ${g.preguntasPorDia} preguntas de hoy'
+                      : 'Te quedan ${g.restantesHoy} de ${g.preguntasPorDia} '
+                            'preguntas hoy',
+                  style: context.texts.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.states.info.onTint,
+                  ),
                 ),
               ],
             ],
@@ -374,6 +406,32 @@ class _SiguienteAccion extends ConsumerWidget {
         onSecundaria: () => context.irA(Routes.practiceConfig),
       ),
 
+      PracticaDelDia(:final restantes, :final porDia) => BloqueSiguienteAccion(
+        antetitulo: 'Tu práctica de hoy',
+        titulo: restantes == porDia
+            ? 'Responde tus $porDia preguntas de hoy'
+            : 'Sigue con tus preguntas de hoy',
+        detalle:
+            'De todas las áreas, con su explicación. Cada día tienes '
+            '$porDia gratis.',
+        progreso: (porDia - restantes) / porDia,
+        icono: Symbols.quiz,
+        accion: 'Practicar',
+        figura: _figura,
+        onAccion: () => context.irA(Routes.practiceConfig),
+      ),
+
+      CupoDelDiaAgotado(:final porDia) => BloqueSiguienteAccion(
+        antetitulo: 'Por hoy, listo',
+        titulo: 'Respondiste tus $porDia preguntas de hoy',
+        detalle:
+            'Mañana tienes $porDia más. Si quieres seguir ahora, con Premium '
+            'no hay límite.',
+        icono: Symbols.task_alt,
+        accion: 'Ver Premium',
+        onAccion: () => abrirMuro(context, ref, const CupoAgotado()),
+      ),
+
       ElegirArea() => BloqueSiguienteAccion(
         antetitulo: 'Tu siguiente paso',
         titulo: 'Elige un área para practicar',
@@ -399,21 +457,29 @@ Widget _figura(double ancho) => FiguraDeMarca.senala(ancho: ancho);
 /// Subordinados a la siguiente acción: mismo ancho, menos peso. Antes
 /// «Practicar» y «Simulacro» eran dos tarjetas grandes que competían con todo
 /// lo demás.
-class _Estudiar extends StatelessWidget {
+class _Estudiar extends ConsumerWidget {
   const _Estudiar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // En gratis las funciones de pago llevan su etiqueta y se abren igual: lo
+    // que hay dentro es la vista previa, y el candado está al empezar.
+    final gratis = ref.watch(cupoGratisProvider);
+    final premium = gratis == null ? null : const EtiquetaPremium();
+
     final filas = [
       _Fila(
         icono: Symbols.quiz,
         titulo: 'Practicar',
-        detalle: 'Elige área, cantidad y tipo de preguntas',
+        detalle: gratis == null
+            ? 'Elige área, cantidad y tipo de preguntas'
+            : '${gratis.preguntasPorDia} preguntas al día, de todas las áreas',
         onTap: () => context.irA(Routes.practiceConfig),
       ),
       _Fila(
         icono: Symbols.timer,
         titulo: 'Simulacro completo',
+        etiqueta: premium,
         detalle:
             '${Blueprint.totalQuestions} preguntas · '
             '${Blueprint.examDuration.inHours} h, como el examen',
@@ -423,6 +489,7 @@ class _Estudiar extends StatelessWidget {
       _Fila(
         icono: Symbols.history_edu,
         titulo: 'Exámenes pasados',
+        etiqueta: premium,
         detalle: 'Los ENAM de años anteriores',
         onTap: () => context.irA(Routes.pastExams),
       ),
@@ -461,6 +528,7 @@ class _Fila extends StatelessWidget {
     required this.detalle,
     required this.onTap,
     this.extra,
+    this.etiqueta,
   });
 
   final IconData icono;
@@ -468,6 +536,9 @@ class _Fila extends StatelessWidget {
   final String detalle;
   final VoidCallback onTap;
   final Widget? extra;
+
+  /// Junto al título, como la de Premium.
+  final Widget? etiqueta;
 
   @override
   Widget build(BuildContext context) {
@@ -497,12 +568,19 @@ class _Fila extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      titulo,
-                      style: context.texts.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        height: 1.25,
-                      ),
+                    Wrap(
+                      spacing: DesignTokens.space2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          titulo,
+                          style: context.texts.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                        ),
+                        ?etiqueta,
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(detalle, style: context.texts.bodyMedium),
@@ -536,6 +614,7 @@ class _Fila extends StatelessWidget {
 /// resultado. La nota proyectada exige 50 respuestas, igual que en la web.
 class _TuProgreso extends StatelessWidget {
   const _TuProgreso({
+    this.conNota = true,
     required this.stats,
     required this.cargando,
     required this.fallo,
@@ -546,6 +625,7 @@ class _TuProgreso extends StatelessWidget {
   final bool cargando;
   final bool fallo;
   final VoidCallback onReintentar;
+  final bool conNota;
 
   /// Con menos respuestas la proyección es ruido y no se muestra (RN-04).
   static const minRespuestas = 50;
@@ -629,7 +709,7 @@ class _TuProgreso extends StatelessWidget {
             practicoHoy: racha.diasDeLaSemana.lastOrNull ?? false,
           ),
         ],
-        if (respondidas >= minRespuestas) ...[
+        if (conNota && respondidas >= minRespuestas) ...[
           const SizedBox(height: DesignTokens.space3),
           _NotaProyectada(nota: s.notaProyectada),
         ],

@@ -12,7 +12,7 @@ Solo los eventos de **cliente** que el contrato asigna a `ios` y `android`:
 | Evento | Dónde | Propiedades |
 |---|---|---|
 | `signup_started` | Se envía el formulario de registro ya validado | `metodo`: `correo` (la app no tiene alta con Google o Apple desde el formulario; esas altas las cuenta el servidor en `account_created`) |
-| `plans_viewed` | Se abre «Acceso terminado» o «Mi suscripción» | `pantalla`: `acceso_terminado` o `perfil` |
+| `plans_viewed` | Se abre «Acceso terminado», el muro de venta del gratis limitado o «Mi suscripción» | `pantalla`: `acceso_terminado` (también el muro, que la reemplaza, hasta que el contrato tenga `muro_visto`) o `perfil` |
 | `checkout_started` | **Solo iOS**: se pulsa comprar un plan de App Store | `plan_id` (`mensual`, `intensivo`, `semestral`; el trimestral de Apple es `intensivo`, como en el backend) y `medio`: `apple` |
 
 `signup_verified` y `profile_completed` **ya no salen de la app**: son de

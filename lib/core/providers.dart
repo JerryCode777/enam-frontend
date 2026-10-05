@@ -23,6 +23,7 @@ import '../features/stats/domain/stats_models.dart';
 import '../features/subscription/data/apple_iap_service.dart';
 import '../features/subscription/data/compras_apple_controller.dart';
 import '../features/subscription/data/subscription_repository.dart';
+import '../features/subscription/domain/acceso.dart';
 import '../features/subscription/domain/subscription_models.dart';
 import 'analitica/identidad_anonima.dart';
 import 'config/app_config.dart';
@@ -269,8 +270,10 @@ const mockEstadosPorCorreo = {
   'gracia@enam.pe': SubscriptionStatus.enGracia,
   'probando@enam.pe': SubscriptionStatus.prueba,
 
-  // Los dos que bloquean la app. `vencido@` es el caso corriente —se le acabó
-  // el día de prueba— y `cancelado@` el de quien canceló un plan pagado.
+  // Sin la prueba ni un plan: gratis limitado, con 6 de 10 preguntas hoy.
+  // `vencido@` es el caso corriente —se le acabó el día de prueba— y
+  // `cancelado@` el de quien canceló un plan pagado. Con un servidor anterior
+  // al gratis (sin `acceso`) bloquearían la app.
   'vencido@enam.pe': SubscriptionStatus.expirada,
   'expirado@enam.pe': SubscriptionStatus.expirada,
   'cancelado@enam.pe': SubscriptionStatus.cancelada,
@@ -319,6 +322,15 @@ final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
     // desde entonces, y bloqueado al pasarse (D-02).
     final forzado = mockEstadosPorCorreo[email];
     if (forzado != null) return MockSubscriptionRepository(estado: forzado);
+
+    // Gratis con el cupo de hoy ya gastado, para ver el muro y el inicio sin
+    // tener que responder diez preguntas.
+    if (email == 'agotado@enam.pe') {
+      return MockSubscriptionRepository(
+        estado: SubscriptionStatus.expirada,
+        restantesGratis: 0,
+      );
+    }
 
     return MockSubscriptionRepository(
       inicioPrueba: ref.watch(inicioPruebaProvider).value,
@@ -602,6 +614,16 @@ final subscriptionProvider = FutureProvider<Subscription>((ref) {
 // cuenta si el usuario puede estar ahí: eso vive en la guarda del router
 // (`_rutasSinAcceso`). Un getter suelto invita a repartir la regla por la app y
 // a que alguna pantalla se olvide de aplicarla.
+
+/// El cupo gratis de hoy, o `null` en premium, cargando o con un servidor que
+/// todavía no manda `acceso`.
+///
+/// No decide si se puede entrar a ningún sitio —eso lo decide el servidor con
+/// sus 403, que van al muro—: solo sirve para **anunciarlo** antes, con el
+/// contador del inicio y los candados de las funciones de pago.
+final cupoGratisProvider = Provider<AccesoGratis?>(
+  (ref) => ref.watch(subscriptionProvider).value?.gratis,
+);
 
 // ==================== SESIÓN REANUDABLE ====================
 

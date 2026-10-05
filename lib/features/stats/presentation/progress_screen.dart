@@ -16,6 +16,8 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/presentation/catalog_providers.dart';
 import '../../home/domain/siguiente_accion.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/widgets/tarjeta_premium.dart';
 import '../domain/stats_models.dart';
 
 /// Pantalla 6.1 — dashboard de progreso (RF-21, RN-04).
@@ -76,6 +78,28 @@ class _Contenido extends ConsumerWidget {
     final respondidas = stats.porArea.fold(0, (s, a) => s + a.respondidas);
     final hayDatos = respondidas >= _minRespuestas;
     final prioridades = ref.watch(prioridadEstudioProvider);
+    // En gratis queda el avance básico (vistas, acierto, racha). La nota, el
+    // acierto por área y la sugerencia de área son Premium: en su sitio va
+    // qué son, con el botón al muro.
+    final gratis = ref.watch(cupoGratisProvider) != null;
+
+    if (gratis) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space8,
+        ),
+        children: [
+          _Cifras(stats: stats, respondidas: respondidas),
+          const SizedBox(height: DesignTokens.space3 + 2),
+          const _AccesosDirectos(),
+          const SizedBox(height: DesignTokens.space3 + 2),
+          const TarjetaPremium(funcion: FuncionPremium.estadisticas),
+        ],
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(

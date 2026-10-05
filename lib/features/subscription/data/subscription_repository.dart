@@ -1,6 +1,7 @@
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
+import '../domain/acceso.dart';
 import '../domain/subscription_models.dart';
 
 /// Suscripciones y planes (Módulo 6 del SSD).
@@ -123,8 +124,19 @@ const _planPrueba = Plan(
 );
 
 class MockSubscriptionRepository implements SubscriptionRepository {
-  MockSubscriptionRepository({SubscriptionStatus? estado, this.inicioPrueba})
-    : _estadoForzado = estado;
+  MockSubscriptionRepository({
+    SubscriptionStatus? estado,
+    this.inicioPrueba,
+    this.restantesGratis = 6,
+    this.conAcceso = true,
+  }) : _estadoForzado = estado;
+
+  /// Preguntas gratis que le quedan hoy a quien ya no tiene la prueba.
+  final int restantesGratis;
+
+  /// Si manda `acceso`, como el servidor del gratis limitado. En `false` es un
+  /// servidor anterior: la prueba vencida bloquea la app (D-01).
+  final bool conAcceso;
 
   /// Estado fijo, para revisar una pantalla concreta sin esperar 24 h. El
   /// atajo para elegirlo es el correo con el que se inicia sesión: ver
@@ -184,6 +196,26 @@ class MockSubscriptionRepository implements SubscriptionRepository {
   @override
   Future<Subscription> current() async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
+    final sub = _segunEstado();
+    if (!conAcceso) return sub;
+    return sub.copyWith(
+      acceso: sub.daAcceso
+          ? const AccesoPremium()
+          : AccesoGratis(
+              preguntasPorDia: AccesoGratis.cupoPorDefecto,
+              restantesHoy: restantesGratis,
+              renuevaEn: _proximaMedianocheDeLima(),
+            ),
+    );
+  }
+
+  /// Medianoche de Lima (UTC−5, sin horario de verano), en UTC.
+  static DateTime _proximaMedianocheDeLima() {
+    final lima = DateTime.now().toUtc().subtract(const Duration(hours: 5));
+    return DateTime.utc(lima.year, lima.month, lima.day + 1, 5);
+  }
+
+  Subscription _segunEstado() {
     final ahora = DateTime.now();
 
     return switch (estado) {

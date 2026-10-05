@@ -309,7 +309,9 @@ as List<String>,
 mixin _$Subscription {
 
  String get id; Plan get plan; SubscriptionStatus get estado;@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin get origen; DateTime get inicia;/// `null` mientras la prueba no haya empezado a correr (D-02).
- DateTime? get expira;
+ DateTime? get expira;/// Premium o gratis con su cupo de hoy. `null` si el servidor todavía no
+/// lo manda: entonces manda el modelo anterior, con bloqueo (D-01).
+@JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson) Acceso? get acceso;
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -322,16 +324,16 @@ $SubscriptionCopyWith<Subscription> get copyWith => _$SubscriptionCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Subscription&&(identical(other.id, id) || other.id == id)&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.origen, origen) || other.origen == origen)&&(identical(other.inicia, inicia) || other.inicia == inicia)&&(identical(other.expira, expira) || other.expira == expira));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Subscription&&(identical(other.id, id) || other.id == id)&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.origen, origen) || other.origen == origen)&&(identical(other.inicia, inicia) || other.inicia == inicia)&&(identical(other.expira, expira) || other.expira == expira)&&(identical(other.acceso, acceso) || other.acceso == acceso));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,plan,estado,origen,inicia,expira);
+int get hashCode => Object.hash(runtimeType,id,plan,estado,origen,inicia,expira,acceso);
 
 @override
 String toString() {
-  return 'Subscription(id: $id, plan: $plan, estado: $estado, origen: $origen, inicia: $inicia, expira: $expira)';
+  return 'Subscription(id: $id, plan: $plan, estado: $estado, origen: $origen, inicia: $inicia, expira: $expira, acceso: $acceso)';
 }
 
 
@@ -342,7 +344,7 @@ abstract mixin class $SubscriptionCopyWith<$Res>  {
   factory $SubscriptionCopyWith(Subscription value, $Res Function(Subscription) _then) = _$SubscriptionCopyWithImpl;
 @useResult
 $Res call({
- String id, Plan plan, SubscriptionStatus estado,@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin origen, DateTime inicia, DateTime? expira
+ String id, Plan plan, SubscriptionStatus estado,@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin origen, DateTime inicia, DateTime? expira,@JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson) Acceso? acceso
 });
 
 
@@ -359,7 +361,7 @@ class _$SubscriptionCopyWithImpl<$Res>
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = freezed,Object? acceso = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
@@ -367,7 +369,8 @@ as Plan,estado: null == estado ? _self.estado : estado // ignore: cast_nullable_
 as SubscriptionStatus,origen: null == origen ? _self.origen : origen // ignore: cast_nullable_to_non_nullable
 as SubscriptionOrigin,inicia: null == inicia ? _self.inicia : inicia // ignore: cast_nullable_to_non_nullable
 as DateTime,expira: freezed == expira ? _self.expira : expira // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,acceso: freezed == acceso ? _self.acceso : acceso // ignore: cast_nullable_to_non_nullable
+as Acceso?,
   ));
 }
 /// Create a copy of Subscription
@@ -461,10 +464,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira, @JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson)  Acceso? acceso)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
-return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
+return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira,_that.acceso);case _:
   return orElse();
 
 }
@@ -482,10 +485,10 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira, @JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson)  Acceso? acceso)  $default,) {final _that = this;
 switch (_that) {
 case _Subscription():
-return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
+return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira,_that.acceso);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -502,10 +505,10 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Plan plan,  SubscriptionStatus estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido)  SubscriptionOrigin origen,  DateTime inicia,  DateTime? expira, @JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson)  Acceso? acceso)?  $default,) {final _that = this;
 switch (_that) {
 case _Subscription() when $default != null:
-return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira);case _:
+return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that.expira,_that.acceso);case _:
   return null;
 
 }
@@ -517,7 +520,7 @@ return $default(_that.id,_that.plan,_that.estado,_that.origen,_that.inicia,_that
 @JsonSerializable()
 
 class _Subscription extends Subscription {
-  const _Subscription({required this.id, required this.plan, required this.estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) required this.origen, required this.inicia, this.expira}): super._();
+  const _Subscription({required this.id, required this.plan, required this.estado, @JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) required this.origen, required this.inicia, this.expira, @JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson) this.acceso}): super._();
   factory _Subscription.fromJson(Map<String, dynamic> json) => _$SubscriptionFromJson(json);
 
 @override final  String id;
@@ -527,6 +530,9 @@ class _Subscription extends Subscription {
 @override final  DateTime inicia;
 /// `null` mientras la prueba no haya empezado a correr (D-02).
 @override final  DateTime? expira;
+/// Premium o gratis con su cupo de hoy. `null` si el servidor todavía no
+/// lo manda: entonces manda el modelo anterior, con bloqueo (D-01).
+@override@JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson) final  Acceso? acceso;
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
@@ -541,16 +547,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Subscription&&(identical(other.id, id) || other.id == id)&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.origen, origen) || other.origen == origen)&&(identical(other.inicia, inicia) || other.inicia == inicia)&&(identical(other.expira, expira) || other.expira == expira));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Subscription&&(identical(other.id, id) || other.id == id)&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.origen, origen) || other.origen == origen)&&(identical(other.inicia, inicia) || other.inicia == inicia)&&(identical(other.expira, expira) || other.expira == expira)&&(identical(other.acceso, acceso) || other.acceso == acceso));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,plan,estado,origen,inicia,expira);
+int get hashCode => Object.hash(runtimeType,id,plan,estado,origen,inicia,expira,acceso);
 
 @override
 String toString() {
-  return 'Subscription(id: $id, plan: $plan, estado: $estado, origen: $origen, inicia: $inicia, expira: $expira)';
+  return 'Subscription(id: $id, plan: $plan, estado: $estado, origen: $origen, inicia: $inicia, expira: $expira, acceso: $acceso)';
 }
 
 
@@ -561,7 +567,7 @@ abstract mixin class _$SubscriptionCopyWith<$Res> implements $SubscriptionCopyWi
   factory _$SubscriptionCopyWith(_Subscription value, $Res Function(_Subscription) _then) = __$SubscriptionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Plan plan, SubscriptionStatus estado,@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin origen, DateTime inicia, DateTime? expira
+ String id, Plan plan, SubscriptionStatus estado,@JsonKey(unknownEnumValue: SubscriptionOrigin.desconocido) SubscriptionOrigin origen, DateTime inicia, DateTime? expira,@JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson) Acceso? acceso
 });
 
 
@@ -578,7 +584,7 @@ class __$SubscriptionCopyWithImpl<$Res>
 
 /// Create a copy of Subscription
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? plan = null,Object? estado = null,Object? origen = null,Object? inicia = null,Object? expira = freezed,Object? acceso = freezed,}) {
   return _then(_Subscription(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
@@ -586,7 +592,8 @@ as Plan,estado: null == estado ? _self.estado : estado // ignore: cast_nullable_
 as SubscriptionStatus,origen: null == origen ? _self.origen : origen // ignore: cast_nullable_to_non_nullable
 as SubscriptionOrigin,inicia: null == inicia ? _self.inicia : inicia // ignore: cast_nullable_to_non_nullable
 as DateTime,expira: freezed == expira ? _self.expira : expira // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,acceso: freezed == acceso ? _self.acceso : acceso // ignore: cast_nullable_to_non_nullable
+as Acceso?,
   ));
 }
 

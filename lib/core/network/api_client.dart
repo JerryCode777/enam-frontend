@@ -165,9 +165,12 @@ class ApiClient {
         message ?? 'Tu sesión expiró. Vuelve a iniciar sesión.',
         code,
       ),
+      // Con sus `details`: el 403 del gratis limitado dice qué función o
+      // cuándo vuelve el cupo, y eso elige el muro (`motivoDelMuro`).
       403 => ForbiddenFailure(
         message ?? 'Tu plan actual no incluye este contenido.',
         code,
+        _details(response?.data),
       ),
       404 => NotFoundFailure(message ?? 'No encontramos lo que buscabas.'),
       429 => RateLimitFailure(
@@ -206,6 +209,11 @@ class ApiClient {
       fieldErrors: fieldErrors,
     );
   }
+
+  Object? _details(Object? body) => switch (body) {
+    {'error': {'details': final Object d}} => d,
+    _ => null,
+  };
 
   Duration? _retryAfter(Response<dynamic>? response) {
     final header = response?.headers.value('retry-after');

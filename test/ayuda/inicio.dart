@@ -7,6 +7,7 @@ import 'package:enam_app/features/offline/presentation/offline_providers.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:enam_app/features/session/presentation/national_mock_screen.dart';
 import 'package:enam_app/features/stats/domain/stats_models.dart';
+import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 
 import 'offline.dart';
@@ -22,6 +23,12 @@ enum EstadoInicio {
   areaPrioritaria,
   elegirArea,
   sinConexion,
+
+  /// Gratis limitado, con historial y 6 de 10 preguntas por hoy.
+  gratis,
+
+  /// Gratis limitado, con el cupo de hoy gastado.
+  gratisAgotado,
 }
 
 List<Override> overridesDeInicio(
@@ -31,7 +38,9 @@ List<Override> overridesDeInicio(
   final conHistorial =
       estado == EstadoInicio.areaPrioritaria ||
       estado == EstadoInicio.retomar ||
-      estado == EstadoInicio.sinConexion;
+      estado == EstadoInicio.sinConexion ||
+      estado == EstadoInicio.gratis ||
+      estado == EstadoInicio.gratisAgotado;
 
   return [
     authControllerProvider.overrideWith(_ConSesion.new),
@@ -42,6 +51,17 @@ List<Override> overridesDeInicio(
       (ref) => Stream.value(estado != EstadoInicio.sinConexion),
     ),
     reservasProvider.overrideWith((ref) async => 2),
+    cupoGratisProvider.overrideWithValue(switch (estado) {
+      EstadoInicio.gratis => const AccesoGratis(
+        preguntasPorDia: 10,
+        restantesHoy: 6,
+      ),
+      EstadoInicio.gratisAgotado => const AccesoGratis(
+        preguntasPorDia: 10,
+        restantesHoy: 0,
+      ),
+      _ => null,
+    }),
     nacionalesProvider.overrideWith((ref) async => [_nacional]),
     catalogProvider.overrideWith((ref) async => _areas),
     sesionesAbiertasProvider.overrideWith(

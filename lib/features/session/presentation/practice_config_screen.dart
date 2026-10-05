@@ -18,7 +18,9 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../catalog/presentation/catalog_providers.dart';
-import '../../subscription/presentation/access_ended_screen.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../subscription/presentation/widgets/etiqueta_premium.dart';
 import '../domain/session_models.dart';
 import 'area_picker_screen.dart';
 
@@ -69,6 +71,10 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(cupoGratisProvider) case final gratis?) {
+      return _enGratis(gratis);
+    }
+
     final nodo = _nodoId == null ? null : ref.watch(nodoProvider(_nodoId!));
 
     // El rango es el de RF-12, sin toparlo por lo que hay en el nodo: el
@@ -132,10 +138,108 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
             ),
           ),
           _BarraEmpezar(
-            cantidad: cantidadEfectiva,
+            etiqueta: 'Empezar · $cantidadEfectiva preguntas',
             creando: _creando,
             onEmpezar: () => _empezar(cantidadEfectiva),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// En gratis no hay nada que configurar: todo el banco, `todas` y hasta el
+  /// cupo que queda. Lo que se elegiría se ve, con su candado, y abre el muro.
+  /// El servidor fuerza lo mismo (`min(10, restantesHoy)`), así que esto solo
+  /// evita prometer una práctica que no va a crear.
+  Widget _enGratis(AccesoGratis gratis) {
+    final porDia = gratis.preguntasPorDia;
+    final cantidad = gratis.restantesHoy.clamp(0, porDia);
+    void aPremium() => abrirMuro(
+      context,
+      ref,
+      const FuncionDePago(FuncionPremium.practicaAMedida),
+    );
+
+    return Scaffold(
+      body: Column(
+        children: [
+          const GradientHeader(titulo: 'Nueva práctica'),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space5,
+                DesignTokens.space4,
+                DesignTokens.space5,
+                DesignTokens.space8,
+              ),
+              children: [
+                // Llegó con un tema elegido (desde el temario): se dice por
+                // qué la práctica no va a ser de ese tema.
+                if (widget.nodoId != null || widget.origenInicial != null) ...[
+                  StateBanner(
+                    kind: BannerKind.info,
+                    message:
+                        'Elegir área o tema es Premium. Tu práctica gratis es '
+                        'de todas las áreas.',
+                    action: TextButton(
+                      onPressed: aPremium,
+                      child: const Text('Ver Premium'),
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.space5),
+                ],
+                _Seccion(
+                  titulo: 'QUÉ VAS A PRACTICAR',
+                  child: _FilaPremium(
+                    icono: Symbols.shuffle,
+                    texto: 'Todo el temario',
+                    onTap: aPremium,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space5),
+                _Seccion(
+                  titulo: 'CANTIDAD',
+                  trailing: Text(
+                    '$cantidad ${cantidad == 1 ? "pregunta" : "preguntas"}',
+                    style: context.texts.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: context.states.info.onTint,
+                    ),
+                  ),
+                  child: Text(
+                    gratis.agotado
+                        ? 'Ya usaste tus $porDia preguntas gratis de hoy. '
+                              'Mañana tienes $porDia más.'
+                        : 'Gratis tienes $porDia preguntas al día. Te quedan '
+                              '${gratis.restantesHoy} hoy.',
+                    style: context.texts.bodyMedium?.copyWith(height: 1.5),
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space5),
+                _Seccion(
+                  titulo: 'QUÉ PREGUNTAS',
+                  child: _FilaPremium(
+                    icono: Symbols.filter_list,
+                    texto: 'Todas, vistas o no',
+                    onTap: aPremium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (gratis.agotado)
+            _BarraEmpezar(
+              etiqueta: 'Ver Premium',
+              icono: Symbols.workspace_premium,
+              creando: false,
+              onEmpezar: () => abrirMuro(context, ref, const CupoAgotado()),
+            )
+          else
+            _BarraEmpezar(
+              etiqueta: 'Empezar · $cantidad preguntas',
+              creando: _creando,
+              onEmpezar: () => _empezar(cantidad, gratis: true),
+            ),
         ],
       ),
     );
@@ -163,12 +267,13 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
   int _cantidadEfectiva(int tope) =>
       _cantidad.clamp(Blueprint.practiceMinQuestions, tope);
 
-  Future<void> _empezar(int cantidad) async {
+  /// [gratis]: sin área ni filtro, que en gratis son Premium.
+  Future<void> _empezar(int cantidad, {bool gratis = false}) async {
     if (_creando) return;
     setState(() => _creando = true);
 
     try {
-      final nodoId = _nodoId;
+      final nodoId = gratis ? null : _nodoId;
       final session = await ref.read(sessionRepositoryProvider).startPractice(
         PracticeConfig(
           // El nodo puede ser área, sub área o tema; el servidor resuelve el
@@ -178,7 +283,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
               ? [nodoId]
               : const [],
           cantidadPreguntas: cantidad,
-          origen: _origen,
+          origen: gratis ? QuestionSource.todas : _origen,
         ),
       );
       // D-02: el reloj de las 24 h arranca aquí, no al registrarse.
@@ -195,10 +300,11 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
       // que vence justo aquí — empezar una práctica es lo que arranca el reloj
       // (D-02), así que este 403 es el desenlace normal del modelo, no un
       // error raro.
+      //
+      // En gratis llega `LIMITE_DIARIO` o, si se eligió área u origen,
+      // `FUNCION_PREMIUM`: los dos son el muro, no un error.
       if (!mounted) return;
-      if (e.requiereSuscripcion) {
-        irAlPago(ref, context);
-      } else {
+      if (!atenderFaltaDeAcceso(context, ref, e)) {
         showErrorSnack(context, e.message);
       }
     } on Failure catch (e) {
@@ -495,12 +601,14 @@ class _Fila extends StatelessWidget {
 
 class _BarraEmpezar extends StatelessWidget {
   const _BarraEmpezar({
-    required this.cantidad,
+    required this.etiqueta,
     required this.creando,
     required this.onEmpezar,
+    this.icono = Symbols.play_arrow,
   });
 
-  final int cantidad;
+  final String etiqueta;
+  final IconData icono;
   final bool creando;
   final VoidCallback onEmpezar;
 
@@ -518,10 +626,53 @@ class _BarraEmpezar extends StatelessWidget {
         border: Border(top: BorderSide(color: context.scheme.outlineVariant)),
       ),
       child: EnamButton(
-        label: 'Empezar · $cantidad preguntas',
-        icon: Symbols.play_arrow,
+        label: etiqueta,
+        icon: icono,
         loading: creando,
         onPressed: onEmpezar,
+      ),
+    );
+  }
+}
+
+/// Una opción que en gratis no se elige: se ve con su candado, y tocarla
+/// abre el muro con la vista previa.
+class _FilaPremium extends StatelessWidget {
+  const _FilaPremium({
+    required this.icono,
+    required this.texto,
+    required this.onTap,
+  });
+
+  final IconData icono;
+  final String texto;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        child: Padding(
+          padding: const EdgeInsets.all(DesignTokens.space4),
+          child: Row(
+            children: [
+              Icon(icono, size: 24, color: context.states.info.onTint),
+              const SizedBox(width: DesignTokens.space3),
+              Expanded(
+                child: Text(
+                  texto,
+                  style: context.texts.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space2),
+              const EtiquetaPremium(),
+            ],
+          ),
+        ),
       ),
     );
   }

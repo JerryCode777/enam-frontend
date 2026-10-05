@@ -20,7 +20,8 @@ import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../session/domain/session_models.dart';
-import '../../subscription/presentation/access_ended_screen.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/offline_models.dart';
 import 'offline_providers.dart';
 
@@ -417,8 +418,15 @@ class _FilaPaquete extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
     final color = AreaColors.of(paquete.areaId, Theme.of(context).brightness);
+    // En gratis, descargar es Premium. Lo ya descargado se puede borrar.
+    final gratis = ref.watch(cupoGratisProvider) != null;
 
     final (icono, colorIcono, tooltip) = switch (paquete.estado) {
+      final e
+          when gratis &&
+              e != EstadoDescarga.descargada &&
+              e != EstadoDescarga.descargando =>
+        (Symbols.lock, states.info.onTint, 'Descargar es Premium'),
       _ when paquete.fallo => (
         Symbols.refresh,
         states.error.onTint,
@@ -554,6 +562,12 @@ class _FilaPaquete extends ConsumerWidget {
       return _eliminar(context, ref);
     }
 
+    // Antes de gastar datos en algo que el servidor no va a dar.
+    if (ref.read(cupoGratisProvider) != null) {
+      abrirMuro(context, ref, const FuncionDePago(FuncionPremium.sinConexion));
+      return;
+    }
+
     if (!hayRed) {
       showErrorSnack(
         context,
@@ -571,9 +585,7 @@ class _FilaPaquete extends ConsumerWidget {
       // RN-03: quien decide si hay plan es el servidor. Si dice que no, se va
       // al mismo sitio que cuando vence la prueba en mitad de una práctica, y
       // no a un aviso que deja al usuario sin saber qué hacer.
-      if (error is ForbiddenFailure && error.requiereSuscripcion) {
-        irAlPago(ref, context);
-      } else {
+      if (!atenderFaltaDeAcceso(context, ref, error)) {
         showErrorSnack(context, error.message);
       }
       return;

@@ -18,6 +18,7 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/session_models.dart';
 
 /// Los simulacros nacionales programados (RF-19).
@@ -203,7 +204,9 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
         ),
       );
     } on Failure catch (e) {
-      if (mounted) showErrorSnack(context, e.message);
+      if (mounted && !atenderFaltaDeAcceso(context, ref, e)) {
+        showErrorSnack(context, e.message);
+      }
     } finally {
       if (mounted) setState(() => _participando = false);
     }

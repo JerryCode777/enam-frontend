@@ -29,9 +29,9 @@ import '../../../../core/theme/state_colors.dart';
 ///     Desaparecer después de jugar dejaba a quien lo usó sin saber que
 ///     existe.
 ///
-/// El tercero va contra la letra de RP-01, que dice no anunciar los límites del
-/// plan. Se hace igual porque aquí el límite **ya se topó**: no se avisa de un
-/// techo que no ha tocado, se explica algo que acaba de pasarle.
+/// El tercero iba contra la letra de RP-01, que decía no anunciar los límites
+/// del plan. Con el gratis limitado esa regla ya no rige: el límite se anuncia
+/// porque es parte de la venta (contador del inicio, etiquetas «Premium»).
 ///
 /// # Quién decide
 ///

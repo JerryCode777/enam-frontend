@@ -43,6 +43,12 @@ void main() {
     EstadoInicio.areaPrioritaria: ('Practica Medicina', 'Practicar Medicina'),
     EstadoInicio.elegirArea: ('Elige un área para practicar', 'Elegir área'),
     EstadoInicio.sinConexion: ('Practica sin conexión', 'Ver lo descargado'),
+    // Gratis: con historial, pero sin sugerir área (elegirla es Premium).
+    EstadoInicio.gratis: ('Sigue con tus preguntas de hoy', 'Practicar'),
+    EstadoInicio.gratisAgotado: (
+      'Respondiste tus 10 preguntas de hoy',
+      'Ver Premium',
+    ),
   };
 
   for (final MapEntry(key: estado, value: (titulo, boton))
@@ -53,6 +59,29 @@ void main() {
       expect(find.widgetWithText(FilledButton, boton), findsOneWidget);
     });
   }
+
+  testWidgets('gratis: el cupo de hoy a la vista, y Premium marcado', (
+    tester,
+  ) async {
+    await montar(tester, EstadoInicio.gratis);
+    expect(find.text('Te quedan 6 de 10 preguntas hoy'), findsOneWidget);
+    // Simulacro y exámenes pasados llevan la etiqueta.
+    expect(find.text('Premium'), findsNWidgets(2));
+    // Sin nota proyectada, que es Premium. Está al final: se baja hasta allí.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
+    await tester.pump();
+    expect(find.text('Tu progreso'), findsOneWidget);
+    expect(find.text('Nota proyectada'), findsNothing);
+  });
+
+  testWidgets('premium: ni contador ni etiquetas', (tester) async {
+    await montar(tester, EstadoInicio.areaPrioritaria);
+    expect(find.textContaining('Te quedan'), findsNothing);
+    expect(find.text('Premium'), findsNothing);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
+    await tester.pump();
+    expect(find.text('Nota proyectada'), findsOneWidget);
+  });
 
   testWidgets('la acción principal cabe en el primer vistazo de 390 × 844', (
     tester,

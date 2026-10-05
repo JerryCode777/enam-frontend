@@ -4,6 +4,7 @@ import 'package:enam_app/core/router/routes.dart';
 import 'package:enam_app/core/storage/app_prefs.dart';
 import 'package:enam_app/features/auth/data/mock_auth_repository.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
+import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/domain/subscription_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -183,6 +184,23 @@ void main() {
       expect(destino(c, Routes.mySubscription, expirada), isNull);
       expect(destino(c, Routes.help, expirada), isNull);
       expect(destino(c, Routes.terms, expirada), isNull);
+    });
+
+    test('gratis limitado: la prueba vencida ya no bloquea nada', () async {
+      final c = await conSesion();
+      // El mismo `expirada`, pero de un servidor que manda `acceso`.
+      final gratis = AsyncData(
+        sub(SubscriptionStatus.expirada).copyWith(
+          acceso: const AccesoGratis(preguntasPorDia: 10, restantesHoy: 0),
+        ),
+      );
+
+      expect(destino(c, Routes.home, gratis), isNull);
+      expect(destino(c, Routes.temario, gratis), isNull);
+      expect(destino(c, Routes.stats, gratis), isNull);
+      expect(destino(c, Routes.simulacroSelection, gratis), isNull);
+      // Y quien quedó en «Acceso terminado» de antes vuelve al inicio.
+      expect(destino(c, Routes.accessEnded, gratis), Routes.home);
     });
 
     test('la prueba sin empezar no bloquea nada', () async {

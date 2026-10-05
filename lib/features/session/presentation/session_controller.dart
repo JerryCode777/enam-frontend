@@ -298,11 +298,13 @@ class SessionController extends AsyncNotifier<SessionState> {
 
       // El progreso del temario y las estadísticas cambiaron. Y la sesión ya
       // no está abierta: sin invalidarla, el inicio seguiría ofreciendo
-      // retomar algo que acaba de terminar.
+      // retomar algo que acaba de terminar. En gratis, además, el cupo de hoy
+      // bajó: el contador del inicio se relee del servidor.
       ref
         ..invalidate(catalogProvider)
         ..invalidate(dashboardProvider)
-        ..invalidate(sesionesAbiertasProvider);
+        ..invalidate(sesionesAbiertasProvider)
+        ..invalidate(subscriptionProvider);
 
       return finalizada;
     } on Failure catch (e) {

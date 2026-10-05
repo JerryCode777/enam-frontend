@@ -17,6 +17,8 @@ import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/presentation/catalog_providers.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 import 'widgets/option_card.dart';
@@ -106,6 +108,18 @@ class _ContenidoState extends ConsumerState<_Contenido> {
       _scroll.jumpTo(0);
     }
 
+    // En gratis, responder sin cupo da `LIMITE_DIARIO`: es el muro, no un
+    // error. Se abre una vez, al llegar; luego queda el aviso para volver.
+    final motivo = switch (ahora.error) {
+      final e? => motivoDelMuro(e),
+      null => null,
+    };
+    if (motivo != null && antes.error != ahora.error) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) abrirMuro(context, ref, motivo);
+      });
+    }
+
     // Recién respondida: el veredicto y el porqué, a la vista.
     if (!antes.respondida && ahora.respondida) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -140,16 +154,31 @@ class _ContenidoState extends ConsumerState<_Contenido> {
               onCerrar: () => _confirmarSalida(context),
               onMarcar: control.alternarMarca,
             ),
-            if (estado.error != null)
+            if (estado.error case final error?)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: DesignTokens.space5,
                   vertical: DesignTokens.space2,
                 ),
-                child: StateBanner(
-                  kind: BannerKind.error,
-                  message: estado.error!.message,
-                ),
+                child: switch (motivoDelMuro(error)) {
+                  final motivo? => StateBanner(
+                    kind: BannerKind.info,
+                    message: switch (motivo) {
+                      CupoAgotado() =>
+                        'Se acabaron tus preguntas gratis de hoy. Mañana '
+                            'tienes más.',
+                      FuncionDePago(:final funcion) => funcion.titulo,
+                    },
+                    action: TextButton(
+                      onPressed: () => abrirMuro(context, ref, motivo),
+                      child: const Text('Ver Premium'),
+                    ),
+                  ),
+                  null => StateBanner(
+                    kind: BannerKind.error,
+                    message: error.message,
+                  ),
+                },
               ),
             Expanded(
               child: Align(
@@ -224,7 +253,11 @@ class _ContenidoState extends ConsumerState<_Contenido> {
       confirmar: 'Salir',
       cancelar: 'Seguir practicando',
     );
-    if (salir && context.mounted) context.pop();
+    if (salir && context.mounted) {
+      // En gratis, lo respondido gastó cupo: que el inicio lo diga al volver.
+      ref.invalidate(subscriptionProvider);
+      context.pop();
+    }
   }
 }
 

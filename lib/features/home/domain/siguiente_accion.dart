@@ -68,6 +68,22 @@ final class PracticarArea extends SiguienteAccion {
   }
 }
 
+/// Gratis, con preguntas por responder hoy. En gratis no se elige área (es
+/// Premium), así que no se sugiere ninguna: la práctica es de todo el banco.
+final class PracticaDelDia extends SiguienteAccion {
+  const PracticaDelDia({required this.restantes, required this.porDia});
+
+  final int restantes;
+  final int porDia;
+}
+
+/// Gratis y sin preguntas por hoy: mañana vuelve el cupo, o Premium.
+final class CupoDelDiaAgotado extends SiguienteAccion {
+  const CupoDelDiaAgotado({required this.porDia});
+
+  final int porDia;
+}
+
 /// No hay datos suficientes para sugerir nada concreto, o algo falló.
 final class ElegirArea extends SiguienteAccion {
   const ElegirArea();
@@ -79,13 +95,16 @@ final class ElegirArea extends SiguienteAccion {
 ///
 /// 1. Sesión abierta → retomarla.
 /// 2. Sin red → lo descargado.
-/// 3. Sin ninguna respuesta → primera práctica corta.
-/// 4. Con historial → el área prioritaria, explicando por qué.
-/// 5. Lo demás (cargando no, eso lo resuelve quien llama; error o datos
+/// 3. Gratis → la práctica del día, o el cupo agotado. Lo que viene después
+///    sugiere un área, y elegir área es Premium.
+/// 4. Sin ninguna respuesta → primera práctica corta.
+/// 5. Con historial → el área prioritaria, explicando por qué.
+/// 6. Lo demás (cargando no, eso lo resuelve quien llama; error o datos
 ///    insuficientes) → elegir un área, sin porcentajes.
 ///
-/// El acceso vencido no llega aquí: lo resuelve la guarda del router antes de
-/// pintar el inicio.
+/// El acceso vencido del modelo anterior no llega aquí: lo resuelve la guarda
+/// del router antes de pintar el inicio. [gratis] nulo es premium (o un
+/// servidor que aún no manda el acceso).
 ///
 /// [stats] nulo significa que el dashboard falló o no hay; [prioridades] vacía,
 /// que el catálogo no está.
@@ -96,6 +115,7 @@ SiguienteAccion decidirSiguienteAccion({
   required int practicasOffline,
   required DashboardStats? stats,
   required List<({CatalogNode area, double? acierto})> prioridades,
+  ({int restantes, int porDia})? gratis,
 }) {
   if (sesionAbierta case final s?) {
     return RetomarSesion(
@@ -107,6 +127,12 @@ SiguienteAccion decidirSiguienteAccion({
   }
 
   if (sinRed) return EstudiarSinConexion(practicasListas: practicasOffline);
+
+  if (gratis case (:final restantes, :final porDia)) {
+    return restantes > 0
+        ? PracticaDelDia(restantes: restantes, porDia: porDia)
+        : CupoDelDiaAgotado(porDia: porDia);
+  }
 
   if (stats == null) return const ElegirArea();
 

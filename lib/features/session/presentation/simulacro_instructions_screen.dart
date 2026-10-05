@@ -15,7 +15,7 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
-import '../../subscription/presentation/access_ended_screen.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 
 /// Pantalla 5.2 — antes de empezar el simulacro.
 ///
@@ -175,11 +175,10 @@ class _SimulacroInstructionsScreenState
       }
     } on ForbiddenFailure catch (e) {
       // Empezar un simulacro también arranca el reloj de la prueba (D-02), así
-      // que este 403 puede ser la prueba venciendo justo aquí.
+      // que este 403 puede ser la prueba venciendo justo aquí. En gratis es
+      // `FUNCION_PREMIUM`: el muro, no un error.
       if (!mounted) return;
-      if (e.requiereSuscripcion) {
-        irAlPago(ref, context);
-      } else {
+      if (!atenderFaltaDeAcceso(context, ref, e)) {
         showErrorSnack(context, e.message);
       }
     } on Failure catch (e) {

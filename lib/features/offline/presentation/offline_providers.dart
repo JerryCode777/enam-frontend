@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../catalog/domain/catalog_models.dart';
+import '../../subscription/domain/acceso.dart';
 import '../domain/offline_models.dart';
 
 /// Lo que la pantalla de descargas necesita saber, y lo que puede hacer.
@@ -102,8 +103,10 @@ class DescargasNotifier extends AsyncNotifier<List<PaqueteEnPantalla>> {
       // Cancelar no es un fallo: no se marca la fila ni se avisa.
       return null;
     } on Failure catch (e) {
-      // Sin plan no hay nada que reintentar: lo resuelve el pago.
-      if (!(e is ForbiddenFailure && e.requiereSuscripcion)) {
+      // Sin plan, o en gratis (`FUNCION_PREMIUM`), no hay nada que
+      // reintentar: lo resuelve el pago, y la fila no se marca como fallida.
+      if (!(e is ForbiddenFailure &&
+          (e.requiereSuscripcion || motivoDelMuro(e) != null))) {
         _fallidas.add(areaId);
       }
       return e;

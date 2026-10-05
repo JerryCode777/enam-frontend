@@ -37,8 +37,10 @@ import '../../features/session/presentation/simulacro_results_screen.dart';
 import '../../features/session/presentation/simulacro_screen.dart';
 import '../../features/stats/presentation/progress_screen.dart';
 import '../../features/stats/presentation/ranking_screen.dart';
+import '../../features/subscription/domain/acceso.dart';
 import '../../features/subscription/domain/subscription_models.dart';
 import '../../features/subscription/presentation/access_ended_screen.dart';
+import '../../features/subscription/presentation/muro_de_venta_screen.dart';
 import '../../features/subscription/presentation/my_subscription_screen.dart';
 import '../../features/system/presentation/galeria_componentes_screen.dart';
 import '../../features/system/presentation/system_screens.dart';
@@ -245,8 +247,12 @@ String? decidirDestino({
       // pantalla de pago parpadeando en cada arranque sería peor que dejar ver
       // una pantalla de más, y de todas formas el contenido lo protege el
       // servidor (RNF-04), no este redirect.
+      //
+      // Solo con un servidor anterior al gratis limitado: con `acceso`, vencer
+      // la prueba deja la app abierta y los límites se muestran en el muro de
+      // venta, en el momento en que se topan.
       _
-          when suscripcion.value?.sinAcceso == true &&
+          when suscripcion.value?.bloqueada == true &&
               !rutasSinAcceso.contains(here) =>
         Routes.accessEnded,
 
@@ -254,7 +260,7 @@ String? decidirDestino({
       // a donde vuelve alguien que acaba de pagar.
       _
           when here == Routes.accessEnded &&
-              suscripcion.value?.daAcceso != false =>
+              suscripcion.value?.bloqueada != true =>
         Routes.home,
 
       _ when user.perfilCompleto && _entryRoutes.contains(here) => Routes.home,
@@ -560,6 +566,17 @@ final List<RouteBase> _routes = [
     // donde lo dejó el router. Deslizarla la haría parecer navegación suya.
     pageBuilder: (context, state) =>
         fadePage(child: const AccessEndedScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.premium,
+    pageBuilder: (context, state) => slidePage(
+      child: MuroDeVentaScreen(
+        motivo:
+            MotivoDeMuro.desdeConsulta(state.uri.queryParameters) ??
+            const FuncionDePago(FuncionPremium.otra),
+      ),
+      state: state,
+    ),
   ),
   // No hay rutas de planes, pago ni resultado de pago, y no es un olvido.
   //
