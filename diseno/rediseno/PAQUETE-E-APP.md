@@ -472,3 +472,21 @@ tema no lleva número.
 las pantallas y falla si un texto interpola `preguntasTotalesBanco`,
 `preguntasDisponibles` o `disponibles`. Usarlos para decidir (ocultar un tema
 sin preguntas, saber si un paquete tiene novedades) sigue permitido.
+
+## 19. La fecha del ENAM, la que publica ASPEFAM
+
+Completar perfil ofrecía «ENAM Ordinario · 12 de diciembre de 2026» y «ENAM
+Extraordinario · 17 de abril de 2027». ASPEFAM publica «ENAM Ordinario -
+Domingo, 22 de noviembre del 2026» (aspefam.org.pe/enam, revisado el
+06/10/2026) y todavía no publica el extraordinario 2027. Quien eligió el botón
+tiene la cuenta regresiva 20 días de más.
+
+- El botón dice 22 de noviembre de 2026, y el del extraordinario 2027 se quitó
+  hasta que se publique. Igual que en la web (PR #42).
+- Una fecha que ya pasó deja de ofrecerse, para que la cuenta regresiva no
+  quede en negativo.
+- Las cuentas que ya guardaron el 12/12 se corrigen con una actualización de
+  datos en el servidor, que decide el usuario. La app muestra lo que tenga
+  guardado.
+
+**Se comprueba con** `test/fechas_enam_test.dart`.

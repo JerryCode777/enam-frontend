@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -21,6 +22,24 @@ import '../domain/auth_models.dart';
 /// Nota de copy, tomada del diseño: la condición `repitiente` se muestra como
 /// **"Voy a rendirlo de nuevo"**. Cerca del 43 % del público ya desaprobó y
 /// vuelve a rendir; la etiqueta técnica se guarda en el dato, no se le enseña.
+/// Fechas del ENAM **publicadas por ASPEFAM** (aspefam.org.pe/enam), y solo
+/// esas. Decía 12/12/2026 para el ordinario, que no era la fecha: la cuenta
+/// regresiva de quien la eligió iba 20 días de más. El extraordinario 2027 se
+/// añade cuando ASPEFAM lo publique. El usuario también puede elegir una fecha
+/// libre.
+final fechasEnamPublicadas = <({String label, DateTime fecha})>[
+  // «ENAM Ordinario - Domingo, 22 de noviembre del 2026», revisado el
+  // 06/10/2026.
+  (label: 'ENAM Ordinario', fecha: DateTime(2026, 11, 22)),
+];
+
+/// Las publicadas que todavía no pasaron: ofrecer un examen que ya ocurrió
+/// dejaría la cuenta regresiva en negativo.
+List<({String label, DateTime fecha})> fechasEnamPorVenir(DateTime hoy) => [
+  for (final f in fechasEnamPublicadas)
+    if (!f.fecha.isBefore(DateUtils.dateOnly(hoy))) f,
+];
+
 class CompleteProfileScreen extends ConsumerStatefulWidget {
   const CompleteProfileScreen({super.key});
 
@@ -51,11 +70,8 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
     StudentCondition.repitiente: 'Voy a rendirlo de nuevo',
   };
 
-  /// Fechas oficiales conocidas. El usuario también puede elegir una libre.
-  static final _fechasOficiales = <({String label, DateTime fecha})>[
-    (label: 'ENAM Ordinario', fecha: DateTime(2026, 12, 12)),
-    (label: 'ENAM Extraordinario', fecha: DateTime(2027, 4, 17)),
-  ];
+  static List<({String label, DateTime fecha})> get _fechasOficiales =>
+      fechasEnamPorVenir(ahora());
 
   @override
   void initState() {
