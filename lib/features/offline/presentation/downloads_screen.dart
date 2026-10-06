@@ -453,8 +453,9 @@ class _FilaPaquete extends ConsumerWidget {
       _ when paquete.fallo => 'No se pudo descargar. Toca para reintentar.',
       // La fecha del paquete y no «al día»: al día respecto de qué. Lo que
       // cuenta es cuándo se generó lo que hay en el teléfono.
+      // Sin cuántas preguntas tiene el área: el tamaño del banco no se
+      // muestra en ninguna pantalla (pedido del usuario, 06/10/2026).
       EstadoDescarga.descargada => [
-        '${paquete.guardadas} preguntas',
         formatearTamano(paquete.bytes),
         if (fecha != null)
           'actualizada el ${DateFormat('d MMM', 'es').format(fecha)}',
@@ -463,10 +464,8 @@ class _FilaPaquete extends ConsumerWidget {
         paquete.progreso > 0
             ? 'Descargando · ${(paquete.progreso * 100).round()} %'
             : 'Descargando…',
-      EstadoDescarga.actualizable =>
-        'Hay ${paquete.disponibles - paquete.guardadas} preguntas nuevas',
-      EstadoDescarga.noDescargada =>
-        '${paquete.disponibles} preguntas disponibles',
+      EstadoDescarga.actualizable => 'Hay preguntas nuevas',
+      EstadoDescarga.noDescargada => 'Toca para descargarla',
     };
 
     final descargando = paquete.estado == EstadoDescarga.descargando;

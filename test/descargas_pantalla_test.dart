@@ -86,7 +86,10 @@ void main() {
 
     expect(find.text('Medicina'), findsOneWidget);
     expect(find.text('Cirugía'), findsOneWidget);
-    expect(find.text('40 preguntas disponibles'), findsNWidgets(2));
+    // Sin cuántas preguntas tiene cada área: el tamaño del banco no se
+    // muestra (pedido del usuario, 06/10/2026).
+    expect(find.text('Toca para descargarla'), findsNWidgets(2));
+    expect(find.textContaining('40 preguntas'), findsNothing);
     expect(find.text('Todavía no hay prácticas listas'), findsOneWidget);
   });
 
@@ -99,7 +102,7 @@ void main() {
     await tester.tap(find.byTooltip('Descargar').first);
     await asentar(tester);
 
-    expect(find.textContaining('40 preguntas'), findsWidgets);
+    expect(find.textContaining('40 preguntas'), findsNothing);
     // La fecha en que el servidor generó el paquete, no un «al día» sin
     // referencia.
     expect(find.textContaining('actualizada el 20 jul'), findsOneWidget);

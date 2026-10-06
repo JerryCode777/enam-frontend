@@ -448,3 +448,27 @@ mostrado, caché y cuerpo del `PATCH`) y `test/buscador_de_universidad_test.dart
 `test/fixtures/universidades.json` es la respuesta real de producción
 (143 universidades, 42 con Medicina), tomada con un solo `GET` público; no se
 hizo ningún `PATCH` contra producción.
+
+## 18. Sin el tamaño del banco
+
+Pedido del usuario (06/10/2026), igual en la web (PR #41): «tenemos muy poco,
+no se debe mostrar explícitamente en ninguna sección; apenas ven eso se
+desaniman». Ninguna pantalla dice cuántas preguntas tiene el banco, ni el total
+ni por área o tema. Se muestra lo que pesa cada área en el ENAM y lo que la
+persona ya vio.
+
+| Pantalla | Antes | Ahora |
+|---|---|---|
+| Inicio, «Tu progreso» | 262 preguntas vistas · de 4 500 | 262 preguntas vistas · hasta hoy |
+| Nueva práctica | «Disponibles aquí: N preguntas»; la barra se topaba en lo que había; aviso «En este nodo hay N preguntas» | «En el ENAM: 40 de 180 preguntas» y «Ya viste». La barra va siempre de 10 a 50; si el tema tiene menos, el servidor crea la sesión con las que hay |
+| Elegir área | «N preguntas · 40 en el examen» | «40 de 180 en el ENAM» |
+| Descargas | «N preguntas disponibles», «Hay N preguntas nuevas», «N preguntas · 47 KB» | «Toca para descargarla», «Hay preguntas nuevas», «47 KB · actualizada el…» |
+| Galería de componentes | El ejemplo decía «de 4.500» | «hasta hoy» |
+
+El temario ya estaba bien: sus cifras son pesos del ENAM, y la barra de cada
+tema no lleva número.
+
+**Se comprueba con** `test/sin_tamano_del_banco_test.dart`. Revisa el código de
+las pantallas y falla si un texto interpola `preguntasTotalesBanco`,
+`preguntasDisponibles` o `disponibles`. Usarlos para decidir (ocultar un tema
+sin preguntas, saber si un paquete tiene novedades) sigue permitido.

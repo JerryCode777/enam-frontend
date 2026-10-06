@@ -71,20 +71,12 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
   Widget build(BuildContext context) {
     final nodo = _nodoId == null ? null : ref.watch(nodoProvider(_nodoId!));
 
-    final disponibles = nodo?.nodo.preguntasDisponibles;
-
-    // El tope del rango es el de RF-12, pero si el nodo tiene menos preguntas
-    // manda lo que hay: una barra que llega a 50 donde solo hay 12 promete algo
-    // que no se puede cumplir.
-    final tope = switch (disponibles) {
-      null || 0 => Blueprint.practiceMaxQuestions,
-      final d => d.clamp(
-        Blueprint.practiceMinQuestions,
-        Blueprint.practiceMaxQuestions,
-      ),
-    };
-
-    final cantidadEfectiva = _cantidadEfectiva(tope, disponibles);
+    // El rango es el de RF-12, sin toparlo por lo que hay en el nodo: el
+    // tamaño del banco no se muestra en ninguna pantalla (pedido del usuario,
+    // 06/10/2026), y una barra que se acorta lo diría igual. Si el nodo tiene
+    // menos, el servidor crea la sesión con las que hay.
+    const tope = Blueprint.practiceMaxQuestions;
+    final cantidadEfectiva = _cantidadEfectiva(tope);
 
     return Scaffold(
       body: Column(
@@ -134,16 +126,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
                 ),
                 if (nodo != null) ...[
                   const SizedBox(height: DesignTokens.space4),
-                  _ResumenDisponibles(nodo: nodo.nodo),
-                ],
-                if (disponibles != null && disponibles < _cantidad) ...[
-                  const SizedBox(height: DesignTokens.space4),
-                  StateBanner(
-                    kind: BannerKind.info,
-                    message:
-                        'En este nodo hay $disponibles preguntas. La sesión va '
-                        'a tener esas.',
-                  ),
+                  _Resumen(nodo: nodo.nodo),
                 ],
               ],
             ),
@@ -176,13 +159,9 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
     });
   }
 
-  /// La cantidad que realmente se va a pedir: lo elegido, dentro del rango de
-  /// RF-12 y topado por lo que hay en el nodo.
-  int _cantidadEfectiva(int tope, int? disponibles) {
-    var n = _cantidad.clamp(Blueprint.practiceMinQuestions, tope);
-    if (disponibles != null && disponibles > 0) n = n.clamp(1, disponibles);
-    return n;
-  }
+  /// La cantidad que se va a pedir: lo elegido, dentro del rango de RF-12.
+  int _cantidadEfectiva(int tope) =>
+      _cantidad.clamp(Blueprint.practiceMinQuestions, tope);
 
   Future<void> _empezar(int cantidad) async {
     if (_creando) return;
@@ -456,8 +435,11 @@ class _Segmento extends StatelessWidget {
   }
 }
 
-class _ResumenDisponibles extends StatelessWidget {
-  const _ResumenDisponibles({required this.nodo});
+/// Lo que pesa en el ENAM y lo que ya viste. No cuántas preguntas tiene el
+/// banco: eso no se muestra en ninguna pantalla (pedido del usuario,
+/// 06/10/2026).
+class _Resumen extends StatelessWidget {
+  const _Resumen({required this.nodo});
 
   final CatalogNode nodo;
 
@@ -472,11 +454,13 @@ class _ResumenDisponibles extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _Fila(
-                etiqueta: 'Disponibles aquí',
-                valor: '${nodo.preguntasDisponibles} preguntas',
-              ),
-              const SizedBox(height: DesignTokens.space1 + 2),
+              if (nodo.peso case final peso? when peso > 0) ...[
+                _Fila(
+                  etiqueta: 'En el ENAM',
+                  valor: '$peso de ${Blueprint.totalQuestions} preguntas',
+                ),
+                const SizedBox(height: DesignTokens.space1 + 2),
+              ],
               _Fila(etiqueta: 'Ya viste', valor: '${nodo.preguntasVistas}'),
             ],
           ),

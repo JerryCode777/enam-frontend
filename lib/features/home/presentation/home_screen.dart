@@ -602,9 +602,9 @@ class _TuProgreso extends StatelessWidget {
             (
               valor: formato.format(s.preguntasVistas),
               etiqueta: 'preguntas vistas',
-              detalle: s.preguntasTotalesBanco > 0
-                  ? 'de ${formato.format(s.preguntasTotalesBanco)}'
-                  : null,
+              // Sin «de N»: el tamaño del banco no se muestra en ninguna
+              // pantalla (pedido del usuario, 06/10/2026).
+              detalle: 'hasta hoy',
             ),
             (
               valor: acierto == null ? '—' : '${(acierto * 100).round()} %',

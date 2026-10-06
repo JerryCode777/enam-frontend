@@ -325,7 +325,11 @@ class _Resumen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ResumenMetrico(
       metricas: [
-        (valor: '262', etiqueta: 'preguntas vistas', detalle: 'de 4.500'),
+        (
+          valor: '262',
+          etiqueta: 'preguntas vistas',
+          detalle: 'hasta hoy',
+        ),
         (valor: '66 %', etiqueta: 'de acierto', detalle: 'en 262'),
         (valor: '—', etiqueta: 'simulacros', detalle: 'ninguno aún'),
       ],
