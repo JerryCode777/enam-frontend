@@ -148,13 +148,101 @@ class _TarjetaDeCurso extends StatelessWidget {
     // sin videos sí: se ve lo que viene.
     final abrible = curso.clases > 0;
 
-    final contenido = Column(
+    final contenido = curso.portadaUrl == null
+        ? _SinPortada(curso: curso, destacado: destacado)
+        : _ConPortada(curso: curso);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: abrible
+          ? InkWell(
+              onTap: () => context.irA(Routes.cursoOf(curso.id)),
+              child: contenido,
+            )
+          : Semantics(
+              label: '${curso.titulo}, próximamente',
+              child: ExcludeSemantics(child: contenido),
+            ),
+    );
+  }
+}
+
+/// Con la portada compuesta: ya trae el nombre, el profe y las clases, así
+/// que debajo va solo lo que es de esta cuenta: el avance y «Seguir viendo».
+class _ConPortada extends ConsumerWidget {
+  const _ConPortada({required this.curso});
+
+  final CursoResumen curso;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final seguir = ref.watch(seguirViendoProvider).value;
+    final aMedias = seguir?.cursoId == curso.id ? seguir : null;
+    final debajo = [
+      if (curso.proximamente)
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: EtiquetaProximamente(),
+        ),
+      if (curso.completadas > 0) _Avance(curso: curso),
+      if (aMedias != null)
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            onPressed: () =>
+                context.irA(Routes.claseOf(curso.id, aMedias.clase.id)),
+            icon: const Icon(Symbols.play_circle, fill: 1),
+            label: const Text('Seguir viendo'),
+          ),
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // A todo el ancho de la tarjeta, que ya recorta las esquinas.
+        PortadaDeCurso(
+          titulo: curso.titulo,
+          areaId: curso.areaId,
+          portadaUrl: curso.portadaUrl,
+          radio: 0,
+        ),
+        if (debajo.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space3,
+              DesignTokens.space3,
+              DesignTokens.space3,
+              DesignTokens.space2,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: DesignTokens.space2,
+              children: debajo,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Sin portada: el degradado del área con el título, el lema, el profe y las
+/// clases.
+class _SinPortada extends StatelessWidget {
+  const _SinPortada({required this.curso, required this.destacado});
+
+  final CursoResumen curso;
+  final bool destacado;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PortadaDeCurso(
           titulo: curso.titulo,
           areaId: curso.areaId,
-          portadaUrl: curso.portadaUrl,
           radio: DesignTokens.radiusMd,
         ),
         Padding(
@@ -169,15 +257,6 @@ class _TarjetaDeCurso extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.4,
                     color: context.scheme.primary,
-                  ),
-                ),
-                const SizedBox(height: DesignTokens.space1),
-              ],
-              if (curso.portadaUrl != null) ...[
-                Text(
-                  curso.titulo,
-                  style: context.texts.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: DesignTokens.space1),
@@ -202,18 +281,31 @@ class _TarjetaDeCurso extends StatelessWidget {
         ),
       ],
     );
+  }
+}
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: abrible
-          ? InkWell(
-              onTap: () => context.irA(Routes.cursoOf(curso.id)),
-              child: contenido,
-            )
-          : Semantics(
-              label: '${curso.titulo}, próximamente',
-              child: ExcludeSemantics(child: contenido),
-            ),
+/// «N de M vistas», con su barra.
+class _Avance extends StatelessWidget {
+  const _Avance({required this.curso});
+
+  final CursoResumen curso;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        BarraDeAvance(
+          valor: curso.completadas / curso.disponibles,
+          etiqueta: 'Avance en ${curso.titulo}',
+          color: colorDeCurso(context, curso.areaId),
+        ),
+        const SizedBox(height: DesignTokens.space1),
+        Text(
+          '${curso.completadas} de ${curso.disponibles} vistas',
+          style: context.texts.bodySmall,
+        ),
+      ],
     );
   }
 }
@@ -241,16 +333,7 @@ class _Pie extends StatelessWidget {
         ),
         if (curso.completadas > 0) ...[
           const SizedBox(height: DesignTokens.space2),
-          BarraDeAvance(
-            valor: curso.completadas / curso.disponibles,
-            etiqueta: 'Avance en ${curso.titulo}',
-            color: colorDeCurso(context, curso.areaId),
-          ),
-          const SizedBox(height: DesignTokens.space1),
-          Text(
-            '${curso.completadas} de ${curso.disponibles} vistas',
-            style: context.texts.bodySmall,
-          ),
+          _Avance(curso: curso),
         ],
       ],
     );

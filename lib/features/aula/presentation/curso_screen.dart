@@ -96,6 +96,10 @@ class _Presentacion extends StatelessWidget {
     final empezado =
         curso.completadas > 0 || (continuar?.progreso.segundosVistos ?? 0) > 0;
 
+    // La portada compuesta ya trae el nombre, el profe y las clases: debajo
+    // va solo lo de esta cuenta, el avance y el botón para seguir.
+    final conPortada = curso.portadaUrl != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -105,6 +109,54 @@ class _Presentacion extends StatelessWidget {
           portadaUrl: curso.portadaUrl,
         ),
         const SizedBox(height: DesignTokens.space4),
+        if (!conPortada)
+          _Datos(curso: curso, porVenir: porVenir)
+        else if (curso.disponibles == 0)
+          Text(
+            'Las clases de este curso llegan pronto.',
+            style: context.texts.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        if (curso.disponibles > 0) ...[
+          const SizedBox(height: DesignTokens.space2),
+          BarraDeAvance(
+            valor: curso.completadas / curso.disponibles,
+            etiqueta: 'Avance en ${curso.titulo}',
+            color: colorDeCurso(context, curso.areaId),
+          ),
+          const SizedBox(height: DesignTokens.space1),
+          Text(
+            '${curso.completadas} de ${curso.disponibles} clases vistas',
+            style: context.texts.bodySmall,
+          ),
+        ],
+        if (continuar != null) ...[
+          const SizedBox(height: DesignTokens.space4),
+          EnamButton(
+            label: empezado ? 'Seguir con el curso' : 'Empezar el curso',
+            icon: Symbols.play_arrow,
+            onPressed: () =>
+                context.irA(Routes.claseOf(curso.id, continuar.id)),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Sin portada compuesta: el lema, la descripción, el profe y las clases.
+class _Datos extends StatelessWidget {
+  const _Datos({required this.curso, required this.porVenir});
+
+  final Curso curso;
+  final int porVenir;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         if (curso.lema.isNotEmpty)
           Text(
             curso.lema,
@@ -142,28 +194,6 @@ class _Presentacion extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        if (curso.disponibles > 0) ...[
-          const SizedBox(height: DesignTokens.space2),
-          BarraDeAvance(
-            valor: curso.completadas / curso.disponibles,
-            etiqueta: 'Avance en ${curso.titulo}',
-            color: colorDeCurso(context, curso.areaId),
-          ),
-          const SizedBox(height: DesignTokens.space1),
-          Text(
-            '${curso.completadas} de ${curso.disponibles} clases vistas',
-            style: context.texts.bodySmall,
-          ),
-        ],
-        if (continuar != null) ...[
-          const SizedBox(height: DesignTokens.space4),
-          EnamButton(
-            label: empezado ? 'Seguir con el curso' : 'Empezar el curso',
-            icon: Symbols.play_arrow,
-            onPressed: () =>
-                context.irA(Routes.claseOf(curso.id, continuar.id)),
-          ),
-        ],
       ],
     );
   }

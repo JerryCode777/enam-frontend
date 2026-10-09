@@ -10,6 +10,16 @@ Las clases en video del temario oficial, con su práctica. Es el gemelo de `/cur
 | `/cursos/:curso` | `CursoScreen` | Portada, lema, profe, avance y el botón «Empezar el curso» o «Seguir con el curso», que va a `continuar` (lo decide el servidor). Sin Premium: «Tienes N clases gratis…». Temario por módulos: duración, «Gratis», candado, «Vista» y la barrita de lo empezado. |
 | `/cursos/:curso/clase/:clase` | `ClaseScreen` | El reproductor, el título y el profe, «Practicar este tema», Anterior/Siguiente, «Lo que aprendes» y «Referencias (n)», y debajo el temario del curso. |
 
+**Las portadas compuestas** (`portada-v2.jpg`, 1600 × 900) ya traen el nombre del curso, el profe y el número de clases:
+- Con `portadaUrl`, el catálogo y el curso las pintan a todo el ancho y sin nada encima. El título va solo para el lector de pantalla.
+- Debajo, en el catálogo, quedan el avance y «Seguir viendo» si el curso tiene una clase a medias. En el curso quedan el aviso de clases gratis, el avance y el botón para seguir.
+- Sin `portadaUrl`, se usa la tarjeta con el degradado del área.
+
+**La caché de las portadas:**
+- Disco y memoria, con `cached_network_image`.
+- La clave es la URL sin la firma (`sinFirma`): CloudFront firma distinto cada vez.
+- Se decodifican al ancho en que se pintan, en escalones de 200 px. Así volver a una portada al hacer scroll no la pide ni la decodifica otra vez.
+
 **La entrada** es la tarjeta «Cursos» del inicio (`EntradaAlAula`), con «Nuevo» o «Muy pronto», como en la web.
 
 **Los textos son los de la web**, con una excepción: el subtítulo del catálogo. El de la web no cabe en la cabecera de un teléfono, así que se usa el de la entrada del inicio.

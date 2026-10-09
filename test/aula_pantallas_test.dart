@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:enam_app/core/router/routes.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/aula/data/mock_aula_repository.dart';
@@ -5,6 +7,7 @@ import 'package:enam_app/features/aula/presentation/aula_providers.dart';
 import 'package:enam_app/features/aula/presentation/clase_screen.dart';
 import 'package:enam_app/features/aula/presentation/curso_screen.dart';
 import 'package:enam_app/features/aula/presentation/cursos_screen.dart';
+import 'package:enam_app/features/aula/presentation/widgets/presentacion.dart';
 import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +35,7 @@ void main() {
     WidgetTester tester, {
     required String en,
     bool premium = true,
+    bool conPortadas = false,
   }) {
     // Un teléfono: con el 800×600 por defecto, la lista perezosa deja fuera
     // la mitad de lo que se prueba.
@@ -77,10 +81,12 @@ void main() {
         aulaRepositoryProvider.overrideWithValue(
           MockAulaRepository(
             premium: premium,
+            conPortadas: conPortadas,
             sesiones: _Sesiones(),
             delay: Duration.zero,
           ),
         ),
+        imagenDeRedProvider.overrideWithValue(_portadaLocal),
       ],
       child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
     );
@@ -187,6 +193,80 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Entendido'), findsOneWidget);
+    });
+  });
+
+  group('Portadas compuestas', () {
+    testWidgets('en el catálogo, la portada sola: sin lema ni profe encima', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        montar(tester, en: Routes.cursos, conPortadas: true),
+      );
+      await tester.pumpAndSettle();
+
+      // La portada ya trae el nombre, el profe y las clases.
+      expect(find.text('Esto cae seguro'), findsNothing);
+      expect(find.text('Profe Andrea'), findsNothing);
+      expect(find.text('Para las últimas semanas'), findsNothing);
+      // El título queda para el lector de pantalla.
+      expect(find.bySemanticsLabel('Repaso final ENAM'), findsOneWidget);
+    });
+
+    testWidgets('debajo de la portada, el avance y «Seguir viendo»', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        montar(tester, en: Routes.cursos, conPortadas: true),
+      );
+      await tester.pumpAndSettle();
+
+      // La lista es perezosa: Pediatría está más abajo.
+      await tester.scrollUntilVisible(
+        find.text('1 de 9 vistas'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('1 de 9 vistas'), findsOneWidget);
+
+      // Solo en la tarjeta del curso a medias.
+      final seguir = find.widgetWithText(TextButton, 'Seguir viendo');
+      expect(seguir, findsOneWidget);
+      await tocar(tester, seguir);
+
+      expect(
+        router.state.uri.path,
+        Routes.claseOf('pediatria', 'pediatria.01-02'),
+      );
+    });
+
+    testWidgets('en el curso: portada, avance y el botón, sin lema ni profe', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        montar(tester, en: Routes.cursoOf('pediatria'), conPortadas: true),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Pediatría'), findsOneWidget);
+      expect(find.text('Primero, la norma'), findsNothing);
+      expect(find.text('Profe del curso'), findsNothing);
+      expect(find.text('1 de 9 clases vistas'), findsOneWidget);
+      expect(find.text('Seguir con el curso'), findsOneWidget);
+    });
+
+    test('la caché no cambia con la firma', () {
+      // CloudFront firma cada vez distinto: con la URL entera como clave, la
+      // portada se volvería a bajar y decodificar en cada visita.
+      const a =
+          'https://cdn.example/medicina/portada-v2.jpg?Expires=1&Signature=a';
+      const b =
+          'https://cdn.example/medicina/portada-v2.jpg?Expires=2&Signature=b';
+      expect(sinFirma(a), sinFirma(b));
+
+      final imagen = ProviderContainer().read(imagenDeRedProvider);
+      expect(imagen(a, ancho: 800), imagen(b, ancho: 800));
+      expect(imagen(a, ancho: 800), isNot(imagen(a, ancho: 1200)));
     });
   });
 
@@ -309,3 +389,22 @@ class _Sesiones extends MockSessionRepository {
         iniciadaEn: DateTime(2026, 10, 9),
       );
 }
+
+/// Las portadas de prueba: las de producción, reducidas, en
+/// `test/fixtures/portadas`. Un curso sin la suya usa la de Medicina.
+ImageProvider _portadaLocal(String url, {int? ancho}) {
+  final curso = Uri.parse(url).pathSegments.first;
+  // Una por curso, siempre la misma: un MemoryImage nuevo es otra clave para
+  // la caché, y la imagen se volvería a cargar en cada construcción.
+  return _portadas.putIfAbsent(curso, () {
+    final archivo = File('test/fixtures/portadas/$curso.jpg');
+    return MemoryImage(
+      (archivo.existsSync()
+              ? archivo
+              : File('test/fixtures/portadas/medicina.jpg'))
+          .readAsBytesSync(),
+    );
+  });
+}
+
+final _portadas = <String, MemoryImage>{};

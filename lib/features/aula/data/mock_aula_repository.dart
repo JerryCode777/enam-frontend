@@ -13,12 +13,21 @@ import 'aula_repository.dart';
 class MockAulaRepository implements AulaRepository {
   MockAulaRepository({
     this.premium = true,
+    this.conPortadas = false,
     this.sesiones,
     this.delay = const Duration(milliseconds: 400),
   });
 
   /// Sin Premium, solo las 3 primeras clases de cada curso se abren.
   final bool premium;
+
+  /// Con la portada compuesta de producción (`portada-v2.jpg`), firmada como
+  /// la sirve CloudFront. Sin ella, la tarjeta pinta el degradado del área.
+  final bool conPortadas;
+
+  String? _portada(String id) => conPortadas
+      ? 'https://cdn.example/$id/portada-v2.jpg?Expires=1&Signature=x'
+      : null;
 
   /// Quién arma la práctica de la clase. Sin él, la práctica falla.
   final SessionRepository? sesiones;
@@ -178,6 +187,7 @@ class MockAulaRepository implements AulaRepository {
           : 'El temario oficial de $titulo, con las normas técnicas del MINSA '
                 'y las guías que se preguntan.',
       profe: _profe(profe, articulo),
+      portadaUrl: _portada(id),
       clases: todas.length,
       disponibles: disponibles.length,
       gratis: todas.where((c) => c.gratis).length,
@@ -221,6 +231,7 @@ class MockAulaRepository implements AulaRepository {
     descripcion: c.descripcion,
     lema: c.lema,
     profe: c.profe,
+    portadaUrl: c.portadaUrl,
     orden: _cursos.indexWhere((x) => x.$1 == c.id) + 1,
     publicado: c.disponibles > 0,
     clases: c.clases,

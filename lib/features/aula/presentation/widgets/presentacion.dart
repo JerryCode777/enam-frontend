@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/theme/area_colors.dart';
@@ -16,11 +17,38 @@ Color colorDeCurso(BuildContext context, String? areaId) => areaId == null
     ? context.scheme.primary
     : AreaColors.of(areaId, Theme.of(context).brightness);
 
-/// Una imagen firmada.
+/// La ruta de una URL firmada, sin la firma: la clave de la caché.
 ///
-/// La firma cambia cada vez que se pide (caduca), así que la caché se indexa
-/// por la ruta sin la firma: si no, cada visita la descargaría de nuevo.
-class ImagenFirmada extends StatelessWidget {
+/// La firma cambia cada vez que se pide (caduca, y se redondea al cuarto de
+/// hora), así que indexar por la URL entera descargaría y decodificaría la
+/// misma imagen en cada visita.
+String sinFirma(String url) {
+  final uri = Uri.tryParse(url);
+  return uri == null ? url : uri.replace(query: '').toString();
+}
+
+/// Cómo se consigue la imagen de una URL, decodificada a [ancho] píxeles.
+///
+/// En la app, con caché en disco (`cached_network_image`) y en memoria (el
+/// `ImageCache` de Flutter, que compara por la clave sin firma): volver a una
+/// portada al hacer scroll no la pide ni la decodifica otra vez. Las pruebas lo
+/// cambian por imágenes locales.
+typedef ImagenDeRed = ImageProvider Function(String url, {int? ancho});
+
+final imagenDeRedProvider = Provider<ImagenDeRed>(
+  (ref) =>
+      (url, {ancho}) => CachedNetworkImageProvider(
+        url,
+        cacheKey: sinFirma(url),
+        maxWidth: ancho,
+      ),
+);
+
+/// Una imagen firmada, decodificada al ancho en que se pinta.
+///
+/// Una portada viene a 1600 px; decodificarla entera para una tarjeta de 400
+/// gasta cuatro veces la memoria y hace saltar el scroll.
+class ImagenFirmada extends ConsumerWidget {
   const ImagenFirmada({
     required this.url,
     this.fit = BoxFit.cover,
@@ -33,20 +61,42 @@ class ImagenFirmada extends StatelessWidget {
   final Widget? alFallar;
 
   @override
-  Widget build(BuildContext context) {
-    final uri = Uri.tryParse(url);
-    return CachedNetworkImage(
-      imageUrl: url,
-      cacheKey: uri == null ? url : uri.replace(query: '').toString(),
-      fit: fit,
-      fadeInDuration: DesignTokens.durationFast,
-      errorWidget: (_, _, _) => alFallar ?? const SizedBox.shrink(),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imagen = ref.watch(imagenDeRedProvider);
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    return LayoutBuilder(
+      builder: (context, c) {
+        // En escalones de 200 px: el ancho entra en la clave de la caché, y
+        // así un píxel de diferencia no la invalida.
+        final ancho = c.hasBoundedWidth
+            ? ((c.maxWidth * dpr / 200).ceil() * 200)
+            : null;
+        return Image(
+          image: imagen(url, ancho: ancho),
+          fit: fit,
+          width: double.infinity,
+          height: double.infinity,
+          gaplessPlayback: true,
+          frameBuilder: (context, hijo, cuadro, sincrono) => sincrono
+              ? hijo
+              : AnimatedOpacity(
+                  opacity: cuadro == null ? 0 : 1,
+                  duration: DesignTokens.durationFast,
+                  child: hijo,
+                ),
+          errorBuilder: (_, _, _) => alFallar ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
 
 /// La portada: la imagen del curso o, sin ella, un degradado con el color del
 /// área, su icono y el título.
+///
+/// Las portadas compuestas ya traen el nombre del curso, el profe y las
+/// clases: se pintan tal cual, sin nada encima, y el título va para el lector
+/// de pantalla.
 class PortadaDeCurso extends StatelessWidget {
   const PortadaDeCurso({
     required this.titulo,
@@ -70,7 +120,13 @@ class PortadaDeCurso extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: switch (portadaUrl) {
-          final url? => ImagenFirmada(url: url, alFallar: sinImagen),
+          final url? => Semantics(
+            label: titulo,
+            image: true,
+            child: ExcludeSemantics(
+              child: ImagenFirmada(url: url, alFallar: sinImagen),
+            ),
+          ),
           null => sinImagen,
         },
       ),
