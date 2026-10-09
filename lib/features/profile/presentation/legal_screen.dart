@@ -24,8 +24,10 @@ class LegalScreen extends StatelessWidget {
     (
       titulo: 'Quién es responsable de tus datos',
       parrafos: [
-        'ENAM Prep es operado por Jaks Tech SAC (RUC 20614811804), que actúa '
-            'como responsable del tratamiento de tus datos personales.',
+        'ENAM Prep es operado por AIDA SOFT S.A.C.S. (RUC 20616515323), con '
+            'domicilio en Cal. Ica 522, Urb. Cercado de Mariano Melgar, '
+            'Arequipa, que actúa como responsable del tratamiento de tus datos '
+            'personales.',
         'Para cualquier consulta sobre tus datos puedes escribirnos desde la '
             'sección de Ayuda de la app.',
       ],
@@ -74,8 +76,8 @@ class LegalScreen extends StatelessWidget {
       titulo: 'El contenido es nuestro',
       parrafos: [
         'Las preguntas, explicaciones e imágenes del banco son propiedad de '
-            'Jaks Tech SAC. Tu suscripción te da acceso personal para estudiar, '
-            'no derecho a copiarlas, redistribuirlas ni publicarlas.',
+            'AIDA SOFT S.A.C.S. Tu suscripción te da acceso personal para '
+            'estudiar, no derecho a copiarlas, redistribuirlas ni publicarlas.',
         'Las preguntas llevan una marca de agua con tu identificador para '
             'desalentar su difusión no autorizada.',
       ],

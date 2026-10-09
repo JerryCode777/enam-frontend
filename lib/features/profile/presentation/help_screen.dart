@@ -407,7 +407,7 @@ class _Version extends StatelessWidget {
             style: context.texts.bodySmall?.copyWith(fontSize: 13),
           ),
           Text(
-            'Jaks Tech SAC',
+            'AIDA SOFT S.A.C.S.',
             style: context.texts.bodySmall?.copyWith(fontSize: 13),
           ),
         ],
