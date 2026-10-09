@@ -184,7 +184,7 @@ class MockAulaRepository implements AulaRepository {
       descripcion: id == 'repaso-final'
           ? 'Lo que más se repite en el ENAM, área por área, en clases cortas '
                 'para las últimas semanas.'
-          : 'El temario oficial de $titulo, con las normas técnicas del MINSA '
+          : 'El temario de $titulo, con las normas técnicas del MINSA '
                 'y las guías que se preguntan.',
       profe: _profe(profe, articulo),
       portadaUrl: _portada(id),

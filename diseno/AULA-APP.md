@@ -1,6 +1,6 @@
 # Aula de cursos en la app
 
-Las clases en video del temario oficial, con su práctica. Es el gemelo de `/cursos` de la web (`enam-prep-web-react`, `src/features/aula`) y habla con el aula del backend (`enam-backend/internal/aula`, `AULA.md`).
+Las clases de todo el temario, cada una con su práctica. Es el gemelo de `/cursos` de la web (`enam-prep-web-react`, `src/features/aula`) y habla con el aula del backend (`enam-backend/internal/aula`, `AULA.md`).
 
 ## Pantallas
 
@@ -24,7 +24,9 @@ Las clases en video del temario oficial, con su práctica. Es el gemelo de `/cur
 
 **La entrada** es la fila «Cursos» de «Estudiar», en el inicio, con «Nuevo» o «Muy pronto», como en la web.
 
-**Los textos son los de la web**, con una excepción: el subtítulo del catálogo. El de la web no cabe en la cabecera de un teléfono, así que se usa uno más corto: «Clases en video, cada una con su práctica».
+**Los textos son los de la web**, con dos excepciones:
+- **Ni «en video» ni «oficial»** al hablar de las clases o del temario (Jerry, 09/10/2026). Se dice «clases de todo el temario». Lo vigila `test/sin_en_video_test.dart`.
+- **El subtítulo del catálogo** es más corto, porque en un teléfono no cabe junto al botón de atrás: «Clases de todo el temario, con su práctica».
 
 ## El reproductor
 

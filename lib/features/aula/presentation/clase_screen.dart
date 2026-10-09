@@ -444,7 +444,7 @@ class _LoQueAprendes extends StatelessWidget {
         if (clase.temas.isNotEmpty) ...[
           const SizedBox(height: DesignTokens.space2),
           Text(
-            'Temas del temario oficial',
+            'Temas del temario',
             style: context.texts.labelMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: context.scheme.onSurfaceVariant,

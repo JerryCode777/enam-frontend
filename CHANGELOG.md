@@ -10,7 +10,7 @@ Las notas para las tiendas de cada versión están en `notas-de-version/`.
   - datos que no mienten, como la fecha del ENAM (22/11/2026) o que no se muestra el tamaño del banco.
 - **Gratis limitado (#2).** Al no tener Premium, la app sigue abierta con preguntas cada día. Las funciones de pago llevan su etiqueta y abren el muro de venta.
 - **Sin día de prueba ni oferta.** Las cuentas nuevas entran directo a gratis, y no hay descuento.
-- **Aula de cursos en video (#5, #7):**
+- **Aula de cursos (#5, #7, #12):**
   - catálogo, curso y clase, con portadas;
   - reproductor con subtítulos, velocidades, pantalla completa y retomar donde quedó;
   - la práctica de cada tema;

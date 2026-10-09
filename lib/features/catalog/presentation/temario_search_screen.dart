@@ -244,8 +244,8 @@ class _Sugerencias extends StatelessWidget {
       children: [
         FadeUp(
           child: Text(
-            'Busca en las 10 áreas, 58 sub áreas y todos los temas del temario '
-            'oficial.',
+            'Busca en las 10 áreas, 58 sub áreas y todos los temas del '
+            'temario.',
             style: context.texts.bodyMedium,
           ),
         ),

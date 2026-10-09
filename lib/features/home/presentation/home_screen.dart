@@ -494,7 +494,7 @@ class _Estudiar extends ConsumerWidget {
           false => const EtiquetaEstado(texto: 'Muy pronto'),
           null => null,
         },
-        detalle: 'Clases en video del temario oficial, con su práctica',
+        detalle: 'Clases de todo el temario, cada una con su práctica',
         onTap: () => context.irA(Routes.cursos),
       ),
       _Fila(

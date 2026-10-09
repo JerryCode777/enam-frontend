@@ -73,7 +73,7 @@ const mensajesDeEspera = <MensajeDeEspera>[
 
   // ---------- El temario y el banco ----------
   MensajeDeEspera(
-    texto: 'El temario oficial, entero.',
+    texto: 'El temario, entero.',
     apoyo:
         'Las 10 áreas de ASPEFAM con sus 58 sub áreas, y el peso que cada una '
         'tiene en el examen.',

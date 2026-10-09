@@ -37,10 +37,9 @@ class CursosScreen extends ConsumerWidget {
     return Scaffold(
       appBar: const GradientHeader(
         titulo: 'Cursos',
-        // El de la web («Clases en video del temario oficial del ENAM, cada
-        // una con su práctica.») no cabe junto al botón de atrás en un
-        // teléfono: se corta. Este dice lo mismo en lo que cabe.
-        subtitulo: 'Clases en video, cada una con su práctica',
+        // Ni «en video» ni «oficial» (Jerry, 09/10/2026). Corto: junto al
+        // botón de atrás de un teléfono, uno más largo se corta.
+        subtitulo: 'Clases de todo el temario, con su práctica',
       ),
       body: cursos.when(
         loading: () => const _Cargando(),

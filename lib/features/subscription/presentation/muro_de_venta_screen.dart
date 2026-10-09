@@ -183,7 +183,7 @@ class _QueIncluye extends StatelessWidget {
     (Symbols.timer, 'Simulacros de 180 y exámenes pasados'),
     (Symbols.query_stats, 'Tu nota proyectada y tu acierto por área'),
     (Symbols.cloud_off, 'Estudiar sin conexión'),
-    (Symbols.play_circle, 'Todos los cursos en video, con su práctica'),
+    (Symbols.play_circle, 'Todos los cursos, con la práctica de cada clase'),
   ];
 
   @override

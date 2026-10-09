@@ -144,8 +144,8 @@ enum FuncionPremium {
     'cursos',
     titulo: 'Los cursos completos son de Premium',
     vistaPrevia:
-        'Todas las clases en video del temario oficial, cada una con su '
-        'práctica. Las clases gratis siguen abiertas.',
+        'Todas las clases de todo el temario, cada una con su práctica. Las '
+        'clases gratis siguen abiertas.',
   ),
   otra(
     'otra',

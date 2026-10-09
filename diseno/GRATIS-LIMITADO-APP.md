@@ -42,7 +42,7 @@ Se apila y se cierra («Ahora no» o la ×), así que no encierra a nadie.
 1. Qué pasó o qué hay detrás: el cupo agotado («Mañana tienes 10 más…») o la
    vista previa de la función.
 2. «Con Premium», en cinco líneas: funciones, no precios. La quinta son los
-   cursos en video.
+   cursos.
 3. «Tu cuenta gratis sigue: 10 preguntas al día…».
 4. Cómo pagar, según la tienda (`OpcionesDePago`):
    - en iPhone, solo App Store;

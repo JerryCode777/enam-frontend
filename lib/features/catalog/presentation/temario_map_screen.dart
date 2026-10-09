@@ -107,7 +107,7 @@ class _CabeceraTemario extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Temario oficial',
+                    'Temario',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
