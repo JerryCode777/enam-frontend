@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -11,6 +12,9 @@ import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../universidades/domain/universidad.dart';
+import '../../universidades/presentation/buscador_de_universidad.dart';
+import '../../universidades/presentation/universidades_providers.dart';
 import '../domain/auth_models.dart';
 
 /// Pantalla 1.7 — perfil inicial (RF-04).
@@ -18,6 +22,24 @@ import '../domain/auth_models.dart';
 /// Nota de copy, tomada del diseño: la condición `repitiente` se muestra como
 /// **"Voy a rendirlo de nuevo"**. Cerca del 43 % del público ya desaprobó y
 /// vuelve a rendir; la etiqueta técnica se guarda en el dato, no se le enseña.
+/// Fechas del ENAM **publicadas por ASPEFAM** (aspefam.org.pe/enam), y solo
+/// esas. Decía 12/12/2026 para el ordinario, que no era la fecha: la cuenta
+/// regresiva de quien la eligió iba 20 días de más. El extraordinario 2027 se
+/// añade cuando ASPEFAM lo publique. El usuario también puede elegir una fecha
+/// libre.
+final fechasEnamPublicadas = <({String label, DateTime fecha})>[
+  // «ENAM Ordinario - Domingo, 22 de noviembre del 2026», revisado el
+  // 06/10/2026.
+  (label: 'ENAM Ordinario', fecha: DateTime(2026, 11, 22)),
+];
+
+/// Las publicadas que todavía no pasaron: ofrecer un examen que ya ocurrió
+/// dejaría la cuenta regresiva en negativo.
+List<({String label, DateTime fecha})> fechasEnamPorVenir(DateTime hoy) => [
+  for (final f in fechasEnamPublicadas)
+    if (!f.fecha.isBefore(DateUtils.dateOnly(hoy))) f,
+];
+
 class CompleteProfileScreen extends ConsumerStatefulWidget {
   const CompleteProfileScreen({super.key});
 
@@ -29,7 +51,10 @@ class CompleteProfileScreen extends ConsumerStatefulWidget {
 class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
   final _nombre = TextEditingController();
 
-  String? _universidad;
+  /// La universidad elegida, y si se cambió en esta pantalla: una que ya venía
+  /// guardada (quizá como siglas de la app antigua) no se vuelve a mandar.
+  EleccionDeUniversidad? _universidad;
+  bool _universidadCambiada = false;
   StudentCondition? _condicion;
   DateTime? _fechaObjetivo;
   String? _fechaEtiqueta;
@@ -45,24 +70,8 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
     StudentCondition.repitiente: 'Voy a rendirlo de nuevo',
   };
 
-  /// Fechas oficiales conocidas. El usuario también puede elegir una libre.
-  static final _fechasOficiales = <({String label, DateTime fecha})>[
-    (label: 'ENAM Ordinario', fecha: DateTime(2026, 12, 12)),
-    (label: 'ENAM Extraordinario', fecha: DateTime(2027, 4, 17)),
-  ];
-
-  static const _universidades = [
-    'UNMSM',
-    'UNSA',
-    'UPCH',
-    'UNT',
-    'UNFV',
-    'USMP',
-    'UCSM',
-    'UNAP',
-    'UNC',
-    'Otra',
-  ];
+  static List<({String label, DateTime fecha})> get _fechasOficiales =>
+      fechasEnamPorVenir(ahora());
 
   @override
   void initState() {
@@ -70,7 +79,11 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
     final user = ref.read(currentUserProvider);
     if (user != null) {
       _nombre.text = user.nombre;
-      _universidad = user.universidad;
+      _universidad = switch ((user.universidadId, user.universidad)) {
+        (final id?, final nombre) => (id: id, nombre: nombre ?? id),
+        (null, final nombre?) => (id: '', nombre: nombre),
+        _ => null,
+      };
       _condicion = user.condicion;
       _fechaObjetivo = user.fechaObjetivo;
     }
@@ -113,12 +126,16 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
 
     setState(() => _loading = true);
     try {
-      final user = await ref.read(authRepositoryProvider).updateProfile(
-        nombre: _nombre.text.trim(),
-        universidad: _universidad,
-        condicion: _condicion,
-        fechaObjetivo: _fechaObjetivo,
-      );
+      final user = await ref
+          .read(authRepositoryProvider)
+          .updateProfile(
+            nombre: _nombre.text.trim(),
+            // El id del catálogo, o «otra» con el nombre escrito. Nunca siglas.
+            universidadId: _universidadCambiada ? _universidad?.id : null,
+            universidad: _universidadCambiada ? _universidad?.nombre : null,
+            condicion: _condicion,
+            fechaObjetivo: _fechaObjetivo,
+          );
       // Refresca el estado de auth: el router ve el perfil completo y deja pasar.
       if (mounted) ref.read(authControllerProvider.notifier).setUser(user);
     } on Failure catch (e) {
@@ -129,30 +146,33 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
   }
 
   Future<void> _pickUniversidad() async {
-    final elegida = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => _UniversidadSheet(
-        opciones: _universidades,
-        seleccionada: _universidad,
-      ),
+    final elegida = await elegirUniversidad(
+      context,
+      idActual: _universidad?.id,
+      nombreActual: _universidad?.nombre,
     );
-    if (elegida != null) setState(() => _universidad = elegida);
+    if (elegida != null) {
+      setState(() {
+        _universidad = elegida;
+        _universidadCambiada = true;
+      });
+    }
   }
 
   Future<void> _pickFecha() async {
-    final elegida = await showModalBottomSheet<({String? label, DateTime fecha})>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => _FechaSheet(oficiales: _fechasOficiales),
-    );
+    final elegida =
+        await showModalBottomSheet<({String? label, DateTime fecha})>(
+          context: context,
+          showDragHandle: true,
+          builder: (context) => _FechaSheet(oficiales: _fechasOficiales),
+        );
     if (elegida == null || !mounted) return;
 
     if (elegida.label == null) {
       final libre = await showDatePicker(
         context: context,
-        initialDate: _fechaObjetivo ?? DateTime.now().add(const Duration(days: 90)),
+        initialDate:
+            _fechaObjetivo ?? DateTime.now().add(const Duration(days: 90)),
         firstDate: DateTime.now(),
         lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
         helpText: 'Fecha de tu examen',
@@ -197,7 +217,14 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
         ),
         _PickerField(
           label: 'Universidad',
-          value: _universidad ?? 'Elige tu universidad',
+          // Por id, con el nombre del catálogo si está cargado.
+          value:
+              nombreDeUniversidad(
+                ref.watch(universidadesProvider).value,
+                id: _universidad?.id,
+                texto: _universidad?.nombre,
+              ) ??
+              'Elige tu universidad',
           placeholder: _universidad == null,
           icon: Symbols.arrow_drop_down,
           onTap: _loading ? null : _pickUniversidad,
@@ -316,7 +343,9 @@ class _PickerField extends StatelessWidget {
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd + 2),
           child: Container(
             height: 56,
-            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space4,
+            ),
             decoration: BoxDecoration(
               color: scheme.surface,
               border: Border.all(color: scheme.outline),
@@ -342,70 +371,6 @@ class _PickerField extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _UniversidadSheet extends StatefulWidget {
-  const _UniversidadSheet({required this.opciones, this.seleccionada});
-
-  final List<String> opciones;
-  final String? seleccionada;
-
-  @override
-  State<_UniversidadSheet> createState() => _UniversidadSheetState();
-}
-
-class _UniversidadSheetState extends State<_UniversidadSheet> {
-  String _filtro = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final visibles = widget.opciones
-        .where((u) => u.toLowerCase().contains(_filtro.toLowerCase()))
-        .toList();
-
-    return Padding(
-      padding: EdgeInsets.only(
-        left: DesignTokens.space4,
-        right: DesignTokens.space4,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + DesignTokens.space4,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Tu universidad',
-            style: context.texts.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: DesignTokens.space3),
-          TextField(
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Buscar',
-              prefixIcon: Icon(Symbols.search),
-            ),
-            onChanged: (v) => setState(() => _filtro = v),
-          ),
-          const SizedBox(height: DesignTokens.space2),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: visibles.length,
-              itemBuilder: (context, i) => ListTile(
-                title: Text(visibles[i]),
-                trailing: widget.seleccionada == visibles[i]
-                    ? const Icon(Symbols.check)
-                    : null,
-                onTap: () => Navigator.of(context).pop(visibles[i]),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -446,9 +411,8 @@ class _FechaSheet extends StatelessWidget {
           ListTile(
             leading: const Icon(Symbols.edit_calendar),
             title: const Text('Otra fecha'),
-            onTap: () => Navigator.of(
-              context,
-            ).pop((label: null, fecha: DateTime.now())),
+            onTap: () =>
+                Navigator.of(context).pop((label: null, fecha: DateTime.now())),
           ),
           const SizedBox(height: DesignTokens.space2),
         ],

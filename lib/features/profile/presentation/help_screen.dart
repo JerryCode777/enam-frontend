@@ -77,9 +77,10 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     (
       pregunta: 'Encontré una pregunta con la clave equivocada',
       respuesta:
-          'Repórtala desde el botón "Reportar" en la pantalla de '
-          'retroalimentación. Un editor la revisa y, si corresponde, la '
-          'corrige o la retira.',
+          // Sin prometer plazos ni una corrección: llega a soporte, por la
+          // app o, si no se puede, por WhatsApp.
+          'Toca "Reportar" después de responderla y elige el motivo. El '
+          'reporte llega a soporte con el código de la pregunta.',
     ),
     (
       pregunta: '¿Puedo usar la app sin internet?',

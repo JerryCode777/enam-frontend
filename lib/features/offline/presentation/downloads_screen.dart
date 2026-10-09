@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
@@ -17,7 +20,8 @@ import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../session/domain/session_models.dart';
-import '../../subscription/presentation/access_ended_screen.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/offline_models.dart';
 import 'offline_providers.dart';
 
@@ -191,6 +195,8 @@ class _ListasParaElViajeState extends ConsumerState<_ListasParaElViaje> {
       await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
       ref.invalidate(reservasProvider);
+      // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
+      ref.sonar(Sonido.empiezaQuiz);
 
       if (mounted) context.irA(Routes.practiceSessionOf(sesion.id));
     } on Failure catch (e) {
@@ -412,17 +418,31 @@ class _FilaPaquete extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
     final color = AreaColors.of(paquete.areaId, Theme.of(context).brightness);
+    // En gratis, descargar es Premium. Lo ya descargado se puede borrar.
+    final gratis = ref.watch(cupoGratisProvider) != null;
 
     final (icono, colorIcono, tooltip) = switch (paquete.estado) {
+      final e
+          when gratis &&
+              e != EstadoDescarga.descargada &&
+              e != EstadoDescarga.descargando =>
+        (Symbols.lock, states.info.onTint, 'Descargar es Premium'),
+      _ when paquete.fallo => (
+        Symbols.refresh,
+        states.error.onTint,
+        'Reintentar la descarga',
+      ),
       EstadoDescarga.descargada => (
         Symbols.delete,
         context.scheme.onSurfaceVariant,
         'Eliminar del teléfono',
       ),
+      // Mientras baja, el botón la corta: una descarga larga con mala señal
+      // no puede quedar sin salida.
       EstadoDescarga.descargando => (
-        Symbols.hourglass_top,
+        Symbols.close,
         context.scheme.onSurfaceVariant,
-        'Descargando',
+        'Cancelar la descarga',
       ),
       EstadoDescarga.actualizable => (
         Symbols.sync,
@@ -436,17 +456,24 @@ class _FilaPaquete extends ConsumerWidget {
       ),
     };
 
+    final fecha = paquete.actualizadaEn;
     final detalle = switch (paquete.estado) {
-      EstadoDescarga.descargada =>
-        '${paquete.guardadas} preguntas · ${formatearTamano(paquete.bytes)} · al día',
+      _ when paquete.fallo => 'No se pudo descargar. Toca para reintentar.',
+      // La fecha del paquete y no «al día»: al día respecto de qué. Lo que
+      // cuenta es cuándo se generó lo que hay en el teléfono.
+      // Sin cuántas preguntas tiene el área: el tamaño del banco no se
+      // muestra en ninguna pantalla (pedido del usuario, 06/10/2026).
+      EstadoDescarga.descargada => [
+        formatearTamano(paquete.bytes),
+        if (fecha != null)
+          'actualizada el ${DateFormat('d MMM', 'es').format(fecha)}',
+      ].join(' · '),
       EstadoDescarga.descargando =>
         paquete.progreso > 0
             ? 'Descargando · ${(paquete.progreso * 100).round()} %'
             : 'Descargando…',
-      EstadoDescarga.actualizable =>
-        'Hay ${paquete.disponibles - paquete.guardadas} preguntas nuevas',
-      EstadoDescarga.noDescargada =>
-        '${paquete.disponibles} preguntas disponibles',
+      EstadoDescarga.actualizable => 'Hay preguntas nuevas',
+      EstadoDescarga.noDescargada => 'Toca para descargarla',
     };
 
     final descargando = paquete.estado == EstadoDescarga.descargando;
@@ -489,10 +516,13 @@ class _FilaPaquete extends ConsumerWidget {
                       style: context.texts.bodySmall?.copyWith(
                         fontSize: 13,
                         fontWeight:
-                            paquete.estado == EstadoDescarga.actualizable
+                            paquete.fallo ||
+                                paquete.estado == EstadoDescarga.actualizable
                             ? FontWeight.w700
                             : null,
-                        color: paquete.estado == EstadoDescarga.actualizable
+                        color: paquete.fallo
+                            ? states.error.onTint
+                            : paquete.estado == EstadoDescarga.actualizable
                             ? states.warning.onTint
                             : null,
                       ),
@@ -514,7 +544,11 @@ class _FilaPaquete extends ConsumerWidget {
               IconButton(
                 icon: Icon(icono, size: 22, color: colorIcono),
                 tooltip: tooltip,
-                onPressed: descargando ? null : () => _actuar(context, ref),
+                onPressed: descargando
+                    ? () => ref
+                          .read(descargasProvider.notifier)
+                          .cancelar(paquete.areaId)
+                    : () => _actuar(context, ref),
               ),
             ],
           ),
@@ -526,6 +560,12 @@ class _FilaPaquete extends ConsumerWidget {
   Future<void> _actuar(BuildContext context, WidgetRef ref) async {
     if (paquete.estado == EstadoDescarga.descargada) {
       return _eliminar(context, ref);
+    }
+
+    // Antes de gastar datos en algo que el servidor no va a dar.
+    if (ref.read(cupoGratisProvider) != null) {
+      abrirMuro(context, ref, const FuncionDePago(FuncionPremium.sinConexion));
+      return;
     }
 
     if (!hayRed) {
@@ -545,9 +585,7 @@ class _FilaPaquete extends ConsumerWidget {
       // RN-03: quien decide si hay plan es el servidor. Si dice que no, se va
       // al mismo sitio que cuando vence la prueba en mitad de una práctica, y
       // no a un aviso que deja al usuario sin saber qué hacer.
-      if (error is ForbiddenFailure && error.requiereSuscripcion) {
-        irAlPago(ref, context);
-      } else {
+      if (!atenderFaltaDeAcceso(context, ref, error)) {
         showErrorSnack(context, error.message);
       }
       return;

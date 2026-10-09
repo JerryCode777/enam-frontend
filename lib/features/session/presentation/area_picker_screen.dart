@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -204,8 +205,7 @@ class _Area extends StatelessWidget {
                     ? 'Descárgala para practicarla sin conexión'
                     : sinPreguntas
                     ? 'Aún no disponible'
-                    : '${area.preguntasDisponibles} preguntas · '
-                          '${area.peso ?? 0} en el examen',
+                    : _enElEnam(area),
                 style: context.texts.bodySmall?.copyWith(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -251,13 +251,13 @@ class _Area extends StatelessWidget {
             _SubArea(
               nodo: area,
               titulo: 'Toda el área',
-              detalle: '${area.preguntasDisponibles} preguntas',
+              detalle: _enElEnam(area),
             ),
             for (final hijo in hijos)
               _SubArea(
                 nodo: hijo,
                 titulo: hijo.nombre,
-                detalle: '${hijo.preguntasDisponibles} preguntas',
+                detalle: _enElEnam(hijo),
               ),
           ],
         ),
@@ -301,13 +301,14 @@ class _SubArea extends StatelessWidget {
                       color: context.scheme.onSurface,
                     ),
                   ),
-                  Text(
-                    detalle,
-                    style: context.texts.bodySmall?.copyWith(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
+                  if (detalle.isNotEmpty)
+                    Text(
+                      detalle,
+                      style: context.texts.bodySmall?.copyWith(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -387,3 +388,12 @@ class _Opcion extends StatelessWidget {
 /// Resultado del selector: `null` si se canceló, el nodo elegido, o
 /// [practicarDeTodo] si se eligió el temario completo.
 bool esPracticarDeTodo(Object? resultado) => resultado is _SinNodo;
+
+/// Cuánto pesa en el ENAM, en lugar de cuántas preguntas hay en el banco: el
+/// tamaño del banco no se muestra en ninguna pantalla (pedido del usuario,
+/// 06/10/2026). Sin peso, nada.
+String _enElEnam(CatalogNode nodo) => switch (nodo.peso) {
+  final peso? when peso > 0 =>
+    '$peso de ${Blueprint.totalQuestions} en el ENAM',
+  _ => '',
+};

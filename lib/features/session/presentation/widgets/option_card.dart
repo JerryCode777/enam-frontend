@@ -1,6 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/sonido/proveedor_sonidos.dart';
+import '../../../../core/sonido/sonidos.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/state_colors.dart';
@@ -28,7 +34,7 @@ enum OptionVisual {
 ///
 /// La letra va en un círculo a la izquierda, como en el examen impreso. El área
 /// táctil es de toda la tarjeta y nunca baja de 48 px de alto.
-class OptionCard extends StatelessWidget {
+class OptionCard extends ConsumerWidget {
   const OptionCard({
     required this.opcion,
     required this.letra,
@@ -43,7 +49,7 @@ class OptionCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = context.scheme;
     final states = context.states;
 
@@ -55,26 +61,30 @@ class OptionCard extends StatelessWidget {
         scheme.onSurfaceVariant,
         null,
       ),
+      // El círculo de la letra se rellena con el color que se lee (onPrimary,
+      // onTint) y lleva encima el del fondo. Con blanco sobre el color base, la
+      // letra y el icono se quedaban en 2,5:1, y en oscuro la letra blanca
+      // sobre la acción aclarada no se veía.
       OptionVisual.seleccionada => (
         states.info.tint,
         scheme.primary,
         2.0,
-        Colors.white,
+        scheme.onPrimary,
         scheme.primary,
       ),
       OptionVisual.correcta => (
         states.success.tint,
         states.success.base,
         2.0,
-        Colors.white,
-        states.success.base,
+        states.success.tint,
+        states.success.onTint,
       ),
       OptionVisual.incorrecta => (
         states.error.tint,
         states.error.base,
         2.0,
-        Colors.white,
-        states.error.base,
+        states.error.tint,
+        states.error.onTint,
       ),
       OptionVisual.descartada => (
         scheme.surface,
@@ -97,6 +107,46 @@ class OptionCard extends StatelessWidget {
       _ => null,
     };
 
+    // El lector de pantalla tiene que oír lo mismo que se ve: qué letra es, si
+    // está elegida y, ya respondida, si era la correcta o la tuya.
+    return Semantics(
+      button: onTap != null,
+      selected: visual == OptionVisual.seleccionada,
+      label: [
+        'Alternativa $letra',
+        ?switch (visual) {
+          OptionVisual.correcta => 'correcta',
+          OptionVisual.incorrecta => 'tu respuesta, incorrecta',
+          _ => null,
+        },
+      ].join(', '),
+      child: _tarjeta(
+        context,
+        ref,
+        fondo: fondo,
+        borde: borde,
+        anchoBorde: anchoBorde,
+        colorLetra: colorLetra,
+        fondoLetra: fondoLetra,
+        etiqueta: etiqueta,
+        icono: icono,
+      ),
+    );
+  }
+
+  Widget _tarjeta(
+    BuildContext context,
+    WidgetRef ref, {
+    required Color fondo,
+    required Color borde,
+    required double anchoBorde,
+    required Color colorLetra,
+    required Color? fondoLetra,
+    required String? etiqueta,
+    required IconData? icono,
+  }) {
+    final states = context.states;
+
     return AnimatedContainer(
       duration: Motion.duration(context, Motion.fast),
       curve: Motion.standard,
@@ -106,7 +156,15 @@ class OptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       ),
       child: InkWell(
-        onTap: onTap,
+        // Elegir una alternativa suena y se nota en la mano, como en Rumbo. Es
+        // el toque neutro: no dice nada de si es la correcta.
+        onTap: onTap == null
+            ? null
+            : () {
+                unawaited(ref.read(sonidosProvider).sonar(Sonido.toque));
+                unawaited(HapticFeedback.selectionClick());
+                onTap!();
+              },
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
           // Mínimo 48 de alto con el padding: una alternativa de una línea no
@@ -133,6 +191,8 @@ class OptionCard extends StatelessWidget {
                     ? Icon(icono, size: 17, color: colorLetra)
                     : Text(
                         letra,
+                        // Excluida: la letra ya la dice la etiqueta semántica.
+                        semanticsLabel: '',
                         style: context.texts.bodySmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: colorLetra,
@@ -143,13 +203,17 @@ class OptionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   opcion.texto,
+                  // 16 como el cuerpo, y 600 y no 700 al elegirla: una
+                  // alternativa de tres líneas en negrita cansa y deja de
+                  // parecer elegida para parecer gritada.
                   style: context.texts.bodyLarge?.copyWith(
-                    fontSize: 15,
+                    fontSize: DesignTokens.fontSizeMd,
                     height: 1.5,
-                    fontWeight: visual == OptionVisual.normal ||
+                    fontWeight:
+                        visual == OptionVisual.normal ||
                             visual == OptionVisual.descartada
                         ? FontWeight.w400
-                        : FontWeight.w700,
+                        : FontWeight.w600,
                   ),
                 ),
               ),
@@ -159,6 +223,7 @@ class OptionCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 3),
                   child: Text(
                     etiqueta,
+                    semanticsLabel: '',
                     style: context.texts.bodySmall?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,

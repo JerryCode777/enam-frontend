@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -44,6 +45,19 @@ class _AccessEndedScreenState extends ConsumerState<AccessEndedScreen> {
   static const _esperaAntesDeOfrecer = Duration(milliseconds: 2200);
 
   Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Solo la vista de la pantalla: nada del cobro. El inicio y la
+    // confirmación del pago los registra quien los sabe (ver EVENTOS.md).
+    ref
+        .read(analiticaProvider)
+        .registrar(
+          Evento.plansViewed,
+          propiedades: {'pantalla': 'acceso_terminado'},
+        );
+  }
 
   @override
   void didChangeDependencies() {
@@ -187,7 +201,12 @@ class _AvisoDatosIntactos extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Symbols.history, size: 21, fill: 1, color: states.success.onTint),
+          Icon(
+            Symbols.history,
+            size: 21,
+            fill: 1,
+            color: states.success.onTint,
+          ),
           const SizedBox(width: DesignTokens.space3),
           Expanded(
             child: Text(

@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/domain/hora_peru.dart';
+
 part 'auth_models.freezed.dart';
 part 'auth_models.g.dart';
 
@@ -30,7 +32,16 @@ abstract class User with _$User {
     required String email,
     required String nombre,
     @Default(UserRole.estudiante) UserRole rol,
+
+    /// El nombre de la universidad **para mostrar**. Con el catálogo, el
+    /// servidor lo rellena con el nombre oficial; con «Otra», es lo que la
+    /// persona escribió.
     String? universidad,
+
+    /// El id del catálogo (`GET /catalog/universidades`), o `null` si es
+    /// «Otra» o si el servidor todavía no lo resolvió. Es lo que se manda al
+    /// guardar: las siglas sueltas rompían las estadísticas por universidad.
+    String? universidadId,
     StudentCondition? condicion,
 
     /// Fecha objetivo de examen (RF-04). Alimenta la cuenta regresiva del home.
@@ -53,8 +64,12 @@ abstract class User with _$User {
   int? get diasParaExamen {
     final objetivo = fechaObjetivo;
     if (objetivo == null) return null;
-    final hoy = DateTime.now();
-    return objetivo.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    // El día de hoy en Perú, que es donde se rinde el examen, y por el reloj
+    // de la app (las pruebas lo congelan). Se comparan fechas sin hora.
+    final hoy = ahoraEnPeru();
+    return DateTime.utc(objetivo.year, objetivo.month, objetivo.day)
+        .difference(DateTime.utc(hoy.year, hoy.month, hoy.day))
+        .inDays;
   }
 }
 

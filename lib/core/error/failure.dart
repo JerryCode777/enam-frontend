@@ -41,6 +41,12 @@ final class SinDescargasFailure extends Failure {
   ]);
 }
 
+/// Quien descargaba un área la canceló. No es un error que haya que mostrar:
+/// la persona sabe lo que hizo.
+final class DescargaCancelada extends Failure {
+  const DescargaCancelada([super.message = 'Descarga cancelada.']);
+}
+
 /// La petición tardó demasiado.
 final class TimeoutFailure extends Failure {
   const TimeoutFailure([
@@ -65,7 +71,8 @@ final class ForbiddenFailure extends Failure {
   const ForbiddenFailure([
     super.message = 'Tu plan actual no incluye este contenido.',
     String? code,
-  ]) : super(code: code);
+    Object? details,
+  ]) : super(code: code, details: details);
 
   /// Si el 403 viene de no tener acceso: la prueba venció o el plan expiró
   /// (RN-03 v2).

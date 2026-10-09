@@ -44,6 +44,10 @@ abstract final class ApiEndpoints {
   /// Taxonomía completa con el progreso del usuario.
   static const String catalogAreas = '/catalog/areas';
 
+  /// Las universidades del Perú, Medicina primero. Público y cacheable un
+  /// día. Lo que se guarda en el perfil es su `id`.
+  static const String universidades = '/catalog/universidades';
+
   // ---------- Sesiones (Módulos 3 y 4) ----------
   static const String practiceSession = '/sessions/practice';
   static const String simulacroSession = '/sessions/simulacro';
@@ -60,6 +64,15 @@ abstract final class ApiEndpoints {
   static String session(String id) => '/sessions/$id';
   static String sessionAnswers(String id) => '/sessions/$id/answers';
   static String sessionSubmit(String id) => '/sessions/$id/submit';
+
+  /// Reportar un problema con una pregunta (RN-06): clave dudosa, error en el
+  /// texto, imagen rota o explicación confusa.
+  static String reportarPregunta(String questionId) =>
+      '/questions/$questionId/reports';
+
+  /// Eventos del embudo (contrato de eventos, `enam-business/contrato/`).
+  /// Autenticación opcional: sin token, el evento es anónimo.
+  static const String eventos = '/eventos';
 
   // ---------- Estadísticas y ranking (Módulo 5) ----------
   static const String statsDashboard = '/stats/dashboard';

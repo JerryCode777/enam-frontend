@@ -3,16 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
-import '../../../core/theme/motion.dart';
-import '../../../shared/widgets/brand_gradient.dart';
+import '../../../core/theme/state_colors.dart';
+import '../../../shared/widgets/brand_mark.dart';
+import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/figura_de_marca.dart';
+import '../../../shared/widgets/fondo_claro.dart';
 
-/// Pantalla 1.2 — onboarding de 3 pasos sobre el degradado de marca.
+/// Pantalla 1.2 — presentación, **una sola pantalla**, en el tema claro.
 ///
-/// Se muestra **una sola vez**: al salir por cualquier vía (terminar o
-/// "Saltar") se marca como visto y el router ya no vuelve a traer aquí.
+/// Era un carrusel de tres pasos: para llegar a crear la cuenta había que
+/// deslizar o pulsar «Siguiente» dos veces. Ahora el beneficio y un ejemplo en
+/// una pantalla, y la acción directa (plan §6). Y va en claro —fondo de la app
+/// con dos halos de marca— y no sobre el degradado azul marino: el producto
+/// pidió la primera impresión en el tema claro, igual que la web.
+///
+/// **La tarjeta de ejemplo nunca queda cortada** por los botones fijos de
+/// abajo. En pantallas bajas ([_Medidas.compacta]) todo se ajusta para caber
+/// —título algo menor, beneficios más cortos, figura más chica, el porqué en
+/// una frase—, y si aun así no cabe (letra del sistema ampliada), la zona de
+/// botones muestra un borde arriba: se lee como el límite de algo que se
+/// desplaza, no como una tarjeta partida.
+///
+/// Se muestra **una sola vez**: al salir por cualquier vía se marca como visto
+/// y el router ya no vuelve a traer aquí.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -21,134 +38,95 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final _controller = PageController();
-  int _page = 0;
+  final _scroll = ScrollController();
 
-  static const _pasos = <_Paso>[
-    _Paso(
-      icono: Symbols.quiz,
-      titulo: 'Simulacros como el real',
-      subtitulo: '180 preguntas · 3 horas · nota al instante.',
-      cta: 'Siguiente',
-      puntos: [
-        (Symbols.timer, 'Cronómetro y grilla reales'),
-        (Symbols.grade, 'Nota vigesimal al enviar'),
-        (Symbols.trophy, 'Ranking nacional en vivo'),
-      ],
-    ),
-    _Paso(
-      icono: Symbols.account_tree,
-      titulo: 'El temario oficial',
-      subtitulo: 'El documento del que sale el examen.',
-      cta: 'Siguiente',
-      puntos: [
-        (Symbols.balance, '10 áreas con su peso real'),
-        (Symbols.play_circle, 'Practica desde cualquier punto'),
-        (Symbols.monitoring, 'Tu avance siempre visible'),
-      ],
-    ),
-    _Paso(
-      icono: Symbols.download,
-      titulo: 'Estudia sin señal',
-      subtitulo: 'Perfecto para la guardia o el bus.',
-      cta: 'Crear cuenta',
-      puntos: [
-        (Symbols.cloud_download, 'Descarga áreas completas'),
-        (Symbols.sync, 'Se sincroniza solo'),
-        (Symbols.battery_saver, 'Liviano y comprimido'),
-      ],
-    ),
-  ];
+  /// Si el contenido no cabe y queda algo por debajo de los botones.
+  bool _desborda = false;
 
-  bool get _esUltimo => _page == _pasos.length - 1;
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_medir);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _medir());
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
-  /// Sale del onboarding para no volver.
-  ///
-  /// Se marca como visto **antes** de navegar: si se hiciera después, el
-  /// redirect del router se dispararía con la bandera aún en falso y traería
-  /// al usuario de vuelta aquí.
+  void _medir() {
+    if (!_scroll.hasClients || !mounted) return;
+    final desborda =
+        _scroll.position.maxScrollExtent > 0 &&
+        _scroll.offset < _scroll.position.maxScrollExtent;
+    if (desborda != _desborda) setState(() => _desborda = desborda);
+  }
+
+  /// Sale para no volver. Se marca como visto **antes** de navegar: si se
+  /// hiciera después, el redirect del router se dispararía con la bandera aún
+  /// en falso y traería al usuario de vuelta aquí.
   Future<void> _salir(String destino) async {
     await ref.read(startupProvider.notifier).marcarOnboardingVisto();
     if (mounted) context.go(destino);
   }
 
-  void _siguiente() {
-    if (_esUltimo) {
-      _salir(Routes.register);
-    } else {
-      _controller.nextPage(
-        duration: Motion.duration(context, Motion.normal),
-        curve: Motion.standard,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final m = _Medidas.de(context);
+
     return Scaffold(
-      body: BrandGradient(
-        circuloSecundarioArriba: false,
-        formaInferior: false,
+      body: FondoClaro(
         child: SafeArea(
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: DesignTokens.space2,
-                    vertical: DesignTokens.space1,
-                  ),
-                  child: TextButton(
-                    onPressed: () => _salir(Routes.login),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white.withValues(alpha: 0.8),
-                    ),
-                    child: const Text(
-                      'Saltar',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ),
               Expanded(
-                child: PageView.builder(
-                  controller: _controller,
-                  onPageChanged: (i) => setState(() => _page = i),
-                  itemCount: _pasos.length,
-                  itemBuilder: (context, i) => _VistaPaso(paso: _pasos[i]),
+                child: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: (_) {
+                    _medir();
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    controller: _scroll,
+                    padding: EdgeInsets.fromLTRB(
+                      DesignTokens.space6,
+                      m.compacta ? DesignTokens.space4 : DesignTokens.space6,
+                      DesignTokens.space6,
+                      DesignTokens.space4,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Presentacion(m: m),
+                        SizedBox(height: m.separacionEjemplo),
+                        _Ejemplo(m: m),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space7,
-                  DesignTokens.space4,
-                  DesignTokens.space7,
-                  DesignTokens.space6 + 2,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: _desborda
+                          ? DesignTokens.borderSubtleLight
+                          : Colors.transparent,
+                    ),
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    _BotonClaro(
-                      label: _pasos[_page].cta,
-                      onPressed: _siguiente,
-                    ),
-                    const SizedBox(height: DesignTokens.space3 + 2),
-                    _Puntos(
-                      total: _pasos.length,
-                      activo: _page,
-                      onTap: (i) => _controller.animateToPage(
-                        i,
-                        duration: Motion.duration(context, Motion.normal),
-                        curve: Motion.standard,
-                      ),
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space6,
+                    DesignTokens.space3,
+                    DesignTokens.space6,
+                    DesignTokens.space3,
+                  ),
+                  child: _Acciones(
+                    onCrear: () => _salir(Routes.register),
+                    onEntrar: () => _salir(Routes.login),
+                  ),
                 ),
               ),
             ],
@@ -159,249 +137,259 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-class _Paso {
-  const _Paso({
-    required this.icono,
-    required this.titulo,
-    required this.subtitulo,
-    required this.cta,
-    required this.puntos,
-  });
-
-  final IconData icono;
-  final String titulo;
-  final String subtitulo;
-  final String cta;
-
-  /// Icono y texto de cada viñeta.
-  final List<(IconData, String)> puntos;
-}
-
-class _VistaPaso extends StatelessWidget {
-  const _VistaPaso({required this.paso});
-
-  final _Paso paso;
-
-  @override
-  Widget build(BuildContext context) {
-    // Desplazable a propósito: con la fuente del sistema al máximo, la
-    // ilustración más el título más las tres viñetas no entran en 360 × 640.
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space7),
-      child: Column(
-        children: [
-          const SizedBox(height: DesignTokens.space4),
-          _Ilustracion(icono: paso.icono),
-          const SizedBox(height: DesignTokens.space4 + 2),
-          Text(
-            paso.titulo,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
-              color: Colors.white,
-              shadows: [
-                Shadow(blurRadius: 8, offset: Offset(0, 2), color: Color(0x1F000000)),
-              ],
-            ),
-          ),
-          const SizedBox(height: DesignTokens.space4 + 2),
-          Text(
-            paso.subtitulo,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              height: 1.5,
-              color: Colors.white.withValues(alpha: 0.85),
-            ),
-          ),
-          const SizedBox(height: DesignTokens.space4 + 2),
-          _TarjetaPuntos(puntos: paso.puntos),
-          const SizedBox(height: DesignTokens.space4),
-        ],
-      ),
-    );
-  }
-}
-
-/// El tile blanco con el icono, flotando en bucle.
+/// Las medidas que cambian con el alto disponible.
 ///
-/// El diseño lo marca como hueco para el arte definitivo; mientras tanto va el
-/// icono, que ya transmite el tema de cada paso.
-class _Ilustracion extends StatefulWidget {
-  const _Ilustracion({required this.icono});
+/// «Compacta» es un teléfono de hasta ~850 dp de alto (13 mini, 14 Pro): ahí
+/// todo se ajusta un poco para que el ejemplo quepa entero sobre los botones.
+class _Medidas {
+  const _Medidas({required this.compacta});
 
-  final IconData icono;
+  factory _Medidas.de(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final alto = media.size.height - media.padding.vertical;
+    return _Medidas(compacta: alto < 800);
+  }
 
-  @override
-  State<_Ilustracion> createState() => _IlustracionState();
+  final bool compacta;
+
+  double get titulo => compacta ? 26 : 30;
+  double get marca => compacta ? 32 : 40;
+  double get beneficio => compacta ? 15 : 16;
+  double get separacionEjemplo =>
+      compacta ? DesignTokens.space4 : DesignTokens.space5;
+
+  /// Parte del ancho que ocupa la figura.
+  double get figura => compacta ? 0.33 : 0.4;
+
+  /// Cuánto baja la figura: cruza el hueco y queda 16 px detrás de la tarjeta,
+  /// que la tapa. Así no se ve el corte recto de la imagen.
+  double get solapeFigura => separacionEjemplo + 16;
 }
 
-class _IlustracionState extends State<_Ilustracion>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 3200),
-  );
+class _Presentacion extends StatelessWidget {
+  const _Presentacion({required this.m});
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!Motion.reduced(context) && !_c.isAnimating) _c.repeat();
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
+  final _Medidas m;
 
   @override
   Widget build(BuildContext context) {
-    final tile = Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(36),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 40,
-            offset: Offset(0, 20),
-          ),
-        ],
-      ),
-      child: Icon(
-        widget.icono,
-        size: 74,
-        fill: 1,
-        color: const Color(0xFF2382B5),
-      ),
-    );
+    const tinta = DesignTokens.textPrimaryLight;
+    const suave = DesignTokens.textSecondaryLight;
 
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, child) {
-        // Sube 9 px y vuelve, una vez por ciclo.
-        final t = _c.value;
-        final vaiven = (t < 0.5 ? t : 1 - t) * 2;
-        return Transform.translate(
-          offset: Offset(0, -9 * Curves.easeInOut.transform(vaiven)),
-          child: child,
-        );
-      },
-      child: tile,
-    );
-  }
-}
-
-/// La tarjeta translúcida con las tres viñetas del paso.
-class _TarjetaPuntos extends StatelessWidget {
-  const _TarjetaPuntos({required this.puntos});
-
-  final List<(IconData, String)> puntos;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-        borderRadius: BorderRadius.circular(20),
+    // Cortos a propósito: a la izquierda de la figura, en un teléfono chico,
+    // cada renglón de más empuja el ejemplo hacia los botones.
+    final beneficios = [
+      (Symbols.quiz, 'La explicación de cada alternativa'),
+      (
+        Symbols.timer,
+        'Simulacros de ${Blueprint.totalQuestions} preguntas en '
+            '${Blueprint.examDuration.inHours} horas',
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space4,
-        vertical: DesignTokens.space1 + 2,
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < puntos.length; i++)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: DesignTokens.space2 + 3,
+      (Symbols.download, 'Estudia sin señal lo que descargues'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            BrandMarkTile(size: m.marca, radio: m.marca * 0.3),
+            const SizedBox(width: DesignTokens.space2 + 2),
+            const Text(
+              'ENAM Prep',
+              style: TextStyle(
+                fontFamily: DesignTokens.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: tinta,
               ),
-              decoration: i == 0
-                  ? null
-                  : BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.18),
-                        ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: m.compacta ? DesignTokens.space4 : DesignTokens.space6,
+        ),
+        Semantics(
+          header: true,
+          child: Text(
+            'Practica para el ENAM y entiende cada respuesta',
+            style: TextStyle(
+              fontFamily: DesignTokens.fontFamily,
+              fontSize: m.titulo,
+              height: 1.15,
+              fontWeight: FontWeight.w800,
+              color: tinta,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: m.compacta ? DesignTokens.space3 : DesignTokens.space4,
+        ),
+        // Los beneficios a la izquierda y la figura a la derecha, apoyada
+        // abajo. Su borde inferior es un corte a la cintura: se esconde detrás
+        // de la tarjeta de ejemplo, que se pinta después y la tapa.
+        LayoutBuilder(
+          builder: (context, c) {
+            final ancho = (c.maxWidth * m.figura).clamp(92.0, 190.0);
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final (icono, texto) in beneficios)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: DesignTokens.space2,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 1),
+                                  child: Icon(
+                                    icono,
+                                    size: 20,
+                                    color: DesignTokens.actionLight,
+                                  ),
+                                ),
+                                const SizedBox(width: DesignTokens.space3),
+                                Expanded(
+                                  child: Text(
+                                    texto,
+                                    style: TextStyle(
+                                      fontFamily: DesignTokens.fontFamily,
+                                      fontSize: m.beneficio,
+                                      height: 1.35,
+                                      color: suave,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: DesignTokens.space2),
+                  SizedBox(
+                    width: ancho,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Transform.translate(
+                        offset: Offset(0, m.solapeFigura),
+                        child: FiguraDeMarca.brazosCruzados(ancho: ancho),
                       ),
                     ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Un ejemplo de cómo se ve una pregunta respondida, **rotulado como tal**.
+///
+/// El contenido es deliberadamente de manual —la adrenalina intramuscular
+/// como primera línea en la anafilaxia— para que el ejemplo no pueda enseñar
+/// nada discutible. Lo que muestra es la forma: el veredicto y el porqué.
+class _Ejemplo extends StatelessWidget {
+  const _Ejemplo({required this.m});
+
+  final _Medidas m;
+
+  @override
+  Widget build(BuildContext context) {
+    final ok = context.states.success;
+    final scheme = context.scheme;
+    final hueco = m.compacta ? DesignTokens.space2 + 2 : DesignTokens.space3;
+
+    return Semantics(
+      label:
+          'Ejemplo de pregunta respondida. En la anafilaxia, el tratamiento '
+          'de primera línea es la adrenalina intramuscular.',
+      excludeSemantics: true,
+      child: Container(
+        padding: EdgeInsets.all(
+          m.compacta ? DesignTokens.space3 + 2 : DesignTokens.space4,
+        ),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          border: Border.all(color: scheme.outlineVariant),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF102338).withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'EJEMPLO',
+              style: context.texts.bodySmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space1 + 2),
+            Text(
+              '¿Cuál es el tratamiento de primera línea en la anafilaxia?',
+              style: context.texts.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+            SizedBox(height: hueco),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DesignTokens.space3,
+                vertical: DesignTokens.space2 + 2,
+              ),
+              decoration: BoxDecoration(
+                color: ok.tint,
+                border: Border.all(color: ok.base, width: 1.5),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(DesignTokens.space2),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(puntos[i].$1, size: 20, color: Colors.white),
+                  Icon(
+                    Symbols.check_circle,
+                    size: 20,
+                    fill: 1,
+                    color: ok.onTint,
                   ),
-                  const SizedBox(width: DesignTokens.space3),
+                  const SizedBox(width: DesignTokens.space2),
                   Expanded(
                     child: Text(
-                      puntos[i].$2,
-                      style: const TextStyle(
-                        fontSize: 15,
+                      'Adrenalina intramuscular',
+                      style: context.texts.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: ok.onTint,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Botón blanco sobre el degradado.
-///
-/// No es el `EnamButton` de la app: ese lleva el degradado de marca, que sobre
-/// este fondo desaparecería.
-class _BotonClaro extends StatelessWidget {
-  const _BotonClaro({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(64, 54),
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF2382B5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(27),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+            SizedBox(height: hueco),
+            Text(
+              m.compacta
+                  ? 'Por qué: revierte la vasodilatación y el broncoespasmo.'
+                  : 'Por qué: revierte la vasodilatación y el broncoespasmo. '
+                        'Los antihistamínicos y los corticoides no la '
+                        'sustituyen.',
+              style: context.texts.bodyMedium?.copyWith(height: 1.45),
             ),
-            const SizedBox(width: DesignTokens.space2),
-            const Icon(Symbols.arrow_forward, size: 18),
           ],
         ),
       ),
@@ -409,51 +397,37 @@ class _BotonClaro extends StatelessWidget {
   }
 }
 
-class _Puntos extends StatelessWidget {
-  const _Puntos({
-    required this.total,
-    required this.activo,
-    required this.onTap,
-  });
+class _Acciones extends StatelessWidget {
+  const _Acciones({required this.onCrear, required this.onEntrar});
 
-  final int total;
-  final int activo;
-  final ValueChanged<int> onTap;
+  final VoidCallback onCrear;
+  final VoidCallback onEntrar;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    // El principal sólido y el secundario con borde, como en la web.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var i = 0; i < total; i++) ...[
-          if (i > 0) const SizedBox(width: 7),
-          Semantics(
-            label: 'Paso ${i + 1} de $total',
-            selected: i == activo,
-            button: true,
-            child: GestureDetector(
-              onTap: () => onTap(i),
-              // El punto mide 8 px de alto pero el área táctil tiene que ser
-              // usable: el rectángulo transparente la lleva a 24 px.
-              child: Container(
-                color: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: AnimatedContainer(
-                  duration: Motion.duration(context, Motion.normal),
-                  curve: Motion.standard,
-                  width: i == activo ? 26 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(
-                      alpha: i == activo ? 1 : 0.4,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            ),
+        EnamButton(label: 'Crear cuenta gratis', onPressed: onCrear),
+        const SizedBox(height: DesignTokens.space2),
+        // La regla real del servidor (D-02): el día de prueba no empieza al
+        // registrarse sino con la primera práctica.
+        const Text(
+          'Tu prueba de 24 horas empieza con tu primera práctica.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: DesignTokens.fontFamily,
+            fontSize: 14,
+            color: DesignTokens.textSecondaryLight,
           ),
-        ],
+        ),
+        const SizedBox(height: DesignTokens.space2),
+        EnamOutlinedButton(
+          label: 'Ya tengo cuenta',
+          height: DesignTokens.minTouchTarget,
+          onPressed: onEntrar,
+        ),
       ],
     );
   }

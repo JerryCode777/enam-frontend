@@ -19,7 +19,7 @@ CustomTransitionPage<T> slidePage<T>({
   return CustomTransitionPage<T>(
     key: state.pageKey,
     child: child,
-    transitionDuration: Motion.normal,
+    transitionDuration: Motion.navigation,
     reverseTransitionDuration: Motion.fast,
     transitionsBuilder: (context, animation, secondary, child) {
       if (Motion.reduced(context)) return child;
@@ -47,8 +47,8 @@ CustomTransitionPage<T> modalPage<T>({
   return CustomTransitionPage<T>(
     key: state.pageKey,
     child: child,
-    transitionDuration: Motion.slow,
-    reverseTransitionDuration: Motion.normal,
+    transitionDuration: Motion.normal,
+    reverseTransitionDuration: Motion.navigation,
     transitionsBuilder: (context, animation, secondary, child) {
       if (Motion.reduced(context)) return child;
 
@@ -74,7 +74,7 @@ CustomTransitionPage<T> fadePage<T>({
   return CustomTransitionPage<T>(
     key: state.pageKey,
     child: child,
-    transitionDuration: Motion.normal,
+    transitionDuration: Motion.navigation,
     reverseTransitionDuration: Motion.fast,
     transitionsBuilder: (context, animation, secondary, child) {
       if (Motion.reduced(context)) return child;

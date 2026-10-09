@@ -37,6 +37,13 @@ void congelarReloj(DateTime instante) => _reloj = () => instante;
 /// Devuelve el reloj de verdad.
 void soltarReloj() => _reloj = DateTime.now;
 
+/// El instante actual según el reloj de la app.
+///
+/// Es `DateTime.now()` salvo en las pruebas, que lo congelan con
+/// [congelarReloj]. Todo lo que pinte una fecha relativa a hoy debería pasar
+/// por aquí: si no, una captura hecha hoy deja de coincidir mañana.
+DateTime ahora() => _reloj();
+
 /// El instante actual leído con el reloj de Lima.
 ///
 /// Devuelve un `DateTime` en UTC cuyos campos —`year`, `weekday`, `day`— son

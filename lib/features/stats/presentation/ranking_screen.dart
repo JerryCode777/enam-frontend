@@ -209,9 +209,13 @@ class _Fila extends StatelessWidget {
                       color: propia ? states.info.onTint : null,
                     ),
                   ),
+                  // El nombre completo, que ahora manda el servidor: en dos
+                  // líneas como mucho, para que la fila no crezca sin fin.
                   if (entrada.universidad != null)
                     Text(
                       entrada.universidad!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: context.texts.bodySmall?.copyWith(fontSize: 13),
                     ),
                 ],

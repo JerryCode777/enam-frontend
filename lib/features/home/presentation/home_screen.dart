@@ -4,766 +4,611 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../aula/presentation/widgets/entrada_al_aula.dart';
+import '../../aula/presentation/aula_providers.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
-import '../../session/presentation/national_mock_screen.dart';
-import '../../catalog/domain/catalog_models.dart';
-import '../../catalog/presentation/catalog_providers.dart';
-import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
-import '../../../features/stats/domain/stats_models.dart';
 import '../../../shared/widgets/animations.dart';
+import '../../../shared/widgets/estudio.dart';
+import '../../../shared/widgets/figura_de_marca.dart';
 import '../../../shared/widgets/state_banner.dart';
-import 'widgets/home_hero.dart';
-import 'widgets/streak_card.dart';
+import '../../auth/domain/auth_models.dart';
+import '../../catalog/presentation/catalog_providers.dart';
+import '../../offline/presentation/offline_providers.dart';
+import '../../session/presentation/national_mock_screen.dart';
+import '../../stats/domain/stats_models.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../subscription/presentation/widgets/etiqueta_premium.dart';
+import '../domain/siguiente_accion.dart';
+
+/// Lo que el inicio propone ahora, o `null` mientras no hay con qué decidirlo.
+///
+/// Se lee `.value` y no el `AsyncValue` entero: en una recarga el valor
+/// anterior se conserva, así que el bloque no desaparece ni se reanima al
+/// tirar hacia abajo. Solo la **primera** carga deja esto en `null`.
+final siguienteAccionProvider = Provider<SiguienteAccion?>((ref) {
+  final abiertas = ref.watch(sesionesAbiertasProvider);
+  final dashboard = ref.watch(dashboardProvider);
+  final sinRed = ref.watch(hayRedProvider).value == false;
+
+  // Sin respuesta todavía de ninguna de las dos fuentes, no hay nada que
+  // decidir: se enseña el esqueleto. Con la de sesiones fallida se sigue
+  // adelante sin ella; retomar es un atajo, no un requisito.
+  final sesionesListas = abiertas.hasValue || abiertas.hasError;
+  final dashboardListo = dashboard.hasValue || dashboard.hasError;
+  if (!sinRed && (!sesionesListas || !dashboardListo)) return null;
+
+  final retomar = ref.watch(resumableSessionProvider);
+  final prioridades = ref.watch(prioridadEstudioProvider);
+  final gratis = ref.watch(cupoGratisProvider);
+
+  return decidirSiguienteAccion(
+    sesionAbierta: retomar == null
+        ? null
+        : (
+            sessionId: retomar.sessionId,
+            esSimulacro: retomar.esSimulacro,
+            respondidas: retomar.respondidas,
+            total: retomar.total,
+          ),
+    sinRed: sinRed,
+    practicasOffline: ref.watch(reservasProvider).value ?? 0,
+    stats: dashboard.value,
+    prioridades: [
+      for (final p in prioridades) (area: p.area, acierto: p.acierto),
+    ],
+    gratis: gratis == null
+        ? null
+        : (restantes: gratis.restantesHoy, porDia: gratis.preguntasPorDia),
+  );
+});
 
 /// Pantalla 2.1 — inicio.
 ///
-/// Responde en orden a "¿qué hago aquí?": retomar lo que dejaste (en el hero),
-/// las dos acciones centrales de la app, tu resultado, la racha y los accesos
-/// secundarios. La cuenta regresiva es apoyo del saludo, no compite.
+/// Responde a una sola pregunta antes que a ninguna otra: **¿qué hago ahora?**
+/// (plan de rediseño §5). Por eso tiene un bloque dominante —la siguiente
+/// acción, distinta según el estado de la persona— y todo lo demás va debajo y
+/// más pequeño: los accesos de estudio, el progreso y, al final, el simulacro
+/// nacional y el duelo.
 ///
-/// Los tamaños de letra salen del diseño (`enam-01-auth-home.dc.html`) y son
-/// **mínimos**: nada baja de 12, y si algo no cabe se recorta contenido o se
-/// desplaza, nunca se achica la tipografía.
+/// Antes eran once tarjetas de peso parecido, con el duelo en degradado por
+/// encima de «Practicar» y una variación semanal de la nota («+0.60 esta
+/// semana») que estaba escrita en el código: no salía de ningún dato.
 ///
-/// **Ya no lleva tarjeta de cuota diaria.** Contaba las 20 preguntas del plan
-/// gratuito, que desapareció (SSD-ENAM-002 §1). Tampoco la reemplaza una cuenta
-/// atrás de la prueba: RP-01 dice que los límites del plan nunca se anuncian, y
-/// el Home es la pantalla que más se abre. Queda anotado como decisión abierta:
-/// con 24 h de prueba, no avisar puede leerse como que se corta sin aviso.
+/// La web aplica la misma regla y los mismos titulares (`siguiente_accion.dart`).
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final sesion = ref.watch(resumableSessionProvider);
+    final accion = ref.watch(siguienteAccionProvider);
     final stats = ref.watch(dashboardProvider);
 
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async => ref
-          ..invalidate(dashboardProvider)
-          // Tirar hacia abajo también relee lo que quedó a medias: es el gesto
-          // con el que la gente pregunta "¿esto está al día?".
-          ..invalidate(sesionesAbiertasProvider),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            HomeHero(user: user, sesion: sesion),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                DesignTokens.space5,
-                DesignTokens.space3,
-                DesignTokens.space5,
-                DesignTokens.space8,
-              ),
-              child: stats.when(
-                loading: () => const _Cargando(),
-                error: (e, _) => StateBanner(
-                  kind: BannerKind.error,
-                  message: 'No pudimos cargar tu progreso.',
-                  action: TextButton(
-                    onPressed: () => ref.invalidate(dashboardProvider),
-                    child: const Text('Reintentar'),
-                  ),
-                ),
-                data: (data) => _Tarjetas(stats: data),
-              ),
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () async => ref
+            ..invalidate(dashboardProvider)
+            // Tirar hacia abajo también relee lo que quedó a medias: es el
+            // gesto con el que la gente pregunta "¿esto está al día?".
+            ..invalidate(sesionesAbiertasProvider)
+            ..invalidate(subscriptionProvider),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              DesignTokens.space3,
+              DesignTokens.space5,
+              DesignTokens.space8,
             ),
-          ],
+            children: [
+              FadeUp(
+                child: _Cabecera(
+                  user: user,
+                  gratis: ref.watch(cupoGratisProvider),
+                ),
+              ),
+              const _EstadoDeEnvio(),
+              const SizedBox(height: DesignTokens.space5),
+              FadeUp(
+                index: 1,
+                child: accion == null
+                    ? const SkeletonBox(
+                        height: 232,
+                        radius: DesignTokens.radiusXl,
+                      )
+                    : _SiguienteAccion(accion: accion),
+              ),
+              const SizedBox(height: DesignTokens.space6),
+              const FadeUp(index: 2, child: _Estudiar()),
+              const SizedBox(height: DesignTokens.space6),
+              FadeUp(
+                index: 3,
+                child: _TuProgreso(
+                  // La nota proyectada es Premium.
+                  conNota: ref.watch(cupoGratisProvider) == null,
+                  stats: stats.value,
+                  cargando: !stats.hasValue && !stats.hasError,
+                  fallo: stats.hasError && !stats.hasValue,
+                  onReintentar: () => ref.invalidate(dashboardProvider),
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space6),
+              const _Mas(),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _Tarjetas extends StatelessWidget {
-  const _Tarjetas({required this.stats});
+// ==================== CABECERA ====================
 
-  final DashboardStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return StaggeredColumn(
-      spacing: DesignTokens.space2 + 1,
-      children: [
-        // La racha va ARRIBA, pegada a las dos acciones. Es lo que empuja a
-        // pulsarlas, y separada de ellas —estaba cuatro tarjetas más abajo, tras
-        // la nota proyectada— empujaba a nada.
-        //
-        // Mismo orden que la web (`InicioScreen.tsx`): racha, acciones, cifras,
-        // temario. Las dos pantallas comparten reglas y disposición; lo que
-        // puede diferir es el ancho, no el orden.
-        //
-        // Sin racha en la respuesta no se pinta nada. El 18 que había escrito
-        // aquí a mano no era de nadie, y un número que no se corresponde con lo
-        // que la persona hizo es peor que no tener racha: premia por algo que
-        // no pasó.
-        if (stats.racha case final racha?)
-          StreakCard(
-            dias: racha.dias,
-            diasDeLaSemana: racha.diasDeLaSemana,
-            practicoHoy: racha.diasDeLaSemana.lastOrNull ?? false,
-          ),
-        // El duelo va DEBAJO de la racha y ENCIMA de practicar, que es donde
-        // se decidió en la web (RF-54): es la única tarjeta del inicio con el
-        // degradado de marca, y no puede competir con «Practicar», que es la
-        // acción principal de la app.
-        const _TarjetaDeDuelo(),
-        const _EmpiezaAPracticar(),
-        _Metricas(stats: stats),
-        const _PorDondeSeguir(),
-        _TarjetaNota(stats: stats),
-        _AccesosRapidos(stats: stats),
-        const EntradaAlAula(),
-        const _SimulacroNacional(),
-      ],
-    );
-  }
-}
-
-/// La entrada al modo duelo (RF-54).
+/// Saludo y cuenta regresiva, compactos y sobre el fondo de la app.
 ///
-/// Lleva el degradado de marca y es la **única** tarjeta del inicio que lo
-/// lleva. Si mañana otra lo pidiera, esta vuelve a superficie normal: dos
-/// tarjetas con degradado dejan de destacar y solo hacen ruido.
-class _TarjetaDeDuelo extends StatelessWidget {
-  const _TarjetaDeDuelo();
+/// Era una portada en degradado de un tercio de pantalla. El saludo no es lo
+/// que se viene a buscar, y la acción principal tiene que caber en el primer
+/// vistazo de un teléfono de 390 × 844 (plan §6).
+class _Cabecera extends StatelessWidget {
+  const _Cabecera({this.user, this.gratis});
+
+  final User? user;
+
+  /// El cupo de hoy, en gratis. Se anuncia aquí, siempre a la vista: en
+  /// gratis limitado el límite es parte de la venta (deja sin efecto RP-01).
+  final AccesoGratis? gratis;
 
   @override
   Widget build(BuildContext context) {
-    final texto = Theme.of(context).textTheme;
-    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final nombre = user?.nombre.split(' ').first ?? '';
+    final dias = user?.diasParaExamen;
+    final fecha = user?.fechaObjetivo;
 
-    return Material(
-      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-      clipBehavior: Clip.antiAlias,
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: oscuro
-                ? DesignTokens.headerGradientDark
-                : DesignTokens.headerGradientLight,
-            stops: DesignTokens.headerGradientStops,
-          ),
-        ),
-        child: InkWell(
-          onTap: () => context.irA(Routes.duelo),
-          child: Padding(
-            padding: const EdgeInsets.all(DesignTokens.space4),
-            child: Row(
-              children: [
-                const Icon(Symbols.swords, color: Colors.white, size: 28),
-                const SizedBox(width: DesignTokens.space4),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Modo duelo',
-                        style: texto.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Diez preguntas contra otra persona, en vivo',
-                        style: texto.bodySmall?.copyWith(color: Colors.white70),
-                      ),
-                    ],
-                  ),
+    final cuenta = switch (dias) {
+      null => null,
+      <= 0 => 'Hoy es tu ENAM',
+      1 => 'Falta 1 día para tu ENAM',
+      _ => 'Faltan $dias días para tu ENAM',
+    };
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(
+                  nombre.isEmpty ? 'Hola' : 'Hola, $nombre',
+                  style: context.texts.headlineMedium,
                 ),
-                const Icon(Symbols.chevron_right, color: Colors.white70),
+              ),
+              if (cuenta != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  fecha == null || (dias ?? 0) <= 0
+                      ? cuenta
+                      : '$cuenta · ${DateFormat('d MMM', 'es').format(fecha)}',
+                  style: context.texts.bodyMedium,
+                ),
               ],
-            ),
+              if (gratis case final g?) ...[
+                const SizedBox(height: 2),
+                Text(
+                  g.agotado
+                      ? 'Usaste tus ${g.preguntasPorDia} preguntas de hoy'
+                      : 'Te quedan ${g.restantesHoy} de ${g.preguntasPorDia} '
+                            'preguntas hoy',
+                  style: context.texts.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.states.info.onTint,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Las dos formas de empezar: práctica libre y simulacro completo.
-///
-/// Van arriba de todo y más grandes que el resto de accesos porque son la
-/// acción que la pantalla existe para provocar. En 360×640 tienen que quedar
-/// visibles sin desplazar.
-class _EmpiezaAPracticar extends StatelessWidget {
-  const _EmpiezaAPracticar();
-
-  /// Alto mínimo que pide el diseño para las dos tarjetas.
-  static const _alto = 104.0;
-
-  @override
-  Widget build(BuildContext context) {
-    const practicar = _TarjetaAccion(
-      icono: Symbols.quiz,
-      titulo: 'Practicar',
-      detalle: 'Elige área y resuelve',
-      ruta: Routes.practiceConfig,
-      destacada: true,
-    );
-    final simulacro = _TarjetaAccion(
-      icono: Symbols.timer,
-      titulo: 'Simulacro',
-      detalle:
-          '${Blueprint.totalQuestions} preguntas · '
-          '${Blueprint.examDuration.inHours} h',
-      ruta: Routes.simulacroSelection,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: DesignTokens.space2),
-          child: Text(
-            'EMPIEZA A PRACTICAR',
-            style: context.texts.bodySmall?.copyWith(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.9,
-              color: context.scheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            // Con la fuente muy ampliada dos columnas no dan: se apilan, que es
-            // preferible a achicar la letra o recortar el título.
-            final apiladas =
-                constraints.maxWidth < 320 ||
-                MediaQuery.textScalerOf(context).scale(16) > 22;
-
-            if (apiladas) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  practicar,
-                  const SizedBox(height: DesignTokens.space2 + 2),
-                  simulacro,
-                ],
-              );
-            }
-
-            return IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Expanded(child: practicar),
-                  const SizedBox(width: DesignTokens.space2 + 2),
-                  Expanded(child: simulacro),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: DesignTokens.space2 + 2),
-        const _ExamenesPasados(),
+        const SizedBox(width: DesignTokens.space2),
+        const BotonTema(),
+        const SizedBox(width: DesignTokens.space1),
+        _Avatar(user: user),
       ],
     );
   }
 }
 
-/// Los exámenes ENAM reales, debajo de las dos acciones (RF-52).
+/// Cambia entre claro y oscuro de un toque (el mismo `BotonTema` que la web).
 ///
-/// Va ancho y con acento propio para que destaque —es lo que más se pide y lo
-/// que diferencia a la app de un banco de preguntas cualquiera— pero sin salir
-/// de la paleta: el degradado de marca ya lo usa "Practicar", así que aquí el
-/// peso lo dan el borde y el fondo tenue, no un color nuevo.
-class _ExamenesPasados extends StatelessWidget {
-  const _ExamenesPasados();
+/// Luna en claro —lo que se consigue al tocarla— y sol en oscuro. El claro es
+/// el predeterminado, así que el oscuro tiene que poder encontrarse sin ir a
+/// Ajustes.
+class BotonTema extends ConsumerWidget {
+  const BotonTema({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    return IconButton(
+      onPressed: () => ref
+          .read(themeModeProvider.notifier)
+          .alternar(oscuroAhora: oscuro),
+      tooltip: oscuro ? 'Usar tema claro' : 'Usar tema oscuro',
+      icon: Icon(oscuro ? Symbols.light_mode : Symbols.dark_mode),
+      color: context.scheme.onSurfaceVariant,
+      constraints: const BoxConstraints(
+        minWidth: DesignTokens.minTouchTarget,
+        minHeight: DesignTokens.minTouchTarget,
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({this.user});
+
+  final User? user;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
-    final states = context.states;
-    final radio = BorderRadius.circular(DesignTokens.radiusXl - 4);
-
     return Semantics(
+      label: 'Perfil y ajustes',
       button: true,
+      excludeSemantics: true,
       child: Material(
-        color: states.info.tint,
-        borderRadius: radio,
+        color: context.states.info.tint,
+        shape: const CircleBorder(),
         child: InkWell(
-          // `push` porque la lista vive fuera del contenedor de pestañas: se
-          // apila sobre el inicio y el botón de atrás devuelve aquí.
-          onTap: () => context.irA(Routes.pastExams),
-          borderRadius: radio,
-          child: Container(
-            padding: const EdgeInsets.all(DesignTokens.space4),
-            decoration: BoxDecoration(
-              borderRadius: radio,
-              border: Border.all(color: scheme.primary, width: 1.5),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(DesignTokens.space2 + 1),
-                  decoration: BoxDecoration(
-                    color: scheme.surface,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  ),
-                  child: Icon(
-                    Symbols.history_edu,
-                    size: 24,
-                    fill: 1,
-                    color: states.info.onTint,
-                  ),
+          customBorder: const CircleBorder(),
+          onTap: () => context.irA(Routes.settings),
+          child: SizedBox.square(
+            dimension: DesignTokens.minTouchTarget,
+            child: Center(
+              child: Text(
+                _iniciales(user?.nombre),
+                style: context.texts.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.primary,
                 ),
-                const SizedBox(width: DesignTokens.space3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Exámenes pasados',
-                        style: context.texts.titleMedium?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                          color: scheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Los ENAM reales, tal como fueron',
-                        style: context.texts.bodySmall?.copyWith(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: states.info.onTint,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Symbols.chevron_right,
-                  size: 22,
-                  color: states.info.onTint,
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  static String _iniciales(String? nombre) {
+    if (nombre == null || nombre.trim().isEmpty) return '·';
+    return nombre
+        .trim()
+        .split(RegExp(r'\s+'))
+        .take(2)
+        .map((p) => p[0].toUpperCase())
+        .join();
+  }
 }
 
-/// Tarjeta grande de acción.
+/// Lo respondido sin señal que aún no llegó al servidor, dicho en una línea.
 ///
-/// [destacada] la pinta con el degradado de marca y sombra: es la acción
-/// primaria y tiene que ganarle visualmente a la de al lado, que va en
-/// superficie con borde de marca.
-class _TarjetaAccion extends StatelessWidget {
-  const _TarjetaAccion({
+/// Discreto a propósito (plan §7): no es algo que la persona tenga que
+/// resolver, se envía solo al volver la red. Pero tiene que poder saberlo, y
+/// nunca se dice «sincronizado» hasta que el servidor lo aceptó: la cifra sale
+/// de la bandeja local y baja solo cuando llega la confirmación.
+class _EstadoDeEnvio extends ConsumerWidget {
+  const _EstadoDeEnvio();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(sincronizacionProvider).value;
+    if (sync == null || sync.pendientes == 0) return const SizedBox.shrink();
+
+    final n = sync.pendientes;
+    return Padding(
+      padding: const EdgeInsets.only(top: DesignTokens.space3),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: EtiquetaEstado(
+          texto: sync.enMarcha
+              ? 'Enviando tus respuestas…'
+              : n == 1
+              ? '1 respuesta por enviar'
+              : '$n respuestas por enviar',
+          tipo: BannerKind.warning,
+          icono: Symbols.cloud_upload,
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== SIGUIENTE ACCIÓN ====================
+
+class _SiguienteAccion extends ConsumerWidget {
+  const _SiguienteAccion({required this.accion});
+
+  final SiguienteAccion accion;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return switch (accion) {
+      RetomarSesion(:final esSimulacro, :final sessionId) && final r =>
+        BloqueSiguienteAccion(
+          antetitulo: esSimulacro
+              ? 'Tienes un simulacro a medias'
+              : 'Tienes una práctica a medias',
+          titulo: esSimulacro ? 'Termina tu simulacro' : 'Continúa tu práctica',
+          detalle: 'Pregunta ${r.siguiente} de ${r.total}',
+          progreso: r.total == 0 ? null : r.respondidas / r.total,
+          icono: esSimulacro ? Symbols.timer : Symbols.play_circle,
+          accion: 'Retomar',
+          // Un simulacro no se retoma en la pantalla de práctica: tiene
+          // cronómetro, grilla de 180 y nada de retroalimentación. Y `go` para
+          // el simulacro, que vive dentro del contenedor de pestañas: apilarlo
+          // monta un segundo Navigator con la misma clave y tumba la app.
+          onAccion: () => esSimulacro
+              ? context.go(Routes.simulacroSessionOf(sessionId))
+              : context.irA(Routes.practiceSessionOf(sessionId)),
+        ),
+
+      EstudiarSinConexion(:final practicasListas) => BloqueSiguienteAccion(
+        antetitulo: 'Sin conexión',
+        titulo: practicasListas > 0
+            ? 'Practica sin conexión'
+            : 'Sin conexión por ahora',
+        detalle: practicasListas > 0
+            ? (practicasListas == 1
+                  ? 'Tienes 1 práctica lista en el teléfono. Tus respuestas '
+                        'se envían al volver la señal.'
+                  : 'Tienes $practicasListas prácticas listas en el '
+                        'teléfono. Tus respuestas se envían al volver la '
+                        'señal.')
+            : 'No tienes áreas descargadas. Cuando vuelvas a tener internet, '
+                  'descarga un área para estudiar sin señal.',
+        icono: Symbols.cloud_off,
+        acento: context.states.warning.base,
+        accion: practicasListas > 0 ? 'Ver lo descargado' : 'Ir a descargas',
+        onAccion: () => context.irA(Routes.downloads),
+      ),
+
+      PrimeraPractica() => BloqueSiguienteAccion(
+        antetitulo: 'Tu primer paso',
+        titulo: 'Empieza con una práctica corta',
+        detalle:
+            '${PrimeraPractica.cantidad} preguntas con su explicación. '
+            'Puedes cambiar el área y la cantidad antes de empezar.',
+        icono: Symbols.flag,
+        accion: 'Empezar',
+        figura: _figura,
+        onAccion: () => context.irA(
+          '${Routes.practiceConfig}?cantidad=${PrimeraPractica.cantidad}',
+        ),
+      ),
+
+      PracticarArea(:final area) && final p => BloqueSiguienteAccion(
+        antetitulo: 'Tu siguiente paso',
+        titulo: 'Practica ${area.nombre}',
+        criterio: p.criterio,
+        icono: Symbols.target,
+        accion: 'Practicar ${area.nombre}',
+        figura: _figura,
+        onAccion: () => context.irA(
+          '${Routes.practiceConfig}?nodo=${Uri.encodeQueryComponent(area.id)}',
+        ),
+        secundaria: 'Elegir otra área',
+        onSecundaria: () => context.irA(Routes.practiceConfig),
+      ),
+
+      PracticaDelDia(:final restantes, :final porDia) => BloqueSiguienteAccion(
+        antetitulo: 'Tu práctica de hoy',
+        titulo: restantes == porDia
+            ? 'Responde tus $porDia preguntas de hoy'
+            : 'Sigue con tus preguntas de hoy',
+        detalle:
+            'De todas las áreas, con su explicación. Cada día tienes '
+            '$porDia gratis.',
+        progreso: (porDia - restantes) / porDia,
+        icono: Symbols.quiz,
+        accion: 'Practicar',
+        figura: _figura,
+        onAccion: () => context.irA(Routes.practiceConfig),
+      ),
+
+      CupoDelDiaAgotado(:final porDia) => BloqueSiguienteAccion(
+        antetitulo: 'Por hoy, listo',
+        titulo: 'Respondiste tus $porDia preguntas de hoy',
+        detalle:
+            'Mañana tienes $porDia más. Si quieres seguir ahora, con Premium '
+            'no hay límite.',
+        icono: Symbols.task_alt,
+        accion: 'Ver Premium',
+        onAccion: () => abrirMuro(context, ref, const CupoAgotado()),
+      ),
+
+      ElegirArea() => BloqueSiguienteAccion(
+        antetitulo: 'Tu siguiente paso',
+        titulo: 'Elige un área para practicar',
+        detalle: 'Escoge el área y cuántas preguntas quieres resolver.',
+        icono: Symbols.quiz,
+        accion: 'Elegir área',
+        figura: _figura,
+        onAccion: () => context.irA(Routes.practiceConfig),
+      ),
+    };
+  }
+}
+
+/// La figura de marca que señala la acción. El bloque decide si cabe: solo en
+/// pantallas anchas, y nunca en retomar ni sin conexión, donde el aviso tiene
+/// que leerse sin adornos.
+Widget _figura(double ancho) => FiguraDeMarca.senala(ancho: ancho);
+
+// ==================== ESTUDIAR ====================
+
+/// Los accesos de estudio, en filas dentro de un solo bloque.
+///
+/// Subordinados a la siguiente acción: mismo ancho, menos peso. Antes
+/// «Practicar» y «Simulacro» eran dos tarjetas grandes que competían con todo
+/// lo demás.
+class _Estudiar extends ConsumerWidget {
+  const _Estudiar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // En gratis las funciones de pago llevan su etiqueta y se abren igual: lo
+    // que hay dentro es la vista previa, y el candado está al empezar.
+    final gratis = ref.watch(cupoGratisProvider);
+    final premium = gratis == null ? null : const EtiquetaPremium();
+    final hayClases = ref
+        .watch(cursosProvider)
+        .value
+        ?.any((c) => !c.proximamente);
+
+    final filas = [
+      _Fila(
+        icono: Symbols.quiz,
+        titulo: 'Practicar',
+        detalle: gratis == null
+            ? 'Elige área, cantidad y tipo de preguntas'
+            : '${gratis.preguntasPorDia} preguntas al día, de todas las áreas',
+        onTap: () => context.irA(Routes.practiceConfig),
+      ),
+      // Como «Cursos» en «Más formas de estudiar» de la web: «Muy pronto»
+      // mientras ningún curso tiene clases, y «Nuevo» cuando ya hay.
+      _Fila(
+        icono: Symbols.school,
+        titulo: 'Cursos',
+        etiqueta: switch (hayClases) {
+          true => const EtiquetaEstado(
+            texto: 'Nuevo',
+            tipo: BannerKind.success,
+          ),
+          false => const EtiquetaEstado(texto: 'Muy pronto'),
+          null => null,
+        },
+        detalle: 'Clases en video del temario oficial, con su práctica',
+        onTap: () => context.irA(Routes.cursos),
+      ),
+      _Fila(
+        icono: Symbols.timer,
+        titulo: 'Simulacro completo',
+        etiqueta: premium,
+        detalle:
+            '${Blueprint.totalQuestions} preguntas · '
+            '${Blueprint.examDuration.inHours} h, como el examen',
+        // `go`: los simulacros son otra pestaña.
+        onTap: () => context.go(Routes.simulacroSelection),
+      ),
+      _Fila(
+        icono: Symbols.history_edu,
+        titulo: 'Exámenes pasados',
+        etiqueta: premium,
+        detalle: 'Los ENAM de años anteriores',
+        onTap: () => context.irA(Routes.pastExams),
+      ),
+      _Fila(
+        icono: Symbols.bookmark,
+        titulo: 'Preguntas marcadas',
+        detalle: 'Las que guardaste para repasar',
+        onTap: () => context.irA(Routes.markedQuestions),
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const TituloSeccion('Estudiar'),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (var i = 0; i < filas.length; i++) ...[
+                if (i > 0) const Divider(indent: 64),
+                filas[i],
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Fila extends StatelessWidget {
+  const _Fila({
     required this.icono,
     required this.titulo,
     required this.detalle,
-    required this.ruta,
-    this.destacada = false,
+    required this.onTap,
+    this.extra,
+    this.etiqueta,
   });
 
   final IconData icono;
   final String titulo;
   final String detalle;
-  final String ruta;
-  final bool destacada;
+  final VoidCallback onTap;
+  final Widget? extra;
+
+  /// Junto al título, como la de Premium.
+  final Widget? etiqueta;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
-    final radio = BorderRadius.circular(DesignTokens.radiusXl - 4);
-
-    // Container + Material transparente, y no `Ink`: `Ink` pinta sobre el
-    // Material ancestro y dentro del ListView se quedaba sin fondo.
-    return Container(
-      decoration: BoxDecoration(
-        color: destacada ? null : scheme.surface,
-        // El degradado de BOTÓN, no el de cabecera.
-        //
-        // Esta tarjeta llevaba `headerGradient`: diagonal, tres paradas y
-        // arrancando en azul marino casi negro. Era el único elemento pulsable
-        // de la app pintado con el degradado de las cabeceras —el resto usa
-        // `buttonGradient`, que para eso se llama así— y al lado de la web, que
-        // usa el de botón, la tarjeta se veía notablemente más oscura.
-        //
-        // Es la misma acción en las dos plataformas: tiene que verse igual.
-        gradient: destacada
-            ? const LinearGradient(colors: DesignTokens.buttonGradient)
-            : null,
-        border: destacada
-            ? null
-            : Border.all(color: scheme.primary, width: 1.5),
-        borderRadius: radio,
-        boxShadow: destacada
-            ? const [
-                BoxShadow(
-                  color: Color(0x471F6F9B),
-                  blurRadius: 16,
-                  offset: Offset(0, 6),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: radio,
-        child: InkWell(
-          onTap: () => context.push(ruta),
-          borderRadius: radio,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: _EmpiezaAPracticar._alto,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: DesignTokens.space3 + 2,
-                vertical: DesignTokens.space3 + 1,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(
-                    icono,
-                    size: 28,
-                    fill: 1,
-                    color: destacada ? Colors.white : scheme.primary,
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        titulo,
-                        style: context.texts.titleMedium?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                          color: destacada ? Colors.white : scheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        detalle,
-                        style: context.texts.bodySmall?.copyWith(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          height: 1.25,
-                          color: destacada
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Las tres cifras que resumen dónde va el usuario.
-///
-/// Están aquí y no solo en Progreso porque son la respuesta a "¿cuánto llevo?",
-/// que es la pregunta con la que se abre la app. Ninguna se inventa: el acierto
-/// global sale de sumar lo respondido por área, y sin respuestas dice "aún sin
-/// responder" en vez de un 0 % que se leería como un mal resultado.
-class _Metricas extends StatelessWidget {
-  const _Metricas({required this.stats});
-
-  final DashboardStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final respondidas = stats.porArea.fold(0, (s, a) => s + a.respondidas);
-    final correctas = stats.porArea.fold(0, (s, a) => s + a.correctas);
-    final acierto = respondidas == 0 ? null : correctas / respondidas;
-    final formato = NumberFormat.decimalPattern('es_PE');
-
-    // IntrinsicHeight para que las tres tarjetas queden del alto de la más
-    // alta: sin él, `stretch` dentro de una columna pide altura infinita.
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: _Metrica(
-              icono: Symbols.menu_book,
-              valor: formato.format(stats.preguntasVistas),
-              etiqueta: 'vistas',
-              detalle: stats.preguntasTotalesBanco > 0
-                  ? 'de ${formato.format(stats.preguntasTotalesBanco)}'
-                  : 'del banco',
-            ),
-          ),
-          const SizedBox(width: DesignTokens.space2 + 2),
-          Expanded(
-            child: _Metrica(
-              icono: Symbols.target,
-              valor: acierto == null ? '—' : '${(acierto * 100).round()} %',
-              etiqueta: 'acierto',
-              detalle: respondidas > 0
-                  ? 'en ${formato.format(respondidas)}'
-                  : 'sin responder',
-            ),
-          ),
-          const SizedBox(width: DesignTokens.space2 + 2),
-          Expanded(
-            child: _Metrica(
-              icono: Symbols.checklist,
-              valor: '${stats.simulacrosCompletados}',
-              etiqueta: 'simulacros',
-              detalle: stats.simulacrosCompletados > 0
-                  ? 'de 180'
-                  : 'ninguno aún',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Metrica extends StatelessWidget {
-  const _Metrica({
-    required this.icono,
-    required this.valor,
-    required this.etiqueta,
-    required this.detalle,
-  });
-
-  final IconData icono;
-  final String valor;
-  final String etiqueta;
-  final String detalle;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.space2 + 2,
-          vertical: DesignTokens.space3,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icono, size: 19, fill: 1, color: context.states.info.onTint),
-            const SizedBox(height: DesignTokens.space2),
-            Text(
-              valor,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.texts.titleLarge?.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                height: 1,
-                color: scheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              etiqueta,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.texts.bodySmall?.copyWith(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: scheme.onSurface,
-              ),
-            ),
-            Text(
-              detalle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.texts.bodySmall?.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Las áreas por las que conviene empezar, con acceso directo.
-///
-/// El inicio no puede ser solo dos botones y una nota: quien lo abre viene a
-/// decidir qué estudiar hoy, y esa decisión necesita ver el temario, no un
-/// enlace que lleva a verlo. Se muestran cuatro y no las diez porque la lista
-/// completa ya tiene su pantalla; aquí sirve como punto de partida.
-///
-/// El orden es el mismo de la pantalla de prioridades —peso en el examen, lo
-/// que falta y cuánto rinde— para que las dos no recomienden cosas distintas.
-class _PorDondeSeguir extends ConsumerWidget {
-  const _PorDondeSeguir();
-
-  static const _cuantas = 4;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prioridades = ref.watch(prioridadEstudioProvider);
-    if (prioridades.isEmpty) return const SizedBox.shrink();
-
-    final areas = prioridades.take(_cuantas).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: DesignTokens.space2),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'POR DÓNDE SEGUIR',
-                  style: context.texts.bodySmall?.copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.9,
-                    color: context.scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              InkWell(
-                // go y no push: el temario es OTRA rama del shell, y pushearlo
-                // desde el inicio monta una segunda copia del shell con la
-                // misma key y la app muere con pantalla roja.
-                onTap: () => context.go(Routes.temario),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: DesignTokens.space1,
-                    vertical: 2,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Ver el temario',
-                        style: context.texts.bodySmall?.copyWith(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: context.states.info.onTint,
-                        ),
-                      ),
-                      Icon(
-                        Symbols.chevron_right,
-                        size: 16,
-                        color: context.states.info.onTint,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        for (var i = 0; i < areas.length; i++) ...[
-          if (i > 0) const SizedBox(height: DesignTokens.space2),
-          _AreaSugerida(area: areas[i].area, acierto: areas[i].acierto),
-        ],
-      ],
-    );
-  }
-}
-
-class _AreaSugerida extends StatelessWidget {
-  const _AreaSugerida({required this.area, this.acierto});
-
-  final CatalogNode area;
-
-  /// Acierto efectivo del área. Llega ya resuelto porque el catálogo no lo
-  /// trae poblado; ver `prioridadEstudioProvider`.
-  final double? acierto;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.scheme;
-    final color = AreaColors.of(area.id, Theme.of(context).brightness);
-    final pct = acierto;
-
-    return Card(
-      child: InkWell(
-        // go y no push: cruza del inicio a la rama del temario (ver arriba).
-        onTap: () => context.go(Routes.temarioAreaOf(area.id)),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space3 + 2,
+            horizontal: DesignTokens.space4,
             vertical: DesignTokens.space3,
           ),
           child: Row(
             children: [
               Container(
-                width: 4,
+                width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(2),
+                  color: context.states.info.tint,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 ),
+                child: Icon(icono, size: 20, color: scheme.primary),
               ),
               const SizedBox(width: DesignTokens.space3),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      area.nombre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.texts.bodyLarge?.copyWith(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        height: 1.2,
-                        color: scheme.onSurface,
-                      ),
+                    Wrap(
+                      spacing: DesignTokens.space2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          titulo,
+                          style: context.texts.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                        ),
+                        ?etiqueta,
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    // El peso va siempre visible: 40 preguntas y 2 preguntas no
-                    // pueden verse igual a la hora de decidir (RN-02).
-                    Text(
-                      pct == null
-                          ? '${area.peso ?? 0} preguntas · sin datos'
-                          : '${area.peso ?? 0} preguntas · '
-                                '${(pct * 100).round()} % de acierto',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.texts.bodySmall?.copyWith(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.space1 + 2),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: pct ?? 0,
-                        minHeight: 6,
-                        backgroundColor: scheme.outlineVariant,
-                        valueColor: AlwaysStoppedAnimation(color),
-                      ),
-                    ),
+                    const SizedBox(height: 2),
+                    Text(detalle, style: context.texts.bodyMedium),
+                    if (extra != null) ...[
+                      const SizedBox(height: DesignTokens.space1),
+                      extra!,
+                    ],
                   ],
                 ),
               ),
@@ -781,130 +626,254 @@ class _AreaSugerida extends StatelessWidget {
   }
 }
 
-/// Nota proyectada (RN-04). El dato más importante de la pantalla.
-class _TarjetaNota extends StatelessWidget {
-  const _TarjetaNota({required this.stats});
+// ==================== TU PROGRESO ====================
 
-  final DashboardStats stats;
+/// Tres cifras como máximo, la racha si la hay y la nota solo con datos.
+///
+/// Ninguna se inventa: el acierto sale de sumar lo respondido por área, y sin
+/// respuestas dice «sin responder» en vez de un 0 % que se leería como un mal
+/// resultado. La nota proyectada exige 50 respuestas, igual que en la web.
+class _TuProgreso extends StatelessWidget {
+  const _TuProgreso({
+    this.conNota = true,
+    required this.stats,
+    required this.cargando,
+    required this.fallo,
+    required this.onReintentar,
+  });
 
-  /// Con menos respuestas la proyección es ruido y no se muestra.
-  static const _minRespuestas = 50;
+  final DashboardStats? stats;
+  final bool cargando;
+  final bool fallo;
+  final VoidCallback onReintentar;
+  final bool conNota;
+
+  /// Con menos respuestas la proyección es ruido y no se muestra (RN-04).
+  static const minRespuestas = 50;
 
   @override
   Widget build(BuildContext context) {
-    final states = context.states;
+    final titulo = TituloSeccion(
+      'Tu progreso',
+      enlace: 'Ver todo',
+      // `go`: el progreso es otra pestaña.
+      onEnlace: () => context.go(Routes.stats),
+    );
+
+    if (cargando) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          titulo,
+          const SkeletonBox(height: 104, radius: DesignTokens.radiusLg),
+        ],
+      );
+    }
+
+    final s = stats;
+    if (fallo || s == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          titulo,
+          StateBanner(
+            kind: BannerKind.error,
+            message: 'No pudimos cargar tu progreso.',
+            action: TextButton(
+              onPressed: onReintentar,
+              child: const Text('Reintentar'),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final formato = NumberFormat.decimalPattern('es_PE');
+    final respondidas = s.porArea.fold(0, (t, a) => t + a.respondidas);
+    final correctas = s.porArea.fold(0, (t, a) => t + a.correctas);
+    final acierto = respondidas == 0 ? null : correctas / respondidas;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        titulo,
+        ResumenMetrico(
+          onTap: () => context.go(Routes.stats),
+          metricas: [
+            (
+              valor: formato.format(s.preguntasVistas),
+              etiqueta: 'preguntas vistas',
+              // Sin «de N»: el tamaño del banco no se muestra en ninguna
+              // pantalla (pedido del usuario, 06/10/2026).
+              detalle: 'hasta hoy',
+            ),
+            (
+              valor: acierto == null ? '—' : '${(acierto * 100).round()} %',
+              etiqueta: 'de acierto',
+              detalle: respondidas > 0
+                  ? 'en ${formato.format(respondidas)}'
+                  : 'sin responder',
+            ),
+            (
+              valor: '${s.simulacrosCompletados}',
+              etiqueta: s.simulacrosCompletados == 1
+                  ? 'simulacro'
+                  : 'simulacros',
+              detalle: s.simulacrosCompletados == 0 ? 'ninguno aún' : null,
+            ),
+          ],
+        ),
+        if (s.racha case final racha? when racha.dias > 0) ...[
+          const SizedBox(height: DesignTokens.space3),
+          _Racha(
+            dias: racha.dias,
+            practicoHoy: racha.diasDeLaSemana.lastOrNull ?? false,
+          ),
+        ],
+        if (conNota && respondidas >= minRespuestas) ...[
+          const SizedBox(height: DesignTokens.space3),
+          _NotaProyectada(nota: s.notaProyectada),
+        ],
+      ],
+    );
+  }
+}
+
+class _Racha extends StatelessWidget {
+  const _Racha({required this.dias, required this.practicoHoy});
+
+  final int dias;
+  final bool practicoHoy;
+
+  @override
+  Widget build(BuildContext context) {
+    final aviso = context.states.warning;
+    return Row(
+      children: [
+        Icon(
+          Symbols.local_fire_department,
+          size: 20,
+          fill: 1,
+          color: aviso.base,
+        ),
+        const SizedBox(width: DesignTokens.space2),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: dias == 1 ? '1 día seguido' : '$dias días seguidos',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(
+                  text: practicoHoy
+                      ? ' · hoy ya practicaste'
+                      : ' · practica hoy para mantenerla',
+                ),
+              ],
+            ),
+            style: context.texts.bodyMedium?.copyWith(
+              color: context.scheme.onSurface,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// La nota proyectada, con su escala y sin adornos (RN-04).
+///
+/// Ya no lleva la variación semanal: aquel «+0.60 esta semana» era un número
+/// escrito en el código. Cuando el servidor mande la evolución real se puede
+/// volver a poner, calculada.
+class _NotaProyectada extends StatelessWidget {
+  const _NotaProyectada({required this.nota});
+
+  final double nota;
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = context.scheme;
-    final respondidas = stats.porArea.fold(0, (s, a) => s + a.respondidas);
-    final hayDatos = respondidas >= _minRespuestas;
+    const aprobado = Blueprint.passingGrade / Blueprint.maxGrade;
 
     return Card(
       child: InkWell(
-        // go y no push: estadísticas es una rama del shell (ver práctica).
-        onTap: () => context.go(Routes.stats),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+        onTap: () => _explicar(context),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space4,
-            vertical: DesignTokens.space3 + 1,
-          ),
+          padding: const EdgeInsets.all(DesignTokens.space4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
                 children: [
-                  Icon(
-                    Symbols.ecg_heart,
-                    size: 17,
-                    fill: 1,
-                    color: states.info.onTint,
-                  ),
-                  const SizedBox(width: DesignTokens.space1 + 2),
                   Expanded(
                     child: Text(
-                      'NOTA PROYECTADA',
-                      style: context.texts.bodySmall?.copyWith(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.75,
-                        color: scheme.onSurfaceVariant,
+                      'Nota proyectada',
+                      style: context.texts.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  // La advertencia de RN-04 vive detrás de este icono: la
-                  // tarjeta ya está densa y el aviso completo empujaría la nota
-                  // fuera de la primera pantalla.
-                  Semantics(
-                    button: true,
-                    label: 'Cómo se calcula',
-                    child: InkWell(
-                      onTap: () => _explicar(context),
-                      borderRadius: BorderRadius.circular(
-                        DesignTokens.radiusFull,
-                      ),
-                      child: SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: Icon(
-                          Symbols.info,
-                          size: 19,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
+                  Icon(
+                    Symbols.info,
+                    size: 18,
+                    color: scheme.onSurfaceVariant,
+                    semanticLabel: 'Cómo se calcula',
                   ),
                 ],
               ),
-              const SizedBox(height: DesignTokens.space2),
-              Row(
-                children: [
-                  if (hayDatos)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        AnimatedNumber(
-                          value: stats.notaProyectada,
-                          style: context.texts.displaySmall?.copyWith(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                          ),
-                        ),
-                        Text(
-                          ' / 20',
-                          style: context.texts.bodyLarge?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    Text(
-                      '—',
-                      style: context.texts.displaySmall?.copyWith(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w800,
-                        height: 1,
+              const SizedBox(height: DesignTokens.space1),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: nota.toStringAsFixed(2),
+                      style: context.texts.headlineLarge?.copyWith(height: 1),
+                    ),
+                    TextSpan(
+                      text: ' / 20',
+                      style: context.texts.bodyLarge?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
-                  const Spacer(),
-                  if (hayDatos) const _Delta(valor: 0.60),
-                ],
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              if (hayDatos)
-                _Escala(nota: stats.notaProyectada)
-              else
-                Text(
-                  'Se calcula con tus primeras $_minRespuestas respuestas.',
-                  style: context.texts.bodySmall?.copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  ],
                 ),
+              ),
+              const SizedBox(height: DesignTokens.space3),
+              LayoutBuilder(
+                builder: (context, c) => Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    AnimatedBar(
+                      value: nota / Blueprint.maxGrade,
+                      color: scheme.primary,
+                      height: 8,
+                      background: scheme.surfaceContainer,
+                    ),
+                    Positioned(
+                      left: c.maxWidth * aprobado - 1.5,
+                      top: -4,
+                      child: Container(
+                        width: 3,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: scheme.onSurface,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                'La marca es el 11, la nota aprobatoria. Es una estimación '
+                'sobre tu práctica, no una predicción del examen.',
+                style: context.texts.bodySmall,
+              ),
             ],
           ),
         ),
@@ -934,435 +903,65 @@ class _TarjetaNota extends StatelessWidget {
   }
 }
 
-/// Cuánto subió o bajó la nota en la semana. Comunica progreso, que es lo que
-/// sostiene el hábito.
-class _Delta extends StatelessWidget {
-  const _Delta({required this.valor});
+// ==================== MÁS ====================
 
-  final double valor;
-
-  @override
-  Widget build(BuildContext context) {
-    final states = context.states;
-    final subio = valor >= 0;
-    final color = subio ? states.success : states.error;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(5, 5, DesignTokens.space3 - 1, 5),
-      decoration: BoxDecoration(
-        color: color.tint,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            subio ? Symbols.arrow_drop_up : Symbols.arrow_drop_down,
-            size: 19,
-            fill: 1,
-            color: color.onTint,
-          ),
-          Text(
-            '${subio ? "+" : ""}${valor.toStringAsFixed(2)} esta semana',
-            style: context.texts.bodySmall?.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: color.onTint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// La escala de 0 a 20 con la marca del 11.
+/// El simulacro nacional, solo si hay convocatoria, y el duelo.
 ///
-/// Sin la referencia, un 12.40 no dice si vas bien o mal.
-class _Escala extends StatelessWidget {
-  const _Escala({required this.nota});
-
-  final double nota;
-
-  @override
-  Widget build(BuildContext context) {
-    const aprobado = Blueprint.passingGrade / Blueprint.maxGrade;
-    final scheme = context.scheme;
-
-    return Column(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) => Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.centerLeft,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(5),
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(
-                    begin: 0,
-                    end: (nota / Blueprint.maxGrade).clamp(0.0, 1.0),
-                  ),
-                  duration: const Duration(milliseconds: 900),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, v, _) => Stack(
-                    children: [
-                      Container(height: 10, color: scheme.outlineVariant),
-                      // Degradado en el relleno, como el diseño.
-                      FractionallySizedBox(
-                        widthFactor: v,
-                        child: Container(
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                DesignTokens.brandDark,
-                                DesignTokens.brand,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: constraints.maxWidth * aprobado - 1.5,
-                top: -3,
-                child: Container(
-                  width: 3,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: scheme.onSurface,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '0',
-              style: context.texts.bodySmall?.copyWith(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              '11 · aprobado',
-              style: context.texts.bodySmall?.copyWith(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-                color: scheme.onSurface,
-              ),
-            ),
-            Text(
-              '20',
-              style: context.texts.bodySmall?.copyWith(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Los dos atajos secundarios: el temario y lo que el usuario guardó.
-class _AccesosRapidos extends StatelessWidget {
-  const _AccesosRapidos({required this.stats});
-
-  final DashboardStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final states = context.states;
-
-    final temario = _Acceso(
-      icon: Symbols.account_tree,
-      color: states.info.onTint,
-      fondo: states.info.tint,
-      titulo: 'Temario',
-      detalle: '${(stats.coberturaBanco * 100).round()} % cubierto',
-      ruta: Routes.temario,
-    );
-    final marcadas = _Acceso(
-      icon: Symbols.bookmark,
-      color: states.warning.onTint,
-      fondo: states.warning.tint,
-      titulo: 'Marcadas',
-      // Sin número: el dashboard no trae el conteo, y el «12 guardadas» que
-      // había aquí no era de nadie. Mismo texto que la web, que ya lo resolvió
-      // así en vez de inventar la cifra.
-      detalle: 'Las que guardaste',
-      ruta: Routes.markedQuestions,
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // 400 y no 320. Estas tarjetas son HORIZONTALES —icono, texto y
-        // chevron en fila—, así que a media pantalla al texto le quedaban unos
-        // 90 px y los títulos salían como «Tem…» y «Marc…», con el detalle en
-        // «0 % c…». Un recorte que no deja leer ni la primera palabra no es
-        // recortar contenido, es no mostrarlo.
-        //
-        // Es el mismo umbral que la web (`min-[400px]:grid-cols-2`), donde las
-        // dos columnas solo aparecen cuando de verdad hay sitio.
-        //
-        // Las tarjetas de «Practicar» y «Simulacro» sí aguantan 320 porque son
-        // verticales: el texto ocupa el ancho entero de la tarjeta.
-        final apiladas =
-            constraints.maxWidth < 400 ||
-            MediaQuery.textScalerOf(context).scale(16) > 22;
-
-        if (apiladas) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              temario,
-              const SizedBox(height: DesignTokens.space2 + 2),
-              marcadas,
-            ],
-          );
-        }
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: temario),
-              const SizedBox(width: DesignTokens.space2 + 2),
-              Expanded(child: marcadas),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _Acceso extends StatelessWidget {
-  const _Acceso({
-    required this.icon,
-    required this.color,
-    required this.fondo,
-    required this.titulo,
-    required this.detalle,
-    required this.ruta,
-  });
-
-  final IconData icon;
-  final Color color;
-  final Color fondo;
-  final String titulo;
-  final String detalle;
-  final String ruta;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: () => context.push(ruta),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space3 + 2,
-            vertical: DesignTokens.space3 + 1,
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(DesignTokens.space2),
-                decoration: BoxDecoration(
-                  color: fondo,
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                ),
-                child: Icon(icon, size: 22, fill: 1, color: color),
-              ),
-              const SizedBox(width: DesignTokens.space2 + 2),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: context.texts.bodyLarge?.copyWith(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        height: 1.2,
-                        color: context.scheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      detalle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.texts.bodySmall?.copyWith(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SimulacroNacional extends ConsumerWidget {
-  const _SimulacroNacional();
+/// Al final y en el mismo formato de fila que «Estudiar»: son añadidos al
+/// estudio, no el estudio. El duelo tenía el degradado de marca y estaba por
+/// encima de «Practicar».
+class _Mas extends ConsumerWidget {
+  const _Mas();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final states = context.states;
     final evento = ref.watch(nacionalProvider);
 
-    // Sin nacional programado no se pinta la tarjeta. Antes el evento estaba
-    // escrito en el código, así que siempre había uno aunque no existiera.
-    if (evento == null) return const SizedBox.shrink();
-
-    final inscrito = evento.inscrito;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.space4,
-          vertical: DesignTokens.space3,
+    final filas = <Widget>[
+      if (evento != null)
+        _Fila(
+          icono: Symbols.campaign,
+          titulo:
+              'Simulacro Nacional · '
+              '${DateFormat('EEE d MMM', 'es').format(evento.inicio)}',
+          // La hora en 12 h con a.m./p.m., que es como se lee en Perú.
+          detalle:
+              '${DateFormat('h:mm', 'es').format(evento.inicio)} '
+              '${evento.inicio.hour < 12 ? "a.m." : "p.m."} · '
+              '${NumberFormat.decimalPattern('es_PE').format(evento.participantes)} '
+              'inscritos',
+          extra: evento.inscrito
+              ? const EtiquetaEstado(
+                  texto: 'Ya estás participando',
+                  tipo: BannerKind.success,
+                )
+              : null,
+          // `go`: el nacional cuelga de la pestaña de simulacros.
+          onTap: () => context.go(Routes.nationalMock),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(DesignTokens.space2 - 1),
-              decoration: BoxDecoration(
-                color: states.warning.tint,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              ),
-              child: Icon(
-                Symbols.campaign,
-                size: 23,
-                fill: 1,
-                color: states.warning.onTint,
-              ),
-            ),
-            const SizedBox(width: DesignTokens.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Simulacro Nacional · '
-                    '${DateFormat('EEE d MMM', 'es').format(evento.inicio)}',
-                    style: context.texts.bodyLarge?.copyWith(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
-                      height: 1.25,
-                      color: context.scheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    // Los datos que hacen falta para decidir si puedes: hora y
-                    // cuánta gente va. La hora va en 12 h con a.m./p.m. porque
-                    // así se lee en Perú, y `DateFormat.jm` da el de 24 h.
-                    '${DateFormat('h:mm', 'es').format(evento.inicio)} '
-                    '${evento.inicio.hour < 12 ? "a.m." : "p.m."} · '
-                    '${NumberFormat.decimalPattern('es_PE').format(evento.participantes)} '
-                    'inscritos',
-                    style: context.texts.bodySmall?.copyWith(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      height: 1.25,
-                    ),
-                  ),
-                  if (inscrito) ...[
-                    const SizedBox(height: DesignTokens.space1 + 2),
-                    // Se dice aquí, antes de entrar: al usuario no le sirve
-                    // descubrir que ya está anotado recién dentro.
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Symbols.check_circle,
-                          size: 16,
-                          fill: 1,
-                          color: states.success.onTint,
-                        ),
-                        const SizedBox(width: DesignTokens.space1),
-                        Text(
-                          'Ya estás participando',
-                          style: context.texts.bodySmall?.copyWith(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: states.success.onTint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: DesignTokens.space2),
-            OutlinedButton(
-              // `go`: el nacional cuelga de la pestaña de simulacros, y el
-              // inicio es otra rama del contenedor.
-              onPressed: () => context.go(Routes.nationalMock),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 40),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: DesignTokens.space4 - 1,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    DesignTokens.radiusXl - 4,
-                  ),
-                ),
-                side: BorderSide(color: context.scheme.primary, width: 1.5),
-                textStyle: context.texts.bodySmall?.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              // Ojo con este texto: con un público en época de trámites,
-              // "Inscribirme" a un "Simulacro Nacional" se puede leer como
-              // inscripción al ENAM real. Va así porque lo pide el diseño.
-              child: Text(inscrito ? 'Ver' : 'Inscribirme'),
-            ),
-          ],
-        ),
+      _Fila(
+        icono: Symbols.swords,
+        titulo: 'Modo duelo',
+        detalle: 'Diez preguntas contra otra persona, en vivo',
+        onTap: () => context.irA(Routes.duelo),
       ),
-    );
-  }
-}
+    ];
 
-class _Cargando extends StatelessWidget {
-  const _Cargando();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SkeletonBox(height: 128, radius: DesignTokens.radiusXl - 4),
-        SizedBox(height: DesignTokens.space2 + 1),
-        SkeletonBox(height: 148, radius: DesignTokens.radiusLg + 2),
-        SizedBox(height: DesignTokens.space2 + 1),
-        SkeletonBox(height: 72, radius: DesignTokens.radiusLg + 2),
-        SizedBox(height: DesignTokens.space2 + 1),
-        SkeletonBox(height: 72, radius: DesignTokens.radiusLg + 2),
+        const TituloSeccion('También puedes'),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (var i = 0; i < filas.length; i++) ...[
+                if (i > 0) const Divider(indent: 64),
+                filas[i],
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }

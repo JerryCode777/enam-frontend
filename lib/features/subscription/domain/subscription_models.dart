@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'acceso.dart';
+
 part 'subscription_models.freezed.dart';
 part 'subscription_models.g.dart';
 
@@ -12,7 +14,8 @@ enum SubscriptionOrigin {
   /// Cobro recurrente por la API de suscripciones de Culqi.
   culqi,
 
-  /// Pago por Yape QR verificado a mano por un admin.
+  /// Activada a mano por un admin. Es como quedaron los pagos por Yape, que ya
+  /// no se aceptan; las suscripciones antiguas siguen llegando con este origen.
   manual,
 
   /// Activada desde el canal de WhatsApp (M10, RF-43).
@@ -36,8 +39,9 @@ enum SubscriptionOrigin {
 
 /// Estado de la suscripción (RN-03 v2, SSD-ENAM-002 §1).
 ///
-/// **No hay plan gratuito permanente.** Todo usuario nace en
-/// [pruebaSinIniciar] y termina en [expirada] si no paga.
+/// Todo usuario nace en [pruebaSinIniciar] y termina en [expirada] si no paga.
+/// Con el gratis limitado, [expirada] ya no cierra la app: lo que se puede
+/// hacer lo dice [Subscription.acceso].
 @JsonEnum(fieldRename: FieldRename.snake)
 enum SubscriptionStatus {
   /// Registrado, con el día de prueba sin consumir.
@@ -106,6 +110,10 @@ abstract class Subscription with _$Subscription {
 
     /// `null` mientras la prueba no haya empezado a correr (D-02).
     DateTime? expira,
+
+    /// Premium o gratis con su cupo de hoy. `null` si el servidor todavía no
+    /// lo manda: entonces manda el modelo anterior, con bloqueo (D-01).
+    @JsonKey(fromJson: Acceso.fromJson, toJson: Acceso.toJson) Acceso? acceso,
   }) = _Subscription;
 
   const Subscription._();
@@ -125,7 +133,8 @@ abstract class Subscription with _$Subscription {
     SubscriptionStatus.pruebaSinIniciar => true,
     SubscriptionStatus.prueba ||
     SubscriptionStatus.activa ||
-    SubscriptionStatus.enGracia => expira == null || DateTime.now().isBefore(expira!),
+    SubscriptionStatus.enGracia =>
+      expira == null || DateTime.now().isBefore(expira!),
     SubscriptionStatus.expirada || SubscriptionStatus.cancelada => false,
   };
 
@@ -146,6 +155,19 @@ abstract class Subscription with _$Subscription {
 
   /// Sin acceso: la app queda bloqueada tras la pantalla de pago (D-01).
   bool get sinAcceso => !daAcceso;
+
+  /// Si la app se cierra entera tras la pantalla de pago.
+  ///
+  /// Solo con un servidor anterior al gratis limitado, que no manda [acceso].
+  /// Con [acceso], vencer la prueba deja la app abierta en [AccesoGratis].
+  bool get bloqueada => acceso == null && sinAcceso;
+
+  /// El cupo de hoy si la cuenta está en gratis; `null` en premium o con un
+  /// servidor que todavía no lo manda.
+  AccesoGratis? get gratis => switch (acceso) {
+    final AccesoGratis g => g,
+    _ => null,
+  };
 
   /// Lo que falta para perder el acceso. `null` si no hay fecha todavía.
   Duration? get restante {

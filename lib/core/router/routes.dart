@@ -107,6 +107,11 @@ abstract final class Routes {
   /// Bloqueo por falta de acceso (RN-03 v2, D-01). No es una hoja sobre la
   /// pantalla: es donde queda el usuario hasta que pague.
   static const accessEnded = '/acceso-terminado';
+
+  /// Muro de venta del gratis limitado: se acabó el cupo del día o se tocó una
+  /// función de pago. Se apila y se cierra; no bloquea nada. Lleva el motivo
+  /// en la consulta: `?motivo=limite` o `?funcion=simulacro`.
+  static const premium = '/premium';
   static const mySubscription = '/mi-suscripcion';
 
   // ---------- Offline (Módulo 7) ----------
@@ -127,4 +132,8 @@ abstract final class Routes {
   static const maintenance = '/mantenimiento';
   static const updateRequired = '/actualizar';
   static const offline = '/sin-conexion';
+
+  // ---------- Desarrollo ----------
+  /// Galería de componentes. Solo existe fuera de release (ver el router).
+  static const componentes = '/dev/componentes';
 }

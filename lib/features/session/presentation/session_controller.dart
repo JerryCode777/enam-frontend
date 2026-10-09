@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../domain/session_models.dart';
 
 /// Estado de una sesión en curso, sea práctica o simulacro.
@@ -149,6 +153,24 @@ class SessionController extends AsyncNotifier<SessionState> {
         ),
       );
 
+      // El sonido llega con la corrección, no con el toque: lo que se celebra
+      // es haber acertado, y quien lo sabe es el servidor. **Solo** si la
+      // pantalla revela el resultado: en un simulacro o un examen
+      // cronometrado la clave está oculta hasta el final, y un sonido de
+      // acierto la delataría (RF-16).
+      if (s.session.muestraFeedbackInmediato) {
+        final correcta =
+            actualizada.respuestas[s.pregunta.id]?.esCorrecta ??
+            answer.esCorrecta;
+        if (correcta != null) {
+          unawaited(
+            ref
+                .read(sonidosProvider)
+                .sonar(correcta ? Sonido.acierto : Sonido.fallo),
+          );
+        }
+      }
+
       // En simulacro no hay pausa para leer: se avanza solo.
       if (!s.session.muestraFeedbackInmediato && !s.esUltima) siguiente();
     } on Failure catch (e) {
@@ -276,11 +298,13 @@ class SessionController extends AsyncNotifier<SessionState> {
 
       // El progreso del temario y las estadísticas cambiaron. Y la sesión ya
       // no está abierta: sin invalidarla, el inicio seguiría ofreciendo
-      // retomar algo que acaba de terminar.
+      // retomar algo que acaba de terminar. En gratis, además, el cupo de hoy
+      // bajó: el contador del inicio se relee del servidor.
       ref
         ..invalidate(catalogProvider)
         ..invalidate(dashboardProvider)
-        ..invalidate(sesionesAbiertasProvider);
+        ..invalidate(sesionesAbiertasProvider)
+        ..invalidate(subscriptionProvider);
 
       return finalizada;
     } on Failure catch (e) {

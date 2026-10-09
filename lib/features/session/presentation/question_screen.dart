@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/config/contacto.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/motion.dart';
 import '../../../core/theme/state_colors.dart';
@@ -12,6 +16,9 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../catalog/presentation/catalog_providers.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 import 'widgets/option_card.dart';
@@ -25,10 +32,15 @@ import 'widgets/watermark.dart';
 /// lectura.
 ///
 /// Decisiones que sostienen la legibilidad, que es la tarea principal:
-/// - Enunciado a 16 px con interlineado 1.625 (el 81 % son casos clínicos)
+/// - Enunciado a 17 px con interlineado 1,6 (el 81 % son casos clínicos), en
+///   una columna de 720 px como máximo para que en tableta no se lean renglones
+///   de lado a lado
 /// - **Seleccionar no responde**: hace falta confirmar, porque leyendo un texto
 ///   largo es fácil tocar de más
 /// - **No se muestra de qué área es** hasta responder (RN-09)
+/// - Al responder, la pantalla baja sola hasta el veredicto: el enunciado de
+///   un caso clínico ocupa la pantalla entera, y sin esto lo primero que se
+///   veía tras confirmar era otra vez el caso, con la respuesta fuera de vista
 class QuestionScreen extends ConsumerWidget {
   const QuestionScreen({required this.sessionId, super.key});
 
@@ -39,9 +51,8 @@ class QuestionScreen extends ConsumerWidget {
     final estado = ref.watch(sessionControllerProvider(sessionId));
 
     return estado.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
         body: Center(
@@ -64,14 +75,72 @@ class QuestionScreen extends ConsumerWidget {
   }
 }
 
-class _Contenido extends ConsumerWidget {
+class _Contenido extends ConsumerStatefulWidget {
   const _Contenido({required this.sessionId, required this.estado});
 
   final String sessionId;
   final SessionState estado;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Contenido> createState() => _ContenidoState();
+}
+
+class _ContenidoState extends ConsumerState<_Contenido> {
+  final _scroll = ScrollController();
+
+  /// El panel de la respuesta, para bajar hasta él al confirmar.
+  final _claveFeedback = GlobalKey();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_Contenido anterior) {
+    super.didUpdateWidget(anterior);
+    final antes = anterior.estado;
+    final ahora = widget.estado;
+
+    // Pregunta nueva: se empieza a leer desde arriba.
+    if (antes.indice != ahora.indice && _scroll.hasClients) {
+      _scroll.jumpTo(0);
+    }
+
+    // En gratis, responder sin cupo da `LIMITE_DIARIO`: es el muro, no un
+    // error. Se abre una vez, al llegar; luego queda el aviso para volver.
+    final motivo = switch (ahora.error) {
+      final e? => motivoDelMuro(e),
+      null => null,
+    };
+    if (motivo != null && antes.error != ahora.error) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) abrirMuro(context, ref, motivo);
+      });
+    }
+
+    // Recién respondida: el veredicto y el porqué, a la vista.
+    if (!antes.respondida && ahora.respondida) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final destino = _claveFeedback.currentContext;
+        if (destino == null || !mounted) return;
+        Scrollable.ensureVisible(
+          destino,
+          duration: Motion.duration(context, Motion.normal),
+          curve: Motion.enter,
+          // Arriba del todo, con el margen del propio panel: el final del
+          // enunciado queda justo encima y se puede volver a él.
+          alignment: 0,
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sessionId = widget.sessionId;
+    final estado = widget.estado;
     final control = ref.read(sessionControllerProvider(sessionId).notifier);
     final usuario = ref.watch(currentUserProvider);
     final pregunta = estado.pregunta;
@@ -85,38 +154,74 @@ class _Contenido extends ConsumerWidget {
               onCerrar: () => _confirmarSalida(context),
               onMarcar: control.alternarMarca,
             ),
-            if (estado.error != null)
+            if (estado.error case final error?)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: DesignTokens.space5,
                   vertical: DesignTokens.space2,
                 ),
-                child: StateBanner(
-                  kind: BannerKind.error,
-                  message: estado.error!.message,
-                ),
+                child: switch (motivoDelMuro(error)) {
+                  final motivo? => StateBanner(
+                    kind: BannerKind.info,
+                    message: switch (motivo) {
+                      CupoAgotado() =>
+                        'Se acabaron tus preguntas gratis de hoy. Mañana '
+                            'tienes más.',
+                      FuncionDePago(:final funcion) => funcion.titulo,
+                    },
+                    action: TextButton(
+                      onPressed: () => abrirMuro(context, ref, motivo),
+                      child: const Text('Ver Premium'),
+                    ),
+                  ),
+                  null => StateBanner(
+                    kind: BannerKind.error,
+                    message: error.message,
+                  ),
+                },
               ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space5,
-                  DesignTokens.space2,
-                  DesignTokens.space5,
-                  DesignTokens.space4,
-                ),
-                children: [
-                  // La marca de agua solo envuelve el enunciado, que es lo que
-                  // alguien capturaría (RNF-05).
-                  Watermark(
-                    texto: _idUsuario(usuario?.id, usuario?.email),
-                    child: _TarjetaEnunciado(pregunta: pregunta),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  // Columna de lectura (plan §6): 680–760 px.
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: ListView(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.space4,
+                      DesignTokens.space2,
+                      DesignTokens.space4,
+                      DesignTokens.space6,
+                    ),
+                    children: [
+                      // La marca de agua solo envuelve el enunciado, que es lo
+                      // que alguien capturaría (RNF-05).
+                      Watermark(
+                        texto: _idUsuario(usuario?.id, usuario?.email),
+                        child: _TarjetaEnunciado(pregunta: pregunta),
+                      ),
+                      const SizedBox(height: DesignTokens.space4),
+                      if (estado.respondida)
+                        KeyedSubtree(
+                          key: _claveFeedback,
+                          // El margen va dentro de la clave: al bajar hasta
+                          // aquí, el veredicto no queda pegado al borde.
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: DesignTokens.space3,
+                            ),
+                            child: _PanelFeedback(estado: estado),
+                          ),
+                        )
+                      else
+                        _Alternativas(
+                          estado: estado,
+                          onTap: control.seleccionar,
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: DesignTokens.space4),
-                  if (estado.respondida)
-                    _PanelFeedback(estado: estado)
-                  else
-                    _Alternativas(estado: estado, onTap: control.seleccionar),
-                ],
+                ),
               ),
             ),
             _BarraAccion(
@@ -148,7 +253,11 @@ class _Contenido extends ConsumerWidget {
       confirmar: 'Salir',
       cancelar: 'Seguir practicando',
     );
-    if (salir && context.mounted) context.pop();
+    if (salir && context.mounted) {
+      // En gratis, lo respondido gastó cupo: que el inicio lo diga al volver.
+      ref.invalidate(subscriptionProvider);
+      context.pop();
+    }
   }
 }
 
@@ -182,17 +291,27 @@ class _Cabecera extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
+                // Flexibles: con la letra del sistema ampliada, los dos
+                // rótulos no caben enteros y se recortan en vez de desbordar.
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Pregunta ${estado.indice + 1} de $total',
-                      style: context.texts.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                    Expanded(
+                      child: Text(
+                        'Pregunta ${estado.indice + 1} de $total',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.texts.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: DesignTokens.space2),
+                    // Corto y fijo: el que cede espacio es el de la izquierda.
                     Text(
-                      estado.session.esSimulacro ? 'Simulacro' : 'Práctica libre',
+                      estado.session.esSimulacro
+                          ? 'Simulacro'
+                          : 'Práctica libre',
+                      maxLines: 1,
                       style: context.texts.bodySmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -244,14 +363,7 @@ class _TarjetaEnunciado extends StatelessWidget {
           children: [
             // La decisión tipográfica más importante de la app: se lee cansado y
             // son varios párrafos.
-            Text(
-              pregunta.enunciado,
-              style: context.texts.bodyLarge?.copyWith(
-                fontSize: DesignTokens.fontSizeMd,
-                height: DesignTokens.lineHeightRelaxed,
-                letterSpacing: 0.1,
-              ),
-            ),
+            Text(pregunta.enunciado, style: AppTheme.clinicalCase(context)),
             if (pregunta.imagenes.isNotEmpty) ...[
               const SizedBox(height: DesignTokens.space3 + 2),
               _AdjuntoImagen(url: pregunta.imagenes.first),
@@ -409,18 +521,38 @@ class _PanelFeedback extends StatelessWidget {
     // se pinta ninguna en verde. Antes se caía a la primera alternativa, que
     // señalaba como correcta una respuesta cualquiera —enseñando medicina
     // equivocada con toda la confianza del mundo— en vez de no decir nada.
-    final correcta = opciones
-        .where((o) => o.esCorrecta == true)
-        .firstOrNull;
+    final correcta = opciones.where((o) => o.esCorrecta == true).firstOrNull;
     final acerto = correcta != null && elegida == correcta.id;
 
+    // Primero el veredicto y la correcta, después la tuya si falló, y después
+    // el porqué (plan §6: respuesta y motivo primero, distractores después).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (correcta != null)
+          FadeUp(
+            child: _Veredicto(
+              acerto: acerto,
+              enBlanco: elegida == null,
+              letraCorrecta: _letra(opciones, correcta.id),
+            ),
+          ),
+        const SizedBox(height: DesignTokens.space3),
+        if (correcta != null)
+          FadeUp(
+            index: 1,
+            child: OptionCard(
+              opcion: correcta,
+              letra: _letra(opciones, correcta.id),
+              visual: OptionVisual.correcta,
+              onTap: null,
+            ),
+          ),
         if (!acerto && elegida != null)
           FadeUp(
+            index: 1,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: DesignTokens.space2 + 2),
+              padding: const EdgeInsets.only(top: DesignTokens.space2 + 2),
               child: OptionCard(
                 opcion: opciones.firstWhere((o) => o.id == elegida),
                 letra: _letra(opciones, elegida),
@@ -429,17 +561,7 @@ class _PanelFeedback extends StatelessWidget {
               ),
             ),
           ),
-        if (correcta != null)
-          FadeUp(
-            index: acerto ? 0 : 1,
-            child: OptionCard(
-              opcion: correcta,
-              letra: _letra(opciones, correcta.id),
-              visual: OptionVisual.correcta,
-              onTap: null,
-            ),
-          ),
-        const SizedBox(height: DesignTokens.space3 + 2),
+        const SizedBox(height: DesignTokens.space4),
         FadeUp(index: 2, child: _Explicacion(estado: estado)),
       ],
     );
@@ -448,6 +570,71 @@ class _PanelFeedback extends StatelessWidget {
   static String _letra(List<QuestionOption> opciones, String id) {
     final i = opciones.indexWhere((o) => o.id == id);
     return i >= 0 && i < _letras.length ? _letras[i] : '?';
+  }
+}
+
+/// El resultado de la pregunta, dicho con palabras, icono y color a la vez.
+class _Veredicto extends StatelessWidget {
+  const _Veredicto({
+    required this.acerto,
+    required this.enBlanco,
+    required this.letraCorrecta,
+  });
+
+  final bool acerto;
+  final bool enBlanco;
+  final String letraCorrecta;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = acerto ? context.states.success : context.states.error;
+    final titulo = acerto
+        ? 'Correcto'
+        : enBlanco
+        ? 'Sin responder'
+        : 'Incorrecto';
+    final detalle = acerto
+        ? 'Elegiste la $letraCorrecta.'
+        : 'La correcta es la $letraCorrecta.';
+
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space4,
+          vertical: DesignTokens.space3,
+        ),
+        decoration: BoxDecoration(
+          color: c.tint,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              acerto ? Symbols.check_circle : Symbols.cancel,
+              size: 26,
+              fill: 1,
+              color: c.onTint,
+            ),
+            const SizedBox(width: DesignTokens.space3),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$titulo. ',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    TextSpan(text: detalle),
+                  ],
+                ),
+                style: context.texts.bodyLarge?.copyWith(color: c.onTint),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -497,22 +684,61 @@ class _Explicacion extends StatelessWidget {
             Text(
               pregunta.explicacion ?? 'Sin explicación disponible.',
               style: context.texts.bodyLarge?.copyWith(
-                fontSize: 15,
                 height: DesignTokens.lineHeightRelaxed,
               ),
             ),
             if (distractores.isNotEmpty) ...[
-              const SizedBox(height: DesignTokens.space3),
+              const SizedBox(height: DesignTokens.space4),
               Divider(color: scheme.outlineVariant),
-              const SizedBox(height: DesignTokens.space2),
+              const SizedBox(height: DesignTokens.space3),
               // Los distractores después de la clave: primero se aprende lo
-              // correcto, después por qué lo demás no era.
+              // correcto, después por qué lo demás no era. A 16 y con la letra
+              // delante: antes iban a 12, pegados al texto de la alternativa, y
+              // no se distinguía dónde acababa una y empezaba el motivo.
+              Text(
+                'Por qué no las demás',
+                style: context.texts.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space2),
               for (final d in distractores)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: DesignTokens.space2),
-                  child: Text(
-                    '${d.texto}: ${d.explicacion}',
-                    style: context.texts.bodySmall?.copyWith(height: 1.55),
+                  padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: Text(
+                          _letraDe(pregunta.opciones, d.id),
+                          style: context.texts.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${d.texto}. ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(text: d.explicacion),
+                            ],
+                          ),
+                          style: context.texts.bodyLarge?.copyWith(
+                            height: 1.5,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -525,7 +751,9 @@ class _Explicacion extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
+                  borderRadius: BorderRadius.circular(
+                    DesignTokens.radiusSm + 2,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -553,6 +781,12 @@ class _Explicacion extends StatelessWidget {
   }
 }
 
+String _letraDe(List<QuestionOption> opciones, String id) {
+  const letras = ['A', 'B', 'C', 'D'];
+  final i = opciones.indexWhere((o) => o.id == id);
+  return i >= 0 && i < letras.length ? letras[i] : '·';
+}
+
 class _MigasPregunta extends ConsumerWidget {
   const _MigasPregunta({required this.pregunta});
 
@@ -564,7 +798,15 @@ class _MigasPregunta extends ConsumerWidget {
       spacing: DesignTokens.space1 + 2,
       runSpacing: DesignTokens.space1 + 2,
       children: [
-        for (final texto in [pregunta.areaId!, ?pregunta.subtemaId])
+        // El nombre del temario, no el identificador: «medicina-infecciosos»
+        // es una clave interna. Sin catálogo cargado se cae al id, que al
+        // menos dice algo.
+        for (final texto in [
+          ref.watch(nodoProvider(pregunta.areaId!))?.nodo.nombre ??
+              pregunta.areaId!,
+          if (pregunta.subtemaId case final sub?)
+            ref.watch(nodoProvider(sub))?.nodo.nombre ?? sub,
+        ])
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: DesignTokens.space2 + 1,
@@ -588,7 +830,7 @@ class _MigasPregunta extends ConsumerWidget {
   }
 }
 
-class _BarraAccion extends StatelessWidget {
+class _BarraAccion extends ConsumerWidget {
   const _BarraAccion({
     required this.sessionId,
     required this.estado,
@@ -600,7 +842,7 @@ class _BarraAccion extends StatelessWidget {
   final SessionController control;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.space5,
@@ -615,21 +857,35 @@ class _BarraAccion extends StatelessWidget {
       child: estado.respondida
           ? Row(
               children: [
+                // Reportar es una acción secundaria y se ve así: con borde,
+                // icono y a un lado. Marcar para repaso vive arriba, en la
+                // cabecera; siguiente, en el botón principal. Tres acciones que
+                // no se pueden confundir (plan §6).
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _reportar(context),
+                  flex: 2,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _reportar(context, ref),
+                    icon: const Icon(Symbols.flag, size: 18),
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 52),
+                      minimumSize: const Size(0, 56),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space3,
+                      ),
                     ),
-                    child: const Text('Reportar'),
+                    label: const Text(
+                      'Reportar',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 const SizedBox(width: DesignTokens.space2 + 2),
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: EnamButton(
                     label: estado.esUltima ? 'Ver resultados' : 'Siguiente',
                     icon: estado.esUltima ? null : Symbols.arrow_forward,
+                    loading: estado.esUltima && estado.enviando,
                     onPressed: () async {
                       if (estado.esUltima) {
                         await control.enviar();
@@ -649,41 +905,75 @@ class _BarraAccion extends StatelessWidget {
               loading: estado.enviando,
               // Sin selección queda deshabilitado: seleccionar y confirmar son
               // pasos distintos a propósito.
-              onPressed: estado.seleccion == null ? null : control.responder,
+              onPressed: estado.seleccion == null
+                  ? null
+                  : () {
+                      // Una vibración corta, solo en la confirmación explícita
+                      // (plan §7). Seleccionar no vibra: es un paso reversible.
+                      HapticFeedback.lightImpact();
+                      control.responder();
+                    },
             ),
     );
   }
 
-  /// Reportar una pregunta con posible clave errónea. Alimenta RN-06.
-  Future<void> _reportar(BuildContext context) async {
-    final motivo = await showModalBottomSheet<String>(
+  /// Motivos de reporte, con el código que usará el endpoint cuando exista.
+  static const motivos = <(String codigo, String texto)>[
+    ('clave', 'La clave me parece equivocada'),
+    ('texto', 'Hay un error en el texto'),
+    ('imagen', 'La imagen no carga o no corresponde'),
+    ('explicacion', 'La explicación no se entiende'),
+  ];
+
+  /// Reportar una pregunta con posible clave errónea (RN-06).
+  ///
+  /// Va a `POST /questions/{id}/reports`. Si el servidor todavía no tiene el
+  /// endpoint (responde 404) o no se puede llegar a él, el reporte cae al
+  /// WhatsApp de soporte con el código de la pregunta y el motivo ya escritos:
+  /// así funciona igual antes y después de desplegar el backend, y ningún
+  /// reporte se pierde en silencio.
+  ///
+  /// Hubo un tiempo en que esto enseñaba «Gracias. Un editor va a revisarla.»
+  /// sin mandar nada a nadie. Lo que se dice ahora es lo que pasó: «Reporte
+  /// enviado» solo si el servidor respondió que lo recibió.
+  Future<void> _reportar(BuildContext context, WidgetRef ref) async {
+    final motivo = await showModalBottomSheet<(String, String)>(
       context: context,
       showDragHandle: true,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: DesignTokens.space4,
-                vertical: DesignTokens.space2,
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space4,
+                0,
+                DesignTokens.space4,
+                DesignTokens.space1,
               ),
               child: Text(
                 '¿Qué pasa con esta pregunta?',
-                style: context.texts.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: context.texts.titleMedium,
               ),
             ),
-            for (final motivo in const [
-              'La clave me parece equivocada',
-              'Hay un error en el texto',
-              'La imagen no carga o no corresponde',
-              'La explicación no se entiende',
-            ])
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space4,
+                0,
+                DesignTokens.space4,
+                DesignTokens.space2,
+              ),
+              child: Text(
+                'Lo enviamos a soporte con el código de la pregunta.',
+                style: context.texts.bodyMedium,
+              ),
+            ),
+            for (final m in motivos)
               ListTile(
-                title: Text(motivo),
-                onTap: () => Navigator.of(context).pop(motivo),
+                title: Text(m.$2),
+                trailing: const Icon(Symbols.chevron_right),
+                onTap: () => Navigator.of(context).pop(m),
               ),
             const SizedBox(height: DesignTokens.space2),
           ],
@@ -691,11 +981,50 @@ class _BarraAccion extends StatelessWidget {
       ),
     );
 
-    if (motivo != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gracias. Un editor va a revisarla.'),
-        ),
+    if (motivo == null || !context.mounted) return;
+
+    try {
+      await ref
+          .read(reportesRepositoryProvider)
+          .reportar(
+            preguntaId: estado.pregunta.id,
+            motivo: motivo.$1,
+            sessionId: sessionId,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(content: Text('Reporte enviado. Gracias por avisar.')),
+        );
+      return;
+    } on RateLimitFailure catch (e) {
+      // Varios seguidos: no es un fallo del canal, es esperar. Mandarlo por
+      // WhatsApp saltaría el límite que puso el servidor.
+      if (context.mounted) showErrorSnack(context, e.message);
+      return;
+    } on Failure {
+      // Backend sin el endpoint, sin red, caído: se sigue por WhatsApp.
+    }
+
+    if (!context.mounted) return;
+    await _reportarPorWhatsApp(context, motivo.$2);
+  }
+
+  /// El canal de respaldo: WhatsApp de soporte con el reporte escrito.
+  Future<void> _reportarPorWhatsApp(BuildContext context, String motivo) async {
+    final enlace = Contacto.soporte(
+      mensaje:
+          'Reporte de pregunta ${estado.pregunta.id}: $motivo. '
+          '(Sesión $sessionId)',
+    );
+    final abierto = await Contacto.abrir(enlace);
+
+    if (!abierto && context.mounted) {
+      showErrorSnack(
+        context,
+        'No pudimos enviar el reporte. Escríbenos a '
+        '${Contacto.soporteVisible} con el código ${estado.pregunta.id}.',
       );
     }
   }

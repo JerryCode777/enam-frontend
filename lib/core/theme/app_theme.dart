@@ -15,16 +15,25 @@ abstract final class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: isLight ? DesignTokens.brand : DesignTokens.brandLight,
-      onPrimary: isLight ? DesignTokens.onBrand : DesignTokens.textPrimaryLight,
+      // `primary` es la ACCIÓN, no la marca: rellena el botón principal y es el
+      // color de los textos y controles activos, así que tiene que leerse. El
+      // azul de marca decorativo se pide por su nombre en DesignTokens.
+      primary: isLight ? DesignTokens.actionLight : DesignTokens.actionDark,
+      onPrimary: isLight ? DesignTokens.onActionLight : DesignTokens.onActionDark,
       primaryContainer:
-          isLight ? DesignTokens.brandSubtle : DesignTokens.brandDark,
+          isLight ? DesignTokens.brandSubtle : DesignTokens.infoTintDark,
       onPrimaryContainer:
-          isLight ? DesignTokens.brandDark : DesignTokens.brandSubtle,
-      secondary: isLight ? DesignTokens.brandDark : DesignTokens.brandLight,
-      onSecondary: DesignTokens.onBrand,
-      error: DesignTokens.error,
-      onError: DesignTokens.onError,
+          isLight ? DesignTokens.actionLight : DesignTokens.brandLight,
+      secondary: isLight ? DesignTokens.actionLight : DesignTokens.actionDark,
+      onSecondary:
+          isLight ? DesignTokens.onActionLight : DesignTokens.onActionDark,
+      // `error` es el rojo que se LEE: textos de error de los campos, avisos.
+      // El rojo base (#EF4444) da 3,8:1 sobre blanco y se queda para bordes e
+      // iconos, que es donde lo usa DesignTokens.error directamente.
+      error: isLight
+          ? DesignTokens.errorOnTintLight
+          : DesignTokens.errorOnTintDark,
+      onError: isLight ? DesignTokens.onError : DesignTokens.errorTintDark,
       errorContainer: isLight
           ? DesignTokens.errorTintLight
           : DesignTokens.errorTintDark,
@@ -40,7 +49,7 @@ abstract final class AppTheme {
       surfaceContainerLowest:
           isLight ? DesignTokens.surfaceLight : DesignTokens.surfaceDark,
       surfaceContainer: isLight
-          ? DesignTokens.backgroundLight
+          ? DesignTokens.backgroundSecondaryLight
           : DesignTokens.backgroundSecondaryDark,
       surfaceContainerHighest: isLight
           ? DesignTokens.surfaceElevatedLight
@@ -76,7 +85,7 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
@@ -89,6 +98,9 @@ abstract final class AppTheme {
             ? DesignTokens.brandSubtle
             : DesignTokens.infoTintDark,
         elevation: 0,
+        // 64 y no los 80 de Material: con icono y etiqueta el objetivo táctil
+        // sigue por encima de 48, y la barra le quita menos al contenido.
+        height: 64,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final activa = states.contains(WidgetState.selected);
           return TextStyle(
@@ -155,9 +167,11 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           borderSide: BorderSide(color: colorScheme.outline),
         ),
+        // El borde del campo es lo que lo identifica como campo: va con el
+        // borde de control (≥3:1), no con el de separadores.
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -166,6 +180,10 @@ abstract final class AppTheme {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           borderSide: const BorderSide(color: DesignTokens.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          borderSide: const BorderSide(color: DesignTokens.error, width: 2),
         ),
       ),
 
@@ -220,13 +238,13 @@ abstract final class AppTheme {
       headlineLarge: base.headlineLarge?.copyWith(
         fontSize: DesignTokens.fontSize3xl,
         height: DesignTokens.lineHeightTight,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: scheme.onSurface,
       ),
       headlineMedium: base.headlineMedium?.copyWith(
         fontSize: DesignTokens.fontSize2xl,
         height: DesignTokens.lineHeightTight,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: scheme.onSurface,
       ),
       titleLarge: base.titleLarge?.copyWith(
@@ -235,10 +253,12 @@ abstract final class AppTheme {
         fontWeight: FontWeight.w700,
         color: scheme.onSurface,
       ),
+      // Subtítulos a 700; títulos a 800 (plan §3). Los párrafos se quedan en
+      // 400/600: la negrita en un párrafo entero cansa y deja de destacar.
       titleMedium: base.titleMedium?.copyWith(
         fontSize: DesignTokens.fontSizeLg,
         height: DesignTokens.lineHeightNormal,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: scheme.onSurface,
       ),
       bodyLarge: base.bodyLarge?.copyWith(
@@ -266,14 +286,14 @@ abstract final class AppTheme {
   /// Estilo para enunciados clínicos.
   ///
   /// El 90 % de las preguntas del ENAM son casos clínicos de varios párrafos, y
-  /// se leen cansado. Interlineado holgado y color de máximo contraste. Es la
+  /// se leen cansado. 17 px, interlineado 1,6 y color de máximo contraste. Es la
   /// decisión tipográfica más importante de la app: no la bajes.
   static TextStyle clinicalCase(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return TextStyle(
       fontFamily: DesignTokens.fontFamily,
-      fontSize: DesignTokens.fontSizeMd,
-      height: DesignTokens.lineHeightRelaxed,
+      fontSize: DesignTokens.fontSizeClinical,
+      height: DesignTokens.lineHeightClinical,
       color: scheme.onSurface,
       letterSpacing: 0.1,
     );

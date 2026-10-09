@@ -22,6 +22,15 @@ class TokenStorage {
   static const _refreshTokenKey = 'enam.refresh_token';
   static const _expiresAtKey = 'enam.expires_at';
 
+  /// El último perfil que devolvió el servidor, en JSON.
+  ///
+  /// Existe para abrir la app **sin señal**. Arrancar pide `GET /me`, y sin red
+  /// esa petición fallaba y la app se quedaba en el splash para siempre, justo
+  /// a quien había descargado áreas para estudiar sin conexión. Va aquí y no en
+  /// `shared_preferences` porque lleva el correo: es un dato personal y se
+  /// borra junto con la sesión.
+  static const _usuarioKey = 'enam.usuario';
+
   String? _cachedAccessToken;
   DateTime? _cachedExpiresAt;
 
@@ -79,6 +88,11 @@ class TokenStorage {
     return DateTime.now().add(margin).isAfter(expiresAt);
   }
 
+  Future<void> guardarUsuario(String json) =>
+      _storage.write(key: _usuarioKey, value: json);
+
+  Future<String?> leerUsuario() => _storage.read(key: _usuarioKey);
+
   Future<bool> hasSession() async =>
       (await readRefreshToken())?.isNotEmpty ?? false;
 
@@ -90,6 +104,7 @@ class TokenStorage {
       _storage.delete(key: _accessTokenKey),
       _storage.delete(key: _refreshTokenKey),
       _storage.delete(key: _expiresAtKey),
+      _storage.delete(key: _usuarioKey),
     ]);
   }
 }

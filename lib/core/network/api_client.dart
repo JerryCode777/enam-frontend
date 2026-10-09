@@ -14,6 +14,10 @@ import 'auth_interceptor.dart';
 /// - Traducir cualquier `DioException` a un [Failure] con mensaje en español.
 ///
 /// Los repositorios usan esta clase; nunca crean su propio `Dio`.
+/// `ios` o `android`, como la nombra el contrato de eventos.
+String get plataformaDeLaApp =>
+    defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
+
 class ApiClient {
   ApiClient({
     required TokenStorage tokenStorage,
@@ -24,13 +28,12 @@ class ApiClient {
     // Cliente separado para el refresh: sin AuthInterceptor, para no recursar.
     final refreshClient = Dio(_baseOptions);
 
-    _dio.interceptors.add(
-      AuthInterceptor(
-        tokenStorage: _tokens,
-        refreshClient: refreshClient,
-        onSessionExpired: onSessionExpired,
-      ),
+    _auth = AuthInterceptor(
+      tokenStorage: _tokens,
+      refreshClient: refreshClient,
+      onSessionExpired: onSessionExpired,
     );
+    _dio.interceptors.add(_auth);
 
     if (AppConfig.logHttp) {
       _dio.interceptors.add(
@@ -48,6 +51,11 @@ class ApiClient {
   }
 
   late final Dio _dio;
+  late final AuthInterceptor _auth;
+
+  /// Renueva el access token con el mismo candado que las demás peticiones.
+  /// `null` si la sesión ya no es válida.
+  Future<String?> renovarSesion() => _auth.renovar();
   final TokenStorage _tokens;
 
   /// Se dispara cuando la sesión expira sin poder renovarse.
@@ -58,6 +66,9 @@ class ApiClient {
     connectTimeout: AppConfig.connectTimeout,
     receiveTimeout: AppConfig.receiveTimeout,
     contentType: Headers.jsonContentType,
+    // De qué app viene: el servidor lo guarda como `plataforma_alta` al crear
+    // una cuenta (contrato de eventos). No identifica a nadie.
+    headers: {'X-Plataforma': plataformaDeLaApp},
     // Manejamos los códigos de error nosotros, en _toFailure.
     validateStatus: (status) => status != null && status < 400,
   );
@@ -168,9 +179,12 @@ class ApiClient {
         message ?? 'Tu sesión expiró. Vuelve a iniciar sesión.',
         code,
       ),
+      // Con sus `details`: el 403 del gratis limitado dice qué función o
+      // cuándo vuelve el cupo, y eso elige el muro (`motivoDelMuro`).
       403 => ForbiddenFailure(
         message ?? 'Tu plan actual no incluye este contenido.',
         code,
+        _details(response?.data),
       ),
       404 => NotFoundFailure(message ?? 'No encontramos lo que buscabas.'),
       429 => RateLimitFailure(
@@ -209,6 +223,11 @@ class ApiClient {
       fieldErrors: fieldErrors,
     );
   }
+
+  Object? _details(Object? body) => switch (body) {
+    {'error': {'details': final Object d}} => d,
+    _ => null,
+  };
 
   Duration? _retryAfter(Response<dynamic>? response) {
     final header = response?.headers.value('retry-after');

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/analitica/analitica.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
@@ -70,6 +71,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (_loading || !_acepta || !_validate()) return;
 
     setState(() => _loading = true);
+    ref
+        .read(analiticaProvider)
+        .registrar(
+          Evento.signupStarted,
+          // El contrato lo llama `metodo` (antes `origen`). En la app el
+          // formulario es solo el de correo; el alta con Google o Apple la
+          // cuenta el servidor, que es quien sabe si la cuenta es nueva.
+          propiedades: {'metodo': 'correo'},
+        );
     try {
       await ref
           .read(authRepositoryProvider)

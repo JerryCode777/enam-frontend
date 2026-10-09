@@ -10,12 +10,15 @@ import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/session_models.dart';
 
 /// Los simulacros nacionales programados (RF-19).
@@ -190,6 +193,7 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
       // cuesta minutos a quien llega justo.
       final sesion = participacion.sesion;
       if (sesion != null) {
+        ref.sonar(Sonido.empiezaQuiz);
         context.irA(Routes.simulacroSessionOf(sesion.id));
         return;
       }
@@ -200,7 +204,9 @@ class _NationalMockScreenState extends ConsumerState<NationalMockScreen> {
         ),
       );
     } on Failure catch (e) {
-      if (mounted) showErrorSnack(context, e.message);
+      if (mounted && !atenderFaltaDeAcceso(context, ref, e)) {
+        showErrorSnack(context, e.message);
+      }
     } finally {
       if (mounted) setState(() => _participando = false);
     }

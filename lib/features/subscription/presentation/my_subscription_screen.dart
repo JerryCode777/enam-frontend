@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/analitica/analitica.dart';
+import '../../../core/analitica/evento_al_aparecer.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -39,16 +42,22 @@ class MySubscriptionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sub = ref.watch(subscriptionProvider).value;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          const GradientHeader(titulo: 'Mi suscripción'),
-          Expanded(
-            child: sub == null
-                ? const _SinSuscripcion()
-                : _Contenido(sub: sub),
-          ),
-        ],
+    // Esta pantalla presenta el plan y su renovación: cuenta como vista de
+    // planes, desde el perfil.
+    return EventoAlAparecer(
+      evento: Evento.plansViewed,
+      propiedades: const {'pantalla': 'perfil'},
+      child: Scaffold(
+        body: Column(
+          children: [
+            const GradientHeader(titulo: 'Mi suscripción'),
+            Expanded(
+              child: sub == null
+                  ? const _SinSuscripcion()
+                  : _Contenido(sub: sub),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -145,7 +154,9 @@ class _TarjetaPlan extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color.tint,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
+                    borderRadius: BorderRadius.circular(
+                      DesignTokens.radiusSm + 2,
+                    ),
                   ),
                   child: Text(
                     etiqueta,
@@ -175,10 +186,14 @@ class _TarjetaPlan extends StatelessWidget {
               etiqueta: 'Renovación',
               valor: switch (sub.estado) {
                 SubscriptionStatus.cancelada => 'Cancelada',
-                SubscriptionStatus.activa || SubscriptionStatus.enGracia =>
-                  sub.origen == SubscriptionOrigin.culqi
-                      ? 'Automática'
-                      : 'Manual',
+                // Las de App Store se renuevan solas (lo dice la letra
+                // pequeña de la compra): decir «Manual» ahí era falso.
+                SubscriptionStatus.activa ||
+                SubscriptionStatus.enGracia => switch (sub.origen) {
+                  SubscriptionOrigin.culqi => 'Automática',
+                  SubscriptionOrigin.apple => 'Automática, por App Store',
+                  _ => 'Manual',
+                },
                 _ => 'Sin renovación',
               },
             ),
@@ -207,11 +222,18 @@ class _Fila extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(etiqueta, style: context.texts.bodyMedium)),
-          Text(
-            valor,
-            style: context.texts.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: context.scheme.onSurface,
+          const SizedBox(width: DesignTokens.space3),
+          // Flexible: un valor largo («Automática, por App Store») se parte
+          // en dos renglones en vez de desbordar.
+          Flexible(
+            flex: 2,
+            child: Text(
+              valor,
+              textAlign: TextAlign.end,
+              style: context.texts.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: context.scheme.onSurface,
+              ),
             ),
           ),
         ],
@@ -246,7 +268,29 @@ class _AccionesState extends ConsumerState<_Acciones> {
         // sitio para que no se olvide al añadir una pantalla.
         const OpcionesDePago(),
 
-        if (_puedeCancelar) ...[
+        // Una suscripción de App Store solo la puede cancelar Apple. El botón
+        // de aquí llama a nuestro servidor, que no detiene ese cobro: quien lo
+        // pulsara creería haber cancelado y Apple seguiría cobrando. Para esas
+        // se dice dónde se gestiona, con el enlace de Apple.
+        if (_puedeCancelar &&
+            widget.sub.origen == SubscriptionOrigin.apple) ...[
+          const SizedBox(height: DesignTokens.space4),
+          Text(
+            'La renovación la gestiona Apple. Para cancelarla, ve a Ajustes '
+            'de tu iPhone → tu nombre → Suscripciones.',
+            textAlign: TextAlign.center,
+            style: context.texts.bodyMedium,
+          ),
+          Center(
+            child: TextButton(
+              onPressed: () => launchUrl(
+                Uri.parse('https://apps.apple.com/account/subscriptions'),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: const Text('Abrir mis suscripciones de Apple'),
+            ),
+          ),
+        ] else if (_puedeCancelar) ...[
           const SizedBox(height: DesignTokens.space4),
           Center(
             child: TextButton(

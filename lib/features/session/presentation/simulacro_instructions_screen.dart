@@ -7,13 +7,15 @@ import '../../../core/domain/blueprint.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/sonido/proveedor_sonidos.dart';
+import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
-import '../../subscription/presentation/access_ended_screen.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 
 /// Pantalla 5.2 — antes de empezar el simulacro.
 ///
@@ -166,16 +168,17 @@ class _SimulacroInstructionsScreenState
       // D-02: el reloj de las 24 h arranca aquí también.
       await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
+      // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
+      ref.sonar(Sonido.empiezaQuiz);
       if (mounted) {
         context.pushReplacement(Routes.simulacroSessionOf(session.id));
       }
     } on ForbiddenFailure catch (e) {
       // Empezar un simulacro también arranca el reloj de la prueba (D-02), así
-      // que este 403 puede ser la prueba venciendo justo aquí.
+      // que este 403 puede ser la prueba venciendo justo aquí. En gratis es
+      // `FUNCION_PREMIUM`: el muro, no un error.
       if (!mounted) return;
-      if (e.requiereSuscripcion) {
-        irAlPago(ref, context);
-      } else {
+      if (!atenderFaltaDeAcceso(context, ref, e)) {
         showErrorSnack(context, e.message);
       }
     } on Failure catch (e) {

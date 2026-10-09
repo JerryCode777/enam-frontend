@@ -11,11 +11,31 @@ import 'package:flutter/material.dart';
 abstract final class DesignTokens {
   // ==================== MARCA ====================
 
-  /// Azul-teal médico. Color de marca y de acción primaria.
+  /// Azul-teal médico. Color de marca **decorativo**: iconos grandes,
+  /// ilustración, portada. Sobre blanco da 3,1:1, así que nunca va como color
+  /// de texto pequeño ni como fondo de un texto blanco. Para eso está [action].
   static const Color brand = Color(0xFF2E9BD0);
   static const Color brandDark = Color(0xFF2382B5);
   static const Color brandLight = Color(0xFF6FC2E6);
   static const Color brandSubtle = Color(0xFFE3F0FB);
+
+  // ==================== ACCIÓN PRIMARIA ====================
+  //
+  // El relleno del botón principal y el texto de marca que se puede leer. Antes
+  // el botón era un degradado que terminaba en [brand], y el texto blanco caía a
+  // 3,1:1 en ese extremo. Ahora es un color plano que cumple AA en los dos
+  // temas, con los mismos valores que la web (diseno/TOKENS.md).
+
+  /// Claro: blanco encima da 6,35:1.
+  static const Color actionLight = Color(0xFF176497);
+  static const Color actionPressedLight = Color(0xFF124F78);
+  static const Color onActionLight = Color(0xFFFFFFFF);
+
+  /// Oscuro: el relleno se aclara y el texto pasa a azul marino (7,8:1). Un
+  /// azul medio con texto blanco se perdía sobre el fondo marino.
+  static const Color actionDark = Color(0xFF6FC2E6);
+  static const Color actionPressedDark = Color(0xFF58B4DD);
+  static const Color onActionDark = Color(0xFF0A2540);
 
   // ==================== ESTADOS SEMÁNTICOS ====================
   //
@@ -50,10 +70,10 @@ abstract final class DesignTokens {
   static const Color warningTintDark = Color(0xFF33240A);
 
   static const Color info = brand;
-  static const Color infoOnTintLight = brandDark;
+  static const Color infoOnTintLight = actionLight; // 5,5:1 sobre el tinte
   static const Color infoOnTintDark = brandLight;
   static const Color infoTintLight = brandSubtle;
-  static const Color infoTintDark = Color(0xFF2E4A78);
+  static const Color infoTintDark = Color(0xFF2A4570); // 4,8:1 con su texto
 
   // ==================== GRADIENTES ====================
   //
@@ -74,23 +94,38 @@ abstract final class DesignTokens {
   ];
   static const List<double> headerGradientStops = [0.0, 0.55, 1.0];
 
-  /// Botones principales, horizontal. Igual en ambos temas.
+  /// Superficies de marca pulsables que llevan texto blanco (la tarjeta del
+  /// duelo, por ejemplo). **No** es el relleno del botón principal: ese es
+  /// [actionLight] plano. Las dos paradas dejan el blanco por encima de 4,5:1
+  /// en todo el recorrido.
   static const List<Color> buttonGradient = [
-    Color(0xFF1D5E92),
-    Color(0xFF2E9BD0),
+    Color(0xFF124F78),
+    Color(0xFF176497),
   ];
 
   // ==================== SUPERFICIES — TEMA CLARO ====================
 
-  static const Color backgroundLight = Color(0xFFF3F4F6);
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceElevatedLight = Color(0xFFFAFAFA);
-  static const Color borderLight = Color(0xFFC8C8C8);
-  static const Color borderSubtleLight = Color(0xFFE5E5E5);
+  // Fondo con un matiz frío y texto azul marino, en vez de gris neutro y casi
+  // negro: es la dirección visual del rediseño (plan §3). Los contrastes están
+  // medidos contra el fondo, que es donde más texto cae.
 
-  static const Color textPrimaryLight = Color(0xFF0A0F1C);
-  static const Color textSecondaryLight = Color(0xFF6B7280);
-  static const Color textTertiaryLight = Color(0xFF9CA3AF);
+  static const Color backgroundLight = Color(0xFFF5F7FA);
+
+  /// Pistas de barra y fondos hundidos.
+  static const Color backgroundSecondaryLight = Color(0xFFEAEFF5);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceElevatedLight = Color(0xFFFAFBFD);
+
+  /// Borde de **controles** (campos, casillas): 3,3:1 sobre el fondo, el mínimo
+  /// de WCAG para distinguir un componente. El de antes daba 1,7:1.
+  static const Color borderLight = Color(0xFF7A8BA0);
+
+  /// Separadores y contorno de tarjetas. Decorativo, no identifica nada.
+  static const Color borderSubtleLight = Color(0xFFDCE4ED);
+
+  static const Color textPrimaryLight = Color(0xFF102338); // 14,8:1
+  static const Color textSecondaryLight = Color(0xFF526479); // 5,7:1
+  static const Color textTertiaryLight = Color(0xFF627286); // 4,6:1
 
   // ==================== SUPERFICIES — TEMA OSCURO ====================
   //
@@ -102,15 +137,17 @@ abstract final class DesignTokens {
   static const Color backgroundSecondaryDark = Color(0xFF2B3D5C);
   static const Color surfaceDark = Color(0xFF22334F);
   static const Color surfaceElevatedDark = Color(0xFF2B3D5C);
-  static const Color borderDark = Color(0xFF4A6693);
+  /// Borde de controles: 3,7:1 sobre la superficie (el de antes, 2,2:1).
+  static const Color borderDark = Color(0xFF6F8BBA);
   static const Color borderSubtleDark = Color(0xFF374E75);
 
   static const Color textPrimaryDark = Color(0xFFF3F4F6);
   static const Color textSecondaryDark = Color(0xFFB8C2E0);
-  static const Color textTertiaryDark = Color(0xFF8A94B8);
+  static const Color textTertiaryDark = Color(0xFFA0AACB); // 5,5:1
 
   // ==================== TEXTO SOBRE COLOR ====================
 
+  /// Texto sobre superficies de marca oscuras (portadas, [buttonGradient]).
   static const Color onBrand = Color(0xFFFFFFFF);
   static const Color onSuccess = Color(0xFFFFFFFF);
   static const Color onError = Color(0xFFFFFFFF);
@@ -131,7 +168,12 @@ abstract final class DesignTokens {
 
   static const double lineHeightTight = 1.25; // títulos
   static const double lineHeightNormal = 1.5; // cuerpo
-  static const double lineHeightRelaxed = 1.625; // enunciados clínicos
+  static const double lineHeightRelaxed = 1.6; // párrafos largos
+
+  /// Enunciados clínicos: 17 px con interlineado 1,6 (plan §3). Es el texto que
+  /// más se lee en la app, casi siempre cansado y en párrafos largos.
+  static const double fontSizeClinical = 17;
+  static const double lineHeightClinical = 1.6;
 
   // ==================== ESPACIADO (múltiplos de 4) ====================
 
@@ -146,13 +188,22 @@ abstract final class DesignTokens {
   static const double space10 = 40;
   static const double space12 = 48;
   static const double space16 = 64;
+  static const double space24 = 96;
 
   // ==================== FORMA ====================
 
   static const double radiusSm = 8;
+
+  /// Controles: botones, campos, selectores.
   static const double radiusMd = 12;
+
+  /// Tarjetas.
   static const double radiusLg = 16;
+
+  /// Contenedores destacados: el bloque de siguiente acción, las hojas.
   static const double radiusXl = 24;
+
+  /// Píldoras para etiquetas cortas.
   static const double radiusFull = 999;
 
   // ==================== ACCESIBILIDAD ====================
@@ -165,7 +216,9 @@ abstract final class DesignTokens {
 
   // ==================== MOVIMIENTO ====================
 
-  static const Duration durationFast = Duration(milliseconds: 150);
-  static const Duration durationNormal = Duration(milliseconds: 250);
-  static const Duration durationSlow = Duration(milliseconds: 400);
+  // Los valores viven en `Motion`; se repiten aquí solo para la tabla de
+  // correspondencia con la web.
+  static const Duration durationFast = Duration(milliseconds: 140);
+  static const Duration durationNormal = Duration(milliseconds: 220);
+  static const Duration durationSlow = Duration(milliseconds: 350);
 }

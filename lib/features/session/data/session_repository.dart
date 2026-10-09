@@ -1,5 +1,6 @@
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/domain/blueprint.dart';
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/mock/mock_data.dart';
 import '../../../core/network/api_client.dart';
@@ -573,8 +574,8 @@ class MockSessionRepository implements SessionRepository {
   Future<List<NationalMock>> nationalMocks() async {
     await Future<void>.delayed(_delay);
 
-    final ahora = DateTime.now();
-    final inicio = ahora.add(const Duration(days: 6, hours: 3));
+    // Por el reloj de la app: las capturas lo congelan.
+    final inicio = ahora().add(const Duration(days: 6, hours: 3));
 
     return [
       NationalMock(

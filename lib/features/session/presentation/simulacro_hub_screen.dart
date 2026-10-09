@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -10,17 +11,22 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
+import '../../../shared/widgets/estudio.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/state_banner.dart';
 import '../../stats/domain/stats_models.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../subscription/presentation/widgets/etiqueta_premium.dart';
+import '../domain/session_models.dart';
+import 'national_mock_screen.dart';
 
 /// Pantallas 5.1 y 5.9 — hub de simulacros e historial.
 ///
 /// Individual autogenerado (RF-16) y nacional programado (RF-19).
 ///
-/// El de muestra de 40 preguntas **ya no es la puerta de un plan gratuito**:
-/// ese plan no existe (SSD-ENAM-002 §1). Quien llega aquí tiene acceso —el
-/// router bloquea a quien no— así que las dos versiones se ofrecen por lo que
-/// son, y la corta es para medirse en poco tiempo.
+/// Los simulacros son Premium. En gratis la pantalla se ve igual —es la vista
+/// previa—, cada tarjeta lleva su etiqueta «Premium» y empezar abre el muro.
 class SimulacroHubScreen extends ConsumerWidget {
   const SimulacroHubScreen({super.key});
 
@@ -61,12 +67,16 @@ class SimulacroHubScreen extends ConsumerWidget {
   }
 }
 
-class _TarjetaCompleto extends StatelessWidget {
+class _TarjetaCompleto extends ConsumerWidget {
   const _TarjetaCompleto();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
+    // Un simulacro a medias se continúa; no se empieza otro encima.
+    final retomar = ref.watch(resumableSessionProvider);
+    final aMedias = retomar != null && retomar.esSimulacro ? retomar : null;
+    final gratis = ref.watch(cupoGratisProvider) != null;
 
     return FadeUp(
       child: Card(
@@ -75,7 +85,20 @@ class _TarjetaCompleto extends StatelessWidget {
           side: BorderSide(color: context.scheme.primary, width: 2),
         ),
         child: InkWell(
-          onTap: () => context.irA(Routes.simulacroInstructions),
+          // `go` para continuar: la sesión de simulacro vive dentro de las
+          // pestañas y apilarla duplicaría el Navigator.
+          //
+          // En gratis, uno a medias (de la prueba) se deja abrir: si el
+          // servidor ya no lo permite, el muro sale desde la sesión.
+          onTap: () => switch ((aMedias, gratis)) {
+            (final a?, _) => context.go(Routes.simulacroSessionOf(a.sessionId)),
+            (null, true) => abrirMuro(
+              context,
+              ref,
+              const FuncionDePago(FuncionPremium.simulacro),
+            ),
+            (null, false) => context.irA(Routes.simulacroInstructions),
+          },
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4 + 2),
@@ -101,6 +124,19 @@ class _TarjetaCompleto extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: DesignTokens.space2),
+                if (aMedias == null && gratis)
+                  const EtiquetaPremium()
+                else
+                  EtiquetaEstado(
+                    texto: aMedias != null
+                        ? 'A medias · continuar en la ${aMedias.detalle.toLowerCase()}'
+                        : 'Comenzar',
+                    tipo: aMedias != null
+                        ? BannerKind.warning
+                        : BannerKind.info,
+                    icono: aMedias != null ? Symbols.play_circle : Symbols.flag,
+                  ),
                 const SizedBox(height: DesignTokens.space3),
                 Text(
                   '${Blueprint.totalQuestions} preguntas con la proporción '
@@ -109,10 +145,6 @@ class _TarjetaCompleto extends StatelessWidget {
                   'vigesimal y desglose por área.',
                   style: context.texts.bodyMedium?.copyWith(height: 1.55),
                 ),
-                // Sin etiqueta "Parte de Premium" ni candado: los límites del
-                // plan nunca se anuncian (RP-01), y con el modelo de la v2 aquí
-                // no hay límite que anunciar — quien ve esta pantalla tiene
-                // acceso.
               ],
             ),
           ),
@@ -127,12 +159,18 @@ class _TarjetaMuestra extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final gratis = ref.watch(cupoGratisProvider) != null;
     return FadeUp(
       index: 1,
       child: Card(
         child: InkWell(
-          onTap: () =>
-              context.irA('${Routes.simulacroInstructions}?muestra=1'),
+          onTap: () => gratis
+              ? abrirMuro(
+                  context,
+                  ref,
+                  const FuncionDePago(FuncionPremium.simulacro),
+                )
+              : context.irA('${Routes.simulacroInstructions}?muestra=1'),
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
@@ -148,11 +186,9 @@ class _TarjetaMuestra extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      _TituloConEtiqueta(
                         'Simulacro de muestra',
-                        style: context.texts.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        premium: gratis,
                       ),
                       Text(
                         '${Blueprint.sampleExamQuestions} preguntas · para '
@@ -176,12 +212,45 @@ class _TarjetaMuestra extends ConsumerWidget {
   }
 }
 
-class _TarjetaNacional extends StatelessWidget {
+/// El simulacro nacional, con los datos de la convocatoria real.
+///
+/// Llevaba escrito «dom 16 ago, 8:00 a.m. · 1,847 participantes»: una fecha
+/// y una cifra de inscritos que no salían de ningún sitio, visibles aunque no
+/// hubiera convocatoria. Ahora salen de `GET /mock-exams`, y sin convocatoria
+/// se dice que no la hay.
+class _TarjetaNacional extends ConsumerWidget {
   const _TarjetaNacional();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final states = context.states;
+    final evento = ref.watch(nacionalProvider);
+    // En gratis se abre igual: la convocatoria es la vista previa, y
+    // inscribirse es lo que abre el muro.
+    final gratis = ref.watch(cupoGratisProvider) != null;
+
+    final detalle = evento == null
+        ? 'No hay una convocatoria programada por ahora.'
+        : '${DateFormat("EEE d MMM", 'es').format(evento.inicio)}, '
+              '${DateFormat('h:mm', 'es').format(evento.inicio)} '
+              '${evento.inicio.hour < 12 ? "a.m." : "p.m."} · '
+              '${NumberFormat.decimalPattern('es_PE').format(evento.participantes)} '
+              'inscritos';
+
+    // Lo que el botón haría, dicho según el estado real (plan §6).
+    final (estado, tipo) = switch (evento) {
+      null => (null, BannerKind.info),
+      final e when e.estado == NationalMockStatus.enCurso => (
+        'En curso · entrar',
+        BannerKind.warning,
+      ),
+      final e when e.inscrito => ('Ya estás inscrito', BannerKind.success),
+      final e when e.estado == NationalMockStatus.programado => (
+        'Inscribirme',
+        BannerKind.info,
+      ),
+      _ => ('Ver resultados', BannerKind.info),
+    };
 
     return FadeUp(
       index: 2,
@@ -204,16 +273,12 @@ class _TarjetaNacional extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Simulacro Nacional',
-                        style: context.texts.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'dom 16 ago, 8:00 a.m. · 1,847 participantes',
-                        style: context.texts.bodySmall,
-                      ),
+                      _TituloConEtiqueta('Simulacro Nacional', premium: gratis),
+                      Text(detalle, style: context.texts.bodyMedium),
+                      if (estado != null) ...[
+                        const SizedBox(height: DesignTokens.space1 + 2),
+                        EtiquetaEstado(texto: estado, tipo: tipo),
+                      ],
                     ],
                   ),
                 ),
@@ -227,6 +292,28 @@ class _TarjetaNacional extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TituloConEtiqueta extends StatelessWidget {
+  const _TituloConEtiqueta(this.titulo, {required this.premium});
+
+  final String titulo;
+  final bool premium;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: DesignTokens.space2,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          titulo,
+          style: context.texts.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        if (premium) const EtiquetaPremium(),
+      ],
     );
   }
 }

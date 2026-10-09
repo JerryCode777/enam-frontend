@@ -1,4 +1,7 @@
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/error/failure.dart';
+import '../../universidades/data/universidades_repository.dart';
+import '../../universidades/domain/universidad.dart';
 import '../domain/auth_models.dart';
 import 'auth_repository.dart';
 
@@ -72,11 +75,14 @@ class MockAuthRepository implements AuthRepository {
       email: email,
       nombre: 'Estudiante de prueba',
       emailVerificado: email != 'sinverificar@enam.pe',
-      universidad: email == 'nuevo2@enam.pe' ? null : 'UNSA',
+      universidad: email == 'nuevo2@enam.pe'
+          ? null
+          : 'Universidad Nacional de San Agustín de Arequipa',
+      universidadId: email == 'nuevo2@enam.pe' ? null : 'unsa',
       condicion: email == 'nuevo2@enam.pe' ? null : StudentCondition.interno,
       fechaObjetivo: email == 'nuevo2@enam.pe'
           ? null
-          : DateTime.now().add(const Duration(days: 96)),
+          : ahora().add(const Duration(days: 96)),
     );
   }
 
@@ -201,6 +207,7 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<User> updateProfile({
     String? nombre,
+    String? universidadId,
     String? universidad,
     StudentCondition? condicion,
     DateTime? fechaObjetivo,
@@ -211,9 +218,21 @@ class MockAuthRepository implements AuthRepository {
     if (user == null) {
       throw const UnauthorizedFailure();
     }
+    // Como el servidor: con un id del catálogo, el nombre oficial; con
+    // «otra», el texto escrito y sin id.
+    final delCatalogo = MockUniversidadesRepository.catalogoDeEjemplo
+        .where((u) => u.id == universidadId)
+        .firstOrNull;
     return _current = user.copyWith(
       nombre: nombre ?? user.nombre,
-      universidad: universidad ?? user.universidad,
+      universidadId: universidadId == null
+          ? user.universidadId
+          : delCatalogo?.id,
+      universidad: switch (universidadId) {
+        null => user.universidad,
+        idOtraUniversidad => universidad ?? user.universidad,
+        _ => delCatalogo?.nombre ?? user.universidad,
+      },
       condicion: condicion ?? user.condicion,
       fechaObjetivo: fechaObjetivo ?? user.fechaObjetivo,
       ocultoEnRanking: ocultoEnRanking ?? user.ocultoEnRanking,

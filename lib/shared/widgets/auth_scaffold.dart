@@ -5,12 +5,14 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/state_colors.dart';
-import 'brand_gradient.dart';
+import 'fondo_claro.dart';
 
 /// Andamiaje común de las pantallas de acceso (1.3 a 1.8).
 ///
-/// Todas comparten la misma composición: degradado de marca a pantalla
-/// completa, cabecera blanca encima y una tarjeta flotante con el formulario.
+/// Todas comparten la misma composición: el fondo claro de la app con dos
+/// halos de marca, la cabecera en tinta y una tarjeta con el formulario. Era
+/// un degradado azul marino a pantalla completa con la cabecera en blanco; el
+/// producto pidió la primera impresión en el tema claro, igual que la web.
 /// Está en un widget y no copiado seis veces porque el bloque entero ya cambió
 /// de lenguaje visual una vez, y volverá a cambiar.
 class AuthScaffold extends StatelessWidget {
@@ -48,7 +50,7 @@ class AuthScaffold extends StatelessWidget {
     final hayCaja = mostrarVolver || iconoCabecera != null;
 
     return Scaffold(
-      body: BrandGradient(
+      body: FondoClaro(
         child: SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -87,9 +89,9 @@ class AuthScaffold extends StatelessWidget {
                         const SizedBox(height: DesignTokens.space1 + 2),
                         Text(
                           subtitulo!,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 15,
-                            color: Colors.white.withValues(alpha: 0.85),
+                            color: DesignTokens.textSecondaryLight,
                           ),
                         ),
                       ],
@@ -118,7 +120,7 @@ class AuthScaffold extends StatelessWidget {
     fontSize: tamanoTitulo,
     fontWeight: FontWeight.w800,
     height: 1.25,
-    color: Colors.white,
+    color: DesignTokens.textPrimaryLight,
   );
 
   /// Vuelve atrás, o al login si no hay a dónde volver.
@@ -174,11 +176,14 @@ class _AuthCardState extends State<AuthCard>
       decoration: BoxDecoration(
         color: context.scheme.surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-        boxShadow: const [
+        border: Border.all(color: context.scheme.outlineVariant),
+        // Sombra suave: sobre el fondo claro, la de antes (pensada para el
+        // azul marino) manchaba.
+        boxShadow: [
           BoxShadow(
-            color: Color(0x38000000),
-            blurRadius: 36,
-            offset: Offset(0, 16),
+            color: const Color(0xFF102338).withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -208,7 +213,7 @@ class _AuthCardState extends State<AuthCard>
   }
 }
 
-/// Caja translúcida con un icono, sobre el degradado.
+/// Caja con un icono junto al título: superficie con borde, en tinta.
 class _CajaVidrio extends StatelessWidget {
   const _CajaVidrio({required this.icono, this.onTap});
 
@@ -220,11 +225,19 @@ class _CajaVidrio extends StatelessWidget {
     final caja = Container(
       padding: const EdgeInsets.all(DesignTokens.space3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        color: DesignTokens.surfaceLight,
+        border: Border.all(color: DesignTokens.borderSubtleLight),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(icono, size: 22, color: Colors.white),
+      // La flecha de volver, en tinta; el icono de la pantalla, en el color
+      // de acción.
+      child: Icon(
+        icono,
+        size: 22,
+        color: icono == Symbols.arrow_back
+            ? DesignTokens.textPrimaryLight
+            : DesignTokens.actionLight,
+      ),
     );
 
     if (onTap == null) return caja;

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/design_tokens.dart';
 
-/// Botón principal de la app: 56 px de alto, radio completo, con degradado.
+/// Botón principal de la app: 56 px de alto, radio de control y relleno plano
+/// del color de acción.
 ///
-/// El degradado es del diseño. Se pinta con un `Ink` bajo el botón en vez de un
-/// `Container` encima, para que el efecto de toque de Material siga viéndose.
+/// Ya no lleva degradado. El de antes terminaba en el azul de marca, y ahí el
+/// texto blanco bajaba a 3,1:1; un botón que se lee a medias en su mitad
+/// derecha no es un botón principal. El color plano cumple AA en los dos temas
+/// y es el mismo que usa la web (diseno/TOKENS.md).
 ///
 /// Cuando [loading] es `true` queda deshabilitado y muestra un spinner, para que
 /// no se pueda enviar el mismo formulario dos veces.
@@ -30,11 +33,17 @@ class EnamButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+
     final child = loading
-        ? const SizedBox(
+        ? SizedBox(
             width: 22,
             height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: scheme.onPrimary,
+            ),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
@@ -57,56 +66,40 @@ class EnamButton extends StatelessWidget {
             ],
           );
 
-    final habilitado = onPressed != null && !loading;
-    final radio = BorderRadius.circular(DesignTokens.radiusXl + 4);
+    final presionado = oscuro
+        ? DesignTokens.actionPressedDark
+        : DesignTokens.actionPressedLight;
 
     final button = FilledButton(
+      // Cargando cuenta como deshabilitado, pero se pinta con el color de
+      // acción: el spinner tiene que verse sobre el mismo fondo que la
+      // etiqueta a la que sustituye.
       onPressed: loading ? null : onPressed,
       style: FilledButton.styleFrom(
         // El ancho completo lo da el SizedBox de abajo cuando expanded es
         // true; aquí solo se fija la altura, con un mínimo finito.
         minimumSize: const Size(64, 56),
-        shape: RoundedRectangleBorder(borderRadius: radio),
-        // Transparente para dejar ver el degradado del Ink de abajo. Cuando
-        // está deshabilitado se deja el color del tema, que ya lo atenúa.
-        backgroundColor: habilitado ? Colors.transparent : null,
-        shadowColor: Colors.transparent,
-        foregroundColor: habilitado ? Colors.white : null,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: DesignTokens.fontFamily,
+          fontSize: DesignTokens.fontSizeMd,
+          fontWeight: FontWeight.w700,
+        ),
       ).copyWith(
         elevation: const WidgetStatePropertyAll(0),
-        // Sin esto, el relleno transparente deja ver el fondo al presionar.
-        overlayColor: WidgetStatePropertyAll(
-          Colors.white.withValues(alpha: 0.12),
-        ),
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (loading) return scheme.primary;
+          if (states.contains(WidgetState.disabled)) return null;
+          if (states.contains(WidgetState.pressed)) return presionado;
+          return scheme.primary;
+        }),
       ),
       child: child,
     );
 
-    // El degradado va en un Material propio y no en un `Ink` suelto.
-    //
-    // `Ink` pinta su decoración sobre el Material más cercano hacia arriba, así
-    // que si el botón vive dentro de un Container con fondo —como las barras de
-    // acción de abajo— ese fondo se dibuja encima y el degradado desaparece: el
-    // botón queda invisible. Con un Material propio, la decoración se pinta en
-    // él y siempre queda por delante.
-    final conDegradado = habilitado
-        ? Material(
-            type: MaterialType.transparency,
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: DesignTokens.buttonGradient,
-                ),
-                borderRadius: radio,
-              ),
-              child: button,
-            ),
-          )
-        : button;
-
-    return expanded
-        ? SizedBox(width: double.infinity, child: conDegradado)
-        : conDegradado;
+    return expanded ? SizedBox(width: double.infinity, child: button) : button;
   }
 }
 
@@ -134,7 +127,13 @@ class EnamOutlinedButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           minimumSize: Size(64, height),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(height / 2),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          ),
+          side: BorderSide(color: Theme.of(context).colorScheme.outline),
+          textStyle: const TextStyle(
+            fontFamily: DesignTokens.fontFamily,
+            fontSize: DesignTokens.fontSizeMd,
+            fontWeight: FontWeight.w700,
           ),
         ),
         child: Row(

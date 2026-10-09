@@ -14,8 +14,10 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
-import '../../catalog/domain/catalog_models.dart';
 import '../../catalog/presentation/catalog_providers.dart';
+import '../../home/domain/siguiente_accion.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/widgets/tarjeta_premium.dart';
 import '../domain/stats_models.dart';
 
 /// Pantalla 6.1 — dashboard de progreso (RF-21, RN-04).
@@ -76,6 +78,28 @@ class _Contenido extends ConsumerWidget {
     final respondidas = stats.porArea.fold(0, (s, a) => s + a.respondidas);
     final hayDatos = respondidas >= _minRespuestas;
     final prioridades = ref.watch(prioridadEstudioProvider);
+    // En gratis queda el avance básico (vistas, acierto, racha). La nota, el
+    // acierto por área y la sugerencia de área son Premium: en su sitio va
+    // qué son, con el botón al muro.
+    final gratis = ref.watch(cupoGratisProvider) != null;
+
+    if (gratis) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space8,
+        ),
+        children: [
+          _Cifras(stats: stats, respondidas: respondidas),
+          const SizedBox(height: DesignTokens.space3 + 2),
+          const _AccesosDirectos(),
+          const SizedBox(height: DesignTokens.space3 + 2),
+          const TarjetaPremium(funcion: FuncionPremium.estadisticas),
+        ],
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -92,7 +116,12 @@ class _Contenido extends ConsumerWidget {
         const _AccesosDirectos(),
         if (prioridades.isNotEmpty) ...[
           const SizedBox(height: DesignTokens.space3 + 2),
-          _Sugerencia(area: prioridades.first.area),
+          _Sugerencia(
+            accion: PracticarArea(
+              area: prioridades.first.area,
+              acierto: prioridades.first.acierto,
+            ),
+          ),
         ],
         const SizedBox(height: DesignTokens.space5),
         _PorArea(porArea: stats.porArea),
@@ -371,17 +400,19 @@ class _AccesosDirectos extends StatelessWidget {
   }
 }
 
+/// La misma sugerencia que el inicio, con el mismo texto y los mismos datos.
+///
+/// Antes tomaba el acierto del catálogo, que el servidor todavía manda en
+/// cero, mientras el inicio lo tomaba del dashboard: las dos pantallas podían
+/// decir cosas distintas del mismo área.
 class _Sugerencia extends StatelessWidget {
-  const _Sugerencia({required this.area});
+  const _Sugerencia({required this.accion});
 
-  final CatalogNode area;
+  final PracticarArea accion;
 
   @override
   Widget build(BuildContext context) {
     final states = context.states;
-    final nombre = area.nombre;
-    final acierto = area.porcentajeAcierto;
-    final peso = area.peso;
 
     return FadeUp(
       index: 3,
@@ -415,10 +446,7 @@ class _Sugerencia extends StatelessWidget {
                             style: TextStyle(fontWeight: FontWeight.w800),
                           ),
                           TextSpan(
-                            text:
-                                '$nombre pesa $peso preguntas y vas en '
-                                '${acierto == null ? "sin datos" : "${(acierto * 100).round()} %"}. '
-                                'Refuérzala primero.',
+                            text: '${accion.area.nombre}. ${accion.criterio}',
                           ),
                         ],
                       ),
@@ -551,7 +579,9 @@ class _FilaArea extends StatelessWidget {
                 ),
               ),
               Text(
-                acierto == null ? 'sin datos' : '${(acierto * 100).round()} %',
+                acierto == null
+                    ? 'aún sin práctica'
+                    : '${(acierto * 100).round()} %',
                 style: context.texts.bodySmall?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -627,14 +657,25 @@ class _Evolucion extends StatelessWidget {
                 children: [
                   SizedBox(
                     height: 120,
-                    child: CustomPaint(
-                      painter: _LineaPainter(
-                        puntos: puntos,
-                        color: context.scheme.primary,
-                        referencia: context.scheme.outlineVariant,
-                        aprobado: context.scheme.onSurfaceVariant,
+                    // El trazo no se lee con un lector de pantalla: se resume
+                    // en una frase, y la tabla de abajo tiene los datos.
+                    child: Semantics(
+                      label:
+                          'Gráfico de tu nota: de '
+                          '${puntos.first.nota.toStringAsFixed(2)} el '
+                          '${DateFormat('d MMM', 'es').format(puntos.first.fecha)} '
+                          'a ${puntos.last.nota.toStringAsFixed(2)} el '
+                          '${DateFormat('d MMM', 'es').format(puntos.last.fecha)}.',
+                      excludeSemantics: true,
+                      child: CustomPaint(
+                        painter: _LineaPainter(
+                          puntos: puntos,
+                          color: context.scheme.primary,
+                          referencia: context.scheme.outlineVariant,
+                          aprobado: context.scheme.onSurfaceVariant,
+                        ),
+                        child: const SizedBox.expand(),
                       ),
-                      child: const SizedBox.expand(),
                     ),
                   ),
                   const SizedBox(height: DesignTokens.space2),
@@ -659,6 +700,52 @@ class _Evolucion extends StatelessWidget {
                         style: context.texts.bodySmall?.copyWith(fontSize: 13),
                       ),
                     ],
+                  ),
+                  // Los mismos datos que el trazo, en tabla (plan §6 y §11):
+                  // para quien no distingue la línea o quiere la cifra exacta.
+                  Theme(
+                    data: Theme.of(
+                      context,
+                    ).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      title: Text(
+                        'Ver como tabla',
+                        style: context.texts.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: context.states.info.onTint,
+                        ),
+                      ),
+                      children: [
+                        for (final p in puntos.reversed)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: DesignTokens.space1,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    DateFormat(
+                                      "d 'de' MMMM",
+                                      'es',
+                                    ).format(p.fecha),
+                                    style: context.texts.bodyMedium,
+                                  ),
+                                ),
+                                Text(
+                                  p.nota.toStringAsFixed(2),
+                                  style: context.texts.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: context.scheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),

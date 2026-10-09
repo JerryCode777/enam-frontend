@@ -10,11 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// El onboarding existía como archivo y **ninguna ruta llegaba a él**: el
-/// router mandaba siempre al login. Y el splash duraba lo que tardaba leer el
-/// storage (~200 ms), así que su animación no se veía nunca.
+/// router mandaba siempre al login.
 ///
-/// Estos tests fijan el recorrido que pide el diseño: sin sesión, onboarding la
-/// primera vez y login a partir de ahí; y el splash con un tiempo mínimo.
+/// Estos tests fijan el recorrido: sin sesión, onboarding la primera vez y
+/// login a partir de ahí; y un arranque que entra en cuanto sabe a dónde ir.
 void main() {
   late _PrefsFalsas prefs;
 
@@ -32,37 +31,17 @@ void main() {
   }
 
   group('Arranque', () {
-    test('el splash espera un mínimo aunque el storage responda al instante',
-        () async {
-      // Sin esto la pantalla aparecía y desaparecía como un parpadeo.
+    test('no impone espera: resuelve en cuanto el storage responde', () async {
+      // Durante un tiempo el splash esperaba 1,8 s aunque todo estuviera listo
+      // en 200 ms. Ninguna espera de marca bloquea datos ya disponibles.
+      prefs.latencia = const Duration(milliseconds: 50);
       final c = contenedor();
       final reloj = Stopwatch()..start();
 
       await c.read(startupProvider.future);
       reloj.stop();
 
-      expect(
-        reloj.elapsed,
-        greaterThanOrEqualTo(
-          StartupNotifier.minimoEnSplash - const Duration(milliseconds: 60),
-        ),
-      );
-    });
-
-    test('la espera mínima y la lectura corren en paralelo, no en serie',
-        () async {
-      prefs.latencia = const Duration(milliseconds: 300);
-      final c = contenedor();
-      final reloj = Stopwatch()..start();
-
-      await c.read(startupProvider.future);
-      reloj.stop();
-
-      // Si fueran en serie tardaría mínimo + 300 ms.
-      expect(
-        reloj.elapsed,
-        lessThan(StartupNotifier.minimoEnSplash + const Duration(milliseconds: 250)),
-      );
+      expect(reloj.elapsed, lessThan(const Duration(milliseconds: 500)));
     });
 
     test('marcar el onboarding como visto se persiste', () async {
@@ -154,6 +133,9 @@ void main() {
 
     test('mientras el arranque no resuelve, todo se queda en el splash',
         () async {
+      // Las preferencias tardan: sin espera mínima, esta es la única forma de
+      // que el arranque siga pendiente cuando la sesión ya se resolvió.
+      prefs.latencia = const Duration(seconds: 1);
       final c = contenedor();
       // Sin await: el arranque sigue pendiente.
       c.read(startupProvider);

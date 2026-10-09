@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../../core/domain/hora_peru.dart';
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/domain/taxonomy.dart';
@@ -98,7 +99,7 @@ class MockStatsRepository implements StatsRepository {
         for (var i = 4; i >= 0; i--)
           GradePoint(
             // Fechas relativas a hoy, hacia atrás cada 12 días.
-            fecha: DateTime.now().subtract(Duration(days: i * 12)),
+            fecha: ahora().subtract(Duration(days: i * 12)),
             nota: 9.4 + (4 - i) * 0.55 + _random.nextDouble() * 0.5,
             sessionId: 'sim-${5 - i}',
             // El primero es la muestra de 40, que es como empieza casi todo el
@@ -156,7 +157,13 @@ class MockStatsRepository implements StatsRepository {
         RankingEntry(
           posicion: i,
           usuarioNombre: 'Estudiante ${String.fromCharCode(64 + i)}.',
-          universidad: ['UNMSM', 'UNSA', 'UPCH', 'UNT'][i % 4],
+          // Nombres completos, como los manda ahora el servidor.
+          universidad: const [
+            'Universidad Nacional Mayor de San Marcos',
+            'Universidad Nacional de San Agustín de Arequipa',
+            'Universidad Peruana Cayetano Heredia',
+            'Universidad Nacional de Trujillo',
+          ][i % 4],
           promedio: double.parse((13.4 - i * 0.58).toStringAsFixed(2)),
           esUsuarioActual: false,
           tiempoTotalMs: 9600000 + i * 42000,
@@ -165,7 +172,7 @@ class MockStatsRepository implements StatsRepository {
       const RankingEntry(
         posicion: 34,
         usuarioNombre: 'E. R.',
-        universidad: 'UNMSM',
+        universidad: 'Universidad Nacional Mayor de San Marcos',
         promedio: 9.85,
         esUsuarioActual: true,
         tiempoTotalMs: 10980000,

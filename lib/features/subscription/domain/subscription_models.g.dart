@@ -44,6 +44,7 @@ _Subscription _$SubscriptionFromJson(Map<String, dynamic> json) =>
       expira: json['expira'] == null
           ? null
           : DateTime.parse(json['expira'] as String),
+      acceso: Acceso.fromJson(json['acceso']),
     );
 
 Map<String, dynamic> _$SubscriptionToJson(_Subscription instance) =>
@@ -54,6 +55,7 @@ Map<String, dynamic> _$SubscriptionToJson(_Subscription instance) =>
       'origen': _$SubscriptionOriginEnumMap[instance.origen]!,
       'inicia': instance.inicia.toIso8601String(),
       'expira': instance.expira?.toIso8601String(),
+      'acceso': Acceso.toJson(instance.acceso),
     };
 
 const _$SubscriptionStatusEnumMap = {

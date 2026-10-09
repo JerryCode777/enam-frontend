@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +14,7 @@ import '../features/catalog/domain/catalog_models.dart';
 import '../features/offline/data/almacen_offline.dart';
 import '../features/offline/data/offline_repository.dart';
 import '../features/offline/data/servicio_offline.dart';
+import '../features/session/data/reportes_repository.dart';
 import '../features/session/data/session_repository.dart';
 import '../features/session/data/session_repository_offline.dart';
 import '../features/session/domain/session_models.dart';
@@ -20,7 +23,9 @@ import '../features/stats/domain/stats_models.dart';
 import '../features/subscription/data/apple_iap_service.dart';
 import '../features/subscription/data/compras_apple_controller.dart';
 import '../features/subscription/data/subscription_repository.dart';
+import '../features/subscription/domain/acceso.dart';
 import '../features/subscription/domain/subscription_models.dart';
+import 'analitica/identidad_anonima.dart';
 import 'config/app_config.dart';
 import 'config/configuracion_remota.dart';
 import 'network/api_client.dart';
@@ -30,6 +35,7 @@ import 'network/conectividad.dart';
 import 'security/cifrado_local.dart';
 import 'storage/base_local.dart';
 import 'storage/app_prefs.dart';
+import 'storage/tema_guardado.dart';
 import 'storage/token_storage.dart';
 
 /// Inyección de dependencias de la app.
@@ -81,6 +87,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return ApiAuthRepository(
     client: ref.watch(apiClientProvider),
     tokens: ref.watch(tokenStorageProvider),
+    anonimoId: ref.watch(identidadAnonimaProvider).id,
   );
 });
 
@@ -146,6 +153,12 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
     offline: offline,
     red: ref.watch(conectividadProvider),
   );
+});
+
+/// Reportes de preguntas (RN-06).
+final reportesRepositoryProvider = Provider<ReportesRepository>((ref) {
+  if (AppConfig.useMocks) return MockReportesRepository();
+  return ApiReportesRepository(ref.watch(apiClientProvider));
 });
 
 // ==================== MODO DUELO (M11) ====================
@@ -230,7 +243,15 @@ final servicioOfflineProvider = Provider<ServicioOffline?>((ref) {
   );
 });
 
+/// Atado al **id** del usuario, y no porque el repositorio lo use.
+///
+/// El dashboard y el ranking cuelgan de aquí. Sin este `watch`, quien cerraba
+/// sesión y dejaba entrar a otra persona en el mismo teléfono le enseñaba sus
+/// propias cifras hasta que algo forzara una recarga: resultados personales en
+/// la cuenta de otro (plan de rediseño §5). Se observa solo el id para que
+/// editar el nombre no tire las estadísticas.
 final statsRepositoryProvider = Provider<StatsRepository>((ref) {
+  ref.watch(currentUserProvider.select((u) => u?.id));
   if (AppConfig.useMocks) return MockStatsRepository();
   return ApiStatsRepository(ref.watch(apiClientProvider));
 });
@@ -249,8 +270,10 @@ const mockEstadosPorCorreo = {
   'gracia@enam.pe': SubscriptionStatus.enGracia,
   'probando@enam.pe': SubscriptionStatus.prueba,
 
-  // Los dos que bloquean la app. `vencido@` es el caso corriente —se le acabó
-  // el día de prueba— y `cancelado@` el de quien canceló un plan pagado.
+  // Sin la prueba ni un plan: gratis limitado, con 6 de 10 preguntas hoy.
+  // `vencido@` es el caso corriente —se le acabó el día de prueba— y
+  // `cancelado@` el de quien canceló un plan pagado. Con un servidor anterior
+  // al gratis (sin `acceso`) bloquearían la app.
   'vencido@enam.pe': SubscriptionStatus.expirada,
   'expirado@enam.pe': SubscriptionStatus.expirada,
   'cancelado@enam.pe': SubscriptionStatus.cancelada,
@@ -300,6 +323,15 @@ final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
     final forzado = mockEstadosPorCorreo[email];
     if (forzado != null) return MockSubscriptionRepository(estado: forzado);
 
+    // Gratis con el cupo de hoy ya gastado, para ver el muro y el inicio sin
+    // tener que responder diez preguntas.
+    if (email == 'agotado@enam.pe') {
+      return MockSubscriptionRepository(
+        estado: SubscriptionStatus.expirada,
+        restantesGratis: 0,
+      );
+    }
+
     return MockSubscriptionRepository(
       inicioPrueba: ref.watch(inicioPruebaProvider).value,
     );
@@ -314,30 +346,21 @@ typedef Startup = ({bool onboardingVisto});
 
 /// Estado de arranque de la app. `null` mientras no está resuelto.
 ///
-/// Dos cosas conviven aquí:
+/// Guarda si el onboarding ya se vio. El router lo necesita de forma
+/// **síncrona** para decidir a dónde mandar al usuario sin sesión, así que no
+/// puede ser un `FutureProvider` que se consulte en el momento de redirigir.
 ///
-/// 1. Si el onboarding ya se vio. El router lo necesita de forma **síncrona**
-///    para decidir a dónde mandar al usuario sin sesión, así que no puede ser
-///    un `FutureProvider` que se consulte en el momento de redirigir.
-///
-/// 2. Un tiempo mínimo en el splash. El diseño pide una animación de logo, ECG
-///    y barra; leer el storage tarda ~200 ms, así que sin esto la pantalla
-///    aparecía y desaparecía como un parpadeo y la animación no se veía nunca.
-///    El diseño marca 2.5 s como techo; 1.8 s deja ver la animación sin que
-///    se haga lento.
+/// Ya no impone un tiempo mínimo en el splash. Durante un tiempo esperaba
+/// 1,8 s para que se viera la animación del logo, aunque las preferencias y la
+/// sesión estuvieran listas en ~200 ms: cada arranque costaba un segundo y
+/// medio de espera que no traía nada. Ahora la app entra en cuanto sabe a
+/// dónde ir (plan de rediseño §5), y es el splash el que, si algo tarda de
+/// verdad, lo dice.
 class StartupNotifier extends AsyncNotifier<Startup> {
-  static const minimoEnSplash = Duration(milliseconds: 1800);
-
   @override
   Future<Startup> build() async {
-    // Las dos se lanzan antes del primer await, así que corren en paralelo: la
-    // espera mínima no se suma a la lectura del storage.
-    final visto = ref.read(appPrefsProvider).onboardingVisto();
-    final espera = Future<void>.delayed(minimoEnSplash);
-
-    final resultado = await visto;
-    await espera;
-    return (onboardingVisto: resultado);
+    final visto = await ref.read(appPrefsProvider).onboardingVisto();
+    return (onboardingVisto: visto);
   }
 
   /// Marca el onboarding como visto y actualiza el estado en memoria, para que
@@ -592,6 +615,16 @@ final subscriptionProvider = FutureProvider<Subscription>((ref) {
 // (`_rutasSinAcceso`). Un getter suelto invita a repartir la regla por la app y
 // a que alguna pantalla se olvide de aplicarla.
 
+/// El cupo gratis de hoy, o `null` en premium, cargando o con un servidor que
+/// todavía no manda `acceso`.
+///
+/// No decide si se puede entrar a ningún sitio —eso lo decide el servidor con
+/// sus 403, que van al muro—: solo sirve para **anunciarlo** antes, con el
+/// contador del inicio y los candados de las funciones de pago.
+final cupoGratisProvider = Provider<AccesoGratis?>(
+  (ref) => ref.watch(subscriptionProvider).value?.gratis,
+);
+
 // ==================== SESIÓN REANUDABLE ====================
 
 /// Resumen de la sesión interrumpida que el usuario puede retomar (RF-15).
@@ -600,6 +633,11 @@ typedef ResumableSession = ({
   bool esSimulacro,
   String titulo,
   String detalle,
+
+  /// Cuántas lleva respondidas y de cuántas. Alimentan la barra de avance del
+  /// inicio; salen del servidor, no de una estimación.
+  int respondidas,
+  int total,
 });
 
 /// Las sesiones a medio hacer, de `GET /sessions/open`.
@@ -630,28 +668,66 @@ final resumableSessionProvider = Provider<ResumableSession?>((ref) {
   return (
     sessionId: sesion.id,
     esSimulacro: sesion.esSimulacro,
+    // Los mismos titulares que la web (acordados para el inicio contextual).
     titulo: sesion.esSimulacro
         ? 'Termina tu simulacro'
-        : 'Continuar donde quedaste',
+        : 'Continúa tu práctica',
     // La que toca es la siguiente sin responder, pero nunca una más allá del
     // total: con la última ya contestada, "pregunta 21 de 20" no significa
     // nada.
     detalle:
         'Pregunta ${(sesion.respondidas + 1).clamp(1, sesion.totalPreguntas)} '
         'de ${sesion.totalPreguntas}',
+    respondidas: sesion.respondidas,
+    total: sesion.totalPreguntas,
   );
 });
 
 // ==================== TEMA ====================
 
-/// Tema elegido por el usuario. Arranca en `system` y se persiste en
-/// `shared_preferences` (no es dato sensible) cuando exista la pantalla de
-/// ajustes.
-class ThemeModeNotifier extends Notifier<ThemeMode> {
-  @override
-  ThemeMode build() => ThemeMode.system;
+final temaGuardadoProvider = Provider<TemaGuardado>((ref) => TemaGuardado());
 
-  void set(ThemeMode mode) => state = mode;
+/// Tema elegido por el usuario.
+///
+/// **Claro por defecto**, aunque el sistema esté en oscuro: es una decisión
+/// del producto, igual en la web. El oscuro se elige con el botón de sol y
+/// luna del inicio o en Ajustes, donde «Sistema» queda como opción explícita.
+/// La elección se guarda y sobrevive a cerrar la app.
+///
+/// Arranca en claro y, si había una elección guardada, la aplica en cuanto
+/// la lee. Esperarla en el arranque retrasaría la primera pantalla por una
+/// preferencia visual.
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  bool _elegidoEnEstaSesion = false;
+
+  @override
+  ThemeMode build() {
+    unawaited(_cargar());
+    return ThemeMode.light;
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final guardado = await ref.read(temaGuardadoProvider).leer();
+      // Si la persona ya tocó el botón mientras se leía, manda lo que tocó.
+      if (guardado != null && !_elegidoEnEstaSesion && ref.mounted) {
+        state = guardado;
+      }
+    } catch (_) {
+      // Sin preferencias legibles se queda en claro, que es el predeterminado.
+    }
+  }
+
+  void set(ThemeMode mode) {
+    _elegidoEnEstaSesion = true;
+    state = mode;
+    unawaited(ref.read(temaGuardadoProvider).guardar(mode).catchError((_) {}));
+  }
+
+  /// Pasa al otro tema según el que **se ve** ahora. Con «Sistema» elegido,
+  /// el que se ve es el del sistema, y alternar lo fija al contrario.
+  void alternar({required bool oscuroAhora}) =>
+      set(oscuroAhora ? ThemeMode.light : ThemeMode.dark);
 }
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(

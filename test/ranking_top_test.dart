@@ -1,7 +1,11 @@
 import 'package:enam_app/features/stats/domain/stats_models.dart';
 import 'package:enam_app/features/stats/presentation/widgets/podio_ranking.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
+import 'package:enam_app/features/universidades/data/universidades_repository.dart';
+import 'package:enam_app/features/universidades/domain/universidad.dart';
+import 'package:enam_app/features/universidades/presentation/universidades_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// El ranking muestra diez y nada más, y siempre dice dónde va uno.
@@ -24,9 +28,17 @@ void main() {
     esUsuarioActual: propia,
   );
 
-  Widget envolver(Widget hijo) => MaterialApp(
-    theme: AppTheme.light,
-    home: Scaffold(body: hijo),
+  // El podio acorta los nombres con el catálogo de universidades.
+  Widget envolver(Widget hijo) => ProviderScope(
+    overrides: [
+      universidadesRepositoryProvider.overrideWithValue(
+        const _CatalogoAlInstante(),
+      ),
+    ],
+    child: MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(body: hijo),
+    ),
   );
 
   group('el recorte a diez', _pruebasDelRecorte);
@@ -42,7 +54,9 @@ void main() {
       expect(find.text('U. 3'), findsOneWidget);
     });
 
-    testWidgets('al usuario lo llama «Tú», no por sus iniciales', (tester) async {
+    testWidgets('al usuario lo llama «Tú», no por sus iniciales', (
+      tester,
+    ) async {
       // Ya sabe cómo se llama. El sitio es para reconocerse de un vistazo.
       await tester.pumpWidget(
         envolver(
@@ -57,7 +71,9 @@ void main() {
     testWidgets('con menos de tres no se pinta', (tester) async {
       // Tres escalones con dos llenos y uno vacío se leen como un fallo de
       // carga, no como «todavía no hay tercero».
-      await tester.pumpWidget(envolver(PodioRanking(filas: [fila(1), fila(2)])));
+      await tester.pumpWidget(
+        envolver(PodioRanking(filas: [fila(1), fila(2)])),
+      );
 
       expect(find.text('U. 1'), findsNothing);
     });
@@ -163,4 +179,13 @@ void _pruebasDelRecorte() {
     expect(conPropia.visibles.any((f) => f.esUsuarioActual), isFalse);
     expect(conPropia.where((f) => f.esUsuarioActual), hasLength(1));
   });
+}
+
+/// El de ejemplo, sin la espera que simula la red.
+class _CatalogoAlInstante implements UniversidadesRepository {
+  const _CatalogoAlInstante();
+
+  @override
+  Future<List<Universidad>> catalogo() async =>
+      MockUniversidadesRepository.catalogoDeEjemplo;
 }

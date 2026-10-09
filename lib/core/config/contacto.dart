@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:url_launcher/url_launcher.dart';
 
-/// Los canales de WhatsApp por donde se cierra el cobro (M10).
+/// El WhatsApp de soporte.
 ///
-/// El bot no es parte de la app: es el canal donde se vende. La app da un día,
-/// corta, y empuja aquí. Del otro lado se atiende, se cobra y se activa el plan.
+/// **Ya no es un canal de cobro.** Lo fue: por aquí se pagaba con Yape y se
+/// activaba el plan a mano. Ahora se cobra con App Store en iPhone y con
+/// Mercado Pago en la web, y el acceso se activa solo. WhatsApp queda para
+/// ayudar: un pago que no se refleja, una duda, un reporte.
 ///
 /// El número de soporte lo **sirve el servidor** (`GET /config`) y lo que hay
 /// aquí es solo el valor de respaldo. Es lo que evita que cambiar de línea
@@ -18,18 +21,12 @@ import 'package:url_launcher/url_launcher.dart';
 /// Los números viven aquí y no repartidos por las pantallas: cuando cambien —y
 /// van a cambiar— se toca un archivo, no ocho.
 abstract final class Contacto {
-  /// Asistente de WhatsApp: suscripciones, planes y pagos.
-  static const String botNumero = '51906944489';
-
   /// Soporte humano (AIDA SOFT S.A.C.S.): problemas y dudas que necesitan
   /// persona.
   ///
   /// Lo pisa [aplicar] con lo que responda el servidor.
   static String soporteNumero = _soportePorDefecto;
   static const String _soportePorDefecto = '51936415245';
-
-  /// Para mostrar: `+51 906 944 489`.
-  static const String botVisible = '+51 906 944 489';
 
   static String soporteVisible = _soporteVisiblePorDefecto;
   static const String _soporteVisiblePorDefecto = '+51 936 415 245';
@@ -72,9 +69,17 @@ abstract final class Contacto {
   /// capturar ahí es la peor forma de perder una venta.
   static Future<bool> abrir(Uri enlace) async {
     try {
-      return await launchUrl(enlace, mode: LaunchMode.externalApplication);
+      return await lanzador(enlace);
     } on Exception {
       return false;
     }
   }
+
+  /// Lo que de verdad abre el enlace. Se puede sustituir en las pruebas, donde
+  /// no hay WhatsApp ni plugin de sistema al que llamar.
+  @visibleForTesting
+  static Future<bool> Function(Uri) lanzador = _lanzar;
+
+  static Future<bool> _lanzar(Uri enlace) =>
+      launchUrl(enlace, mode: LaunchMode.externalApplication);
 }
