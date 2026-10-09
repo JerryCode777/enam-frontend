@@ -34,6 +34,7 @@ enum EstadoInicio {
 List<Override> overridesDeInicio(
   EstadoInicio estado, {
   AlmacenEnMemoria? almacen,
+  DateTime? fechaObjetivo,
 }) {
   final conHistorial =
       estado == EstadoInicio.areaPrioritaria ||
@@ -43,7 +44,9 @@ List<Override> overridesDeInicio(
       estado == EstadoInicio.gratisAgotado;
 
   return [
-    authControllerProvider.overrideWith(_ConSesion.new),
+    authControllerProvider.overrideWith(
+      () => _ConSesion(fechaObjetivo ?? DateTime(2026, 10, 12)),
+    ),
     // La bandeja de lo que falta enviar vive en la base local; en las pruebas,
     // en memoria.
     almacenOfflineProvider.overrideWithValue(almacen ?? AlmacenEnMemoria()),
@@ -150,6 +153,10 @@ const _conHistorial = DashboardStats(
 );
 
 class _ConSesion extends AuthController {
+  _ConSesion(this.fechaObjetivo);
+
+  final DateTime fechaObjetivo;
+
   @override
   Future<AuthState> build() async => AuthSignedIn(
     User(
@@ -159,7 +166,7 @@ class _ConSesion extends AuthController {
       emailVerificado: true,
       universidad: 'UNMSM',
       condicion: StudentCondition.repitiente,
-      fechaObjetivo: DateTime(2026, 10, 12),
+      fechaObjetivo: fechaObjetivo,
     ),
   );
 }
