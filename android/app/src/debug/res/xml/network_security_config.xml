@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo en debug: el backend local va por HTTP. Con `adb reverse tcp:8080
+     tcp:8080` el emulador lo ve en localhost; sin él, en 10.0.2.2. Los videos
+     del aula los reproduce ExoPlayer, que respeta esta regla: sin esto el
+     reproductor no carga contra el backend local. Release no la
+     tiene: allí todo va por HTTPS. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
