@@ -64,18 +64,6 @@ abstract final class Contacto {
     return Uri.parse('$base?text=${Uri.encodeComponent(mensaje)}');
   }
 
-  /// Activar la cuenta: va al **soporte humano**, no al bot.
-  ///
-  /// Del otro lado se cobra y se activa a mano, así que quien contesta tiene
-  /// que poder hacerlo. El bot todavía no cierra el cobro.
-  static Uri activarPlan({String? codigoDescuento}) => _enlace(
-    soporteNumero,
-    codigoDescuento == null
-        ? 'hola, quiero activar mi cuenta de ENAM Prep'
-        : 'hola, quiero activar mi cuenta de ENAM Prep con mi código de '
-              'descuento: $codigoDescuento',
-  );
-
   static Uri soporte({String? mensaje}) => _enlace(soporteNumero, mensaje);
 
   /// Abre WhatsApp. Devuelve `false` si el dispositivo no puede.

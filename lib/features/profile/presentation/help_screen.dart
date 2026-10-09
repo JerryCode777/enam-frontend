@@ -11,8 +11,6 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
-import '../../subscription/presentation/widgets/opciones_de_pago.dart'
-    show enTiendaApple;
 
 /// Ayuda y contacto.
 ///
@@ -69,15 +67,6 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           'programadas para que todos rindan al mismo tiempo. No tiene relación '
           'con ASPEFAM ni con tu inscripción al ENAM real.',
     ),
-    // Habla de un pago fuera de la tienda: en Android no se muestra (ver
-    // [_faqDeEstaTienda]).
-    (
-      pregunta: 'Yapeé y sigo sin Premium',
-      respuesta:
-          'La verificación de Yape es manual y suele tomar menos de 2 horas en '
-          'horario de atención. Si pasó más tiempo, escríbenos con la captura '
-          'de tu operación y lo activamos.',
-    ),
     (
       pregunta: '¿Por qué las preguntas tienen mi correo encima?',
       respuesta:
@@ -116,16 +105,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
     ),
   ];
 
-  /// Las preguntas que se pueden mostrar aquí. En Android ninguna habla de
-  /// pagar fuera de Google Play (política de pagos).
-  static List<({String pregunta, String respuesta})> get _faqDeEstaTienda =>
-      enTiendaApple
-      ? _faq
-      : _faq.where((f) => !f.respuesta.contains('Yape')).toList();
-
   @override
   Widget build(BuildContext context) {
-    final faq = _faqDeEstaTienda;
     return Scaffold(
       body: Column(
         children: [
@@ -161,8 +142,11 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                 Card(
                   child: Column(
                     children: [
-                      for (var i = 0; i < faq.length; i++)
-                        _Pregunta(item: faq[i], esUltima: i == faq.length - 1),
+                      for (var i = 0; i < _faq.length; i++)
+                        _Pregunta(
+                          item: _faq[i],
+                          esUltima: i == _faq.length - 1,
+                        ),
                     ],
                   ),
                 ),
