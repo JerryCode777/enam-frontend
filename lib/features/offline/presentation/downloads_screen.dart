@@ -191,8 +191,6 @@ class _ListasParaElViajeState extends ConsumerState<_ListasParaElViaje> {
           .read(sessionRepositoryProvider)
           .startPractice(const PracticeConfig(cantidadPreguntas: 20));
 
-      // D-02: el reloj de las 24 h arranca al practicar, no al registrarse.
-      await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
       ref.invalidate(reservasProvider);
       // Empieza: el mismo sonido que en Rumbo al abrir un quiz.

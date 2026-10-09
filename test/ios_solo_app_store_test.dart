@@ -95,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
 
     soloAppStore(tester);
-    expect(find.text('¿Cuánto dura la prueba gratis?'), findsOneWidget);
+    expect(find.text('¿Qué incluye la cuenta gratis?'), findsOneWidget);
   }, variant: iPhone);
 }
 

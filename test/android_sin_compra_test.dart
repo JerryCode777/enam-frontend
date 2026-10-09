@@ -111,7 +111,7 @@ void main() {
 
     sinCaminoDeCompra(tester);
     // Las demás preguntas siguen.
-    expect(find.text('¿Cuánto dura la prueba gratis?'), findsOneWidget);
+    expect(find.text('¿Qué incluye la cuenta gratis?'), findsOneWidget);
   });
 
   testWidgets('el botón de WhatsApp es de ayuda, no de activar', (

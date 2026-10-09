@@ -93,16 +93,15 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       pregunta: 'Si cancelo Premium, ¿pierdo mi progreso?',
       respuesta:
           'No. Tu historial, tus estadísticas y tus preguntas marcadas se '
-          'conservan (RN-07). Lo que se acaba es el acceso: al terminar el '
-          'periodo pagado dejas de poder practicar hasta que actives un plan '
-          'de nuevo. Tu avance te espera intacto.',
+          'conservan. Al terminar el periodo pagado sigues con la cuenta '
+          'gratis, y tu avance te espera intacto.',
     ),
     (
-      pregunta: '¿Cuánto dura la prueba gratis?',
+      pregunta: '¿Qué incluye la cuenta gratis?',
       respuesta:
-          'Un día completo, con todo desbloqueado. El reloj empieza cuando '
-          'inicias tu primera práctica o simulacro, no cuando te registras: '
-          'crear la cuenta de noche no te quema el día.',
+          'Cada día tienes preguntas para practicar, con su explicación, y las '
+          'primeras clases de cada curso. Simulacros, exámenes pasados, '
+          'práctica por tema y estudiar sin conexión son de Premium.',
     ),
   ];
 

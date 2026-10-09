@@ -411,10 +411,9 @@ class _Acciones extends StatelessWidget {
       children: [
         EnamButton(label: 'Crear cuenta gratis', onPressed: onCrear),
         const SizedBox(height: DesignTokens.space2),
-        // La regla real del servidor (D-02): el día de prueba no empieza al
-        // registrarse sino con la primera práctica.
+        // Sin día de prueba desde el 09/10/2026: la cuenta nace gratis.
         const Text(
-          'Tu prueba de 24 horas empieza con tu primera práctica.',
+          'Practica gratis cada día, con la explicación de cada pregunta.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: DesignTokens.fontFamily,

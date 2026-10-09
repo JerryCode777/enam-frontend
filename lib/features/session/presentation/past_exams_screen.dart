@@ -308,8 +308,6 @@ class _HojaDeModoState extends ConsumerState<_HojaDeModo> {
             cantidad: _modo.esExamen ? null : _cantidad,
           );
 
-      // D-02: rendir un examen también consume el día de prueba.
-      await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
       // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
       ref.sonar(Sonido.empiezaQuiz);

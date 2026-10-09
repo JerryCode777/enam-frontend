@@ -13,6 +13,7 @@ import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../domain/acceso.dart';
 import '../domain/subscription_models.dart';
 import 'widgets/opciones_de_pago.dart';
 
@@ -96,19 +97,29 @@ class _Contenido extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space4),
         ],
-        FadeUp(index: 1, child: _TarjetaPlan(sub: sub)),
+        FadeUp(
+          index: 1,
+          // En gratis se dice eso, y no el plan de prueba vencido que el
+          // servidor guarda desde el alta: una cuenta nueva nunca tuvo prueba.
+          child: switch (sub.gratis) {
+            final gratis? => _TarjetaGratis(gratis: gratis),
+            null => _TarjetaPlan(sub: sub),
+          },
+        ),
         const SizedBox(height: DesignTokens.space4),
         FadeUp(index: 2, child: _Acciones(sub: sub)),
-        const SizedBox(height: DesignTokens.space4),
-        FadeUp(
-          index: 3,
-          child: Text(
-            // RN-07: hay que decirlo antes de que cancele, no después.
-            'Si cancelas, mantienes tu acceso hasta el fin del periodo pagado. '
-            'Tu historial y tus estadísticas nunca se borran.',
-            style: context.texts.bodySmall?.copyWith(height: 1.55),
+        if (sub.gratis == null) ...[
+          const SizedBox(height: DesignTokens.space4),
+          FadeUp(
+            index: 3,
+            child: Text(
+              // RN-07: hay que decirlo antes de que cancele, no después.
+              'Si cancelas, mantienes tu acceso hasta el fin del periodo '
+              'pagado. Tu historial y tus estadísticas nunca se borran.',
+              style: context.texts.bodySmall?.copyWith(height: 1.55),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -196,6 +207,69 @@ class _TarjetaPlan extends StatelessWidget {
                 },
                 _ => 'Sin renovación',
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// La cuenta gratis: qué incluye cada día y cuánto queda hoy.
+class _TarjetaGratis extends StatelessWidget {
+  const _TarjetaGratis({required this.gratis});
+
+  final AccesoGratis gratis;
+
+  @override
+  Widget build(BuildContext context) {
+    final info = context.states.info;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.space4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Cuenta gratis',
+                    style: context.texts.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DesignTokens.space2 + 2,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: info.tint,
+                    borderRadius: BorderRadius.circular(
+                      DesignTokens.radiusSm + 2,
+                    ),
+                  ),
+                  child: Text(
+                    'GRATIS',
+                    style: context.texts.bodySmall?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: info.onTint,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.space3),
+            _Fila(
+              etiqueta: 'Preguntas al día',
+              valor: '${gratis.preguntasPorDia}, con su explicación',
+            ),
+            _Fila(
+              etiqueta: 'Te quedan hoy',
+              valor: '${gratis.restantesHoy}',
             ),
           ],
         ),
@@ -313,9 +387,9 @@ class _AccionesState extends ConsumerState<_Acciones> {
         title: const Text('¿Cancelar la renovación?'),
         content: Text(
           'Mantienes tu acceso hasta el ${_fechaLarga(widget.sub.expira)}. '
-          // No hay plan gratis al que volver (SSD-ENAM-002 §1). Decir que lo
-          // hay sería vender una red de seguridad que no existe.
-          'Después pierdes el acceso hasta que vuelvas a activar un plan.\n\n'
+          // Después sigue la cuenta gratis (gratis limitado): no se pierde la
+          // app, solo lo que es de Premium.
+          'Después sigues con la cuenta gratis.\n\n'
           // Lo que NO se pierde, que es la duda real de quien cancela (RN-07).
           'Tu historial, tus estadísticas y tus preguntas marcadas se '
           'conservan.',

@@ -286,8 +286,6 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
           origen: gratis ? QuestionSource.todas : _origen,
         ),
       );
-      // D-02: el reloj de las 24 h arranca aquí, no al registrarse.
-      await ref.read(inicioPruebaProvider.notifier).arrancar();
 
       // Hay una sesión abierta nueva: el inicio tiene que poder ofrecerla.
       ref.invalidate(sesionesAbiertasProvider);

@@ -165,8 +165,6 @@ class _SimulacroInstructionsScreenState
           .read(sessionRepositoryProvider)
           .startSimulacro(esMuestra: widget.esMuestra);
 
-      // D-02: el reloj de las 24 h arranca aquí también.
-      await ref.read(inicioPruebaProvider.notifier).arrancar();
       ref.invalidate(sesionesAbiertasProvider);
       // Empieza: el mismo sonido que en Rumbo al abrir un quiz.
       ref.sonar(Sonido.empiezaQuiz);

@@ -13,6 +13,15 @@ Antes, al vencer la prueba de 24 h la app entera quedaba tras «Acceso
 terminado» (D-01). Ahora sigue abierta con **10 preguntas al día** (día de
 Lima), y se vende en el momento en que se topa un límite.
 
+**Sin día de prueba ni oferta (Jerry, 09/10/2026, versión 1.1.0).**
+- **Las cuentas nuevas entran directo a gratis.** El backend lo controla con `PRUEBA_NUEVAS_CUENTAS`, que va apagada. Les guarda una suscripción del plan de prueba que vence en el mismo alta (`billing.DarAlta`), así que la app la lee como gratis y no como «se acabó tu día de prueba»:
+  - «Mi suscripción» muestra «Cuenta gratis», con las preguntas del día;
+  - «Acceso terminado», que solo sale con un servidor sin `acceso`, dice «Tu acceso terminó»;
+  - la presentación y la Ayuda ya no hablan de la prueba.
+- **Sin el 50 %.** La app nunca lo mostró. Los precios salen de StoreKit.
+- **Lo vigila** `test/sin_prueba_test.dart`.
+- **Cuentas viejas en su prueba.** Las que estaban en su día de prueba al cambiar siguen viendo «EN PRUEBA» hasta que vence, porque es lo que manda el servidor.
+
 | Dónde | En gratis |
 |---|---|
 | Inicio, cabecera | «Te quedan 6 de 10 preguntas hoy» / «Usaste tus 10 preguntas de hoy» |
@@ -32,20 +41,27 @@ Se apila y se cierra («Ahora no» o la ×), así que no encierra a nadie.
 
 1. Qué pasó o qué hay detrás: el cupo agotado («Mañana tienes 10 más…») o la
    vista previa de la función.
-2. «Con Premium», en cuatro líneas: funciones, no precios.
+2. «Con Premium», en cinco líneas: funciones, no precios. La quinta son los
+   cursos en video.
 3. «Tu cuenta gratis sigue: 10 preguntas al día…».
-4. Cómo pagar, según la tienda (`OpcionesDePago`, sin cambios): en iPhone,
-   App Store; en Android, la web con Mercado Pago.
+4. Cómo pagar, según la tienda (`OpcionesDePago`):
+   - en iPhone, solo App Store;
+   - en Android, ninguna compra en la app (política de pagos de Google Play):
+     «Tu acceso Premium se activa con tu cuenta de ENAM Prep.», y el botón de
+     cerrar dice «Entendido».
+
+La clase de pago del aula abre este mismo muro con `funcion=cursos`.
 
 Si alguien compra desde el muro y la suscripción pasa de gratis a premium, el
 muro se cierra solo.
 
 ### Diferencias con la web, a propósito
 
-- **Sin ofertas.** El 50 % es solo web, por las normas de las tiendas. El muro
-  de la app no lo muestra ni lo menciona (lo comprueba
-  `test/gratis_limitado_test.dart` en las dos tiendas).
-- **En iPhone, solo App Store** (guía 3.1.1): ningún enlace al pago web.
+- **Sin ofertas.** El muro de la app no muestra ni menciona ninguna (lo
+  comprueba `test/gratis_limitado_test.dart` en las dos tiendas).
+- **En iPhone, solo App Store** (guía 3.1.1): ningún enlace al pago web
+  (`test/ios_solo_app_store_test.dart`).
+- **En Android, ninguna compra** (`test/android_sin_compra_test.dart`).
 
 ## Contrato
 
@@ -63,7 +79,8 @@ muro se cierra solo.
   - `simulacro`, también el de muestra;
   - `examen_pasado`;
   - `simulacro_nacional`;
-  - `sin_conexion`: descargar y también sincronizar.
+  - `sin_conexion`: descargar y también sincronizar;
+  - `cursos`: una clase del aula que no es de la muestra gratis.
 
   Uno desconocido abre el muro genérico, nunca un error.
 - La nota proyectada y las estadísticas por área **no** las restringe el
@@ -111,7 +128,7 @@ Con datos de ejemplo (`USE_MOCKS`):
   - el modelo y la caché;
   - los 403 y la ruta del muro;
   - la siguiente acción;
-  - el muro en las dos tiendas, sin ofertas, y «Ahora no»;
+  - el muro en las dos tiendas, sin ofertas, y cerrarlo;
   - Nueva práctica: lo que manda, el candado y los dos 403;
   - responder sin cupo;
   - simulacros.

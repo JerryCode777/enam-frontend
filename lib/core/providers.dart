@@ -263,8 +263,9 @@ final statsRepositoryProvider = Provider<StatsRepository>((ref) {
 /// atajo es el correo con el que se inició sesión. Mismo criterio que los
 /// correos especiales de [MockAuthRepository].
 ///
-/// Cualquier otro correo entra en `prueba_sin_iniciar`, que es como nace todo
-/// usuario de verdad (RN-03 v2).
+/// Cualquier otro correo entra en gratis, que es como nace toda cuenta desde
+/// el 09/10/2026: sin día de prueba (PRUEBA_NUEVAS_CUENTAS apagada en el
+/// backend).
 const mockEstadosPorCorreo = {
   'premium@enam.pe': SubscriptionStatus.activa,
   'gracia@enam.pe': SubscriptionStatus.enGracia,
@@ -279,47 +280,12 @@ const mockEstadosPorCorreo = {
   'cancelado@enam.pe': SubscriptionStatus.cancelada,
 };
 
-/// Cuánto dura la prueba (RN-03 v2).
-const duracionPrueba = Duration(hours: 24);
-
-/// Instante en que arrancó el día de prueba, o `null` si no ha empezado.
-///
-/// Solo tiene sentido con mocks: contra el backend real la fecha la manda el
-/// servidor. Se guarda en disco para que cerrar la app no reinicie el reloj,
-/// que es justo lo que haría un usuario para estirar la prueba.
-class InicioPruebaNotifier extends AsyncNotifier<DateTime?> {
-  @override
-  Future<DateTime?> build() => ref.read(appPrefsProvider).inicioPrueba();
-
-  /// Enciende el reloj si no lo estaba. Se llama al crear la primera sesión.
-  Future<void> arrancar() async {
-    if (state.value != null) return;
-    final inicio = await ref.read(appPrefsProvider).marcarInicioPrueba();
-    state = AsyncData(inicio);
-    // La suscripción cambia de estado con esto, así que hay que releerla.
-    ref.invalidate(subscriptionProvider);
-  }
-
-  /// Vuelve a dejar la prueba sin empezar. Solo para probar el flujo.
-  Future<void> reiniciar() async {
-    await ref.read(appPrefsProvider).reiniciarPrueba();
-    state = const AsyncData(null);
-    ref.invalidate(subscriptionProvider);
-  }
-}
-
-final inicioPruebaProvider =
-    AsyncNotifierProvider<InicioPruebaNotifier, DateTime?>(
-      InicioPruebaNotifier.new,
-    );
-
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
   if (AppConfig.useMocks) {
     final email = ref.watch(currentUserProvider)?.email;
 
-    // Los correos especiales fuerzan un estado concreto; el resto vive el
-    // trial de verdad: sin empezar hasta la primera práctica, 24 h corriendo
-    // desde entonces, y bloqueado al pasarse (D-02).
+    // Los correos especiales fuerzan un estado concreto. `probando@` sigue
+    // en su día de prueba: es una cuenta vieja, de antes de quitarla.
     final forzado = mockEstadosPorCorreo[email];
     if (forzado != null) return MockSubscriptionRepository(estado: forzado);
 
@@ -332,9 +298,9 @@ final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
       );
     }
 
-    return MockSubscriptionRepository(
-      inicioPrueba: ref.watch(inicioPruebaProvider).value,
-    );
+    // Como una cuenta nueva del backend (billing.DarAlta): la suscripción del
+    // plan de prueba, ya vencida desde el alta, y el nivel gratis.
+    return MockSubscriptionRepository(estado: SubscriptionStatus.expirada);
   }
   return ApiSubscriptionRepository(ref.watch(apiClientProvider));
 });

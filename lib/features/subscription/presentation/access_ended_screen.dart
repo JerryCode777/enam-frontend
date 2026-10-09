@@ -89,23 +89,24 @@ class _AccessEndedScreenState extends ConsumerState<AccessEndedScreen> {
   Widget build(BuildContext context) {
     final suscripcion = ref.watch(subscriptionProvider).value;
 
-    // La prueba y un plan pagado se acaban por motivos distintos, y a quien
-    // pagó no se le habla como si nunca lo hubiera hecho.
-    final vieneDePrueba = suscripcion?.plan.esGratuito ?? true;
-
+    // A quien pagó no se le habla como si nunca lo hubiera hecho. Y a quien
+    // no, no se le habla de una prueba: desde el 09/10/2026 las cuentas
+    // nuevas no la tienen. Esta pantalla solo sale con un servidor anterior al
+    // gratis limitado (sin `acceso`); con el actual, la app sigue en gratis.
+    //
     // No se nombra cómo volver a tener acceso. En Android la app no tiene
     // camino de compra (política de pagos de Google Play), y decir «activa tu
     // plan» donde no hay botón que lo haga es peor que no decir nada. En iOS
     // la compra está más abajo y se explica sola.
-    final (titular, bajada) = vieneDePrueba
+    final pago = !(suscripcion?.plan.esGratuito ?? true);
+    final (titular, bajada) = pago
         ? (
-            'Se acabó tu día de prueba',
-            'Viste la app completa. Tu cuenta sigue activa y te espera donde '
-                'la dejaste.',
-          )
-        : (
             'Tu plan terminó',
             'Se acabó la vigencia. Tu cuenta y tu avance siguen intactos.',
+          )
+        : (
+            'Tu acceso terminó',
+            'Tu cuenta sigue activa y te espera donde la dejaste.',
           );
 
     return Scaffold(
