@@ -95,6 +95,20 @@ class ApiClient {
     ),
   );
 
+  /// Un GET que puede responder 204 sin cuerpo, que aquí es `null` y no un
+  /// error: «no hay nada» es una respuesta válida (`GET /aula/continuar`).
+  Future<T?> getOpcional<T>(String path) async {
+    try {
+      final response = await _dio.get<T>(path);
+      return response.data;
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<T> put<T>(String path, {Object? data, CancelToken? cancelToken}) =>
+      _request(() => _dio.put<T>(path, data: data, cancelToken: cancelToken));
+
   Future<T> patch<T>(String path, {Object? data, CancelToken? cancelToken}) =>
       _request(() => _dio.patch<T>(path, data: data, cancelToken: cancelToken));
 

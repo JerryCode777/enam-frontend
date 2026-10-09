@@ -83,6 +83,17 @@ abstract final class Routes {
   /// Exámenes ENAM de años anteriores (RF-52). Cuelga de simulacros porque se
   /// rinden con la misma metodología.
   static const pastExams = '/examenes';
+
+  // ---------- Aula: cursos en video (enam-backend/AULA.md) ----------
+  static const cursos = '/cursos';
+
+  static const curso = '/cursos/:curso';
+  static String cursoOf(String id) => '/cursos/$id';
+
+  static const clase = '/cursos/:curso/clase/:clase';
+  static String claseOf(String cursoId, String claseId) =>
+      '/cursos/$cursoId/clase/$claseId';
+
   // ---------- Ranking (Módulo 5) ----------
   static const ranking = '/ranking';
 

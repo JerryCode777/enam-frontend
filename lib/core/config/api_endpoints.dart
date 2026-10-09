@@ -151,4 +151,27 @@ abstract final class ApiEndpoints {
 
   /// Canjear la sesión por el permiso de un solo uso que abre el socket.
   static String duelTicket(String id) => '/duels/$id/ticket';
+
+  // ---------- Aula (enam-backend/AULA.md §4) ----------
+  //
+  // Las URL de medios que devuelven salen firmadas y caducan: no se guardan,
+  // se piden cada vez.
+
+  /// El catálogo: los cursos con su profe y el avance de la cuenta.
+  static const String aulaCursos = '/aula/cursos';
+
+  /// El temario de un curso, con `continuar`.
+  static String aulaCurso(String id) => '/aula/cursos/$id';
+
+  /// La clase con sus URL firmadas. 403 `FUNCION_PREMIUM` si está bloqueada.
+  static String aulaClase(String id) => '/aula/clases/$id';
+
+  /// PUT `{segundosVistos, posicionS}`. Completada al 90 %.
+  static String aulaProgreso(String id) => '/aula/clases/$id/progreso';
+
+  /// POST: una práctica de 5 preguntas de la sub área de la clase.
+  static String aulaPractica(String id) => '/aula/clases/$id/practica';
+
+  /// Lo último a medias. 204 si no hay nada.
+  static const String aulaContinuar = '/aula/continuar';
 }

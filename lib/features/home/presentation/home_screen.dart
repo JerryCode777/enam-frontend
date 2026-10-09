@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../aula/presentation/widgets/entrada_al_aula.dart';
 import '../../../core/domain/blueprint.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
@@ -120,6 +121,7 @@ class _Tarjetas extends StatelessWidget {
         const _PorDondeSeguir(),
         _TarjetaNota(stats: stats),
         _AccesosRapidos(stats: stats),
+        const EntradaAlAula(),
         const _SimulacroNacional(),
       ],
     );

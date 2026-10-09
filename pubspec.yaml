@@ -44,6 +44,14 @@ dependencies:
   # ---------- UI ----------
   cached_network_image: ^3.4.1
 
+  # Las clases del aula: MP4 H.264 por rango desde CloudFront, con ExoPlayer en
+  # Android y AVPlayer en iOS. Los controles y los subtítulos VTT son nuestros
+  # (ver features/aula/presentation/reproductor).
+  video_player: ^2.14.1
+  # La pantalla encendida mientras corre una clase: video_player no lo hace
+  # en Android, y sin tocar nada se apagaría a mitad de la clase.
+  wakelock_plus: ^1.5.2
+
   # ---------- Utilidades ----------
   intl: ^0.20.2
   connectivity_plus: ^7.0.0
@@ -63,6 +71,10 @@ dev_dependencies:
   # `StreamChannelMixin` vive aquí y sin declararlo el análisis lo marca como
   # dependencia prestada de otro paquete.
   stream_channel: ^2.1.4
+
+  # Para el video falso de las pruebas del reproductor del aula: sin él no
+  # hay forma de probar el progreso ni la URL que caduca sin un dispositivo.
+  video_player_platform_interface: ^6.9.0
 
   flutter_lints: ^6.0.0
 

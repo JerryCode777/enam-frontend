@@ -1,3 +1,5 @@
+import 'package:enam_app/features/aula/data/mock_aula_repository.dart';
+import 'package:enam_app/features/aula/presentation/aula_providers.dart';
 import 'package:enam_app/core/mock/mock_data.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/features/catalog/data/catalog_repository.dart';
@@ -214,6 +216,10 @@ Widget _harness(Widget screen, Brightness brightness, {double textScale = 1.0}) 
       // Sin esto la base local intentaría abrir SQLite, que en las pruebas no
       // existe, y la pantalla de descargas se mediría en su estado de error.
       almacenOfflineProvider.overrideWithValue(_almacen),
+      // La entrada a los cursos del inicio pregunta el catálogo.
+      aulaRepositoryProvider.overrideWithValue(
+        MockAulaRepository(delay: Duration.zero),
+      ),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,

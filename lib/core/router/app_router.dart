@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/aula/presentation/clase_screen.dart';
+import '../../features/aula/presentation/curso_screen.dart';
+import '../../features/aula/presentation/cursos_screen.dart';
 import '../../features/auth/presentation/complete_profile_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -456,6 +459,37 @@ final List<RouteBase> _routes = [
     path: Routes.pastExams,
     pageBuilder: (context, state) =>
         slidePage(child: const PastExamsScreen(), state: state),
+  ),
+
+  // ---------- Aula ----------
+  //
+  // Fuera de las pestañas, como los exámenes pasados: se entra desde el
+  // inicio y se vuelve con atrás.
+  GoRoute(
+    path: Routes.cursos,
+    pageBuilder: (context, state) =>
+        slidePage(child: const CursosScreen(), state: state),
+    routes: [
+      GoRoute(
+        path: ':curso',
+        pageBuilder: (context, state) => slidePage(
+          child: CursoScreen(cursoId: state.pathParameters['curso']!),
+          state: state,
+        ),
+        routes: [
+          GoRoute(
+            path: 'clase/:clase',
+            pageBuilder: (context, state) => slidePage(
+              child: ClaseScreen(
+                cursoId: state.pathParameters['curso']!,
+                claseId: state.pathParameters['clase']!,
+              ),
+              state: state,
+            ),
+          ),
+        ],
+      ),
+    ],
   ),
   // ---------- Modo duelo (M11) ----------
   //
