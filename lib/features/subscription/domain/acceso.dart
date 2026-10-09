@@ -140,6 +140,13 @@ enum FuncionPremium {
         'Descarga áreas completas y practica sin señal. Tus respuestas se '
         'envían al volver la conexión.',
   ),
+  cursos(
+    'cursos',
+    titulo: 'Los cursos completos son de Premium',
+    vistaPrevia:
+        'Todas las clases en video del temario oficial, cada una con su '
+        'práctica. Las clases gratis siguen abiertas.',
+  ),
   otra(
     'otra',
     titulo: 'Esto es Premium',

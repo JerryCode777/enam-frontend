@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/router/routes.dart';
+import 'package:enam_app/features/subscription/domain/acceso.dart';
+import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/aula/data/mock_aula_repository.dart';
 import 'package:enam_app/features/aula/presentation/aula_providers.dart';
@@ -36,6 +39,7 @@ void main() {
     required String en,
     bool premium = true,
     bool conPortadas = false,
+    AccesoGratis? gratis,
   }) {
     // Un teléfono: con el 800×600 por defecto, la lista perezosa deja fuera
     // la mitad de lo que se prueba.
@@ -71,8 +75,12 @@ void main() {
           builder: (_, s) => Text('Sesión ${s.pathParameters['id']}'),
         ),
         GoRoute(
-          path: Routes.accessEnded,
-          builder: (_, _) => const Text('Pago'),
+          path: Routes.premium,
+          builder: (_, s) => MuroDeVentaScreen(
+            motivo:
+                MotivoDeMuro.desdeConsulta(s.uri.queryParameters) ??
+                const FuncionDePago(FuncionPremium.otra),
+          ),
         ),
       ],
     );
@@ -87,6 +95,7 @@ void main() {
           ),
         ),
         imagenDeRedProvider.overrideWithValue(_portadaLocal),
+        cupoGratisProvider.overrideWithValue(gratis),
       ],
       child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
     );
@@ -129,6 +138,34 @@ void main() {
     });
   });
 
+  group('«Gratis» en el catálogo', () {
+    testWidgets('en la cuenta gratis, en los cursos con muestra', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        montar(
+          tester,
+          en: Routes.cursos,
+          premium: false,
+          conPortadas: true,
+          gratis: const AccesoGratis(preguntasPorDia: 10, restantesHoy: 6),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Gratis'), findsWidgets);
+    });
+
+    testWidgets('a quien es Premium no le dice nada', (tester) async {
+      await tester.pumpWidget(
+        montar(tester, en: Routes.cursos, conPortadas: true),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Gratis'), findsNothing);
+    });
+  });
+
   group('Curso', () {
     testWidgets('con algo visto, el botón es «Seguir con el curso»', (
       tester,
@@ -164,11 +201,12 @@ void main() {
       expect(find.textContaining('Tienes 3 clases gratis'), findsOneWidget);
       expect(find.text('Gratis'), findsNWidgets(3));
 
-      // Una clase con candado abre el muro sin pedir la clase.
+      // Una clase con candado abre el muro de cursos sin pedir la clase.
       await tocar(tester, find.text('Esquema nacional de vacunación'));
 
       expect(find.text('Los cursos completos son de Premium'), findsOneWidget);
-      expect(router.state.uri.path, Routes.cursoOf('medicina'));
+      expect(router.state.uri.path, Routes.premium);
+      expect(router.state.uri.queryParameters['funcion'], 'cursos');
     });
   });
 
@@ -188,11 +226,11 @@ void main() {
       await tocar(tester, find.text('Esquema nacional de vacunación'));
 
       expect(find.text('Ver Premium'), findsNothing);
+      await tester.scrollUntilVisible(find.text('Entendido'), 300);
       expect(
         find.text('Tu acceso Premium se activa con tu cuenta de ENAM Prep.'),
         findsOneWidget,
       );
-      expect(find.text('Entendido'), findsOneWidget);
     });
   });
 
@@ -357,6 +395,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Los cursos completos son de Premium'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Entendido'), 300);
       await tester.tap(find.text('Entendido'));
       await tester.pumpAndSettle();
 

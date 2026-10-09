@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:enam_app/core/router/routes.dart';
+import 'package:enam_app/features/subscription/domain/acceso.dart';
+import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/aula/data/mock_aula_repository.dart';
 import 'package:enam_app/features/aula/presentation/aula_providers.dart';
@@ -189,6 +191,14 @@ class _Marco extends StatelessWidget {
               ],
             ),
           ],
+        ),
+        GoRoute(
+          path: Routes.premium,
+          builder: (_, s) => MuroDeVentaScreen(
+            motivo:
+                MotivoDeMuro.desdeConsulta(s.uri.queryParameters) ??
+                const FuncionDePago(FuncionPremium.otra),
+          ),
         ),
       ],
     );

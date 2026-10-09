@@ -248,6 +248,8 @@ void main() {
 
       // En Android dice «Entendido»: no hay nada que comprar después.
       await tester.scrollUntilVisible(find.text('Entendido'), 300);
+      await tester.ensureVisible(find.text('Entendido'));
+      await _asentar(tester);
       await tester.tap(find.text('Entendido'));
       await _asentar(tester);
       expect(find.byType(MuroDeVentaScreen), findsNothing);

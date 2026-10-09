@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -136,21 +137,28 @@ class _Rejilla extends StatelessWidget {
   }
 }
 
-class _TarjetaDeCurso extends StatelessWidget {
+class _TarjetaDeCurso extends ConsumerWidget {
   const _TarjetaDeCurso({required this.curso, this.destacado = false});
 
   final CursoResumen curso;
   final bool destacado;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Sin ninguna clase en el temario no hay nada que abrir. Con temario pero
     // sin videos sí: se ve lo que viene.
     final abrible = curso.clases > 0;
 
+    // «Gratis» solo a quien tiene la cuenta gratis: a quien es Premium no le
+    // dice nada. Como en la web.
+    final conGratis =
+        ref.watch(cupoGratisProvider) != null &&
+        curso.gratis > 0 &&
+        !curso.proximamente;
+
     final contenido = curso.portadaUrl == null
-        ? _SinPortada(curso: curso, destacado: destacado)
-        : _ConPortada(curso: curso);
+        ? _SinPortada(curso: curso, destacado: destacado, conGratis: conGratis)
+        : _ConPortada(curso: curso, conGratis: conGratis);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -170,15 +178,18 @@ class _TarjetaDeCurso extends StatelessWidget {
 /// Con la portada compuesta: ya trae el nombre, el profe y las clases, así
 /// que debajo va solo lo que es de esta cuenta: el avance y «Seguir viendo».
 class _ConPortada extends ConsumerWidget {
-  const _ConPortada({required this.curso});
+  const _ConPortada({required this.curso, required this.conGratis});
 
   final CursoResumen curso;
+  final bool conGratis;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seguir = ref.watch(seguirViendoProvider).value;
     final aMedias = seguir?.cursoId == curso.id ? seguir : null;
     final debajo = [
+      if (conGratis)
+        const Align(alignment: Alignment.centerLeft, child: EtiquetaGratis()),
       if (curso.proximamente)
         const Align(
           alignment: Alignment.centerLeft,
@@ -230,10 +241,15 @@ class _ConPortada extends ConsumerWidget {
 /// Sin portada: el degradado del área con el título, el lema, el profe y las
 /// clases.
 class _SinPortada extends StatelessWidget {
-  const _SinPortada({required this.curso, required this.destacado});
+  const _SinPortada({
+    required this.curso,
+    required this.destacado,
+    required this.conGratis,
+  });
 
   final CursoResumen curso;
   final bool destacado;
+  final bool conGratis;
 
   @override
   Widget build(BuildContext context) {
@@ -276,6 +292,10 @@ class _SinPortada extends StatelessWidget {
                 const SizedBox(height: DesignTokens.space3),
               ],
               _Pie(curso: curso),
+              if (conGratis) ...[
+                const SizedBox(height: DesignTokens.space2),
+                const EtiquetaGratis(),
+              ],
             ],
           ),
         ),

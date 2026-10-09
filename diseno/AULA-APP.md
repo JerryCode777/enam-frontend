@@ -20,9 +20,9 @@ Las clases en video del temario oficial, con su práctica. Es el gemelo de `/cur
 - La clave es la URL sin la firma (`sinFirma`): CloudFront firma distinto cada vez.
 - Se decodifican al ancho en que se pintan, en escalones de 200 px. Así volver a una portada al hacer scroll no la pide ni la decodifica otra vez.
 
-**La entrada** es la tarjeta «Cursos» del inicio (`EntradaAlAula`), con «Nuevo» o «Muy pronto», como en la web.
+**La entrada** es la fila «Cursos» de «Estudiar», en el inicio, con «Nuevo» o «Muy pronto», como en la web.
 
-**Los textos son los de la web**, con una excepción: el subtítulo del catálogo. El de la web no cabe en la cabecera de un teléfono, así que se usa el de la entrada del inicio.
+**Los textos son los de la web**, con una excepción: el subtítulo del catálogo. El de la web no cabe en la cabecera de un teléfono, así que se usa uno más corto: «Clases en video, cada una con su práctica».
 
 ## El reproductor
 
@@ -48,11 +48,11 @@ Qué hace:
 
 ## El muro
 
-Una clase con candado abre una hoja con el texto de la web, «Los cursos completos son de Premium» (`abrirMuroDeCursos`). Se abre al tocarla, sin pedirla, o cuando el servidor responde 403 `FUNCION_PREMIUM`.
+Una clase con candado abre el muro de venta de la app con la función `cursos`, «Los cursos completos son de Premium» (`abrirMuroDeCursos`). Se abre al tocarla, sin pedirla, o cuando el servidor responde 403 `FUNCION_PREMIUM`.
 
-- **En Android no hay botón de compra**, por la política de pagos de Google Play: la app no tiene Play Billing. Sale «Tu acceso Premium se activa con tu cuenta de ENAM Prep.» (`PremiumConTuCuenta`).
-- **En iOS**, «Ver Premium» lleva a la compra con App Store.
-- **Gratis limitado (PR #2).** Cuando entre a `main`, `abrirMuroDeCursos` pasa a ser el muro de venta con `FuncionPremium.cursos`.
+- **En Android no hay compra**, por la política de pagos de Google Play: la app no tiene Play Billing. Sale «Tu acceso Premium se activa con tu cuenta de ENAM Prep.».
+- **En iPhone, App Store.**
+- **En el catálogo**, la cuenta gratis ve «Gratis» en los cursos con clases de muestra.
 
 ## Contrato
 

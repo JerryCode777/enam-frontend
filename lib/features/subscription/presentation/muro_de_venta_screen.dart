@@ -173,7 +173,7 @@ class _Encabezado extends StatelessWidget {
   }
 }
 
-/// Lo que trae Premium, en cuatro líneas. Las mismas en las dos tiendas: son
+/// Lo que trae Premium, en cinco líneas. Las mismas en las dos tiendas: son
 /// funciones, no precios.
 class _QueIncluye extends StatelessWidget {
   const _QueIncluye();
@@ -183,6 +183,7 @@ class _QueIncluye extends StatelessWidget {
     (Symbols.timer, 'Simulacros de 180 y exámenes pasados'),
     (Symbols.query_stats, 'Tu nota proyectada y tu acierto por área'),
     (Symbols.cloud_off, 'Estudiar sin conexión'),
+    (Symbols.play_circle, 'Todos los cursos en video, con su práctica'),
   ];
 
   @override
