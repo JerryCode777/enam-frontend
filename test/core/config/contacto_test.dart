@@ -13,8 +13,8 @@ void main() {
   tearDown(Contacto.restablecer);
 
   test('sin decir nada, el número es el compilado y es real', () {
-    expect(Contacto.soporteNumero, '51964235124');
-    expect(Contacto.soporteVisible, '+51 964 235 124');
+    expect(Contacto.soporteNumero, '51936415245');
+    expect(Contacto.soporteVisible, '+51 936 415 245');
   });
 
   test('toma el número que sirve el servidor', () {
@@ -40,8 +40,8 @@ void main() {
       test('ignora ${malo.isEmpty ? '(vacío)' : malo}', () {
         Contacto.aplicar(numero: malo, visible: malo);
 
-        expect(Contacto.soporteNumero, '51964235124');
-        expect(Contacto.soporteVisible, '+51 964 235 124');
+        expect(Contacto.soporteNumero, '51936415245');
+        expect(Contacto.soporteVisible, '+51 936 415 245');
       });
     }
 
