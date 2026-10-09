@@ -16,6 +16,7 @@ import 'package:enam_app/features/aula/presentation/curso_screen.dart';
 import 'package:enam_app/features/aula/presentation/cursos_screen.dart';
 import 'package:enam_app/features/aula/presentation/widgets/presentacion.dart';
 import 'package:enam_app/features/aula/domain/aula_models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -141,6 +142,39 @@ void main() {
       });
     }
   }
+
+  // Las portadas todavía en camino: cada caja ya ocupa su sitio, con el
+  // relleno neutro, y nada salta cuando llegan.
+  for (final oscuro in [false, true]) {
+    final tema = oscuro ? 'oscuro' : 'claro';
+    testWidgets('8.7-cursos-portadas-cargando · $tema', (tester) async {
+      tester.view
+        ..devicePixelRatio = 2
+        ..physicalSize = tamano * 2;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        _Marco(
+          tamano: tamano,
+          oscuro: oscuro,
+          ruta: Routes.cursos,
+          premium: true,
+          portadas: true,
+          imagen: _queNoLlega,
+        ),
+      );
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(milliseconds: 600));
+      }
+
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile(
+          '_imagenes/android-412/8.7-cursos-portadas-cargando-$tema.png',
+        ),
+      );
+    });
+  }
 }
 
 /// Las imágenes de assets se decodifican fuera del reloj falso.
@@ -159,6 +193,7 @@ class _Marco extends StatelessWidget {
     required this.ruta,
     required this.premium,
     required this.portadas,
+    this.imagen = _portadaLocal,
   });
 
   final Size tamano;
@@ -166,6 +201,7 @@ class _Marco extends StatelessWidget {
   final String ruta;
   final bool premium;
   final bool portadas;
+  final ImagenDeRed imagen;
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +243,7 @@ class _Marco extends StatelessWidget {
         aulaRepositoryProvider.overrideWithValue(
           _ConVideo(premium: premium, conPortadas: portadas),
         ),
-        imagenDeRedProvider.overrideWithValue(_portadaLocal),
+        imagenDeRedProvider.overrideWithValue(imagen),
       ],
       child: MediaQuery(
         data: MediaQueryData(
@@ -415,4 +451,19 @@ Future<String?> _rutaSimbolos() async {
     return base.resolve('lib/fonts/MaterialSymbolsOutlined.ttf').toFilePath();
   }
   return null;
+}
+
+/// Una imagen que nunca termina de llegar.
+ImageProvider _queNoLlega(String url, {int? ancho}) => _QueNoLlega();
+
+class _QueNoLlega extends ImageProvider<_QueNoLlega> {
+  @override
+  Future<_QueNoLlega> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _QueNoLlega key,
+    ImageDecoderCallback decode,
+  ) => OneFrameImageStreamCompleter(Completer<ImageInfo>().future);
 }

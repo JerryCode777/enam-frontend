@@ -44,10 +44,29 @@ final imagenDeRedProvider = Provider<ImagenDeRed>(
       ),
 );
 
+/// El ancho, en píxeles, al que se decodifica una imagen que se pinta a
+/// [logico] puntos.
+///
+/// En escalones de 200 px: el ancho entra en la clave de la caché, y así un
+/// píxel de diferencia no la invalida. La precarga del catálogo usa esta misma
+/// cuenta, para pedir exactamente la imagen que la tarjeta va a buscar.
+int anchoDeDecodificacion(double logico, double dpr) =>
+    (logico * dpr / 200).ceil() * 200;
+
+/// El relleno de una imagen que todavía no llega: un gris tenue sacado del
+/// color del texto, que se ve igual sobre la tarjeta blanca y sobre la oscura.
+Color colorDeRelleno(BuildContext context) =>
+    context.scheme.onSurface.withValues(alpha: 0.06);
+
 /// Una imagen firmada, decodificada al ancho en que se pinta.
 ///
-/// Una portada viene a 1600 px; decodificarla entera para una tarjeta de 400
-/// gasta cuatro veces la memoria y hace saltar el scroll.
+/// Las portadas vienen a 1280 px. Decodificarlas al ancho en que se pintan, y
+/// no al suyo, ahorra memoria en los teléfonos de menos densidad y en las dos
+/// columnas de una tablet.
+///
+/// Mientras llega, su caja ya ocupa su sitio con un relleno neutro, y la
+/// imagen entra con un fundido corto: nada salta ni aparece de golpe. Si ya
+/// estaba en la caché, sale sin fundido.
 class ImagenFirmada extends ConsumerWidget {
   const ImagenFirmada({
     required this.url,
@@ -60,16 +79,18 @@ class ImagenFirmada extends ConsumerWidget {
   final BoxFit fit;
   final Widget? alFallar;
 
+  /// Lo que dura el fundido al llegar la imagen.
+  static const fundido = Duration(milliseconds: 200);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final imagen = ref.watch(imagenDeRedProvider);
     final dpr = MediaQuery.devicePixelRatioOf(context);
+    final relleno = ColoredBox(color: colorDeRelleno(context));
     return LayoutBuilder(
       builder: (context, c) {
-        // En escalones de 200 px: el ancho entra en la clave de la caché, y
-        // así un píxel de diferencia no la invalida.
         final ancho = c.hasBoundedWidth
-            ? ((c.maxWidth * dpr / 200).ceil() * 200)
+            ? anchoDeDecodificacion(c.maxWidth, dpr)
             : null;
         return Image(
           image: imagen(url, ancho: ancho),
@@ -79,10 +100,17 @@ class ImagenFirmada extends ConsumerWidget {
           gaplessPlayback: true,
           frameBuilder: (context, hijo, cuadro, sincrono) => sincrono
               ? hijo
-              : AnimatedOpacity(
-                  opacity: cuadro == null ? 0 : 1,
-                  duration: DesignTokens.durationFast,
-                  child: hijo,
+              : Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    relleno,
+                    AnimatedOpacity(
+                      opacity: cuadro == null ? 0 : 1,
+                      duration: fundido,
+                      curve: Curves.easeOut,
+                      child: hijo,
+                    ),
+                  ],
                 ),
           errorBuilder: (_, _, _) => alFallar ?? const SizedBox.shrink(),
         );

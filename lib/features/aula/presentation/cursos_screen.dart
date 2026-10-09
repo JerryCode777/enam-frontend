@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -23,6 +25,14 @@ class CursosScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cursos = ref.watch(cursosProvider);
+
+    // En cuanto llega el catálogo se piden las primeras portadas: cuando se
+    // pintan, ya están.
+    ref.listen(cursosProvider, (_, ahora) {
+      if (ahora.value case final lista?) {
+        _precargarPortadas(context, ref.read(imagenDeRedProvider), lista);
+      }
+    });
 
     return Scaffold(
       appBar: const GradientHeader(
@@ -52,6 +62,49 @@ class CursosScreen extends ConsumerWidget {
           },
           child: _Catalogo(cursos: lista),
         ),
+      ),
+    );
+  }
+}
+
+/// Cuántas portadas se piden por adelantado: las que caben en la primera
+/// pantalla y la siguiente.
+const _portadasAdelantadas = 4;
+
+/// Pide las primeras portadas al mismo ancho al que las pintará su tarjeta,
+/// para que la clave de la caché sea la misma y no se decodifiquen dos veces.
+///
+/// El orden y los anchos son los de [_Catalogo]: el repaso final a todo el
+/// ancho, y las áreas en una columna o, desde 600 puntos, en dos.
+void _precargarPortadas(
+  BuildContext context,
+  ImagenDeRed imagen,
+  List<CursoResumen> cursos,
+) {
+  final pantalla = MediaQuery.of(context);
+  final contenido = pantalla.size.width - 2 * DesignTokens.space4;
+  final enRejilla = contenido >= 600
+      ? (contenido - DesignTokens.space3) / 2
+      : contenido;
+  final enOrden = [
+    ...cursos.where((c) => c.esRepaso),
+    ...cursos.where((c) => !c.esRepaso),
+  ];
+  for (final c
+      in enOrden
+          .where((c) => c.portadaUrl != null)
+          .take(_portadasAdelantadas)) {
+    final ancho = anchoDeDecodificacion(
+      c.esRepaso ? contenido : enRejilla,
+      pantalla.devicePixelRatio,
+    );
+    // Sin red o sin imagen no pasa nada: la tarjeta la volverá a pedir y, si
+    // falla, pinta el degradado del área.
+    unawaited(
+      precacheImage(
+        imagen(c.portadaUrl!, ancho: ancho),
+        context,
+        onError: (_, _) {},
       ),
     );
   }
