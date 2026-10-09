@@ -18,7 +18,9 @@ Las clases en video del temario oficial, con su práctica. Es el gemelo de `/cur
 **La caché de las portadas:**
 - Disco y memoria, con `cached_network_image`.
 - La clave es la URL sin la firma (`sinFirma`): CloudFront firma distinto cada vez.
-- Se decodifican al ancho en que se pintan, en escalones de 200 px. Así volver a una portada al hacer scroll no la pide ni la decodifica otra vez.
+- Se decodifican al ancho en que se pintan, en escalones de 200 px (`anchoDeDecodificacion`). Así volver a una portada al hacer scroll no la pide ni la decodifica otra vez.
+- Mientras llega, la caja 16:9 ya ocupa su sitio con un relleno neutro (`colorDeRelleno`), y la imagen entra con un fundido de 200 ms. Si ya estaba en caché, sale sin fundido.
+- En cuanto llega el catálogo se precargan las 4 primeras portadas, en el orden y al ancho de su tarjeta. Es la misma clave de caché que pedirá la tarjeta, así que no se decodifican dos veces.
 
 **La entrada** es la fila «Cursos» de «Estudiar», en el inicio, con «Nuevo» o «Muy pronto», como en la web.
 

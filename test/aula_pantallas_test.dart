@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:enam_app/core/providers.dart';
@@ -13,6 +14,7 @@ import 'package:enam_app/features/aula/presentation/cursos_screen.dart';
 import 'package:enam_app/features/aula/presentation/widgets/presentacion.dart';
 import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +42,7 @@ void main() {
     bool premium = true,
     bool conPortadas = false,
     AccesoGratis? gratis,
+    ImagenDeRed? imagen,
   }) {
     // Un teléfono: con el 800×600 por defecto, la lista perezosa deja fuera
     // la mitad de lo que se prueba.
@@ -94,7 +97,7 @@ void main() {
             delay: Duration.zero,
           ),
         ),
-        imagenDeRedProvider.overrideWithValue(_portadaLocal),
+        imagenDeRedProvider.overrideWithValue(imagen ?? _portadaLocal),
         cupoGratisProvider.overrideWithValue(gratis),
       ],
       child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
@@ -293,6 +296,83 @@ void main() {
       expect(find.text('Seguir con el curso'), findsOneWidget);
     });
 
+    testWidgets('las primeras portadas se piden al llegar el catálogo, al '
+        'mismo ancho que su tarjeta', (tester) async {
+      // Cada pedido anota de dónde viene: de la precarga o de una tarjeta.
+      final adelantadas = <(String, int?)>[];
+      final deLasTarjetas = <(String, int?)>{};
+      ImageProvider registrar(String url, {int? ancho}) {
+        final pedido = (Uri.parse(url).pathSegments.first, ancho);
+        if (StackTrace.current.toString().contains('_precargarPortadas')) {
+          adelantadas.add(pedido);
+        } else {
+          deLasTarjetas.add(pedido);
+        }
+        return _portadaLocal(url, ancho: ancho);
+      }
+
+      await tester.pumpWidget(
+        montar(tester, en: Routes.cursos, conPortadas: true, imagen: registrar),
+      );
+      await tester.pumpAndSettle();
+
+      // Las cuatro primeras, en el orden del catálogo: el repaso y las tres
+      // primeras áreas.
+      expect(adelantadas.map((p) => p.$1), [
+        'repaso-final',
+        'medicina',
+        'pediatria',
+        'gineco-obstetricia',
+      ]);
+      // Con la misma clave que pide su tarjeta: si no, se decodificaría dos
+      // veces.
+      for (final p in adelantadas.take(2)) {
+        expect(deLasTarjetas, contains(p), reason: '${p.$1} a ${p.$2} px');
+      }
+    });
+
+    testWidgets('mientras llega, la caja ya ocupa su sitio con un relleno', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        montar(
+          tester,
+          en: Routes.cursos,
+          conPortadas: true,
+          imagen: (url, {ancho}) => _QueNoLlega(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      final portada = find.bySemanticsLabel('Repaso final ENAM');
+      expect(portada, findsOneWidget);
+      // 16:9, con el relleno neutro adentro.
+      final caja = tester.getSize(portada);
+      expect(caja.width / caja.height, closeTo(16 / 9, 0.01));
+      expect(
+        find.descendant(
+          of: find.byType(ImagenFirmada).first,
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is ColoredBox &&
+                w.color ==
+                    colorDeRelleno(
+                      tester.element(find.byType(ImagenFirmada).first),
+                    ),
+          ),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    test('el ancho de decodificación va en escalones de 200 px', () {
+      // 380 puntos a 2,625 son 997,5 px; 372 son 976,5: los dos, 1000.
+      expect(anchoDeDecodificacion(380, 2.625), 1000);
+      expect(anchoDeDecodificacion(372, 2.625), 1000);
+      expect(anchoDeDecodificacion(412, 3), 1400);
+    });
+
     test('la caché no cambia con la firma', () {
       // CloudFront firma cada vez distinto: con la URL entera como clave, la
       // portada se volvería a bajar y decodificar en cada visita.
@@ -447,3 +527,16 @@ ImageProvider _portadaLocal(String url, {int? ancho}) {
 }
 
 final _portadas = <String, MemoryImage>{};
+
+/// Una imagen que nunca termina de llegar, para ver el relleno.
+class _QueNoLlega extends ImageProvider<_QueNoLlega> {
+  @override
+  Future<_QueNoLlega> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _QueNoLlega key,
+    ImageDecoderCallback decode,
+  ) => OneFrameImageStreamCompleter(Completer<ImageInfo>().future);
+}
