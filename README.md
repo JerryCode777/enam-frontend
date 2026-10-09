@@ -46,21 +46,31 @@ dart run build_runner watch
 El entorno se elige **al compilar**, nunca editando código:
 
 ```sh
-flutter run   --dart-define=ENV=dev
-flutter build apk --release --dart-define=ENV=prod
+flutter run --dart-define=ENV=dev
 ```
 
 | Flag | Valores | Por defecto | Para qué |
 |---|---|---|---|
 | `ENV` | `dev`, `staging`, `prod` | `dev` | Elige la URL del backend |
-| `USE_MOCKS` | `true`, `false` | `true` | Datos falsos sin backend |
-| `API_URL` | una URL | — | Sobrescribe el backend (p. ej. la máquina de un compañero) |
+| `USE_MOCKS` | `true`, `false` | `true` | Datos falsos sin backend. En release se apagan siempre |
+| `API_URL` | una URL | — | Sobrescribe el backend |
 
-Mientras el backend no exista, todo corre con `USE_MOCKS=true`. Para probar
-contra un backend real:
+**Producción se compila con `API_URL`.** `ENV=prod` solo apunta a
+`api.enamprep.pe`, que no existe: el backend de producción está en Railway.
 
 ```sh
-flutter run --dart-define=ENV=dev --dart-define=USE_MOCKS=false
+flutter build appbundle --release \
+  --dart-define=ENV=prod \
+  --dart-define=API_URL=https://api-production-4b34.up.railway.app
+```
+
+El paso a paso para publicar, con los archivos que no están en git y la
+firma de iOS, está en `PUBLICAR-TIENDAS.md`. Para probar contra producción
+desde el simulador, ver `PROBAR-CONTRA-PRODUCCION.md`:
+
+```sh
+flutter run --dart-define=USE_MOCKS=false \
+  --dart-define=API_URL=https://api-production-4b34.up.railway.app
 ```
 
 ### Usuarios de prueba (con mocks)
@@ -134,8 +144,9 @@ flutter analyze                     # debe salir limpio
 flutter test                        # toda la batería, capturas incluidas
 flutter test --exclude-tags golden  # sin las capturas, más rápido
 dart run build_runner build         # regenerar modelos
-flutter build apk --release --dart-define=ENV=prod
 ```
+
+Para compilar y subir a las tiendas: `PUBLICAR-TIENDAS.md`.
 
 ## Pendiente
 

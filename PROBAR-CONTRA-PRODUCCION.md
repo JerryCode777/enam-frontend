@@ -47,11 +47,10 @@ que protege el acceso es la huella SHA-1 más el nombre del paquete, registrados
 del lado de Google. Lo que sí es secreto es `android/key.properties`, y ese no
 se comparte.
 
-Falta además un archivo que **no viaja en git** y sin el cual Android no
-compila: `android/app/google-services.json`. Se descarga de la consola de
-Firebase —Configuración del proyecto, la app de Android— o te lo pasa alguien
-del equipo por un canal privado. El equivalente en iOS es
-`ios/Runner/GoogleService-Info.plist`.
+`android/app/google-services.json` y `ios/Runner/GoogleService-Info.plist`
+**no viajan en git**. Hoy la compilación no los usa: no hay plugin de Firebase
+y el `.plist` no está en el proyecto de Xcode. Para publicar se pasan igual,
+junto con la clave de Play: ver `PUBLICAR-TIENDAS.md`.
 
 ## 3. Entrar
 
