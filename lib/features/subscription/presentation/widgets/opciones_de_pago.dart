@@ -2,18 +2,13 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/config/contacto.dart';
-import '../../../../core/error/failure.dart';
-import '../../../../core/providers.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
-import '../../../../shared/widgets/enam_button.dart';
-import '../../../../shared/widgets/state_banner.dart';
 import 'planes_de_apple.dart';
 
 /// Cómo se vuelve a tener acceso, según la tienda.
@@ -28,23 +23,21 @@ import 'planes_de_apple.dart';
 /// ---
 ///
 /// Ni App Store ni Google Play dejan cobrar dentro de una app sin llevarse su
-/// comisión. La salida que usan Netflix y Spotify es la misma: **la app no
-/// cobra ni enseña precios**, y el pago ocurre en el navegador. Los dos caminos
-/// no son intercambiables:
+/// comisión, ni llevar a pagar fuera de ellas. Los dos caminos:
 ///
-/// - **Android** — la app abre el navegador **ya identificado**: pide un enlace
-///   de un solo uso con su propia sesión y lo abre. Antes esto pasaba por el
-///   correo, y la bandeja de entrada era un paso donde se perdía gente —el
-///   correo en otro teléfono, en spam, o simplemente no encontrado—. Mandarlo
-///   por correo sigue estando, de respaldo, para cuando el navegador no abre.
-/// - **iOS** — Apple es más estricta: ni correo ni botón de pago. Solo una nota
-///   discreta con la dirección del sitio. Al tocarla, el sistema muestra su
-///   propio aviso de que el pago no pasa por la App Store, y el navegador abre
+/// - **Android** — **ningún camino de compra.** Google Play no deja enlazar ni
+///   mandar a pagar fuera de Play Billing, y la app no tiene Play Billing. Antes
+///   había un botón que abría la web ya identificado, un enlace por correo y un
+///   «Activar por WhatsApp»: los tres eran llevar a pagar fuera de Play. Ahora
+///   solo se dice que Premium va con la cuenta, sin dónde ni cómo, y quien ya
+///   es Premium entra con su cuenta y lo tiene todo.
+/// - **iOS** — la compra dentro de la app, con App Store. La nota del sitio
+///   va debajo y sin precios. Al tocarla, el sistema muestra su propio aviso de
+///   que el pago no pasa por la App Store, y el navegador abre
 ///   `/activar?origen=ios` **en frío**, sin saber quién llega; por eso esa
 ///   pantalla pregunta a qué viene en vez de suponerlo.
 ///
-/// Ninguna de las dos variantes enseña un precio. Los precios viven en la web y
-/// en el correo, que además es donde pueden cambiar sin publicar una versión.
+/// Ninguna de las dos variantes enseña un precio fuera de StoreKit.
 
 /// Si toca la variante de App Store.
 ///
@@ -57,87 +50,17 @@ bool get enTiendaApple => switch (AppConfig.tiendaForzada) {
 };
 
 /// Las opciones de pago que corresponden a esta tienda.
-class OpcionesDePago extends ConsumerStatefulWidget {
+class OpcionesDePago extends StatelessWidget {
   const OpcionesDePago({super.key, this.etiquetaWhatsApp});
 
-  /// Texto del botón de WhatsApp. En el bloqueo es «Activar por WhatsApp»; en
-  /// «Mi suscripción» quien llega ya es cliente y el texto tiene que cambiar.
+  /// Texto del botón de WhatsApp en iOS. En el bloqueo es «Activar por
+  /// WhatsApp»; en «Mi suscripción» quien llega ya es cliente y el texto tiene
+  /// que cambiar. En Android el botón es siempre de ayuda.
   final String? etiquetaWhatsApp;
 
   @override
-  ConsumerState<OpcionesDePago> createState() => _OpcionesDePagoState();
-}
-
-class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
-  bool _enviando = false;
-  bool _enviado = false;
-  bool _abriendo = false;
-
-  /// Abre el navegador con la sesión ya resuelta.
-  ///
-  /// Si algo falla —sin red, el servidor no responde, no hay navegador— se cae
-  /// al envío por correo en vez de dejar al usuario mirando un error: el
-  /// objetivo es que llegue a la web, y hay dos caminos para eso.
-  Future<void> _abrirEnElNavegador() async {
-    if (_abriendo) return;
-    setState(() => _abriendo = true);
-
-    try {
-      final url = await ref
-          .read(subscriptionRepositoryProvider)
-          .enlaceDeSuscripcion();
-
-      final abierto = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
-      ).catchError((_) => false);
-
-      if (!abierto) await _enviarEnlace();
-    } on Failure {
-      await _enviarEnlace();
-    } finally {
-      if (mounted) setState(() => _abriendo = false);
-    }
-  }
-
-  Future<void> _enviarEnlace() async {
-    if (_enviando) return;
-
-    final correo = ref.read(currentUserProvider)?.email;
-    if (correo == null) return;
-
-    setState(() => _enviando = true);
-    try {
-      await ref
-          .read(subscriptionRepositoryProvider)
-          .enviarEnlaceDeSuscripcion(correo);
-      if (mounted) setState(() => _enviado = true);
-    } on Failure catch (e) {
-      if (mounted) showErrorSnack(context, e.message);
-    } finally {
-      if (mounted) setState(() => _enviando = false);
-    }
-  }
-
-  /// Abre la app de correo del dispositivo.
-  ///
-  /// `mailto:` sin destinatario es lo que el sistema entiende como "abre el
-  /// buzón": no redacta nada, solo lleva a la bandeja.
-  Future<void> _abrirBuzon() async {
-    final abierto = await launchUrl(
-      Uri(scheme: 'mailto'),
-      mode: LaunchMode.externalApplication,
-    ).catchError((_) => false);
-
-    if (!abierto && mounted) {
-      showErrorSnack(context, 'No encontramos una app de correo en el equipo.');
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final etiqueta = widget.etiquetaWhatsApp;
-    final scheme = context.scheme;
+    final etiqueta = etiquetaWhatsApp;
 
     if (enTiendaApple) {
       return Column(
@@ -158,139 +81,62 @@ class _OpcionesDePagoState extends ConsumerState<OpcionesDePago> {
       );
     }
 
-    if (_enviado) {
-      return _EnlaceEnviado(
-        correo: ref.watch(currentUserProvider)?.email ?? '',
-        onAbrirBuzon: _abrirBuzon,
-        onReenviar: _enviarEnlace,
-      );
-    }
-
+    // Android: ni botón, ni enlace, ni precio. Solo lo que es verdad para
+    // cualquiera: Premium va con la cuenta.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        EnamButton(
-          label: 'Continuar en el navegador',
-          loading: _abriendo,
-          onPressed: _abrirEnElNavegador,
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        TextButton(
-          onPressed: _enviando ? null : _enviarEnlace,
-          child: Text(
-            _enviando ? 'Enviando…' : 'Mejor mándame el enlace por correo',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: scheme.onSurfaceVariant,
-            ),
+        const PremiumConTuCuenta(),
+        const SizedBox(height: DesignTokens.space4),
+        BotonWhatsApp(
+          label: 'Escríbenos si necesitas ayuda',
+          enlace: Contacto.soporte(
+            mensaje: 'hola, necesito ayuda con mi cuenta de ENAM Prep',
           ),
         ),
-        const SizedBox(height: DesignTokens.space2),
-        BotonWhatsApp(label: etiqueta ?? 'Activar por WhatsApp'),
       ],
     );
   }
 }
 
-/// Lo que se ve en Android tras pedir el enlace.
+/// En Android, en lugar de un camino de compra: Premium va con la cuenta.
 ///
-/// El correo va grande y visible: si la persona no reconoce esa dirección, el
-/// enlace no le va a llegar nunca y hay que dejar que se dé cuenta aquí.
-class _EnlaceEnviado extends StatelessWidget {
-  const _EnlaceEnviado({
-    required this.correo,
-    required this.onAbrirBuzon,
-    required this.onReenviar,
-  });
-
-  final String correo;
-  final VoidCallback onAbrirBuzon;
-  final VoidCallback onReenviar;
+/// Sin decir dónde ni cómo se compra, sin enlace y sin precio (política de
+/// pagos de Google Play).
+class PremiumConTuCuenta extends StatelessWidget {
+  const PremiumConTuCuenta({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.scheme;
-    final states = context.states;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(DesignTokens.space4),
-          decoration: BoxDecoration(
-            color: states.info.tint,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+    final info = context.states.info;
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      decoration: BoxDecoration(
+        color: info.tint,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Symbols.workspace_premium,
+            size: 22,
+            fill: 1,
+            color: info.onTint,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Symbols.mark_email_unread,
-                    size: 22,
-                    fill: 1,
-                    color: states.info.onTint,
-                  ),
-                  const SizedBox(width: DesignTokens.space2 + 2),
-                  Expanded(
-                    child: Text(
-                      'Pulsa el enlace del correo',
-                      style: context.texts.bodyLarge?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: states.info.onTint,
-                      ),
-                    ),
-                  ),
-                ],
+          const SizedBox(width: DesignTokens.space3),
+          Expanded(
+            child: Text(
+              'Tu acceso Premium se activa con tu cuenta de ENAM Prep.',
+              style: context.texts.bodyMedium?.copyWith(
+                height: 1.5,
+                fontWeight: FontWeight.w700,
+                color: info.onTint,
               ),
-              const SizedBox(height: DesignTokens.space2),
-              Text(
-                'Te enviamos un enlace de suscripción al siguiente correo. '
-                'Solo tienes que pulsarlo para completar la suscripción. '
-                'Vence en 15 minutos.',
-                style: context.texts.bodyMedium?.copyWith(
-                  fontSize: 13,
-                  height: 1.45,
-                  color: states.info.onTint,
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space3),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: DesignTokens.space3,
-                  vertical: DesignTokens.space2 + 2,
-                ),
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  border: Border.all(color: scheme.outlineVariant),
-                ),
-                child: Text(
-                  correo,
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodyLarge?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: scheme.onSurface,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: DesignTokens.space4),
-        EnamButton(label: 'Ir al buzón de correo', onPressed: onAbrirBuzon),
-        const SizedBox(height: DesignTokens.space2),
-        Center(
-          child: TextButton(
-            onPressed: onReenviar,
-            child: const Text('No me llegó, reenviar'),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -367,9 +213,16 @@ class _NotaDelSitio extends StatelessWidget {
 ///
 /// No es una integración: es un enlace `wa.me`, igual que en la app hermana.
 class BotonWhatsApp extends StatelessWidget {
-  const BotonWhatsApp({super.key, this.label = 'Activar por WhatsApp'});
+  const BotonWhatsApp({
+    super.key,
+    this.label = 'Activar por WhatsApp',
+    this.enlace,
+  });
 
   final String label;
+
+  /// A qué chat y con qué mensaje. Por defecto, el de activar el plan.
+  final Uri? enlace;
 
   @override
   Widget build(BuildContext context) {
@@ -377,7 +230,7 @@ class BotonWhatsApp extends StatelessWidget {
 
     return OutlinedButton.icon(
       onPressed: () async {
-        final abierto = await Contacto.abrir(Contacto.activarPlan());
+        final abierto = await Contacto.abrir(enlace ?? Contacto.activarPlan());
         if (!abierto && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

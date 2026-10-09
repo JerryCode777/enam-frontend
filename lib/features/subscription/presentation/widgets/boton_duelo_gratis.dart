@@ -104,8 +104,9 @@ class _BotonDueloGratisState extends ConsumerState<BotonDueloGratis> {
                       Text(
                         disponible
                             ? 'Diez preguntas contra otra persona, ahora mismo'
-                            : 'Vuelve mañana, o activa tu plan y juega sin '
-                                  'límite',
+                            // Lo que trae un plan, no cómo conseguirlo: en
+                            // Android no hay compra en la app.
+                            : 'Vuelve mañana. Con Premium juegas sin límite',
                         style: texto.bodySmall?.copyWith(
                           color: disponible
                               ? estados.info.onTint

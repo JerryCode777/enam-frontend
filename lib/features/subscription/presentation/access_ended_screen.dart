@@ -79,28 +79,20 @@ class _AccessEndedScreenState extends ConsumerState<AccessEndedScreen> {
     // pagó no se le habla como si nunca lo hubiera hecho.
     final vieneDePrueba = suscripcion?.plan.esGratuito ?? true;
 
-    // En iOS la app no puede ofrecer la acción, así que tampoco la nombra:
-    // decir "activa tu plan" donde no hay botón que lo haga es peor que no
-    // decir nada.
-    final (titular, bajada) = switch ((vieneDePrueba, enTiendaApple)) {
-      (true, true) => (
-        'Se acabó tu día de prueba',
-        'Viste la app completa. Tu cuenta sigue activa y te espera donde la '
-            'dejaste.',
-      ),
-      (true, false) => (
-        'Se acabó tu día de prueba',
-        'Viste la app completa. Para seguir donde lo dejaste, activa tu plan.',
-      ),
-      (false, true) => (
-        'Tu plan terminó',
-        'Se acabó la vigencia. Tu cuenta y tu avance siguen intactos.',
-      ),
-      (false, false) => (
-        'Tu plan terminó',
-        'Se acabó la vigencia. Renuévalo y sigues donde lo dejaste.',
-      ),
-    };
+    // No se nombra cómo volver a tener acceso. En Android la app no tiene
+    // camino de compra (política de pagos de Google Play), y decir «activa tu
+    // plan» donde no hay botón que lo haga es peor que no decir nada. En iOS
+    // la compra está más abajo y se explica sola.
+    final (titular, bajada) = vieneDePrueba
+        ? (
+            'Se acabó tu día de prueba',
+            'Viste la app completa. Tu cuenta sigue activa y te espera donde '
+                'la dejaste.',
+          )
+        : (
+            'Tu plan terminó',
+            'Se acabó la vigencia. Tu cuenta y tu avance siguen intactos.',
+          );
 
     return Scaffold(
       // Sin `AppBar`: no hay atrás al que volver. La salida es pagar o cerrar
@@ -226,7 +218,7 @@ class _Esperando extends StatelessWidget {
     return Align(
       child: TextButton(
         onPressed: onSaltar,
-        child: Text(enTiendaApple ? 'Continuar' : 'Ver los planes'),
+        child: const Text('Continuar'),
       ),
     );
   }
