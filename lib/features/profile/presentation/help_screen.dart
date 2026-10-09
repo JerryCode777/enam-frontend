@@ -30,7 +30,7 @@ class HelpScreen extends ConsumerStatefulWidget {
 }
 
 class _HelpScreenState extends ConsumerState<HelpScreen> {
-  static const _correo = 'soporte@enamprep.pe';
+  static const _correo = 'office@aidasoftware.net';
 
   String _version = '';
 

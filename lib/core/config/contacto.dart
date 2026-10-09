@@ -26,13 +26,13 @@ abstract final class Contacto {
   ///
   /// Lo pisa [aplicar] con lo que responda el servidor.
   static String soporteNumero = _soportePorDefecto;
-  static const String _soportePorDefecto = '51964235124';
+  static const String _soportePorDefecto = '51936415245';
 
   /// Para mostrar: `+51 906 944 489`.
   static const String botVisible = '+51 906 944 489';
 
   static String soporteVisible = _soporteVisiblePorDefecto;
-  static const String _soporteVisiblePorDefecto = '+51 964 235 124';
+  static const String _soporteVisiblePorDefecto = '+51 936 415 245';
 
   /// Reemplaza el número de soporte con el que sirve el servidor.
   ///
