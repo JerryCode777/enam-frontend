@@ -101,8 +101,6 @@ class _Catalogo extends StatelessWidget {
           ),
           _Rejilla(cursos: areas),
         ],
-        const SizedBox(height: DesignTokens.space4),
-        const AvisoPlanaVirtual(),
       ],
     );
   }

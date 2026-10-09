@@ -316,37 +316,3 @@ class BarraDeAvance extends StatelessWidget {
     );
   }
 }
-
-/// La plana docente es virtual, y se dice.
-class AvisoPlanaVirtual extends StatelessWidget {
-  const AvisoPlanaVirtual({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final info = context.states.info;
-    return Container(
-      padding: const EdgeInsets.all(DesignTokens.space3),
-      decoration: BoxDecoration(
-        color: info.tint,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Symbols.info, size: 18, color: info.onTint),
-          const SizedBox(width: DesignTokens.space2),
-          Expanded(
-            child: Text(
-              'Nuestra plana docente es virtual: personajes ilustrados con voz '
-              'generada. Lo que enseñan sale de las referencias de cada clase.',
-              style: context.texts.bodySmall?.copyWith(
-                color: info.onTint,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

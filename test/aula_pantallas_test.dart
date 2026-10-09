@@ -190,6 +190,50 @@ void main() {
     });
   });
 
+  group('Los profes', () {
+    // Jerry: nunca se dice cómo están hechos los profes ni sus voces.
+    const prohibidas = [
+      'virtual',
+      'ilustrad',
+      'voz generada',
+      'inteligencia artificial',
+    ];
+
+    for (final (nombre, ruta) in [
+      ('el catálogo', Routes.cursos),
+      ('el curso', Routes.cursoOf('pediatria')),
+      ('la clase', Routes.claseOf('pediatria', 'pediatria.01-03')),
+    ]) {
+      testWidgets('en $nombre no se dice cómo están hechos', (tester) async {
+        await tester.pumpWidget(montar(tester, en: ruta));
+        await tester.pumpAndSettle();
+        // Hasta el final de la página, que es donde iba el aviso.
+        await tester.drag(
+          find.byType(Scrollable).first,
+          const Offset(0, -6000),
+        );
+        await tester.pumpAndSettle();
+
+        final textos = tester
+            .widgetList<Text>(find.byType(Text))
+            .map(
+              (t) => (t.data ?? t.textSpan?.toPlainText() ?? '').toLowerCase(),
+            )
+            .join('\n');
+        for (final p in prohibidas) {
+          expect(textos, isNot(contains(p)), reason: '«$p» en $nombre');
+        }
+      });
+    }
+
+    testWidgets('el profe es «Profe del curso»', (tester) async {
+      await tester.pumpWidget(montar(tester, en: Routes.cursoOf('pediatria')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Profe del curso'), findsOneWidget);
+    });
+  });
+
   group('Clase', () {
     testWidgets('«Practicar este tema» abre la sesión de práctica', (
       tester,

@@ -170,8 +170,6 @@ class _ContenidoState extends ConsumerState<_Contenido> {
           const SizedBox(height: DesignTokens.space3),
           TemarioDelCurso(curso: curso, actual: clase.id, compacto: true),
         ],
-        const SizedBox(height: DesignTokens.space6),
-        const AvisoPlanaVirtual(),
       ],
     );
   }

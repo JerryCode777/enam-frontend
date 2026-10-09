@@ -76,8 +76,6 @@ class CursoScreen extends ConsumerWidget {
               ),
               const SizedBox(height: DesignTokens.space3),
               TemarioDelCurso(curso: c),
-              const SizedBox(height: DesignTokens.space6),
-              const AvisoPlanaVirtual(),
             ],
           ),
         ),
@@ -129,7 +127,7 @@ class _Presentacion extends StatelessWidget {
           LineaDelProfe(
             profe: profe,
             areaId: curso.areaId,
-            subtitulo: 'Profe virtual del curso',
+            subtitulo: 'Profe del curso',
             tamano: 44,
           ),
         ],
