@@ -244,7 +244,7 @@ class _AccionesState extends ConsumerState<_Acciones> {
         // Cómo seguir teniendo acceso, según la tienda. Es lo mismo que ve
         // quien se quedó sin acceso, y a propósito: la regla vive en un solo
         // sitio para que no se olvide al añadir una pantalla.
-        const OpcionesDePago(etiquetaWhatsApp: 'Escríbenos si necesitas ayuda'),
+        const OpcionesDePago(),
 
         if (_puedeCancelar) ...[
           const SizedBox(height: DesignTokens.space4),

@@ -133,25 +133,6 @@ abstract final class AppConfig {
     defaultValue: 'https://enamprep.com',
   );
 
-  /// La pantalla de activación de la web.
-  ///
-  /// Es la única dirección de la web que la app enlaza, y **no es `/planes` a
-  /// propósito**. La guía 3.1.1 de App Store prohíbe enlazar a un mecanismo de
-  /// compra externo; lo que sí tolera —y lo que el *External Link Account
-  /// Entitlement* contempla— es llevar a **gestionar la cuenta**. Una lista de
-  /// precios es inequívocamente lo primero; una pantalla que pregunta a qué
-  /// vienes, no. Google Play tiene una política equivalente, más tolerante en
-  /// la práctica pero igual de explícita en el papel.
-  ///
-  /// Por eso tampoco lleva al inicio: quien viene de la app llega **sin
-  /// sesión** y acabaría en el splash y de ahí en el login, escribiendo una
-  /// contraseña en el teclado del móvil sin ninguna pista de a qué había ido.
-  /// `/activar` es la única que sabe recibir a alguien en frío.
-  ///
-  /// El `origen` no lo usa el servidor: viaja para poder medir por separado los
-  /// dos caminos de compra.
-  static String get urlActivar => '$webUrl/activar?origen=ios';
-
   /// Fuerza la variante de tienda de la pantalla de bloqueo, para poder ver
   /// las dos sin cambiar de dispositivo:
   /// `--dart-define=TIENDA=apple` o `--dart-define=TIENDA=android`.

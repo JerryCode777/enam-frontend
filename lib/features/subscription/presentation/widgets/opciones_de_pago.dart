@@ -1,9 +1,7 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/config/contacto.dart';
@@ -31,13 +29,13 @@ import 'planes_de_apple.dart';
 ///   «Activar por WhatsApp»: los tres eran llevar a pagar fuera de Play. Ahora
 ///   solo se dice que Premium va con la cuenta, sin dónde ni cómo, y quien ya
 ///   es Premium entra con su cuenta y lo tiene todo.
-/// - **iOS** — la compra dentro de la app, con App Store. La nota del sitio
-///   va debajo y sin precios. Al tocarla, el sistema muestra su propio aviso de
-///   que el pago no pasa por la App Store, y el navegador abre
-///   `/activar?origen=ios` **en frío**, sin saber quién llega; por eso esa
-///   pantalla pregunta a qué viene en vez de suponerlo.
+/// - **iOS** — la compra dentro de la app, con App Store, y nada más (guía
+///   3.1.1). Había una nota con la dirección del sitio que abría `/activar` en
+///   la web y un «Activar por WhatsApp» con «quiero activar mi cuenta»: las dos
+///   eran ofrecer un medio de pago que no es App Store.
 ///
-/// Ninguna de las dos variantes enseña un precio fuera de StoreKit.
+/// En las dos, WhatsApp queda solo como ayuda. Ninguna enseña un precio fuera
+/// de StoreKit.
 
 /// Si toca la variante de App Store.
 ///
@@ -46,54 +44,40 @@ import 'planes_de_apple.dart';
 bool get enTiendaApple => switch (AppConfig.tiendaForzada) {
   'apple' => true,
   'android' => false,
-  _ => !kIsWeb && Platform.isIOS,
+  // `defaultTargetPlatform` y no `Platform.isIOS`: en el teléfono dicen lo
+  // mismo, pero este se puede simular en las pruebas, que es donde se
+  // comprueba qué ofrece cada tienda.
+  _ => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
 };
 
 /// Las opciones de pago que corresponden a esta tienda.
 class OpcionesDePago extends StatelessWidget {
-  const OpcionesDePago({super.key, this.etiquetaWhatsApp});
-
-  /// Texto del botón de WhatsApp en iOS. En el bloqueo es «Activar por
-  /// WhatsApp»; en «Mi suscripción» quien llega ya es cliente y el texto tiene
-  /// que cambiar. En Android el botón es siempre de ayuda.
-  final String? etiquetaWhatsApp;
+  const OpcionesDePago({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final etiqueta = etiquetaWhatsApp;
-
     if (enTiendaApple) {
-      return Column(
+      return const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // El cobro dentro de la app va PRIMERO. Es lo que Apple exige —su
           // sistema de pago no puede quedar por detrás de otra vía— y además es
           // lo más cómodo: se paga con el Face ID y sin salir de aquí.
-          const PlanesDeApple(),
-          const SizedBox(height: DesignTokens.space4),
-
-          // La nota del sitio se queda, pero debajo y sin precios: no es un
-          // camino de compra alternativo, es dónde gestionar la cuenta.
-          const _NotaDelSitio(),
-          const SizedBox(height: DesignTokens.space3),
-          BotonWhatsApp(label: etiqueta ?? 'Escríbenos si necesitas ayuda'),
+          PlanesDeApple(),
+          SizedBox(height: DesignTokens.space4),
+          BotonWhatsApp(),
         ],
       );
     }
 
     // Android: ni botón, ni enlace, ni precio. Solo lo que es verdad para
     // cualquiera: Premium va con la cuenta.
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const PremiumConTuCuenta(),
-        const SizedBox(height: DesignTokens.space4),
-        BotonWhatsApp(
-          label: 'Escríbenos si necesitas ayuda',
-          enlace: Contacto.soporte(
-            mensaje: 'hola, necesito ayuda con mi cuenta de ENAM Prep',
-          ),
-        ),
+        PremiumConTuCuenta(),
+        SizedBox(height: DesignTokens.space4),
+        BotonWhatsApp(),
       ],
     );
   }
@@ -141,88 +125,12 @@ class PremiumConTuCuenta extends StatelessWidget {
   }
 }
 
-/// Lo que se ve en iOS.
-///
-/// Sin precio, sin botón de pago y sin prometer nada: solo la dirección del
-/// sitio. Al tocarla, el sistema muestra su propio aviso de que el pago no pasa
-/// por Apple antes de abrir el navegador.
-class _NotaDelSitio extends StatelessWidget {
-  const _NotaDelSitio();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
-    // Se enseña el dominio a secas —sin la ruta ni los parámetros— porque es lo
-    // que la persona tiene que reconocer; pero se ABRE la pantalla de
-    // activación, que es la que sabe recibir a alguien que llega sin sesión.
-    // Abrir la raíz dejaba al usuario en el splash y de ahí en el login, sin
-    // ninguna pista de a qué había ido.
-    final destino = Uri.parse(AppConfig.urlActivar);
-
-    return InkWell(
-      onTap: () => launchUrl(destino, mode: LaunchMode.externalApplication),
-      borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-      child: Container(
-        padding: const EdgeInsets.all(DesignTokens.space4),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Gestiona tu cuenta de ENAM Prep y mucho más',
-              style: context.texts.bodyLarge?.copyWith(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                height: 1.3,
-                color: scheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space2),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    destino.host,
-                    style: context.texts.bodyMedium?.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: context.states.info.onTint,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Symbols.open_in_new,
-                  size: 18,
-                  color: context.states.info.onTint,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Abre WhatsApp con el mensaje ya escrito (M10).
+/// Abre el WhatsApp de soporte con un pedido de ayuda ya escrito (M10).
 ///
 /// No es una integración: es un enlace `wa.me`, igual que en la app hermana.
+/// Y no es un medio de pago, en ninguna tienda: ver [OpcionesDePago].
 class BotonWhatsApp extends StatelessWidget {
-  const BotonWhatsApp({
-    super.key,
-    this.label = 'Activar por WhatsApp',
-    this.enlace,
-  });
-
-  final String label;
-
-  /// A qué chat y con qué mensaje. Por defecto, el de activar el plan.
-  final Uri? enlace;
+  const BotonWhatsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +138,11 @@ class BotonWhatsApp extends StatelessWidget {
 
     return OutlinedButton.icon(
       onPressed: () async {
-        final abierto = await Contacto.abrir(enlace ?? Contacto.activarPlan());
+        final abierto = await Contacto.abrir(
+          Contacto.soporte(
+            mensaje: 'hola, necesito ayuda con mi cuenta de ENAM Prep',
+          ),
+        );
         if (!abierto && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -243,7 +155,7 @@ class BotonWhatsApp extends StatelessWidget {
         }
       },
       icon: const Icon(Symbols.chat, size: 20, fill: 1),
-      label: Text(label),
+      label: const Text('Escríbenos si necesitas ayuda'),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(52),
         foregroundColor: scheme.onSurface,
