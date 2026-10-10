@@ -342,7 +342,27 @@ class _Pastilla extends StatelessWidget {
   }
 }
 
-/// «Gratis»: de la muestra del curso.
+/// En la tarjeta del curso: cuántas clases son gratis, en neutro. Un «Gratis»
+/// suelto junto a un curso se lee como que el curso entero lo es. Sin clases
+/// gratis, nada. Como `EtiquetaClasesGratis` de la web.
+class EtiquetaClasesGratis extends StatelessWidget {
+  const EtiquetaClasesGratis({required this.cantidad, super.key});
+
+  final int cantidad;
+
+  @override
+  Widget build(BuildContext context) {
+    if (cantidad <= 0) return const SizedBox.shrink();
+    final scheme = context.scheme;
+    return _Pastilla(
+      texto: cantidad == 1 ? '1 clase gratis' : '$cantidad clases gratis',
+      fondo: scheme.surfaceContainer,
+      color: scheme.onSurfaceVariant,
+    );
+  }
+}
+
+/// «Gratis»: en una CLASE del temario, que sí es gratis entera.
 class EtiquetaGratis extends StatelessWidget {
   const EtiquetaGratis({super.key});
 
