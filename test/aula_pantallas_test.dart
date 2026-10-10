@@ -141,23 +141,30 @@ void main() {
     });
   });
 
-  group('«Gratis» en el catálogo', () {
-    testWidgets('en la cuenta gratis, en los cursos con muestra', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        montar(
-          tester,
-          en: Routes.cursos,
-          premium: false,
-          conPortadas: true,
-          gratis: const AccesoGratis(preguntasPorDia: 10, restantesHoy: 6),
-        ),
-      );
-      await tester.pumpAndSettle();
+  group('Las clases gratis en el catálogo', () {
+    // En la tarjeta, cuántas clases son gratis; nunca un «Gratis» suelto, que
+    // se lee como que el curso entero lo es.
+    for (final conPortadas in [true, false]) {
+      testWidgets(
+        'en la cuenta gratis, «3 clases gratis» en los cursos con muestra '
+        '(${conPortadas ? 'con' : 'sin'} portada)',
+        (tester) async {
+          await tester.pumpWidget(
+            montar(
+              tester,
+              en: Routes.cursos,
+              premium: false,
+              conPortadas: conPortadas,
+              gratis: const AccesoGratis(preguntasPorDia: 10, restantesHoy: 6),
+            ),
+          );
+          await tester.pumpAndSettle();
 
-      expect(find.text('Gratis'), findsWidgets);
-    });
+          expect(find.text('3 clases gratis'), findsWidgets);
+          expect(find.text('Gratis'), findsNothing);
+        },
+      );
+    }
 
     testWidgets('a quien es Premium no le dice nada', (tester) async {
       await tester.pumpWidget(
@@ -165,7 +172,25 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.textContaining('gratis'), findsNothing);
       expect(find.text('Gratis'), findsNothing);
+    });
+
+    testWidgets('«1 clase gratis» en singular, y con 0 nada', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: const Column(
+            children: [
+              EtiquetaClasesGratis(cantidad: 1),
+              EtiquetaClasesGratis(cantidad: 0),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.text('1 clase gratis'), findsOneWidget);
+      expect(find.textContaining('gratis'), findsOneWidget);
     });
   });
 

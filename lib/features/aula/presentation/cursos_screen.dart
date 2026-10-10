@@ -241,7 +241,10 @@ class _ConPortada extends ConsumerWidget {
     final aMedias = seguir?.cursoId == curso.id ? seguir : null;
     final debajo = [
       if (conGratis)
-        const Align(alignment: Alignment.centerLeft, child: EtiquetaGratis()),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: EtiquetaClasesGratis(cantidad: curso.gratis),
+        ),
       if (curso.proximamente)
         const Align(
           alignment: Alignment.centerLeft,
@@ -346,7 +349,7 @@ class _SinPortada extends StatelessWidget {
               _Pie(curso: curso),
               if (conGratis) ...[
                 const SizedBox(height: DesignTokens.space2),
-                const EtiquetaGratis(),
+                EtiquetaClasesGratis(cantidad: curso.gratis),
               ],
             ],
           ),
