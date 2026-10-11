@@ -7,13 +7,19 @@ import 'package:flutter_test/flutter_test.dart';
 /// «blueprint oficial»: no somos el organismo del ENAM, así que se dice «la
 /// distribución del ENAM».
 ///
-/// Los «oficial» que dicen que NO lo somos —la Ayuda, Legal, el aviso del
+/// Ni «los nombres oficiales de ASPEFAM»: son «los nombres de ASPEFAM». Los
+/// «oficial» que dicen que NO lo somos —la Ayuda, Legal, el aviso del
 /// simulacro nacional— se quedan.
 ///
 /// Mira los textos del código —también los que se parten en varias líneas—
 /// y las notas para las tiendas. Los comentarios no cuentan.
 void main() {
-  const prohibidas = ['en video', 'temario oficial', 'blueprint oficial'];
+  const prohibidas = [
+    'en video',
+    'temario oficial',
+    'blueprint oficial',
+    'nombres oficiales',
+  ];
 
   /// Un literal entre comillas simples, con los que le siguen pegados: así
   /// «'del temario ' 'oficial'» se lee como una sola frase.

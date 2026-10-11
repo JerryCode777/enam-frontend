@@ -355,8 +355,8 @@ class _SinResultados extends StatelessWidget {
             ),
             const SizedBox(height: DesignTokens.space3),
             Text(
-              'El temario usa los nombres oficiales de ASPEFAM. Prueba con un '
-              'término más general.',
+              'El temario usa los nombres de ASPEFAM. Prueba con un término '
+              'más general.',
               textAlign: TextAlign.center,
               style: context.texts.bodyMedium?.copyWith(height: 1.55),
             ),
