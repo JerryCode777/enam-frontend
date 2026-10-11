@@ -3,12 +3,17 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Las clases son «clases», no «clases en video», y el temario es «el
-/// temario», no «el temario oficial» (Jerry, 09/10/2026).
+/// temario», no «el temario oficial» (Jerry, 09/10/2026). Tampoco hay un
+/// «blueprint oficial»: no somos el organismo del ENAM, así que se dice «la
+/// distribución del ENAM».
+///
+/// Los «oficial» que dicen que NO lo somos —la Ayuda, Legal, el aviso del
+/// simulacro nacional— se quedan.
 ///
 /// Mira los textos del código —también los que se parten en varias líneas—
 /// y las notas para las tiendas. Los comentarios no cuentan.
 void main() {
-  const prohibidas = ['en video', 'temario oficial'];
+  const prohibidas = ['en video', 'temario oficial', 'blueprint oficial'];
 
   /// Un literal entre comillas simples, con los que le siguen pegados: así
   /// «'del temario ' 'oficial'» se lee como una sola frase.
@@ -30,7 +35,8 @@ void main() {
     ];
   }
 
-  test('ningún texto de la app dice «en video» ni «temario oficial»', () {
+  test('ningún texto de la app dice «en video», «temario oficial» ni '
+      '«blueprint oficial»', () {
     final hallazgos = <String>[];
     final archivos = Directory('lib')
         .listSync(recursive: true)

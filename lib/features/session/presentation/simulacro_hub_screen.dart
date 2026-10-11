@@ -139,10 +139,10 @@ class _TarjetaCompleto extends ConsumerWidget {
                   ),
                 const SizedBox(height: DesignTokens.space3),
                 Text(
-                  '${Blueprint.totalQuestions} preguntas con la proporción '
-                  'exacta del blueprint oficial, en '
-                  '${Blueprint.examDuration.inHours} horas. Calificación '
-                  'vigesimal y desglose por área.',
+                  // Sin «oficial»: no somos el organismo del ENAM.
+                  '${Blueprint.totalQuestions} preguntas con la distribución '
+                  'del ENAM, en ${Blueprint.examDuration.inHours} horas. '
+                  'Calificación vigesimal y desglose por área.',
                   style: context.texts.bodyMedium?.copyWith(height: 1.55),
                 ),
               ],
