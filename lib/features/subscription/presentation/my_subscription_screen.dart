@@ -113,9 +113,17 @@ class _Contenido extends StatelessWidget {
           FadeUp(
             index: 3,
             child: Text(
-              // RN-07: hay que decirlo antes de que cancele, no después.
-              'Si cancelas, mantienes tu acceso hasta el fin del periodo '
-              'pagado. Tu historial y tus estadísticas nunca se borran.',
+              // En el día gratis no hay nada que cancelar ni periodo pagado:
+              // se dice qué incluye y qué sigue.
+              sub.enPrueba
+                  ? 'Tu día gratis incluye práctica sin límite, simulacros y '
+                        'estadísticas; los cursos completos son de Premium. '
+                        'Al terminar sigues con la cuenta gratis, con tu '
+                        'historial y tus estadísticas.'
+                  // RN-07: hay que decirlo antes de que cancele, no después.
+                  : 'Si cancelas, mantienes tu acceso hasta el fin del '
+                        'periodo pagado. Tu historial y tus estadísticas '
+                        'nunca se borran.',
               style: context.texts.bodySmall?.copyWith(height: 1.55),
             ),
           ),
@@ -134,8 +142,9 @@ class _TarjetaPlan extends StatelessWidget {
   Widget build(BuildContext context) {
     final states = context.states;
     final (etiqueta, color) = switch (sub.estado) {
-      SubscriptionStatus.pruebaSinIniciar => ('PRUEBA', states.info),
-      SubscriptionStatus.prueba => ('EN PRUEBA', states.info),
+      // «Día gratis», no «prueba» (Jerry, 11/10/2026).
+      SubscriptionStatus.pruebaSinIniciar ||
+      SubscriptionStatus.prueba => ('DÍA GRATIS', states.info),
       SubscriptionStatus.activa => ('ACTIVO', states.success),
       SubscriptionStatus.enGracia => ('EN GRACIA', states.warning),
       SubscriptionStatus.expirada => ('EXPIRADO', states.error),
@@ -152,7 +161,9 @@ class _TarjetaPlan extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    sub.plan.nombre,
+                    // El nombre del plan de prueba que guarde el servidor no
+                    // se muestra: para quien lo tiene, es su día gratis.
+                    sub.enPrueba ? 'Día gratis' : sub.plan.nombre,
                     style: context.texts.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -185,9 +196,12 @@ class _TarjetaPlan extends StatelessWidget {
               etiqueta: 'Vigente hasta',
               // La prueba sin empezar no tiene fecha: el reloj arranca en la
               // primera práctica (D-02). Poner "hoy" ahí sería inventar.
-              valor: sub.expira == null
-                  ? 'Empieza con tu primera práctica'
-                  : DateFormat('d MMM yyyy', 'es').format(sub.expira!),
+              valor: switch (sub.expira) {
+                null => 'Empieza con tu primera práctica',
+                // Son 24 h: el día solo no dice cuándo termina.
+                final fin when sub.enPrueba => _fechaYHora(fin.toLocal()),
+                final fin => DateFormat('d MMM yyyy', 'es').format(fin),
+              },
             ),
             // Sin fila de precio ni de medio de pago. Un importe dentro de la
             // app es justo lo que las tiendas no admiten, y además el dato no
@@ -267,10 +281,7 @@ class _TarjetaGratis extends StatelessWidget {
               etiqueta: 'Preguntas al día',
               valor: '${gratis.preguntasPorDia}, con su explicación',
             ),
-            _Fila(
-              etiqueta: 'Te quedan hoy',
-              valor: '${gratis.restantesHoy}',
-            ),
+            _Fila(etiqueta: 'Te quedan hoy', valor: '${gratis.restantesHoy}'),
           ],
         ),
       ),
@@ -466,3 +477,8 @@ class _SinSuscripcion extends StatelessWidget {
     );
   }
 }
+
+/// «12 oct 2026, 3:15 p.m.», como las convocatorias del simulacro nacional.
+String _fechaYHora(DateTime t) =>
+    '${DateFormat('d MMM yyyy', 'es').format(t)}, '
+    '${DateFormat('h:mm', 'es').format(t)} ${t.hour < 12 ? 'a.m.' : 'p.m.'}';
