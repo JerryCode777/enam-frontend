@@ -62,9 +62,16 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
   @override
   Widget build(BuildContext context) {
     // Quien compra aquí (App Store) no tiene por qué seguir mirando el muro.
-    // Solo al pasar de gratis a premium: no en la primera carga.
+    // Solo al pasar de gratis, o del día gratis, a un plan pagado: no en la
+    // primera carga. El día gratis ya es `AccesoPremium`, así que lo que se
+    // mira es que ahora haya un plan pagado.
     ref.listen(subscriptionProvider, (antes, s) {
-      if (antes?.value?.gratis != null && s.value?.acceso is AccesoPremium) {
+      final antesSinPlan =
+          antes?.value?.gratis != null || (antes?.value?.enPrueba ?? false);
+      final ahora = s.value;
+      if (antesSinPlan &&
+          ahora?.acceso is AccesoPremium &&
+          ahora!.planPagadoVigente) {
         _cerrar();
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
           const SnackBar(content: Text('Listo: ya tienes Premium.')),
@@ -72,15 +79,19 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
       }
     });
 
-    final gratis = ref.watch(subscriptionProvider).value?.gratis;
-    final porDia = gratis?.preguntasPorDia ?? AccesoGratis.cupoPorDefecto;
+    final sub = ref.watch(subscriptionProvider).value;
+    final diaGratis = sub?.enPrueba ?? false;
+    // El cupo, solo si lo manda el servidor: no se fija ningún número aquí.
+    final porDia = sub?.gratis?.preguntasPorDia;
 
     final (icono, titular, bajada) = switch (widget.motivo) {
       CupoAgotado() => (
         Symbols.hourglass_bottom,
-        'Se acabaron tus $porDia preguntas de hoy',
-        'Mañana tienes $porDia más. Si no quieres esperar, con Premium sigues '
-            'ahora, sin límite.',
+        porDia == null
+            ? 'Se acabaron tus preguntas de hoy'
+            : 'Se acabaron tus $porDia preguntas de hoy',
+        '${porDia == null ? 'Mañana tienes más' : 'Mañana tienes $porDia más'}'
+            '. Si no quieres esperar, con Premium sigues ahora, sin límite.',
       ),
       FuncionDePago(:final funcion) => (
         Symbols.lock,
@@ -112,7 +123,7 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
             const SizedBox(height: DesignTokens.space5),
             const _QueIncluye(),
             const SizedBox(height: DesignTokens.space4),
-            _GratisSigue(porDia: porDia),
+            _GratisSigue(porDia: porDia, diaGratis: diaGratis),
             const SizedBox(height: DesignTokens.space5),
             const OpcionesDePago(),
             const SizedBox(height: DesignTokens.space3),
@@ -234,10 +245,15 @@ class _QueIncluye extends StatelessWidget {
 
 /// Lo gratis no se pierde: dicho antes del botón, para que el muro no se lea
 /// como un cierre.
+///
+/// En el día gratis se dice lo que ya tiene: todo menos los cursos completos.
+/// Decirle «tu cuenta gratis sigue» y venderle lo que ya usa sería falso.
 class _GratisSigue extends StatelessWidget {
-  const _GratisSigue({required this.porDia});
+  const _GratisSigue({required this.porDia, required this.diaGratis});
 
-  final int porDia;
+  /// El cupo que manda el servidor; `null` si no lo manda.
+  final int? porDia;
+  final bool diaGratis;
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +271,17 @@ class _GratisSigue extends StatelessWidget {
           const SizedBox(width: DesignTokens.space3),
           Expanded(
             child: Text(
-              'Tu cuenta gratis sigue: $porDia preguntas al día con su '
-              'explicación, y tu avance guardado.',
+              switch ((diaGratis, porDia)) {
+                (true, _) =>
+                  'Tu día gratis incluye práctica sin límite, simulacros y '
+                      'estadísticas; los cursos completos son de Premium.',
+                (false, final porDia?) =>
+                  'Tu cuenta gratis sigue: $porDia preguntas al día con su '
+                      'explicación, y tu avance guardado.',
+                (false, null) =>
+                  'Tu cuenta gratis sigue: preguntas cada día con su '
+                      'explicación, y tu avance guardado.',
+              },
               style: context.texts.bodyMedium?.copyWith(
                 height: 1.5,
                 color: success.onTint,

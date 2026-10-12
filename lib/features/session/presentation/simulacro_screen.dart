@@ -17,6 +17,8 @@ import '../../../shared/widgets/confirm_dialog.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../subscription/domain/acceso.dart';
+import '../../subscription/presentation/muro_de_venta_screen.dart';
 import 'session_controller.dart';
 import 'widgets/exam_grid.dart';
 import 'widgets/option_card.dart';
@@ -97,6 +99,17 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Si el acceso venció a mitad del examen (el día gratis dura 24 h), el
+    // servidor rechaza cada respuesta con un 403. El muro se abre una vez, al
+    // llegar el error; luego queda el aviso encima de la pregunta.
+    ref.listen(sessionControllerProvider(widget.sessionId), (antes, ahora) {
+      final error = ahora.value?.error;
+      if (error == null || error == antes?.value?.error) return;
+      if (motivoDelMuro(error) case final motivo?) {
+        abrirMuro(context, ref, motivo);
+      }
+    });
+
     final estado = ref.watch(sessionControllerProvider(widget.sessionId));
 
     return estado.when(
@@ -134,6 +147,31 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
                 onSalir: _confirmarAbandono,
                 onMarcar: control.alternarMarca,
               ),
+              if (estado.error case final error?)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DesignTokens.space5,
+                    vertical: DesignTokens.space2,
+                  ),
+                  child: switch (motivoDelMuro(error)) {
+                    final motivo? => StateBanner(
+                      kind: BannerKind.info,
+                      // Lo respondido ya está guardado: enviar da la nota con
+                      // eso, y el servidor no pide acceso para enviar.
+                      message:
+                          'Tu acceso a los simulacros terminó. Envía el '
+                          'examen para ver tu nota con lo que respondiste.',
+                      action: TextButton(
+                        onPressed: () => abrirMuro(context, ref, motivo),
+                        child: const Text('Ver Premium'),
+                      ),
+                    ),
+                    null => StateBanner(
+                      kind: BannerKind.error,
+                      message: error.message,
+                    ),
+                  },
+                ),
               Expanded(
                 child: Align(
                   alignment: Alignment.topCenter,
