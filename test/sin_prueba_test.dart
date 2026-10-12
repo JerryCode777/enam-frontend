@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
@@ -32,13 +34,26 @@ void main() {
     );
   });
 
-  const prohibidos = [
-    'prueba',
-    '24 horas',
-    'oferta',
-    'descuento',
-    '%',
-  ];
+  const prohibidos = ['prueba', '24 horas', 'oferta', 'descuento', '%'];
+
+  test('las notas para las tiendas: «día gratis», sin prueba ni el cupo', () {
+    // Solo lo que se pega en las tiendas: los bloques de código. Lo de fuera
+    // son instrucciones y puede nombrar lo que no va.
+    final bloque = RegExp(r'```\n(.*?)```', dotAll: true);
+    // El número de preguntas al día lo pone el servidor y puede cambiar.
+    final cupo = RegExp(r'\d+ preguntas (al|por|cada) día');
+    for (final f in Directory(
+      'notas-de-version',
+    ).listSync().whereType<File>()) {
+      for (final m in bloque.allMatches(f.readAsStringSync())) {
+        final texto = m.group(1)!.toLowerCase();
+        for (final p in ['prueba', '24 horas', 'oferta', 'descuento', '%']) {
+          expect(texto, isNot(contains(p)), reason: '«$p» en ${f.path}');
+        }
+        expect(cupo.hasMatch(texto), isFalse, reason: 'cupo en ${f.path}');
+      }
+    }
+  });
 
   void sinPruebaNiOferta(WidgetTester tester) {
     final textos = tester

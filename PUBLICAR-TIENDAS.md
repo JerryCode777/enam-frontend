@@ -1,11 +1,11 @@
 # Publicar en las tiendas
 
-Cómo compilar y subir una versión, como la 1.1.0 (8), desde una Mac donde nunca se compiló la app. Las notas de cada versión están en `notas-de-version/`.
+Cómo compilar y subir una versión, como la 1.1.1 (9), desde una Mac donde nunca se compiló la app. Las notas de cada versión están en `notas-de-version/`.
 
 ## 1. Lo que tiene que tener la Mac
 
 - **Espacio:** unos 15 GB libres. Un build de release de Android deja unos 2–3 GB en `build/`, y el de iOS otros tantos más los de Xcode.
-- **Flutter 3.44 o superior** (el proyecto exige Dart ≥ 3.12.2).
+- **Flutter 3.47.7**, el mismo con el que se compiló la 1.1.0 (8). El proyecto exige Dart ≥ 3.12.2 y desde 3.47 el mínimo de iOS es 15 (#15). No compiles una versión nueva con un Flutter más viejo que la anterior.
 - **Xcode**, con la cuenta de Apple del equipo que publica la app (equipo `7XUZZ52F47`):
   - entra en Xcode → Settings → Accounts;
   - acepta la licencia la primera vez con `sudo xcodebuild -license accept`.
@@ -38,7 +38,7 @@ flutter pub get
 Comprueba que la versión es la que se publica:
 
 ```sh
-grep '^version' pubspec.yaml   # version: 1.1.0+8
+grep '^version' pubspec.yaml   # version: 1.1.1+9
 ```
 
 El `+8` es el número de compilación. En las dos tiendas tiene que ser mayor que el de la última subida.
@@ -67,6 +67,8 @@ En la Mac nueva:
 1. **El certificado con su clave privada.** En la Mac donde se compiló antes, abre Acceso a Llaveros, busca «Apple Distribution», expórtalo como `.p12` con una contraseña y pásalo por AirDrop. En la Mac nueva, ábrelo con doble clic.
    - Si ese certificado ya no está, se crea otro en developer.apple.com (Certificates) y se regenera el perfil.
 2. **El perfil.** Xcode → Settings → Accounts → el equipo → *Download Manual Profiles*.
+
+**Vencen el 20/11/2026**, dos días antes del ENAM: el certificado «Apple Distribution» y el perfil «ENAM Prep App Store». Desde ese día no se puede subir nada a App Store hasta renovarlos en developer.apple.com. Renuévalos antes de la semana del examen.
 
 ## 4. Compilar
 
@@ -104,21 +106,21 @@ Dónde quedan:
 
 1. Abre ENAM Prep, ve a Producción (o primero a Pruebas internas) y elige *Crear versión*.
 2. Sube `app-release.aab`.
-3. En «Novedades» pega el bloque de Google Play de `notas-de-version/1.1.0.md`, en el idioma de la ficha (español).
+3. En «Novedades» pega el bloque de Google Play de `notas-de-version/1.1.1.md`, en el idioma de la ficha (español).
 4. Revisa y envía.
 
 **App Store** (App Store Connect):
 
 1. Abre Transporter, inicia sesión con la cuenta de Apple, arrastra el `.ipa` y dale a *Entregar*.
 2. Espera a que la compilación aparezca procesada en App Store Connect → ENAM Prep → TestFlight. Suele tardar entre 10 y 30 minutos.
-3. Crea la versión 1.1.0 en App Store y elige la compilación 8.
-4. En «Novedades en esta versión» pega el bloque de App Store de `notas-de-version/1.1.0.md`. Ese bloque no nombra a AIDA SOFT: en App Store el vendedor sigue siendo Jaks Tech S.A.C. hasta que Apple apruebe la cuenta de AIDA SOFT.
+3. Crea la versión 1.1.1 en App Store y elige la compilación 9.
+4. En «Novedades en esta versión» pega el bloque de App Store de `notas-de-version/1.1.1.md`. Ese bloque no nombra a AIDA SOFT: en App Store el vendedor sigue siendo Jaks Tech S.A.C. hasta que Apple apruebe la cuenta de AIDA SOFT.
 5. Envía a revisión.
 
 ## 6. Antes de enviar a revisión
 
-- **La versión.** El `.aab` y el `.ipa` dicen 1.1.0 (8): en Play Console sale al subir, y en App Store Connect, en la compilación.
-- **Las notas.** Las de cada tienda son su bloque. En ninguna hay prueba ni descuentos.
+- **La versión.** El `.aab` y el `.ipa` dicen 1.1.1 (9): en Play Console sale al subir, y en App Store Connect, en la compilación.
+- **Las notas.** Las de cada tienda son su bloque. Pueden decir «día gratis»; en ninguna hay prueba, descuentos ni el número del cupo. Si anuncian el día gratis, el backend tiene que tenerlo encendido antes.
 - **Una prueba en un teléfono real contra producción**, con la build de release, no con `flutter run`:
   - **Android:** instala desde Pruebas internas de Play. O bien, con el teléfono conectado:
 
@@ -129,7 +131,7 @@ Dónde quedan:
     flutter install --release
     ```
 
-  - **iPhone:** instala la compilación 8 desde TestFlight.
+  - **iPhone:** instala la compilación 9 desde TestFlight.
   - **Qué probar en las dos:**
     - Entrar con una cuenta real.
     - Responder una pregunta.
