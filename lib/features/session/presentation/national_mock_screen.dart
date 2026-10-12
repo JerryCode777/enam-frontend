@@ -395,7 +395,8 @@ class _Detalles extends StatelessWidget {
         icon: Symbols.quiz,
         // Del servidor: un nacional de muestra no tiene 180, y afirmarlo
         // sería prometer un examen distinto del que se va a rendir.
-        texto: '${evento.totalPreguntas} preguntas con el blueprint oficial',
+        texto:
+            '${evento.totalPreguntas} preguntas con la distribución del ENAM',
       ),
       (
         icon: Symbols.timer,
