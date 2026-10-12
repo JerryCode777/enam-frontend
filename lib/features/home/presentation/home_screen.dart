@@ -22,6 +22,7 @@ import '../../session/presentation/national_mock_screen.dart';
 import '../../stats/domain/stats_models.dart';
 import '../../subscription/domain/acceso.dart';
 import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../subscription/presentation/widgets/aviso_del_dia_gratis.dart';
 import '../../subscription/presentation/widgets/etiqueta_premium.dart';
 import '../domain/siguiente_accion.dart';
 
@@ -114,6 +115,8 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const _EstadoDeEnvio(),
+              // El día gratis: lo que trae y cuánto le queda, sin precios.
+              const AvisoDelDiaGratis(espacioArriba: DesignTokens.space4),
               const SizedBox(height: DesignTokens.space5),
               FadeUp(
                 index: 1,
@@ -237,9 +240,8 @@ class BotonTema extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final oscuro = Theme.of(context).brightness == Brightness.dark;
     return IconButton(
-      onPressed: () => ref
-          .read(themeModeProvider.notifier)
-          .alternar(oscuroAhora: oscuro),
+      onPressed: () =>
+          ref.read(themeModeProvider.notifier).alternar(oscuroAhora: oscuro),
       tooltip: oscuro ? 'Usar tema claro' : 'Usar tema oscuro',
       icon: Icon(oscuro ? Symbols.light_mode : Symbols.dark_mode),
       color: context.scheme.onSurfaceVariant,
