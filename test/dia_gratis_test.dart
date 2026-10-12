@@ -1,3 +1,4 @@
+import 'package:enam_app/core/domain/hora_peru.dart';
 import 'package:enam_app/core/error/failure.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/router/routes.dart';
@@ -5,17 +6,24 @@ import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
 import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
+import 'package:enam_app/features/home/presentation/home_screen.dart';
+import 'package:enam_app/features/session/presentation/session_summary_screen.dart';
 import 'package:enam_app/features/session/presentation/simulacro_screen.dart';
 import 'package:enam_app/features/session/presentation/widgets/option_card.dart';
 import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/domain/subscription_models.dart';
 import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
 import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
+import 'package:enam_app/features/subscription/presentation/widgets/aviso_del_dia_gratis.dart';
+import 'package:enam_app/shared/widgets/state_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
+import 'ayuda/inicio.dart';
+import 'ayuda/offline.dart';
 
 /// El día gratis de 24 h de las cuentas nuevas (Jerry, 11/10/2026): todo menos
 /// los cursos completos.
@@ -249,6 +257,180 @@ void main() {
       expect(find.byType(MuroDeVentaScreen), findsNothing);
     });
   });
+
+  group('El aviso del día gratis', () {
+    // Un instante fijo: el aviso cuenta con el reloj de la app.
+    final ahora = DateTime(2026, 10, 11, 20);
+    setUp(() => congelarReloj(ahora));
+    tearDown(soltarReloj);
+
+    Subscription quedan(Duration falta) =>
+        diaGratis.copyWith(expira: ahora.add(falta));
+
+    test('el texto de la web, con las horas hacia arriba', () {
+      expect(
+        textoDelDiaGratis(quedan(const Duration(hours: 23)), ahora),
+        'Tu día gratis: práctica sin límite, simulacros y estadísticas. '
+        'Te quedan 23 h. En los cursos ves sus clases gratis.',
+      );
+      // 22 h 30 min son «23 h»: nunca menos de lo que queda.
+      expect(
+        textoDelDiaGratis(
+          quedan(const Duration(hours: 22, minutes: 30)),
+          ahora,
+        ),
+        contains('Te quedan 23 h.'),
+      );
+      expect(
+        textoDelDiaGratis(quedan(const Duration(minutes: 45)), ahora),
+        contains('Te quedan 45 min.'),
+      );
+      expect(
+        textoDelDiaGratis(quedan(const Duration(seconds: 20)), ahora),
+        contains('Te quedan 1 min.'),
+      );
+    });
+
+    test('sin empezar, empieza con la primera práctica', () {
+      expect(
+        textoDelDiaGratis(
+          diaGratis.copyWith(
+            estado: SubscriptionStatus.pruebaSinIniciar,
+            expira: null,
+          ),
+          ahora,
+        ),
+        'Tu día gratis empieza con tu primera práctica: 24 h de práctica sin '
+        'límite, simulacros y estadísticas. En los cursos ves sus clases '
+        'gratis.',
+      );
+    });
+
+    test('vencido, en gratis o con un plan pagado: nada', () {
+      expect(textoDelDiaGratis(quedan(Duration.zero), ahora), isNull);
+      expect(
+        textoDelDiaGratis(
+          enGratis(const AccesoGratis(preguntasPorDia: 20, restantesHoy: 5)),
+          ahora,
+        ),
+        isNull,
+      );
+      expect(
+        textoDelDiaGratis(
+          diaGratis.copyWith(
+            estado: SubscriptionStatus.activa,
+            expira: ahora.add(const Duration(days: 30)),
+          ),
+          ahora,
+        ),
+        isNull,
+      );
+    });
+
+    /// Ningún precio ni invitación a pagar en pantalla.
+    void sinPrecios(WidgetTester tester) {
+      for (final t in textos(tester)) {
+        expect(t, isNot(contains('s/')), reason: t);
+        expect(t, isNot(contains('ver premium')), reason: t);
+        expect(t, isNot(contains('planes')), reason: t);
+      }
+    }
+
+    testWidgets('en el inicio, sin precios', (tester) async {
+      tester.view
+        ..physicalSize = const Size(393, 1400) * 3
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...overridesDeInicio(EstadoInicio.areaPrioritaria),
+            subscriptionProvider.overrideWith(
+              (_) async => quedan(const Duration(hours: 23)),
+            ),
+          ],
+          child: MaterialApp(theme: AppTheme.light, home: const HomeScreen()),
+        ),
+      );
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+
+      expect(find.byType(AvisoDelDiaGratis), findsOneWidget);
+      expect(find.textContaining('Te quedan 23 h.'), findsOneWidget);
+      sinPrecios(tester);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('en el resultado de la práctica, sin precios', (tester) async {
+      tester.view
+        ..physicalSize = const Size(393, 1400) * 3
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      final s = sesionDePrueba(
+        cuantas: 10,
+      ).copyWith(estado: SessionStatus.finalizada);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authControllerProvider.overrideWith(_ConSesion.new),
+            subscriptionProvider.overrideWith(
+              (_) async => quedan(const Duration(minutes: 45)),
+            ),
+            sessionRepositoryProvider.overrideWithValue(_Fija(s)),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: SessionSummaryScreen(sessionId: s.id),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+
+      expect(find.textContaining('Te quedan 45 min.'), findsOneWidget);
+      expect(find.text('Otra práctica'), findsOneWidget);
+      sinPrecios(tester);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('al vencer se va solo y vuelve a pedir la suscripción', (
+      tester,
+    ) async {
+      var pedidas = 0;
+      // Un proveedor que cuenta las peticiones: la segunda ya viene en gratis.
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authControllerProvider.overrideWith(_ConSesion.new),
+            subscriptionProvider.overrideWith((_) async {
+              pedidas++;
+              return pedidas == 1
+                  ? quedan(const Duration(seconds: 30))
+                  : enGratis(
+                      const AccesoGratis(preguntasPorDia: 20, restantesHoy: 20),
+                    );
+            }),
+          ],
+          child: const MaterialApp(home: Scaffold(body: AvisoDelDiaGratis())),
+        ),
+      );
+      await tester.pump();
+      expect(find.textContaining('Te quedan 1 min.'), findsOneWidget);
+
+      // Pasan 31 s en el reloj de la app y en el del temporizador.
+      congelarReloj(ahora.add(const Duration(seconds: 31)));
+      await tester.pump(const Duration(seconds: 31));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(StateBanner), findsNothing);
+      expect(pedidas, 2);
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
 }
 
 /// El servidor tras vencer el día gratis: cada respuesta del simulacro, 403.
@@ -277,4 +459,14 @@ class _ConSesion extends AuthController {
       fechaObjetivo: DateTime(2026, 12, 12),
     ),
   );
+}
+
+/// Devuelve siempre la misma sesión, ya terminada.
+class _Fija extends MockSessionRepository {
+  _Fija(this.s);
+
+  final StudySession s;
+
+  @override
+  Future<StudySession> session(String id) async => s;
 }

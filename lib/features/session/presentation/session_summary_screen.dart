@@ -15,6 +15,7 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/sonar_al_aparecer.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../subscription/presentation/widgets/aviso_del_dia_gratis.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 
@@ -326,6 +327,9 @@ class _ContenidoState extends ConsumerState<_Contenido> {
                   ),
                 ),
               ],
+              // En el día gratis, lo que le queda: seguir practicando no
+              // cuesta nada todavía. Sin precios.
+              const AvisoDelDiaGratis(espacioArriba: DesignTokens.space5),
               const SizedBox(height: DesignTokens.space6),
               // Una sola acción principal, la que más rinde después de esta
               // sesión: repasar lo fallado si lo hay; si no, otra práctica.
