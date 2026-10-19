@@ -75,6 +75,7 @@ En la Mac nueva:
 ## 3b. Antes de compilar la 1.1.2 (10)
 
 - **El backend con el origen `fin_dia_gratis` y el catálogo 25 de BI** (PR B de enam-backend-07), desplegado en producción. Sin él, la tarjeta de correos comerciales del inicio responde con error al tocar «Sí» o «No», y sus eventos se rechazan.
+- **La suite completa en verde en la Mac donde se compila**: `flutter test`, con los goldens. En la Mac de desarrollo (la de 3,5 GB libres) los 254 goldens fallan desde la actualización del sistema, también en main limpio, así que ahí solo se corrió `flutter test --exclude-tags golden`. Los goldens se validan en la Mac de compilación. Si fallan ahí, no se compila hasta ver por qué.
 - **La 1.1.1 (9) no se vuelve a subir.** Ya se compiló (#20). La 10 la reemplaza y lleva todo lo suyo.
 
 ## 4. Compilar
