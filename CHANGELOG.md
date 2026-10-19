@@ -13,7 +13,7 @@ Las notas para las tiendas de cada versión están en `notas-de-version/`.
   - Analítica del catálogo 25, igual que la web: `consentimiento_visto` cuando aparece y `consentimiento_respuesta` (`si`, `no` o `cerro`) al tocar, antes del PATCH, con `lugar = fin_dia_gratis`.
   - `PATCH /me {aceptaComerciales, origenConsentimiento: "fin_dia_gratis"}`. Si falla, la tarjeta queda abierta con el error y se puede tocar otra vez.
   - No coincide con el aviso del día gratis: ese se va justo al vencer.
-- **Ajustes:** el interruptor «Correos con descuentos y novedades» (origen `ajustes`), para cambiar la decisión cuando quiera.
+- **Ajustes:** el interruptor «Novedades y ofertas por correo» (origen `ajustes`), para cambiar la decisión cuando quiera.
 
 ## 1.1.1 (9): compilada, sin publicar
 

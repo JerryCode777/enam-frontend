@@ -403,7 +403,7 @@ class _Cuenta extends ConsumerWidget {
               ref.read(authControllerProvider.notifier).setUser(actualizado);
             },
             secondary: const Icon(Symbols.mail),
-            title: const Text('Correos con descuentos y novedades'),
+            title: const Text('Novedades y ofertas por correo'),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           ListTile(
