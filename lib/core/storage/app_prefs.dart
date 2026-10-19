@@ -45,7 +45,8 @@ class AppPrefs {
   }
 
   /// Para poder volver a probar el flujo desde cero en desarrollo.
-  Future<void> reiniciarPrueba() async => (await _prefs).remove(_kInicioPrueba);
+  Future<void> reiniciarPrueba() async =>
+      (await _prefs).remove(_kInicioPrueba);
 
   static const _kNacionalesInscritos = 'nacionales_inscritos';
 

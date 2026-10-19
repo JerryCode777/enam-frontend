@@ -320,9 +320,7 @@ class _Sonidos extends ConsumerWidget {
       child: Column(
         children: [
           SwitchListTile(
-            secondary: Icon(
-              prefs.activo ? Symbols.volume_up : Symbols.volume_off,
-            ),
+            secondary: Icon(prefs.activo ? Symbols.volume_up : Symbols.volume_off),
             title: const Text('Sonidos'),
             subtitle: const Text(
               'Al elegir, al acertar o fallar en la práctica y al ver tu '

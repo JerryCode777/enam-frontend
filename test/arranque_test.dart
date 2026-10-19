@@ -63,17 +63,14 @@ void main() {
     // fuera de las rutas públicas, quien terminaba de registrarse rebotaba al
     // login sin verla nunca: el código le llegaba al correo y no había dónde
     // escribirlo. Cuenta creada y sin forma de activarla.
-    test(
-      'recién registrado, se puede verificar el correo sin sesión',
-      () async {
-        prefs.visto = true;
-        final c = contenedor();
-        await c.read(startupProvider.future);
-        await c.read(authControllerProvider.future);
+    test('recién registrado, se puede verificar el correo sin sesión', () async {
+      prefs.visto = true;
+      final c = contenedor();
+      await c.read(startupProvider.future);
+      await c.read(authControllerProvider.future);
 
-        expect(destino(c, desde: Routes.verifyEmail), isNull);
-      },
-    );
+      expect(destino(c, desde: Routes.verifyEmail), isNull);
+    });
 
     test('la primera vez va al onboarding', () async {
       final c = contenedor();
@@ -92,17 +89,15 @@ void main() {
       expect(destino(c, desde: Routes.splash), Routes.login);
     });
 
-    test(
-      'con el onboarding ya visto, entrar a esa ruta rebota al login',
-      () async {
-        prefs.visto = true;
-        final c = contenedor();
-        await c.read(startupProvider.future);
-        await c.read(authControllerProvider.future);
+    test('con el onboarding ya visto, entrar a esa ruta rebota al login',
+        () async {
+      prefs.visto = true;
+      final c = contenedor();
+      await c.read(startupProvider.future);
+      await c.read(authControllerProvider.future);
 
-        expect(destino(c, desde: Routes.onboarding), Routes.login);
-      },
-    );
+      expect(destino(c, desde: Routes.onboarding), Routes.login);
+    });
 
     test('el registro y el login siguen siendo alcanzables', () async {
       final c = contenedor();
@@ -123,36 +118,32 @@ void main() {
   });
 
   group('Recorrido de arranque, con sesión', () {
-    test(
-      'con perfil completo va al home, sin pasar por el onboarding',
-      () async {
-        final c = contenedor(repo: _RepoConSesion());
-        await c.read(startupProvider.future);
-        await c.read(authControllerProvider.future);
+    test('con perfil completo va al home, sin pasar por el onboarding',
+        () async {
+      final c = contenedor(repo: _RepoConSesion());
+      await c.read(startupProvider.future);
+      await c.read(authControllerProvider.future);
 
-        expect(destino(c, desde: Routes.splash), Routes.home);
-        // Aunque nunca se haya visto el onboarding: quien ya tiene cuenta no
-        // necesita que le presenten la app.
-        expect(prefs.visto, isFalse);
-        expect(destino(c, desde: Routes.onboarding), Routes.home);
-      },
-    );
+      expect(destino(c, desde: Routes.splash), Routes.home);
+      // Aunque nunca se haya visto el onboarding: quien ya tiene cuenta no
+      // necesita que le presenten la app.
+      expect(prefs.visto, isFalse);
+      expect(destino(c, desde: Routes.onboarding), Routes.home);
+    });
 
-    test(
-      'mientras el arranque no resuelve, todo se queda en el splash',
-      () async {
-        // Las preferencias tardan: sin espera mínima, esta es la única forma de
-        // que el arranque siga pendiente cuando la sesión ya se resolvió.
-        prefs.latencia = const Duration(seconds: 1);
-        final c = contenedor();
-        // Sin await: el arranque sigue pendiente.
-        c.read(startupProvider);
-        await c.read(authControllerProvider.future);
+    test('mientras el arranque no resuelve, todo se queda en el splash',
+        () async {
+      // Las preferencias tardan: sin espera mínima, esta es la única forma de
+      // que el arranque siga pendiente cuando la sesión ya se resolvió.
+      prefs.latencia = const Duration(seconds: 1);
+      final c = contenedor();
+      // Sin await: el arranque sigue pendiente.
+      c.read(startupProvider);
+      await c.read(authControllerProvider.future);
 
-        expect(destino(c, desde: Routes.home), Routes.splash);
-        expect(destino(c, desde: Routes.splash), isNull);
-      },
-    );
+      expect(destino(c, desde: Routes.home), Routes.splash);
+      expect(destino(c, desde: Routes.splash), isNull);
+    });
   });
 }
 
