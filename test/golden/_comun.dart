@@ -158,6 +158,13 @@ class PrefsEnMemoria implements AppPrefs {
   Future<void> reiniciarPrueba() async => _inicioPrueba = null;
 
   final _nacionales = <String>{};
+
+  // La pregunta de correos comerciales ya se hizo: aquí no sale.
+  @override
+  Future<bool> comercialesPreguntado(String userId) async => true;
+
+  @override
+  Future<void> marcarComercialesPreguntado(String userId) async {}
 }
 
 /// Decodifica de verdad las imágenes que haya en pantalla antes de capturar.

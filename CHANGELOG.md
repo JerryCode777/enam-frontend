@@ -2,7 +2,23 @@
 
 Las notas para las tiendas de cada versión están en `notas-de-version/`.
 
-## 1.1.1 (9): sin publicar
+## 1.1.2 (10): sin publicar
+
+**Antes de compilar:** tiene que estar desplegado en producción el PR B del backend (enam-backend-07): el origen `fin_dia_gratis` y el catálogo 25 de BI. Sin él, el servidor responde 422 a «Sí» o «No», la tarjeta se queda con el error y los eventos se rechazan con `TIPO_DESCONOCIDO`.
+
+- **Permiso de correos comerciales al terminar el día gratis.** Aprobado por Jerry el 19/10/2026; igual que la web.
+  - Una tarjeta arriba del inicio, solo para quien no decidió (`aceptaComerciales` nulo) y con el día gratis ya terminado (plan `trial`, `expira > inicia` y ya pasado). Sale una sola vez por cuenta en el teléfono; en la visita en que sale, sigue en el inicio aunque se navegue.
+  - El texto es el de marketing (enam-marketing 4dcb4ef): «¿Te avisamos de descuentos y novedades?». Es igual que la web, salvo que aquí dice «puedes cambiarlo cuando quieras en Ajustes».
+  - Dos botones del mismo tamaño y el mismo estilo, «Sí, avísenme» y «No, gracias», y la política a un toque. Nada premarcado y ningún descuento prometido. Cerrarla con la X no decide nada. Tras el sí: «Listo. Puedes cambiarlo cuando quieras.».
+  - Analítica del catálogo 25, igual que la web: `consentimiento_visto` cuando aparece y `consentimiento_respuesta` (`si`, `no` o `cerro`) al tocar, antes del PATCH, con `lugar = fin_dia_gratis`.
+  - `PATCH /me {aceptaComerciales, origenConsentimiento: "fin_dia_gratis"}`. Si falla, la tarjeta queda abierta con el error y se puede tocar otra vez.
+  - No coincide con el aviso del día gratis: ese se va justo al vencer.
+- **Ajustes:** el interruptor «Novedades y ofertas por correo» (origen `ajustes`), para cambiar la decisión cuando quiera.
+
+## 1.1.1 (9): compilada, sin publicar
+
+Compilada desde la rama del #20 (firma de AIDA SOFT). Si nunca se envió a revisión, la 1.1.2 (10) la reemplaza y lleva todo lo de abajo.
+
 
 - **Día gratis de 24 h (#17).** Las cuentas nuevas vuelven a tener un día gratis, que pone el servidor: todo menos los cursos completos.
   - «Mi suscripción» dice «Día gratis», con la hora de fin, y nunca «prueba».

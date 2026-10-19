@@ -50,6 +50,10 @@ abstract class User with _$User {
 
     /// Si el usuario eligió ocultarse del ranking público (RF-22).
     @Default(false) bool ocultoEnRanking,
+
+    /// Correos comerciales (`users.acepta_comerciales`): `true` sí, `false`
+    /// no, y `null` si todavía no decidió, que no es lo mismo que «no».
+    bool? aceptaComerciales,
   }) = _User;
 
   const User._();

@@ -22,6 +22,7 @@ import '../../session/presentation/national_mock_screen.dart';
 import '../../stats/domain/stats_models.dart';
 import '../../subscription/domain/acceso.dart';
 import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../consentimiento/presentation/tarjeta_de_comerciales.dart';
 import '../../subscription/presentation/widgets/aviso_del_dia_gratis.dart';
 import '../../subscription/presentation/widgets/etiqueta_premium.dart';
 import '../domain/siguiente_accion.dart';
@@ -117,6 +118,10 @@ class HomeScreen extends ConsumerWidget {
               const _EstadoDeEnvio(),
               // El día gratis: lo que trae y cuánto le queda, sin precios.
               const AvisoDelDiaGratis(espacioArriba: DesignTokens.space4),
+              // Al terminar el día gratis, y una sola vez: el permiso de
+              // correos comerciales. No coincide con el aviso de arriba, que
+              // se va justo al vencer.
+              const TarjetaDeComerciales(espacioArriba: DesignTokens.space4),
               const SizedBox(height: DesignTokens.space5),
               FadeUp(
                 index: 1,

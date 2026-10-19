@@ -23,7 +23,9 @@ mixin _$User {
 /// guardar: las siglas sueltas rompían las estadísticas por universidad.
  String? get universidadId; StudentCondition? get condicion;/// Fecha objetivo de examen (RF-04). Alimenta la cuenta regresiva del home.
  DateTime? get fechaObjetivo; bool get emailVerificado;/// Si el usuario eligió ocultarse del ranking público (RF-22).
- bool get ocultoEnRanking;
+ bool get ocultoEnRanking;/// Correos comerciales (`users.acepta_comerciales`): `true` sí, `false`
+/// no, y `null` si todavía no decidió, que no es lo mismo que «no».
+ bool? get aceptaComerciales;
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -36,16 +38,16 @@ $UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.rol, rol) || other.rol == rol)&&(identical(other.universidad, universidad) || other.universidad == universidad)&&(identical(other.universidadId, universidadId) || other.universidadId == universidadId)&&(identical(other.condicion, condicion) || other.condicion == condicion)&&(identical(other.fechaObjetivo, fechaObjetivo) || other.fechaObjetivo == fechaObjetivo)&&(identical(other.emailVerificado, emailVerificado) || other.emailVerificado == emailVerificado)&&(identical(other.ocultoEnRanking, ocultoEnRanking) || other.ocultoEnRanking == ocultoEnRanking));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.rol, rol) || other.rol == rol)&&(identical(other.universidad, universidad) || other.universidad == universidad)&&(identical(other.universidadId, universidadId) || other.universidadId == universidadId)&&(identical(other.condicion, condicion) || other.condicion == condicion)&&(identical(other.fechaObjetivo, fechaObjetivo) || other.fechaObjetivo == fechaObjetivo)&&(identical(other.emailVerificado, emailVerificado) || other.emailVerificado == emailVerificado)&&(identical(other.ocultoEnRanking, ocultoEnRanking) || other.ocultoEnRanking == ocultoEnRanking)&&(identical(other.aceptaComerciales, aceptaComerciales) || other.aceptaComerciales == aceptaComerciales));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,nombre,rol,universidad,universidadId,condicion,fechaObjetivo,emailVerificado,ocultoEnRanking);
+int get hashCode => Object.hash(runtimeType,id,email,nombre,rol,universidad,universidadId,condicion,fechaObjetivo,emailVerificado,ocultoEnRanking,aceptaComerciales);
 
 @override
 String toString() {
-  return 'User(id: $id, email: $email, nombre: $nombre, rol: $rol, universidad: $universidad, universidadId: $universidadId, condicion: $condicion, fechaObjetivo: $fechaObjetivo, emailVerificado: $emailVerificado, ocultoEnRanking: $ocultoEnRanking)';
+  return 'User(id: $id, email: $email, nombre: $nombre, rol: $rol, universidad: $universidad, universidadId: $universidadId, condicion: $condicion, fechaObjetivo: $fechaObjetivo, emailVerificado: $emailVerificado, ocultoEnRanking: $ocultoEnRanking, aceptaComerciales: $aceptaComerciales)';
 }
 
 
@@ -56,7 +58,7 @@ abstract mixin class $UserCopyWith<$Res>  {
   factory $UserCopyWith(User value, $Res Function(User) _then) = _$UserCopyWithImpl;
 @useResult
 $Res call({
- String id, String email, String nombre, UserRole rol, String? universidad, String? universidadId, StudentCondition? condicion, DateTime? fechaObjetivo, bool emailVerificado, bool ocultoEnRanking
+ String id, String email, String nombre, UserRole rol, String? universidad, String? universidadId, StudentCondition? condicion, DateTime? fechaObjetivo, bool emailVerificado, bool ocultoEnRanking, bool? aceptaComerciales
 });
 
 
@@ -73,7 +75,7 @@ class _$UserCopyWithImpl<$Res>
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? nombre = null,Object? rol = null,Object? universidad = freezed,Object? universidadId = freezed,Object? condicion = freezed,Object? fechaObjetivo = freezed,Object? emailVerificado = null,Object? ocultoEnRanking = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? nombre = null,Object? rol = null,Object? universidad = freezed,Object? universidadId = freezed,Object? condicion = freezed,Object? fechaObjetivo = freezed,Object? emailVerificado = null,Object? ocultoEnRanking = null,Object? aceptaComerciales = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -85,7 +87,8 @@ as String?,condicion: freezed == condicion ? _self.condicion : condicion // igno
 as StudentCondition?,fechaObjetivo: freezed == fechaObjetivo ? _self.fechaObjetivo : fechaObjetivo // ignore: cast_nullable_to_non_nullable
 as DateTime?,emailVerificado: null == emailVerificado ? _self.emailVerificado : emailVerificado // ignore: cast_nullable_to_non_nullable
 as bool,ocultoEnRanking: null == ocultoEnRanking ? _self.ocultoEnRanking : ocultoEnRanking // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,aceptaComerciales: freezed == aceptaComerciales ? _self.aceptaComerciales : aceptaComerciales // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -170,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String nombre,  UserRole rol,  String? universidad,  String? universidadId,  StudentCondition? condicion,  DateTime? fechaObjetivo,  bool emailVerificado,  bool ocultoEnRanking)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String nombre,  UserRole rol,  String? universidad,  String? universidadId,  StudentCondition? condicion,  DateTime? fechaObjetivo,  bool emailVerificado,  bool ocultoEnRanking,  bool? aceptaComerciales)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
-return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_that.universidadId,_that.condicion,_that.fechaObjetivo,_that.emailVerificado,_that.ocultoEnRanking);case _:
+return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_that.universidadId,_that.condicion,_that.fechaObjetivo,_that.emailVerificado,_that.ocultoEnRanking,_that.aceptaComerciales);case _:
   return orElse();
 
 }
@@ -191,10 +194,10 @@ return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String nombre,  UserRole rol,  String? universidad,  String? universidadId,  StudentCondition? condicion,  DateTime? fechaObjetivo,  bool emailVerificado,  bool ocultoEnRanking)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String nombre,  UserRole rol,  String? universidad,  String? universidadId,  StudentCondition? condicion,  DateTime? fechaObjetivo,  bool emailVerificado,  bool ocultoEnRanking,  bool? aceptaComerciales)  $default,) {final _that = this;
 switch (_that) {
 case _User():
-return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_that.universidadId,_that.condicion,_that.fechaObjetivo,_that.emailVerificado,_that.ocultoEnRanking);case _:
+return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_that.universidadId,_that.condicion,_that.fechaObjetivo,_that.emailVerificado,_that.ocultoEnRanking,_that.aceptaComerciales);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -211,10 +214,10 @@ return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String nombre,  UserRole rol,  String? universidad,  String? universidadId,  StudentCondition? condicion,  DateTime? fechaObjetivo,  bool emailVerificado,  bool ocultoEnRanking)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String nombre,  UserRole rol,  String? universidad,  String? universidadId,  StudentCondition? condicion,  DateTime? fechaObjetivo,  bool emailVerificado,  bool ocultoEnRanking,  bool? aceptaComerciales)?  $default,) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
-return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_that.universidadId,_that.condicion,_that.fechaObjetivo,_that.emailVerificado,_that.ocultoEnRanking);case _:
+return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_that.universidadId,_that.condicion,_that.fechaObjetivo,_that.emailVerificado,_that.ocultoEnRanking,_that.aceptaComerciales);case _:
   return null;
 
 }
@@ -226,7 +229,7 @@ return $default(_that.id,_that.email,_that.nombre,_that.rol,_that.universidad,_t
 @JsonSerializable()
 
 class _User extends User {
-  const _User({required this.id, required this.email, required this.nombre, this.rol = UserRole.estudiante, this.universidad, this.universidadId, this.condicion, this.fechaObjetivo, this.emailVerificado = false, this.ocultoEnRanking = false}): super._();
+  const _User({required this.id, required this.email, required this.nombre, this.rol = UserRole.estudiante, this.universidad, this.universidadId, this.condicion, this.fechaObjetivo, this.emailVerificado = false, this.ocultoEnRanking = false, this.aceptaComerciales}): super._();
   factory _User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
 @override final  String id;
@@ -247,6 +250,9 @@ class _User extends User {
 @override@JsonKey() final  bool emailVerificado;
 /// Si el usuario eligió ocultarse del ranking público (RF-22).
 @override@JsonKey() final  bool ocultoEnRanking;
+/// Correos comerciales (`users.acepta_comerciales`): `true` sí, `false`
+/// no, y `null` si todavía no decidió, que no es lo mismo que «no».
+@override final  bool? aceptaComerciales;
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
@@ -261,16 +267,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.rol, rol) || other.rol == rol)&&(identical(other.universidad, universidad) || other.universidad == universidad)&&(identical(other.universidadId, universidadId) || other.universidadId == universidadId)&&(identical(other.condicion, condicion) || other.condicion == condicion)&&(identical(other.fechaObjetivo, fechaObjetivo) || other.fechaObjetivo == fechaObjetivo)&&(identical(other.emailVerificado, emailVerificado) || other.emailVerificado == emailVerificado)&&(identical(other.ocultoEnRanking, ocultoEnRanking) || other.ocultoEnRanking == ocultoEnRanking));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.rol, rol) || other.rol == rol)&&(identical(other.universidad, universidad) || other.universidad == universidad)&&(identical(other.universidadId, universidadId) || other.universidadId == universidadId)&&(identical(other.condicion, condicion) || other.condicion == condicion)&&(identical(other.fechaObjetivo, fechaObjetivo) || other.fechaObjetivo == fechaObjetivo)&&(identical(other.emailVerificado, emailVerificado) || other.emailVerificado == emailVerificado)&&(identical(other.ocultoEnRanking, ocultoEnRanking) || other.ocultoEnRanking == ocultoEnRanking)&&(identical(other.aceptaComerciales, aceptaComerciales) || other.aceptaComerciales == aceptaComerciales));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,nombre,rol,universidad,universidadId,condicion,fechaObjetivo,emailVerificado,ocultoEnRanking);
+int get hashCode => Object.hash(runtimeType,id,email,nombre,rol,universidad,universidadId,condicion,fechaObjetivo,emailVerificado,ocultoEnRanking,aceptaComerciales);
 
 @override
 String toString() {
-  return 'User(id: $id, email: $email, nombre: $nombre, rol: $rol, universidad: $universidad, universidadId: $universidadId, condicion: $condicion, fechaObjetivo: $fechaObjetivo, emailVerificado: $emailVerificado, ocultoEnRanking: $ocultoEnRanking)';
+  return 'User(id: $id, email: $email, nombre: $nombre, rol: $rol, universidad: $universidad, universidadId: $universidadId, condicion: $condicion, fechaObjetivo: $fechaObjetivo, emailVerificado: $emailVerificado, ocultoEnRanking: $ocultoEnRanking, aceptaComerciales: $aceptaComerciales)';
 }
 
 
@@ -281,7 +287,7 @@ abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$UserCopyWith(_User value, $Res Function(_User) _then) = __$UserCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String email, String nombre, UserRole rol, String? universidad, String? universidadId, StudentCondition? condicion, DateTime? fechaObjetivo, bool emailVerificado, bool ocultoEnRanking
+ String id, String email, String nombre, UserRole rol, String? universidad, String? universidadId, StudentCondition? condicion, DateTime? fechaObjetivo, bool emailVerificado, bool ocultoEnRanking, bool? aceptaComerciales
 });
 
 
@@ -298,7 +304,7 @@ class __$UserCopyWithImpl<$Res>
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? nombre = null,Object? rol = null,Object? universidad = freezed,Object? universidadId = freezed,Object? condicion = freezed,Object? fechaObjetivo = freezed,Object? emailVerificado = null,Object? ocultoEnRanking = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? nombre = null,Object? rol = null,Object? universidad = freezed,Object? universidadId = freezed,Object? condicion = freezed,Object? fechaObjetivo = freezed,Object? emailVerificado = null,Object? ocultoEnRanking = null,Object? aceptaComerciales = freezed,}) {
   return _then(_User(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -310,7 +316,8 @@ as String?,condicion: freezed == condicion ? _self.condicion : condicion // igno
 as StudentCondition?,fechaObjetivo: freezed == fechaObjetivo ? _self.fechaObjetivo : fechaObjetivo // ignore: cast_nullable_to_non_nullable
 as DateTime?,emailVerificado: null == emailVerificado ? _self.emailVerificado : emailVerificado // ignore: cast_nullable_to_non_nullable
 as bool,ocultoEnRanking: null == ocultoEnRanking ? _self.ocultoEnRanking : ocultoEnRanking // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,aceptaComerciales: freezed == aceptaComerciales ? _self.aceptaComerciales : aceptaComerciales // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 

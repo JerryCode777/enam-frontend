@@ -269,6 +269,13 @@ class _Prefs implements AppPrefs {
 
   @override
   Future<void> reiniciarPrueba() async {}
+
+  // La pregunta de correos comerciales ya se hizo: aquí no sale.
+  @override
+  Future<bool> comercialesPreguntado(String userId) async => true;
+
+  @override
+  Future<void> marcarComercialesPreguntado(String userId) async {}
 }
 
 class _RepoConSesion extends MockAuthRepository {

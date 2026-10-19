@@ -1,6 +1,6 @@
 # Publicar en las tiendas
 
-Cómo compilar y subir una versión, como la 1.1.1 (9), desde una Mac donde nunca se compiló la app. Las notas de cada versión están en `notas-de-version/`.
+Cómo compilar y subir una versión, como la 1.1.2 (10), desde una Mac donde nunca se compiló la app. Las notas de cada versión están en `notas-de-version/`.
 
 ## 1. Lo que tiene que tener la Mac
 
@@ -38,7 +38,7 @@ flutter pub get
 Comprueba que la versión es la que se publica:
 
 ```sh
-grep '^version' pubspec.yaml   # version: 1.1.1+9
+grep '^version' pubspec.yaml   # version: 1.1.2+10
 ```
 
 El `+8` es el número de compilación. En las dos tiendas tiene que ser mayor que el de la última subida.
@@ -71,6 +71,12 @@ En la Mac nueva:
 2. **El perfil.** Xcode → Settings → Accounts → el equipo → *Download Manual Profiles*.
 
 **Vencen el 19/10/2027** el certificado «Apple Distribution: AIDA SOFT S.A.C.S.» y el perfil «ENAM Prep App Store AIDA SOFT». Desde ese día no se puede subir nada a App Store hasta renovarlos en developer.apple.com.
+
+## 3b. Antes de compilar la 1.1.2 (10)
+
+- **El backend con el origen `fin_dia_gratis` y el catálogo 25 de BI** (PR B de enam-backend-07), desplegado en producción. Sin él, la tarjeta de correos comerciales del inicio responde con error al tocar «Sí» o «No», y sus eventos se rechazan.
+- **La suite completa en verde en la Mac donde se compila**: `flutter test`, con los goldens. En la Mac de desarrollo (la de 3,5 GB libres) los 254 goldens fallan desde la actualización del sistema, también en main limpio, así que ahí solo se corrió `flutter test --exclude-tags golden`. Los goldens se validan en la Mac de compilación. Si fallan ahí, no se compila hasta ver por qué.
+- **La 1.1.1 (9) no se vuelve a subir.** Ya se compiló (#20). La 10 la reemplaza y lleva todo lo suyo.
 
 ## 4. Compilar
 
@@ -108,20 +114,20 @@ Dónde quedan:
 
 1. Abre ENAM Prep, ve a Producción (o primero a Pruebas internas) y elige *Crear versión*.
 2. Sube `app-release.aab`.
-3. En «Novedades» pega el bloque de Google Play de `notas-de-version/1.1.1.md`, en el idioma de la ficha (español).
+3. En «Novedades» pega el bloque de Google Play de `notas-de-version/1.1.2.md`, en el idioma de la ficha (español).
 4. Revisa y envía.
 
 **App Store** (App Store Connect):
 
 1. Abre Transporter, inicia sesión con la cuenta de Apple, arrastra el `.ipa` y dale a *Entregar*.
 2. Espera a que la compilación aparezca procesada en App Store Connect → ENAM Prep → TestFlight. Suele tardar entre 10 y 30 minutos.
-3. Crea la versión 1.1.1 en App Store y elige la compilación 9.
-4. En «Novedades en esta versión» pega el bloque de App Store de `notas-de-version/1.1.1.md`. En App Store el vendedor ya es AIDA SOFT S.A.C.S.
+3. Crea la versión 1.1.2 en App Store y elige la compilación 10. Si la 1.1.1 (9) se creó en App Store Connect pero nunca se envió a revisión, bórrala ahí o déjala sin enviar.
+4. En «Novedades en esta versión» pega el bloque de App Store de `notas-de-version/1.1.2.md`. En App Store el vendedor ya es AIDA SOFT S.A.C.S.
 5. Envía a revisión.
 
 ## 6. Antes de enviar a revisión
 
-- **La versión.** El `.aab` y el `.ipa` dicen 1.1.1 (9): en Play Console sale al subir, y en App Store Connect, en la compilación.
+- **La versión.** El `.aab` y el `.ipa` dicen 1.1.2 (10): en Play Console sale al subir, y en App Store Connect, en la compilación.
 - **Las notas.** Las de cada tienda son su bloque. Pueden decir «día gratis»; en ninguna hay prueba, descuentos ni el número del cupo. Si anuncian el día gratis, el backend tiene que tenerlo encendido antes.
 - **Una prueba en un teléfono real contra producción**, con la build de release, no con `flutter run`:
   - **Android:** instala desde Pruebas internas de Play. O bien, con el teléfono conectado:
@@ -133,7 +139,7 @@ Dónde quedan:
     flutter install --release
     ```
 
-  - **iPhone:** instala la compilación 9 desde TestFlight.
+  - **iPhone:** instala la compilación 10 desde TestFlight.
   - **Qué probar en las dos:**
     - Entrar con una cuenta real.
     - Responder una pregunta.

@@ -21,6 +21,7 @@ _User _$UserFromJson(Map<String, dynamic> json) => _User(
       : DateTime.parse(json['fechaObjetivo'] as String),
   emailVerificado: json['emailVerificado'] as bool? ?? false,
   ocultoEnRanking: json['ocultoEnRanking'] as bool? ?? false,
+  aceptaComerciales: json['aceptaComerciales'] as bool?,
 );
 
 Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
@@ -34,6 +35,7 @@ Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
   'fechaObjetivo': instance.fechaObjetivo?.toIso8601String(),
   'emailVerificado': instance.emailVerificado,
   'ocultoEnRanking': instance.ocultoEnRanking,
+  'aceptaComerciales': instance.aceptaComerciales,
 };
 
 const _$UserRoleEnumMap = {
