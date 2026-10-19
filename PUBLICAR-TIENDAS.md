@@ -6,7 +6,7 @@ Cómo compilar y subir una versión, como la 1.1.1 (9), desde una Mac donde nunc
 
 - **Espacio:** unos 15 GB libres. Un build de release de Android deja unos 2–3 GB en `build/`, y el de iOS otros tantos más los de Xcode.
 - **Flutter 3.47.7**, el mismo con el que se compiló la 1.1.0 (8). El proyecto exige Dart ≥ 3.12.2 y desde 3.47 el mínimo de iOS es 15 (#15). No compiles una versión nueva con un Flutter más viejo que la anterior.
-- **Xcode**, con la cuenta de Apple del equipo que publica la app (equipo `7XUZZ52F47`):
+- **Xcode**, con la cuenta de Apple del equipo que publica la app (AIDA SOFT S.A.C.S., equipo `6D689DJPSB`):
   - entra en Xcode → Settings → Accounts;
   - acepta la licencia la primera vez con `sudo xcodebuild -license accept`.
 - **CocoaPods.** iOS se compila con CocoaPods: `brew install cocoapods`.
@@ -59,8 +59,10 @@ Son cuatro. Están en `.gitignore`, y **se pasan solo por AirDrop, de Mac a Mac*
 - **Los archivos de Firebase** hoy no los usa la compilación: no hay plugin de Firebase y el `.plist` no está en el proyecto de Xcode. Se pasan igual, para que la Mac quede como la de siempre.
 
 **Para iOS hace falta además la firma de distribución.** La configuración Release firma a mano, con:
-- la identidad «Apple Distribution» del equipo `7XUZZ52F47`;
-- el perfil «ENAM Prep App Store» del bundle `pe.jakstech.enamApp`.
+- la identidad «Apple Distribution: AIDA SOFT S.A.C.S.» del equipo `6D689DJPSB`;
+- el perfil «ENAM Prep App Store AIDA SOFT» del bundle `pe.jakstech.enamApp`.
+
+La app pasó de Jaks Tech S.A.C. (`7XUZZ52F47`) a AIDA SOFT en octubre de 2026. El bundle sigue siendo `pe.jakstech.enamApp`, pero el certificado y el perfil de Jaks Tech ya no firman esta app.
 
 En la Mac nueva:
 
@@ -68,7 +70,7 @@ En la Mac nueva:
    - Si ese certificado ya no está, se crea otro en developer.apple.com (Certificates) y se regenera el perfil.
 2. **El perfil.** Xcode → Settings → Accounts → el equipo → *Download Manual Profiles*.
 
-**Vencen el 20/11/2026**, dos días antes del ENAM: el certificado «Apple Distribution» y el perfil «ENAM Prep App Store». Desde ese día no se puede subir nada a App Store hasta renovarlos en developer.apple.com. Renuévalos antes de la semana del examen.
+**Vencen el 19/10/2027** el certificado «Apple Distribution: AIDA SOFT S.A.C.S.» y el perfil «ENAM Prep App Store AIDA SOFT». Desde ese día no se puede subir nada a App Store hasta renovarlos en developer.apple.com.
 
 ## 4. Compilar
 
@@ -114,7 +116,7 @@ Dónde quedan:
 1. Abre Transporter, inicia sesión con la cuenta de Apple, arrastra el `.ipa` y dale a *Entregar*.
 2. Espera a que la compilación aparezca procesada en App Store Connect → ENAM Prep → TestFlight. Suele tardar entre 10 y 30 minutos.
 3. Crea la versión 1.1.1 en App Store y elige la compilación 9.
-4. En «Novedades en esta versión» pega el bloque de App Store de `notas-de-version/1.1.1.md`. Ese bloque no nombra a AIDA SOFT: en App Store el vendedor sigue siendo Jaks Tech S.A.C. hasta que Apple apruebe la cuenta de AIDA SOFT.
+4. En «Novedades en esta versión» pega el bloque de App Store de `notas-de-version/1.1.1.md`. En App Store el vendedor ya es AIDA SOFT S.A.C.S.
 5. Envía a revisión.
 
 ## 6. Antes de enviar a revisión
