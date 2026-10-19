@@ -14,7 +14,14 @@ void main() {
   group('Lista cerrada', () {
     test('solo los de cliente de la app; los de servidor, no', () {
       final nombres = Evento.values.map((e) => e.nombre).toSet();
-      expect(nombres, {'signup_started', 'plans_viewed', 'checkout_started'});
+      expect(nombres, {
+        'signup_started',
+        'plans_viewed',
+        'checkout_started',
+        // Catálogo 25: la pregunta de correo comercial.
+        'consentimiento_visto',
+        'consentimiento_respuesta',
+      });
       // Pasaron a ser de servidor: si la app los mandara, se rechazarían.
       for (final deServidor in const [
         'signup_verified',

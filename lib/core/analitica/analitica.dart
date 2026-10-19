@@ -28,7 +28,15 @@ enum Evento {
 
   /// iOS: se abre la hoja de compra de App Store. En Android el pago es en la
   /// web, y ahí lo emite la web.
-  checkoutStarted('checkout_started');
+  checkoutStarted('checkout_started'),
+
+  /// Se muestra una pregunta de correo comercial (catálogo 25). La del fin
+  /// del día gratis sale una sola vez por cuenta.
+  consentimientoVisto('consentimiento_visto'),
+
+  /// Toca «Sí», «No» o la X de esa pregunta, antes del `PATCH /me`
+  /// (catálogo 25). Si se va sin tocar nada, no sale.
+  consentimientoRespuesta('consentimiento_respuesta');
 
   const Evento(this.nombre);
 
@@ -49,6 +57,13 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
     'plan_id': {'mensual', 'intensivo', 'semestral'},
     'medio': {'apple'},
   },
+  Evento.consentimientoVisto: {
+    'lugar': {'aviso', 'fin_dia_gratis'},
+  },
+  Evento.consentimientoRespuesta: {
+    'lugar': {'aviso', 'fin_dia_gratis'},
+    'respuesta': {'si', 'no', 'cerro'},
+  },
 };
 
 /// Las obligatorias. Sin ellas el servidor rechazaría el evento, así que ni se
@@ -57,6 +72,8 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.signupStarted: {},
   Evento.plansViewed: {'pantalla'},
   Evento.checkoutStarted: {'plan_id', 'medio'},
+  Evento.consentimientoVisto: {'lugar'},
+  Evento.consentimientoRespuesta: {'lugar', 'respuesta'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -64,6 +81,8 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.signupStarted: {'ios', 'android'},
   Evento.plansViewed: {'ios', 'android'},
   Evento.checkoutStarted: {'ios'},
+  Evento.consentimientoVisto: {'ios', 'android'},
+  Evento.consentimientoRespuesta: {'ios', 'android'},
 };
 
 /// Versión del diseño, para comparar cohortes antes y después del rediseño.

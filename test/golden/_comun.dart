@@ -92,10 +92,9 @@ Future<void> cargarFuentes() async {
   // cuadrados vacíos.
   final iconos = await _rutaSimbolos();
   if (iconos != null) {
-    await cargar(
-      'packages/material_symbols_icons/MaterialSymbolsOutlined',
-      [iconos],
-    );
+    await cargar('packages/material_symbols_icons/MaterialSymbolsOutlined', [
+      iconos,
+    ]);
   }
 }
 
@@ -141,8 +140,7 @@ class PrefsEnMemoria implements AppPrefs {
   Future<Set<String>> nacionalesInscritos() async => _nacionales;
 
   @override
-  Future<void> marcarInscritoEnNacional(String id) async =>
-      _nacionales.add(id);
+  Future<void> marcarInscritoEnNacional(String id) async => _nacionales.add(id);
 
   // El reloj de la prueba (D-02). En las capturas siempre arranca sin empezar,
   // que es como nace todo usuario: así el inicio se retrata en su estado real
@@ -151,13 +149,19 @@ class PrefsEnMemoria implements AppPrefs {
   Future<DateTime?> inicioPrueba() async => _inicioPrueba;
 
   @override
-  Future<DateTime> marcarInicioPrueba() async =>
-      _inicioPrueba = DateTime.now();
+  Future<DateTime> marcarInicioPrueba() async => _inicioPrueba = DateTime.now();
 
   @override
   Future<void> reiniciarPrueba() async => _inicioPrueba = null;
 
   final _nacionales = <String>{};
+
+  // La pregunta de correos comerciales ya se hizo: aquí no sale.
+  @override
+  Future<bool> comercialesPreguntado(String userId) async => true;
+
+  @override
+  Future<void> marcarComercialesPreguntado(String userId) async {}
 }
 
 /// Decodifica de verdad las imágenes que haya en pantalla antes de capturar.

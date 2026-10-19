@@ -84,14 +84,17 @@ void main() {
       expect(sub(SubscriptionStatus.expirada).sinAcceso, isTrue);
     });
 
-    test('en gracia conserva acceso: falló el cobro, no la vigencia (RF-27)', () {
-      final s = sub(
-        SubscriptionStatus.enGracia,
-        plan: planMensual,
-        faltaParaExpirar: const Duration(days: 2),
-      );
-      expect(s.daAcceso, isTrue);
-    });
+    test(
+      'en gracia conserva acceso: falló el cobro, no la vigencia (RF-27)',
+      () {
+        final s = sub(
+          SubscriptionStatus.enGracia,
+          plan: planMensual,
+          faltaParaExpirar: const Duration(days: 2),
+        );
+        expect(s.daAcceso, isTrue);
+      },
+    );
 
     test('estar en prueba NO cuenta como plan pagado vigente (RF-42)', () {
       // Es la decisión más fina del backend de la app hermana: así el bot le
@@ -169,7 +172,10 @@ void main() {
       expect(destino(c, Routes.home, expirada), Routes.accessEnded);
       expect(destino(c, Routes.temario, expirada), Routes.accessEnded);
       expect(destino(c, Routes.stats, expirada), Routes.accessEnded);
-      expect(destino(c, Routes.simulacroSelection, expirada), Routes.accessEnded);
+      expect(
+        destino(c, Routes.simulacroSelection, expirada),
+        Routes.accessEnded,
+      );
     });
 
     test('sin acceso, el camino para pagar sigue abierto', () async {
@@ -224,7 +230,10 @@ void main() {
 
     test('si la petición falla tampoco se bloquea', () async {
       final c = await conSesion();
-      final error = AsyncError<Subscription>(Exception('sin red'), StackTrace.empty);
+      final error = AsyncError<Subscription>(
+        Exception('sin red'),
+        StackTrace.empty,
+      );
 
       // Quedarse sin señal no puede leerse como "no pagaste".
       expect(destino(c, Routes.home, error), isNull);
@@ -269,6 +278,13 @@ class _Prefs implements AppPrefs {
 
   @override
   Future<void> reiniciarPrueba() async {}
+
+  // La pregunta de correos comerciales ya se hizo: aquí no sale.
+  @override
+  Future<bool> comercialesPreguntado(String userId) async => true;
+
+  @override
+  Future<void> marcarComercialesPreguntado(String userId) async {}
 }
 
 class _RepoConSesion extends MockAuthRepository {

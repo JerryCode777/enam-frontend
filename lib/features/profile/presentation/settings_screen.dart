@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../consentimiento/data/consentimiento_repository.dart';
 import '../../../core/providers.dart';
 import '../../../core/sonido/proveedor_sonidos.dart';
 import '../../../core/sonido/sonidos.dart';
@@ -319,7 +320,9 @@ class _Sonidos extends ConsumerWidget {
       child: Column(
         children: [
           SwitchListTile(
-            secondary: Icon(prefs.activo ? Symbols.volume_up : Symbols.volume_off),
+            secondary: Icon(
+              prefs.activo ? Symbols.volume_up : Symbols.volume_off,
+            ),
             title: const Text('Sonidos'),
             subtitle: const Text(
               'Al elegir, al acertar o fallar en la práctica y al ver tu '
@@ -387,6 +390,22 @@ class _Cuenta extends ConsumerWidget {
             },
             secondary: const Icon(Symbols.visibility),
             title: const Text('Aparecer en rankings'),
+          ),
+          Divider(height: 1, color: context.scheme.outlineVariant),
+          // Sin decidir se ve apagado: no se manda nada hasta que lo toque.
+          SwitchListTile(
+            value: user?.aceptaComerciales ?? false,
+            onChanged: (acepta) async {
+              final actualizado = await ref
+                  .read(consentimientoRepositoryProvider)
+                  .decidir(
+                    acepta: acepta,
+                    origen: OrigenConsentimiento.ajustes,
+                  );
+              ref.read(authControllerProvider.notifier).setUser(actualizado);
+            },
+            secondary: const Icon(Symbols.mail),
+            title: const Text('Correos con descuentos y novedades'),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           ListTile(

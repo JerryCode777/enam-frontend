@@ -45,8 +45,7 @@ class AppPrefs {
   }
 
   /// Para poder volver a probar el flujo desde cero en desarrollo.
-  Future<void> reiniciarPrueba() async =>
-      (await _prefs).remove(_kInicioPrueba);
+  Future<void> reiniciarPrueba() async => (await _prefs).remove(_kInicioPrueba);
 
   static const _kNacionalesInscritos = 'nacionales_inscritos';
 
@@ -64,5 +63,21 @@ class AppPrefs {
     final actuales = prefs.getStringList(_kNacionalesInscritos) ?? [];
     if (actuales.contains(id)) return;
     await prefs.setStringList(_kNacionalesInscritos, [...actuales, id]);
+  }
+
+  /// Cuentas a las que ya se les mostró la pregunta de correos comerciales al
+  /// terminar el día gratis. La clave lleva la campaña, como la de la web
+  /// (`fin-dia-gratis-2026-10`): si algún día se vuelve a preguntar, es otra.
+  static const _kComercialesPreguntado = 'comerciales_fin_dia_gratis_2026_10';
+
+  Future<bool> comercialesPreguntado(String userId) async =>
+      ((await _prefs).getStringList(_kComercialesPreguntado) ?? const [])
+          .contains(userId);
+
+  Future<void> marcarComercialesPreguntado(String userId) async {
+    final prefs = await _prefs;
+    final actuales = prefs.getStringList(_kComercialesPreguntado) ?? [];
+    if (actuales.contains(userId)) return;
+    await prefs.setStringList(_kComercialesPreguntado, [...actuales, userId]);
   }
 }
