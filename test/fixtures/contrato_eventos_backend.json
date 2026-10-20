@@ -1,0 +1,811 @@
+{
+  "$comentario": "Contrato normativo de eventos de ENAM Prep. Fuente única para backend, web, portada y app. Lo que no está aquí no se acepta. Explicación en contrato/EVENTOS.md.",
+  "version_contrato": 1,
+  "version_catalogo": 26,
+  "actualizado": "2026-10-19",
+  "historial_catalogo": {
+    "1": "289bf63: los 15 eventos iniciales.",
+    "26": "Recordatorio de la oferta de bienvenida (aprobado por Jerry el 19/10): evento de servidor oferta_bienvenida_recordatorio_enviado, uno por cuenta en toda la vida (campana, horas_para_vencer 1-12, incluye_hasta_enam). Un segundo correo a quien tiene la ventana bienvenida-30 vigente y no pagó, unas 6 h antes de que venza, de 08:00 a 21:00 de Lima y al menos 1 h antes del vencimiento. Propuesta del backend; BI amplió horas_para_vencer a 12 por las ventanas que vencen de noche. Un tipo en el CHECK y en el índice eventos_una_vez_por_cuenta.",
+    "25": "Pedir el consentimiento comercial al terminar el día gratis (aprobado por Jerry el 19/10): consentimiento_comercial_cambiado.origen suma fin_dia_gratis (PATCH /me, como aviso). Eventos de cliente consentimiento_visto y consentimiento_respuesta (lugar: aviso | fin_dia_gratis; respuesta: si | no | cerro), para tener el denominador (cuántos vieron la pregunta) y la X, que no llega al servidor. Propuesta del backend (origen) y de la web (eventos), nombres de la web. Dos tipos en el CHECK; el CHECK de users.acepta_comerciales_origen es del backend.",
+    "24": "Oferta automática de bienvenida (aprobada por Jerry el 15/10; propuesta del backend con ajustes de BI): evento de servidor oferta_bienvenida_enviada (uno por cuenta en toda la vida: campana, porcentaje, horas_desde_fin_dia_gratis 0-168, incluye_hasta_enam) y oferta_origen suma 'bienvenida' en los 8 lugares (la enumeración y 7 eventos). 30 % sin código, 48 h desde el correo. La vista es oferta_vista con oferta_origen 'bienvenida'; sin píxel de apertura ni campana_correo_enviado. Un tipo en el CHECK y en el índice eventos_una_vez_por_cuenta.",
+    "23": "Propiedad opcional aplicacion (automatica, manual) en codigo_aplicado: si el código lo puso solo la web (códigos de la cuenta, web #96) o lo escribió la persona. La web lo manda en el checkout (codigoAplicacion) y el backend lo copia al evento; sin ese campo (clientes viejos) la propiedad no va. Aprobado por el director (14/10). Sin cambio de SQL.",
+    "22": "Evento de cliente registro_abandonado: sale de la pantalla de registro sin enviar ni entrar con Google; segundos en tramos, campos_tocados (0-3), casilla_marcada, toco_google, navegador y dispositivo. Nunca lo escrito. Propuesta de la web (13/10). Un tipo en el CHECK.",
+    "21": "landing_view suma referente: el dominio de document.referrer CLASIFICADO en una lista cerrada (ninguno, facebook, messenger, instagram, tiktok, whatsapp, google, youtube, enamprep, otro); nunca la URL ni el dominio crudo. Para separar Facebook de Messenger y el tráfico sin utm. Sin SQL. Aprobado por el director el 13/10.",
+    "20": "registro_fallido.motivo suma terminos_sin_marcar y datos_invalidos (la validación del navegador, que el servidor nunca ve); validacion queda solo para el 422 del servidor. La web no puede saber google_bloqueado ni proveedor_cancelado (Google Identity Services no avisa a la página): solo los mandan las apps. Sin SQL. Consulta de la web, 12/10.",
+    "19": "Dónde se pierde el registro (12/10, aprobado por el director): landing_view y signup_started suman navegador (normal o el navegador interno de tiktok, instagram, facebook, whatsapp u otro_interno) y dispositivo (celular, tableta, pc), calculados en el cliente SIN guardar el user agent; eventos de cliente registro_visto (se abre el formulario de registro) y registro_fallido (metodo y motivo, p. ej. google_bloqueado). Dos tipos en el CHECK.",
+    "18": "Pago con Google Play en la app Android (aprobado por Jerry el 12/10): medio google_play en checkout_started (que suma la plataforma android), payment_confirmed y payment_failed; origen_acceso google_play en access_granted, access_expired y correo_bienvenida_premium_enviado; pago_ref y concesion_ref suman gp:<orderId> (con puntos: GPA.…, renovaciones GPA.….0, ..1) y, solo en payment_failed, el sufijo :gracia o :retenida; access_expired suma motivo (vencimiento | reembolso). Sin SQL. Acordado con el backend (enam-backend-79).",
+    "17": "La clase de muestra también en el hero de la portada: clase_muestra_vista y clase_muestra_play suman lugar (hero | seccion), opcional para no rechazar lo que la portada ya manda. Sin SQL. Pedido de la web por encargo de Jerry, 10/10.",
+    "16": "Aula en Inicio y clases de muestra en la portada: eventos de cliente aula_tarjeta_vista y aula_tarjeta_clic (web, ios, android: lugar, curso_id, clase_id, nivel) y clase_muestra_vista y clase_muestra_play (landing: pagina, clase_id). El clic en «Ver el curso completo» de la portada es signup_started con ubicacion clase-muestra y su clase_id (propiedad nueva, solo en landing). Pedido de la web por encargo del director, 10/10.",
+    "15": "Consentimiento comercial y prueba del recordatorio D1: eventos de servidor consentimiento_comercial_cambiado (acepta, origen: registro | ajustes | aviso | baja, antes: si | no | sin_decidir) y recordatorio_d1 (grupo envio | control, uno por cuenta). Propuesta del backend, aprobada por Jerry el 10/10.",
+    "14": "Códigos de descuento dirigidos (por correo y por segmento): oferta_origen suma 'codigo'; payment_confirmed suma codigo_id y descuento_centimos; eventos de servidor codigo_aplicado y codigo_rechazado. Pedido del director para el PR 1 del backend.",
+    "13": "Plan «Hasta tu ENAM» (S/ 99, pago único, acceso hasta el 22/11): todo plan_id suma 'hasta-enam'. Eventos de cliente plan_destacado_visto y plan_destacado_clic, con el lugar donde se muestra la tarjeta destacada (planes, muro o resultado de la primera práctica). Recomendación del estudio de comportamiento del 09/10, aprobada por Jerry.",
+    "12": "Aviso de pago rechazado: evento de servidor recordatorio_pago_rechazado_enviado, uno por pago de Mercado Pago rechazado (action_required o failed). Un pago recibe este aviso o recordatorio_pago_enviado, nunca los dos. Pedido del backend por encargo del director.",
+    "11": "Correo «Bienvenido a Premium»: evento de servidor correo_bienvenida_premium_enviado, uno por pago aprobado (Mercado Pago o Apple). Pedido del backend por encargo del director.",
+    "10": "Aula de cursos: curso_visto (cliente), clase_iniciada, clase_completada y practica_desde_clase (servidor); funcion_premium suma 'cursos'. Parche del 07/10: el patrón de practica_desde_clase.sesion_id pasa de ^session- a ^sesion-[0-9a-f]{32}$ (los ids reales usan «sesion-»; con el patrón anterior el evento se rechazaba siempre).",
+    "9": "Corte entre Planes y pago: eventos de cliente ayuda_clic (clic en «¿Dudas antes de pagar? Escríbenos», hacia WhatsApp) y planes_salida (una vez al salir de Planes: cuánto tiempo, en tramos, y cómo salió). Pedido de la web por encargo del director. Evento de servidor recordatorio_pago_enviado: correo de recordatorio de un pago de Mercado Pago sin pagar a los 60 min, uno por pago (pedido del backend, tarea aprobada por el usuario).",
+    "8": "Tarjetas, completar y quiz con IA: recurso_gratis suma 'tarjetas' y 'completar' (cupos de 10 y 5 al día); funcion_premium suma 'quiz_ia' (el quiz de prueba ya usado). Sin eventos nuevos: el uso se lee de las tablas (contrato/bi-catalogo8.sql).",
+    "7": "Oferta de lanzamiento (50 % hasta el 11/10 23:59 Lima, para quien no tiene premium pagado): oferta_origen suma 'lanzamiento' y minutos_restantes suma 'mas_1440' (más de 24 h: solo esa oferta tiene plazo de días). Sin eventos ni SQL nuevos.",
+    "6": "Gratis limitado: evento de servidor limite_alcanzado (el cupo diario llega a 0) y de cliente muro_visto (motivo limite|funcion, con recurso o funcion y con_oferta); plans_viewed.pantalla suma 'muro'. Enumeraciones recurso_gratis y funcion_premium.",
+    "5": "minutos_restantes suma 'antes_de_prueba': la oferta de prueba se muestra desde el registro, antes de que corra el reloj de 24 h, y ahí no hay plazo.",
+    "4": "Oferta de regreso: oferta_origen ('prueba'|'regreso') en oferta_vista, oferta_clic, checkout_started y en los pagos y accesos; eventos de servidor oferta_regreso_iniciada y campana_correo_enviado. La atribución al correo sale de esos dos eventos, sin utm.",
+    "3": "Reglas condicionales en el JSON: obligatoria_si y ausente_si (oferta_porcentaje si y solo si con_oferta es true). Formato de la especificación de propiedad en `formato_propiedad`.",
+    "2": "Oferta de prueba (oferta_vista, oferta_clic; con_oferta y oferta_porcentaje en pagos y accesos; oferta_porcentaje en trial_started y con_oferta en checkout_started) y decisiones de implementación del backend (account_created sin utm; signup_verified 'proveedor' también al vincular)."
+  },
+
+  "limites": {
+    "eventos_por_lote": 50,
+    "bytes_por_cuerpo": 65536,
+    "propiedades_por_evento": 12,
+    "texto_codigo_max": 64,
+    "utm_max": 100,
+    "ventana_pasado_horas": { "landing": 24, "web": 24, "ios": 168, "android": 168, "backend": 168 },
+    "ventana_futuro_minutos": 5,
+    "peticiones_por_minuto_por_ip": 30,
+    "eventos_por_hora_por_anonimo": 300
+  },
+
+  "tipos": {
+    "enum": "Uno de `valores`. Comparación exacta, minúsculas.",
+    "entero": "Número entero JSON dentro de [min, max]. Nada de decimales, cadenas ni no finitos.",
+    "booleano": "true o false.",
+    "codigo": "Cadena que cumple `patron`. Es un identificador de máquina, nunca texto escrito por una persona.",
+    "uuid": "UUID en minúsculas, forma canónica de 36 caracteres.",
+    "fecha": "AAAA-MM-DD, hora de Lima.",
+    "mes": "AAAA-MM."
+  },
+
+  "formato_propiedad": {
+    "$comentario": "Claves que puede llevar la especificación de una propiedad. El validador rechaza el contrato si encuentra otra.",
+    "tipo": "Regla. Uno de los de `tipos`.",
+    "valores": "Regla. Lista cerrada (tipo enum).",
+    "enumeracion": "Informativa. Nombre de la lista compartida de `enumeraciones` de la que salen `valores`; los valores igual van escritos.",
+    "min": "Regla. Mínimo inclusivo (tipo entero).",
+    "max": "Regla. Máximo inclusivo (tipo entero).",
+    "patron": "Regla. Expresión regular que el valor completo debe cumplir (tipo codigo).",
+    "obligatoria": "Regla. true: falta → PROPIEDAD_FALTANTE.",
+    "obligatoria_si": "Regla (catálogo 3). Objeto {propiedad_hermana: valor}. Si en el mismo evento TODAS esas hermanas están presentes y valen exactamente eso, esta propiedad es obligatoria: falta → PROPIEDAD_FALTANTE.",
+    "ausente_si": "Regla (catálogo 3). Mismo formato. Si se cumple, esta propiedad NO puede venir: presente → PROPIEDAD_INVALIDA.",
+    "solo_en": "Regla. Plataformas en las que se admite; en otra → PROPIEDAD_INVALIDA.",
+    "la_pone": "Informativa. Quién rellena el valor.",
+    "solo_cliente": "Informativa.",
+    "desde_catalogo": "Informativa. Catálogo en que apareció.",
+    "nota": "Informativa."
+  },
+
+  "enumeraciones": {
+    "oferta_origen": {
+      "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"],
+      "nota": "prueba = oferta de las 24 h de prueba (alternancia 50/0); regreso = oferta de 24 h para quien venció la prueba antes del cobro web. Son poblaciones distintas y no se mezclan en ninguna comparación. lanzamiento (catálogo 7) = 50 % hasta el 11/10 23:59 Lima para toda cuenta sin premium pagado; precedencia en EVENTOS.md §17. codigo (catálogo 14) = un código de descuento dirigido, enviado por correo a un segmento. bienvenida (catálogo 24) = 30 % automático y sin código, por 48 h desde el correo, una vez por persona, para quien terminó su día gratis sin comprar y aceptó ofertas (campaña bienvenida-30)."
+    },
+    "minutos_restantes": {
+      "valores": ["antes_de_prueba", "menos_60", "60_179", "180_359", "360_719", "720_1440", "mas_1440"],
+      "nota": "Minutos que le quedan a la ventana de la oferta, en tramos: menos de 1 h, 1–3 h, 3–6 h, 6–12 h y 12–24 h. Nunca el número exacto. 'antes_de_prueba' (catálogo 5): oferta de prueba mostrada antes de que empiece el reloj de 24 h (GET /oferta con estado antes_de_prueba y vence null); no aplica a la oferta de regreso, que siempre tiene plazo. 'mas_1440' (catálogo 7): quedan más de 24 h; la usan la oferta de lanzamiento, que duraba días, y la de bienvenida (catálogo 24), que dura 48 h."
+    },
+    "navegador": {
+      "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"],
+      "nota": "Catálogo 19. Lo calcula el cliente a partir del user agent, que NUNCA se manda ni se guarda. normal = un navegador común (Chrome, Safari, Firefox, Edge…). Reglas, en este orden: tiktok = musical_ly, BytedanceWebview o TikTok; instagram = Instagram; facebook = FBAN, FBAV, FB_IAB o FB4A; whatsapp = WhatsApp; otro_interno = otra vista web dentro de una app (wv en Android, Line, Snapchat, Twitter, Telegram). Google bloquea su inicio de sesión dentro de los navegadores internos (disallowed_useragent)."
+    },
+    "dispositivo": {
+      "valores": ["celular", "tableta", "pc"],
+      "nota": "Catálogo 19. Lo calcula el cliente: tableta = iPad o Tablet (o un iPad que se presenta como Mac con pantalla táctil); celular = Mobi, Android o iPhone; pc = lo demás. Sin el user agent ni el tamaño exacto de pantalla."
+    },
+    "referente": {
+      "valores": ["ninguno", "facebook", "messenger", "instagram", "tiktok", "whatsapp", "google", "youtube", "enamprep", "otro"],
+      "nota": "Catálogo 21. Lo calcula la portada a partir del host de document.referrer, que NUNCA se manda (ni la URL ni el dominio). Reglas sobre el host: facebook = facebook.com, m.facebook.com, l.facebook.com, lm.facebook.com o fb.com; messenger = messenger.com o m.me; instagram = instagram.com o l.instagram.com; tiktok = tiktok.com o un subdominio; whatsapp = whatsapp.com, web.whatsapp.com o wa.me; google = google.<cualquier dominio> (búsqueda); youtube = youtube.com o youtu.be; enamprep = enamprep.com o un subdominio (navegación interna o vuelta desde la web); ninguno = referrer vacío (escrito a mano, marcador, o una app que no lo manda, como muchos navegadores internos); otro = lo demás."
+    },
+    "segundos_en_pantalla": {
+      "valores": ["menos_10", "10_29", "30_59", "60_179", "180_o_mas"],
+      "nota": "Tiempo en una pantalla, en tramos de segundos enteros, con bordes inclusivos y sin solaparse: menos de 10 s, 10–29 s, 30–59 s, 1–3 min y 3 min o más. Nunca el número exacto (catálogo 9)."
+    },
+    "recurso_gratis": {
+      "valores": ["preguntas", "duelo", "tarjetas", "completar"],
+      "nota": "Cupo diario del nivel gratis, por día de Lima (catálogo 6): preguntas = respuestas de práctica (hoy 10 al día); duelo = el duelo gratis del día (DUELO_GRATIS_POR_DIA). Catálogo 8: tarjetas = tarjetas distintas calificadas en el día (gratis 10; volver a calificar la misma no gasta); completar = ítems distintos del día (gratis 5). El quiz con IA no es un cupo gratis: el nivel gratis tiene un solo quiz de prueba en la vida (funcion_premium quiz_ia)."
+    },
+    "funcion_premium": {
+      "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos"],
+      "nota": "Función que el nivel gratis no tiene (catálogo 6). Coincide con details.funcion del 403 FUNCION_PREMIUM. practica_a_medida = práctica por área o tema, o con un filtro distinto de «todas»; estadisticas incluye la nota proyectada y el detalle por área. Catálogo 8: quiz_ia = el quiz con IA cuando el quiz de prueba (uno en la vida) ya se usó. Catálogo 10: cursos = una clase del aula que no es gratis (403 FUNCION_PREMIUM {funcion: cursos}). Las de la fase 2 (repaso, plan_completo) se suman en otro catálogo."
+    }
+  },
+
+  "comunes": {
+    "$comentario": "Van en el sobre (`comunes`) y se copian a cada evento del lote. Los eventos de servidor las rellena el backend.",
+    "plataforma": {
+      "tipo": "enum",
+      "valores": ["landing", "web", "ios", "android", "backend"],
+      "obligatoria": true,
+      "nota": "landing = enamprep.com; web = app.enamprep.com; backend solo lo usan los eventos de servidor."
+    },
+    "version_app": {
+      "tipo": "codigo",
+      "patron": "^[A-Za-z0-9._+-]{1,32}$",
+      "obligatoria": true,
+      "nota": "Web y portada: SHA corto del commit desplegado. App: versión de pubspec (1.4.0+27). Backend: SHA del binario. Desarrollo: '0.0.0' o terminada en '-dev'. La semilla: 'semilla'. Ver `fuente` en EVENTOS.md."
+    },
+    "version_visual": {
+      "tipo": "codigo",
+      "patron": "^[a-z0-9-]{1,32}$",
+      "obligatoria": false,
+      "nota": "Hoy 'rediseno-2026-09'. La misma en portada, web y app."
+    },
+    "anonimo_id": {
+      "tipo": "uuid",
+      "obligatoria": true,
+      "solo_cliente": true,
+      "nota": "UUID v4 aleatorio generado una vez por dispositivo o navegador y guardado localmente. Se envía también con sesión iniciada: es lo que une la visita anónima con la cuenta. No se deriva de nada del usuario."
+    },
+    "usuario_id": {
+      "tipo": "uuid",
+      "obligatoria": false,
+      "la_pone": "servidor",
+      "nota": "El cliente NUNCA la envía: si el cuerpo trae usuario_id se rechaza el lote (400). El servidor la toma del access token cuando la petición lo trae."
+    }
+  },
+
+  "utm": {
+    "$comentario": "Solo en los eventos que lo declaran. Se leen una vez al llegar a la portada o a la web, se guardan por pestaña y se adjuntan tal cual.",
+    "claves": ["utm_source", "utm_medium", "utm_campaign", "utm_content"],
+    "tipo": "codigo",
+    "patron": "^[a-z0-9._~-]{1,100}$",
+    "normalizacion": "El servidor pasa a minúsculas y cambia espacios por '-'. Si aun así no cumple el patrón, el valor se guarda como 'invalido' (no se rechaza el evento: la visita existió).",
+    "obligatoria": false
+  },
+
+  "eventos": {
+    "landing_view": {
+      "origen": "cliente",
+      "plataformas": ["landing"],
+      "cuando": "Carga de una página de la portada.",
+      "unicidad": "Una por página y pestaña (el cliente no la repite al volver atrás).",
+      "utm": true,
+      "propiedades": {
+        "pagina": { "tipo": "enum", "valores": ["inicio", "preguntas_enam", "precios", "metodologia", "otra"], "obligatoria": true },
+        "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["landing", "web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
+        "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["landing", "web"], "desde_catalogo": 19 },
+        "referente": { "tipo": "enum", "enumeracion": "referente", "valores": ["ninguno", "facebook", "messenger", "instagram", "tiktok", "whatsapp", "google", "youtube", "enamprep", "otro"], "obligatoria": false, "solo_en": ["landing"], "desde_catalogo": 21, "nota": "Clasificado en el cliente; ni la URL ni el dominio viajan." }
+      }
+    },
+
+    "demo_started": {
+      "origen": "cliente",
+      "plataformas": ["landing"],
+      "cuando": "Primera respuesta en la demo de preguntas.",
+      "unicidad": "Una por pestaña.",
+      "propiedades": {
+        "pagina": { "tipo": "enum", "valores": ["inicio", "preguntas_enam", "precios", "metodologia", "otra"], "obligatoria": true }
+      }
+    },
+
+    "demo_completed": {
+      "origen": "cliente",
+      "plataformas": ["landing"],
+      "cuando": "Se responde la última pregunta de la demo.",
+      "unicidad": "Una por pestaña.",
+      "propiedades": {
+        "pagina": { "tipo": "enum", "valores": ["inicio", "preguntas_enam", "precios", "metodologia", "otra"], "obligatoria": true },
+        "aciertos": { "tipo": "entero", "min": 0, "max": 20, "obligatoria": true },
+        "total": { "tipo": "entero", "min": 1, "max": 20, "obligatoria": true }
+      }
+    },
+
+    "signup_started": {
+      "origen": "cliente",
+      "plataformas": ["landing", "web", "ios", "android"],
+      "cuando": "Portada: clic en un botón de «Crear cuenta». Web y app: se envía el formulario de registro ya validado.",
+      "unicidad": "Ninguna: cada intento cuenta.",
+      "utm": true,
+      "propiedades": {
+        "ubicacion": {
+          "tipo": "codigo",
+          "patron": "^[a-z0-9-]{1,40}$",
+          "obligatoria": false,
+          "solo_en": ["landing"],
+          "nota": "El data-origen del botón: cabecera, pie, portada, cierre, demo, preguntas, preguntas-final, metodologia, plataforma-web, planes-<plan>, precios-<plan> y (catálogo 16) clase-muestra, el botón «Ver el curso completo» de una clase de muestra (catálogo 17: clase-muestra-hero si el botón está en la clase del hero; también lleva clase_id)."
+        },
+        "clase_id": {
+          "tipo": "codigo",
+          "patron": "^[a-z0-9][a-z0-9.-]{0,99}$",
+          "obligatoria_si": { "ubicacion": "clase-muestra" },
+          "solo_en": ["landing"],
+          "desde_catalogo": 16,
+          "nota": "La clase de muestra desde la que se hizo clic, con el id del aula (p. ej. pediatria.02-01). Solo con ubicacion = clase-muestra."
+        },
+        "metodo": {
+          "tipo": "enum",
+          "valores": ["correo", "google", "apple"],
+          "obligatoria": false,
+          "solo_en": ["web", "ios", "android"],
+          "nota": "Hoy la web y la app lo mandan como `origen`. Se renombra a `metodo` para no chocar con el `origen` de cliente/servidor."
+        },
+        "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["landing", "web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
+        "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["landing", "web"], "desde_catalogo": 19 }
+      }
+    },
+
+    "plans_viewed": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "cuando": "Se abre una pantalla que presenta planes o su renovación.",
+      "unicidad": "Ninguna.",
+      "propiedades": {
+        "pantalla": { "tipo": "enum", "valores": ["planes", "acceso_terminado", "muro", "perfil", "otra"], "obligatoria": true, "nota": "Catálogo 6: 'muro' = los planes se muestran dentro del muro de venta (límite o función de pago). 'acceso_terminado' queda para las versiones publicadas antes del gratis limitado." }
+      }
+    },
+
+    "checkout_started": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "cuando": "Se pulsa pagar: web antes de redirigir a Mercado Pago; iOS al abrir la hoja de compra de App Store; Android (catálogo 18) al abrir la hoja de compra de Google Play.",
+      "unicidad": "Ninguna: cada intento cuenta.",
+      "propiedades": {
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true, "nota": "google_play desde el catálogo 18, solo en android." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 2, "nota": "true si el precio que se va a cobrar es el de una oferta (de prueba o de regreso). Solo web." },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4, "nota": "Ausente con con_oferta true = 'prueba' (clientes anteriores al catálogo 4)." }
+      }
+    },
+
+    "oferta_vista": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 2,
+      "cuando": "Se muestra la franja superior de la oferta (de prueba o de regreso).",
+      "unicidad": "Una por sesión de navegador y origen de oferta (sessionStorage), aunque la franja se vuelva a pintar al navegar.",
+      "propiedades": {
+        "porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": true },
+        "minutos_restantes": { "tipo": "enum", "enumeracion": "minutos_restantes", "valores": ["antes_de_prueba", "menos_60", "60_179", "180_359", "360_719", "720_1440", "mas_1440"], "obligatoria": true },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "desde_catalogo": 4, "nota": "Ausente = 'prueba' (clientes anteriores al catálogo 4)." }
+      }
+    },
+
+    "oferta_clic": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 2,
+      "cuando": "Clic en «Aprovechar» de la franja, que lleva a /planes.",
+      "unicidad": "Ninguna: cada clic cuenta.",
+      "propiedades": {
+        "porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": true },
+        "minutos_restantes": { "tipo": "enum", "enumeracion": "minutos_restantes", "valores": ["antes_de_prueba", "menos_60", "60_179", "180_359", "360_719", "720_1440", "mas_1440"], "obligatoria": true },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "desde_catalogo": 4, "nota": "Ausente = 'prueba' (clientes anteriores al catálogo 4)." }
+      }
+    },
+
+    "ayuda_clic": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 9,
+      "cuando": "Clic en «¿Dudas antes de pagar? Escríbenos», que abre WhatsApp.",
+      "unicidad": "Ninguna: cada clic cuenta.",
+      "propiedades": {
+        "pantalla": { "tipo": "enum", "valores": ["planes", "pago"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false, "nota": "Va en Pago (el plan elegido) y en Planes solo si el botón está dentro de la tarjeta de un plan." }
+      }
+    },
+
+    "planes_salida": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 9,
+      "cuando": "La persona sale de la pantalla Planes: elige un plan, va a WhatsApp, la cierra con la X, o la página se oculta o se descarga (pagehide o visibilitychange a hidden). Una sola vez por visita a Planes: la primera salida gana.",
+      "unicidad": "Una por visita a Planes (la garantiza el cliente).",
+      "propiedades": {
+        "segundos": { "tipo": "enum", "enumeracion": "segundos_en_pantalla", "valores": ["menos_10", "10_29", "30_59", "60_179", "180_o_mas"], "obligatoria": true },
+        "salida": { "tipo": "enum", "valores": ["eligio_plan", "whatsapp", "cerro", "abandono"], "obligatoria": true, "nota": "abandono = la página se ocultó o se descargó sin ninguna de las otras tres. Se envía con keepalive o sendBeacon, porque si no se pierde." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false, "obligatoria_si": { "salida": "eligio_plan" }, "nota": "El plan elegido. Solo con salida eligio_plan." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "Planes mostraba una oferta vigente." }
+      }
+    },
+
+    "curso_visto": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 10,
+      "cuando": "Se abre la página de un curso del aula.",
+      "unicidad": "Ninguna: cada apertura cuenta.",
+      "propiedades": {
+        "curso_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true },
+        "desde": { "tipo": "enum", "valores": ["catalogo", "inicio", "muro", "enlace"], "obligatoria": true, "nota": "catalogo = la lista de cursos; inicio = la pantalla de Inicio; muro = el muro de venta; enlace = un enlace directo (correo, redes)." }
+      }
+    },
+
+    "muro_visto": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 6,
+      "cuando": "Se muestra el muro de venta del nivel gratis: el servidor respondió 403 LIMITE_DIARIO o FUNCION_PREMIUM, o la persona tocó una función con candado. Uno por cada apertura del muro.",
+      "unicidad": "Ninguna: cada apertura cuenta.",
+      "propiedades": {
+        "motivo": { "tipo": "enum", "valores": ["limite", "funcion"], "obligatoria": true },
+        "recurso": { "tipo": "enum", "enumeracion": "recurso_gratis", "valores": ["preguntas", "duelo", "tarjetas", "completar"], "obligatoria": false, "obligatoria_si": { "motivo": "limite" }, "ausente_si": { "motivo": "funcion" } },
+        "funcion": { "tipo": "enum", "enumeracion": "funcion_premium", "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos"], "obligatoria": false, "obligatoria_si": { "motivo": "funcion" }, "ausente_si": { "motivo": "limite" } },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "El muro mostró una oferta vigente (GET /oferta con descuento)." }
+      }
+    },
+
+    "account_created": {
+      "origen": "servidor",
+      "cuando": "Se crea la cuenta (correo, Google o Apple), en la misma transacción del INSERT en users.",
+      "unicidad": "Una por cuenta.",
+      "clave_unicidad": ["usuario_id"],
+      "utm": false,
+      "decision": "Sin utm_* (decisión del 29/09 con el backend): la atribución sale de anonimo_id → analitica.identidades, que une la cuenta con la visita anónima que sí trae los utm.",
+      "anonimo_id_en_servidor": "Lo manda el cliente en la petición de alta (campo `anonimoId` del cuerpo, opcional). Es el puente visita → cuenta.",
+      "propiedades": {
+        "metodo": { "tipo": "enum", "valores": ["correo", "google", "apple"], "obligatoria": true },
+        "plataforma_alta": { "tipo": "enum", "valores": ["web", "ios", "android", "desconocida"], "obligatoria": true, "nota": "De la cabecera X-Plataforma de la petición de alta." }
+      }
+    },
+
+    "signup_verified": {
+      "origen": "servidor",
+      "cuando": "El correo queda verificado. 'codigo': código del correo o su enlace (GET /auth/verify). 'proveedor': alta con Google o Apple, o al vincular Google o Apple a una cuenta con contraseña sin verificar.",
+      "unicidad": "Una por cuenta.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "metodo": { "tipo": "enum", "valores": ["codigo", "proveedor"], "obligatoria": true }
+      }
+    },
+
+    "profile_completed": {
+      "origen": "servidor",
+      "cuando": "Se guarda por primera vez el perfil obligatorio. Solo en la transición real (de incompleto a completo): quien ya lo tenía antes del despliegue no lo emite.",
+      "unicidad": "Una por cuenta.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "condicion": { "tipo": "enum", "valores": ["preinterno", "interno", "egresado", "repitiente"], "obligatoria": true },
+        "mes_objetivo": { "tipo": "mes", "obligatoria": false }
+      }
+    },
+
+    "trial_started": {
+      "origen": "servidor",
+      "cuando": "IniciarRelojDePrueba fija el vencimiento de las 24 h.",
+      "unicidad": "Una por cuenta.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "actividad": { "tipo": "enum", "valores": ["practica", "simulacro", "examen_pasado", "simulacro_nacional", "duelo"], "obligatoria": true },
+        "oferta_porcentaje": { "tipo": "entero", "min": 0, "max": 90, "obligatoria": false, "desde_catalogo": 2, "nota": "OFERTA_PRUEBA_PORCENTAJE vigente al empezar la prueba; 0 si no hay oferta. Es lo que asigna la prueba a la cohorte con oferta o sin oferta. El backend la manda siempre desde el catálogo 2." }
+      }
+    },
+
+    "first_practice_completed": {
+      "origen": "servidor",
+      "cuando": "Se finaliza la primera sesión de tipo práctica de la cuenta. Solo en la transición real: si la cuenta ya tenía una práctica finalizada antes del despliegue, no se emite.",
+      "unicidad": "Una por cuenta.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "cantidad_preguntas": { "tipo": "entero", "min": 1, "max": 180, "obligatoria": true },
+        "respondidas": { "tipo": "entero", "min": 0, "max": 180, "obligatoria": true }
+      }
+    },
+
+    "payment_confirmed": {
+      "origen": "servidor",
+      "cuando": "Un cobro queda validado: Mercado Pago en `Aplicar` (webhook, confirmar o conciliación); Apple al verificar la transacción; Google Play (catálogo 18) al verificar la compra y en cada renovación (RTDN SUBSCRIPTION_PURCHASED, RENEWED o RECOVERED, y la compra única de hasta-enam), cada cobro con su orderId.",
+      "unicidad": "Una por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<id de transacción> o gp:<orderId de Google Play> (GPA.…; renovaciones GPA.….0, ..1)." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true },
+        "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": false, "nota": "Obligatorio con Mercado Pago. Con Apple y Google Play la base no conoce el monto cobrado (impuestos, ofertas de la tienda, moneda): no va." },
+        "moneda": { "tipo": "enum", "valores": ["PEN", "USD"], "obligatoria": false },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true, "desde_catalogo": 2, "nota": "true si se cobró el precio de la oferta de prueba. Apple y Google Play: siempre false." },
+        "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false }, "desde_catalogo": 2 },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4 },
+        "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": false, "obligatoria_si": { "oferta_origen": "codigo" }, "desde_catalogo": 14, "nota": "Id interno del código de descuento aplicado (no el texto que escribe la persona). Solo con oferta_origen = codigo." },
+        "descuento_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": false, "obligatoria_si": { "oferta_origen": "codigo" }, "desde_catalogo": 14, "nota": "Lo que se descontó del precio de lista, en céntimos. Con el código es la verdad del descuento; sirve para medir el margen regalado. Con un código de monto fijo, oferta_porcentaje = max(1, round(descuento_centimos × 100 / precio de lista en céntimos))." }
+      }
+    },
+
+    "payment_failed": {
+      "origen": "servidor",
+      "cuando": "Un pago pasa a `fallido` o `cancelado`. Google Play (catálogo 18): el cobro de una renovación falla y la suscripción entra en período de gracia (conserva el acceso, detalle gracia) o queda retenida (se corta, detalle retenida).",
+      "unicidad": "Una por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^((mp|apple):[A-Za-z0-9._-]{1,80}|gp:[A-Za-z0-9._-]{1,80}(:(gracia|retenida))?)$", "obligatoria": true, "nota": "Como en payment_confirmed. Google Play: gp:<orderId del último cobro bueno>:gracia o :retenida, para no chocar con el payment_confirmed de ese orderId." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true },
+        "estado": { "tipo": "enum", "valores": ["fallido", "cancelado"], "obligatoria": true },
+        "detalle": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": false, "nota": "status_detail de la pasarela (p. ej. cc_rejected_insufficient_amount). Código de máquina, no mensaje. Google Play: gracia (IN_GRACE_PERIOD, conserva el acceso) o retenida (ON_HOLD, se corta)." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 2 },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4 }
+      }
+    },
+
+    "access_granted": {
+      "origen": "servidor",
+      "cuando": "Se conceden días de acceso de pago, por cualquier vía: Mercado Pago, Apple, Google Play (catálogo 18) o activación manual del admin.",
+      "unicidad": "Una por concesión.",
+      "clave_unicidad": ["concesion_ref"],
+      "propiedades": {
+        "concesion_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|manual):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<transacción>, gp:<orderId de Google Play> o manual:<uuid generado al activar>." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam", "trial"], "obligatoria": true },
+        "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "manual"], "obligatoria": true },
+        "dias": { "tipo": "entero", "min": 1, "max": 400, "obligatoria": true },
+        "desde_prueba": { "tipo": "booleano", "obligatoria": true, "nota": "true si la cuenta estaba en su prueba (sin empezar, en curso o vencida) y nunca había pagado." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true, "desde_catalogo": 2, "nota": "true si la concesión viene de un pago con el precio de la oferta. Manual, Apple y Google Play: false." },
+        "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false }, "desde_catalogo": 2 },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4 }
+      }
+    },
+
+    "access_expired": {
+      "origen": "servidor",
+      "cuando": "El cierre horario de vencidas pasa una suscripción a `expirada`, incluida la prueba de 24 h. Google Play (catálogo 18): también SUBSCRIPTION_EXPIRED si llega antes, y el reembolso o la revocación (SUBSCRIPTION_REVOKED, voided purchases), que corta el acceso ya con vencimiento = hoy.",
+      "unicidad": "Una por cuenta y vencimiento.",
+      "clave_unicidad": ["usuario_id", "vencimiento"],
+      "propiedades": {
+        "plan_id": { "tipo": "enum", "valores": ["trial", "mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "origen_acceso": { "tipo": "enum", "valores": ["sistema", "mercadopago", "apple", "google_play", "manual"], "obligatoria": true },
+        "vencimiento": { "tipo": "fecha", "obligatoria": true },
+        "motivo": { "tipo": "enum", "valores": ["vencimiento", "reembolso"], "obligatoria": false, "desde_catalogo": 18, "nota": "reembolso = el pago se devolvió o se revocó y el acceso se cortó antes de tiempo. Ausente = vencimiento (los eventos anteriores al catálogo 18)." }
+      }
+    },
+
+    "oferta_regreso_iniciada": {
+      "origen": "servidor",
+      "desde_catalogo": 4,
+      "cuando": "Empieza la ventana de 24 h de la oferta de regreso: primera visita autenticada de una cuenta elegible después del encendido de la campaña.",
+      "unicidad": "Una por cuenta y campaña.",
+      "clave_unicidad": ["usuario_id", "campana"],
+      "propiedades": {
+        "campana": { "tipo": "codigo", "patron": "^[a-z0-9._~-]{1,100}$", "obligatoria": true, "nota": "Mismo formato que utm_campaign. Hoy: regreso-oct." },
+        "porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": true },
+        "plataforma_inicio": { "tipo": "enum", "valores": ["web", "ios", "android"], "obligatoria": true },
+        "dias_desde_fin_prueba": { "tipo": "entero", "min": 0, "max": 400, "obligatoria": false }
+      }
+    },
+
+    "consentimiento_visto": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 25,
+      "cuando": "Se muestra una pregunta de correo comercial (la del aviso de Inicio o la del fin del día gratis). Una vez por aparición en pantalla, no por cada re-render. Solo con sesión iniciada.",
+      "unicidad": "Ninguna: cada aparición cuenta. La de fin_dia_gratis sale una sola vez por cuenta.",
+      "propiedades": {
+        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis"], "obligatoria": true, "nota": "Qué pregunta es; el mismo valor que consentimiento_comercial_cambiado.origen si la persona responde sí o no." }
+      }
+    },
+
+    "consentimiento_respuesta": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 25,
+      "cuando": "La persona responde la pregunta de correo comercial: toca «Sí» o «No», o la cierra con la X. Sale al tocar, antes del PATCH /me. Si se va sin tocar nada, no sale.",
+      "unicidad": "Una por aparición de la pregunta.",
+      "propiedades": {
+        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis"], "obligatoria": true },
+        "respuesta": { "tipo": "enum", "valores": ["si", "no", "cerro"], "obligatoria": true, "nota": "cerro = la X: no hay PATCH y el consentimiento queda sin decidir. La verdad del consentimiento es consentimiento_comercial_cambiado (servidor); este evento da la X y el denominador." }
+      }
+    },
+
+    "oferta_bienvenida_enviada": {
+      "origen": "servidor",
+      "desde_catalogo": 24,
+      "cuando": "Sale el correo de la oferta automática de bienvenida y en ese momento se abre su ventana de 48 h (fila en ofertas_regreso con campana bienvenida-30). Solo a quien le venció el día gratis sin comprar hace 7 días o menos y aceptó ofertas; corre de 08:00 a 21:00 de Lima.",
+      "unicidad": "Una por cuenta, en toda la vida.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "campana": { "tipo": "codigo", "patron": "^[a-z0-9._~-]{1,100}$", "obligatoria": true, "nota": "Mismo formato que utm_campaign. Hoy: bienvenida-30." },
+        "porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": true },
+        "horas_desde_fin_dia_gratis": { "tipo": "entero", "min": 0, "max": 168, "obligatoria": true, "nota": "Horas enteras desde que venció el día gratis hasta el correo. Si vence de noche, el correo espera a las 08:00." },
+        "incluye_hasta_enam": { "tipo": "booleano", "obligatoria": true, "nota": "true si «Hasta tu ENAM» estaba a la venta para esa persona y entró en la oferta y en el correo." }
+      }
+    },
+
+    "oferta_bienvenida_recordatorio_enviado": {
+      "origen": "servidor",
+      "desde_catalogo": 26,
+      "cuando": "Sale el segundo correo de la oferta de bienvenida, el recordatorio: a quien tiene su ventana bienvenida-30 vigente y no pagó, unas 6 h antes de que venza, de 08:00 a 21:00 de Lima y al menos 1 h antes del vencimiento. No cambia la ventana.",
+      "unicidad": "Una por cuenta, en toda la vida.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "campana": { "tipo": "codigo", "patron": "^[a-z0-9._~-]{1,100}$", "obligatoria": true, "nota": "La campaña de la ventana que recuerda. Hoy: bienvenida-30." },
+        "horas_para_vencer": { "tipo": "entero", "min": 1, "max": 12, "obligatoria": true, "nota": "Horas enteras (hacia abajo) desde el correo hasta el vencimiento de la ventana. Lo normal es 6 (5 por el redondeo); si las 6 h antes caen de noche, el correo sale antes, a las 21:00, y pueden ser hasta 12." },
+        "incluye_hasta_enam": { "tipo": "booleano", "obligatoria": true, "nota": "Igual que en oferta_bienvenida_enviada, al momento del recordatorio." }
+      }
+    },
+
+    "campana_correo_enviado": {
+      "origen": "servidor",
+      "desde_catalogo": 4,
+      "cuando": "El proceso de envío entrega a la pasarela de correo el mensaje de una campaña para una cuenta. Lo emite quien envía (backend), uno por destinatario.",
+      "unicidad": "Una por cuenta y campaña.",
+      "clave_unicidad": ["usuario_id", "campana"],
+      "propiedades": {
+        "campana": { "tipo": "codigo", "patron": "^[a-z0-9._~-]{1,100}$", "obligatoria": true, "nota": "El mismo valor que el utm_campaign del enlace del correo." }
+      }
+    },
+
+    "recordatorio_pago_enviado": {
+      "origen": "servidor",
+      "desde_catalogo": 9,
+      "cuando": "El backend entrega a la pasarela de correo el recordatorio de un pago de Mercado Pago que sigue sin pagar 60 min después de creado. Se emite tras el envío, en su propia transacción. El backend limita a uno cada 7 días por cuenta.",
+      "unicidad": "Uno por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^mp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_confirmed y payment_failed (solo Mercado Pago)." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "El correo muestra el precio con oferta. Solo si la oferta sigue vigente al enviar; si ya venció, no se promete." },
+        "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
+        "minutos_desde_pago": { "tipo": "entero", "min": 60, "max": 2880, "obligatoria": true, "nota": "Minutos entre la creación del pago y el envío. Hasta 48 h: después el pago se cierra como abandonado." }
+      }
+    },
+
+    "clase_iniciada": {
+      "origen": "servidor",
+      "desde_catalogo": 10,
+      "cuando": "El primer progreso mayor que 0 de una cuenta en una clase.",
+      "unicidad": "Una por cuenta y clase.",
+      "clave_unicidad": ["usuario_id", "clase_id"],
+      "propiedades": {
+        "curso_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "p. ej. pediatria, repaso-final." },
+        "modulo_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "p. ej. pediatria.02." },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "p. ej. pediatria.02-01." },
+        "gratis": { "tipo": "booleano", "obligatoria": true, "nota": "La clase es gratis. Lo gratis se decide por clase, no por módulo (decisión del director, 07/10)." },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true, "nota": "Nivel de la cuenta al momento (premium incluye la prueba de 24 h y los planes), como acceso.nivel." }
+      }
+    },
+
+    "clase_completada": {
+      "origen": "servidor",
+      "desde_catalogo": 10,
+      "cuando": "El progreso de una cuenta en una clase cruza el 90 % de su duración.",
+      "unicidad": "Una por cuenta y clase.",
+      "clave_unicidad": ["usuario_id", "clase_id"],
+      "propiedades": {
+        "curso_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "p. ej. pediatria, repaso-final." },
+        "modulo_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "p. ej. pediatria.02." },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "p. ej. pediatria.02-01." },
+        "gratis": { "tipo": "booleano", "obligatoria": true, "nota": "La clase es gratis. Lo gratis se decide por clase, no por módulo (decisión del director, 07/10)." },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true, "nota": "Nivel de la cuenta al momento (premium incluye la prueba de 24 h y los planes), como acceso.nivel." },
+        "duracion_s": { "tipo": "entero", "min": 1, "max": 7200, "obligatoria": true, "nota": "Duración de la clase en segundos (la del video, no lo que vio la persona)." }
+      }
+    },
+
+    "practica_desde_clase": {
+      "origen": "servidor",
+      "desde_catalogo": 10,
+      "cuando": "Se crea la práctica de 5 preguntas desde una clase.",
+      "unicidad": "Una por sesión de práctica.",
+      "clave_unicidad": ["sesion_id"],
+      "propiedades": {
+        "sesion_id": { "tipo": "codigo", "patron": "^sesion-[0-9a-f]{32}$", "obligatoria": true, "nota": "sessions.id de la práctica creada: «sesion-» y 32 hex. El patrón cerrado deja fuera los ids de los bots de prueba (sesion-bot-…@test.pe), que llevan un correo. Corregido el 07/10: decía «session-» y rechazaba todos los ids reales." },
+        "curso_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true },
+        "nodo_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "taxonomy_nodes.id de la sub área de la clase (p. ej. pediatria-nino-adolescente)." },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true }
+      }
+    },
+
+    "limite_alcanzado": {
+      "origen": "servidor",
+      "desde_catalogo": 6,
+      "cuando": "Una cuenta sin premium agota su cupo del día: la respuesta que deja las preguntas en 0, o el duelo gratis del día al empezar. En la transacción del hecho.",
+      "unicidad": "Una por cuenta, recurso y día de Lima.",
+      "clave_unicidad": ["usuario_id", "recurso", "dia"],
+      "propiedades": {
+        "recurso": { "tipo": "enum", "enumeracion": "recurso_gratis", "valores": ["preguntas", "duelo", "tarjetas", "completar"], "obligatoria": true },
+        "dia": { "tipo": "fecha", "obligatoria": true, "nota": "Día de Lima del cupo agotado. Forma parte de la unicidad." },
+        "limite": { "tipo": "entero", "min": 1, "max": 1000, "obligatoria": true, "nota": "Tamaño del cupo de ese día (hoy 10 preguntas o 1 duelo), desde plans.limites." }
+      }
+    },
+
+    "correo_bienvenida_premium_enviado": {
+      "origen": "servidor",
+      "desde_catalogo": 11,
+      "cuando": "El backend entrega a la pasarela de correo la bienvenida a Premium de un pago aprobado: Mercado Pago aprobado o compra de App Store verificada en /subscription/apple/verify. Se emite tras el envío, en su propia transacción. Si el primer intento falla, el backend reintenta hasta 48 h.",
+      "unicidad": "Uno por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_confirmed: mp:<pagos.id>, apple:<id de transacción> o gp:<orderId>." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true, "nota": "Como en access_granted, sin 'manual': la activación manual no manda este correo." },
+        "minutos_desde_pago": { "tipo": "entero", "min": 0, "max": 2880, "obligatoria": true, "nota": "Minutos de la aprobación del pago al envío. Suele ser 0; con reintentos, hasta 48 h." }
+      }
+    },
+
+    "codigo_aplicado": {
+      "origen": "servidor",
+      "desde_catalogo": 14,
+      "cuando": "El backend acepta un código de descuento y crea el checkout con el precio rebajado. Uno por checkout con código; el pago se confirma aparte (payment_confirmed con oferta_origen = codigo).",
+      "unicidad": "Uno por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^mp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El pago (checkout) creado con el código: el mismo pago_ref de payment_confirmed." },
+        "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "Id interno del código, no su texto." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "descuento_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "La verdad del descuento, sea el código de % o de monto." },
+        "tipo_codigo": { "tipo": "enum", "valores": ["porcentaje", "monto"], "obligatoria": true, "nota": "porcentaje = el código descuenta un %; monto = descuenta un monto fijo." },
+        "campana": { "tipo": "codigo", "patron": "^[a-z0-9._~-]{1,100}$", "obligatoria": false, "nota": "La campaña que repartió el código (el mismo valor que campana_envios.campana y utm_campaign), si tiene una." },
+        "aplicacion": { "tipo": "enum", "valores": ["automatica", "manual"], "obligatoria": false, "desde_catalogo": 23, "nota": "Cómo llegó el código al checkout: automatica = la web lo puso sola con los códigos de la cuenta (web #96); manual = lo escribió la persona. Lo dice la web en el checkout (campo codigoAplicacion) y el backend lo copia. Sin ese campo no va (clientes viejos o la app)." }
+      }
+    },
+
+    "codigo_rechazado": {
+      "origen": "servidor",
+      "desde_catalogo": 14,
+      "cuando": "El backend rechaza un código de descuento que la persona intentó usar.",
+      "unicidad": "Ninguna: cada intento cuenta.",
+      "propiedades": {
+        "motivo": { "tipo": "enum", "valores": ["vencido", "agotado", "ya_usado", "no_vale_para_este_plan", "no_valido"], "obligatoria": true, "nota": "no_valido = el código no existe; entonces no hay codigo_id." },
+        "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": false, "ausente_si": { "motivo": "no_valido" }, "nota": "Solo si el código existe." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false, "nota": "El plan para el que se intentó, si ya estaba elegido." }
+      }
+    },
+
+    "consentimiento_comercial_cambiado": {
+      "origen": "servidor",
+      "desde_catalogo": 15,
+      "cuando": "Cambia el consentimiento de la cuenta para recibir correo comercial (users.acepta_comerciales): al registrarse, en Ajustes, desde un aviso en la app o con el enlace de baja de un correo. En la transacción del cambio, solo si el valor cambia o es la primera decisión.",
+      "unicidad": "Ninguna: cada cambio es un evento.",
+      "propiedades": {
+        "acepta": { "tipo": "booleano", "obligatoria": true, "nota": "El valor nuevo: true = acepta correo comercial." },
+        "origen": { "tipo": "enum", "valores": ["registro", "ajustes", "aviso", "baja", "fin_dia_gratis"], "obligatoria": true, "nota": "Dónde cambió (users.acepta_comerciales_origen). baja = el enlace de baja de un correo (acepta = false). fin_dia_gratis (catálogo 25) = la pregunta que sale una vez, en Inicio, en la primera visita después de que venció el día gratis, a quien no había decidido. Es una propiedad: no es el origen del evento (cliente o servidor)." },
+        "antes": { "tipo": "enum", "valores": ["si", "no", "sin_decidir"], "obligatoria": true, "nota": "El valor anterior. sin_decidir = acepta_comerciales_en era null (primera decisión)." }
+      }
+    },
+
+    "recordatorio_d1": {
+      "origen": "servidor",
+      "desde_catalogo": 15,
+      "cuando": "Prueba 50/50 del recordatorio del día siguiente: la cuenta se registró hace 20 a 36 h (solo se envía de 7:00 a 21:00 de Lima; el grupo y la reserva se fijan en el primer momento elegible dentro del horario, y «no volvió a practicar» se evalúa al enviar), no volvió a practicar después de su primer día y acepta correo comercial. Grupo envio: se emite tras entregar el correo. Grupo control: se emite al asignarla, y no recibe nada.",
+      "unicidad": "Una por cuenta.",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "grupo": { "tipo": "enum", "valores": ["envio", "control"], "obligatoria": true, "nota": "Mitad y mitad, por hash de user_id y el nombre de la prueba." },
+        "horas_desde_registro": { "tipo": "entero", "min": 20, "max": 36, "obligatoria": true, "nota": "Ventana de 20 a 36 h por el horario de envío: un registro a las 1:00 sale a las 7:00 del día siguiente (30 h)." }
+      }
+    },
+
+    "plan_destacado_visto": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 13,
+      "cuando": "Se muestra la tarjeta destacada del plan recomendado (hoy «Hasta tu ENAM»). Una vez por aparición en pantalla, no por cada re-render.",
+      "unicidad": "Ninguna: cada aparición cuenta.",
+      "propiedades": {
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true, "nota": "El plan de la tarjeta destacada." },
+        "lugar": { "tipo": "enum", "valores": ["planes", "muro", "cupo_agotado", "primera_practica", "resultado_practica"], "obligatoria": true, "nota": "planes = la página /planes; muro = los muros de venta del gratis limitado, salvo el del cupo agotado (simulacro, cursos, etc.); cupo_agotado = la tarjeta dentro del muro cuando se agotan las preguntas del día; primera_practica = el resultado de la primera práctica terminada de la cuenta; resultado_practica = el resultado de cualquier otra práctica terminada de una cuenta gratis." }
+      }
+    },
+
+    "plan_destacado_clic": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 13,
+      "cuando": "La persona toca el botón de la tarjeta destacada (lleva al pago de ese plan o a /planes).",
+      "unicidad": "Ninguna: cada clic cuenta.",
+      "propiedades": {
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "lugar": { "tipo": "enum", "valores": ["planes", "muro", "cupo_agotado", "primera_practica", "resultado_practica"], "obligatoria": true }
+      }
+    },
+
+    "aula_tarjeta_vista": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 16,
+      "cuando": "Se muestra la tarjeta del aula que lleva a una clase (hoy, en Inicio, a la primera clase gratis de un curso). Una vez por aparición en pantalla, no por cada re-render, como plan_destacado_visto.",
+      "unicidad": "Ninguna: cada aparición cuenta.",
+      "propiedades": {
+        "lugar": { "tipo": "enum", "valores": ["inicio"], "obligatoria": true, "nota": "Dónde está la tarjeta. Hoy solo inicio; otro lugar se suma en un catálogo nuevo." },
+        "curso_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "El curso de la tarjeta, como en curso_visto." },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "La clase a la que lleva, como en clase_iniciada." },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true, "nota": "Nivel de la cuenta al mostrarla (premium incluye la prueba y los planes), como acceso.nivel y clase_iniciada.nivel." }
+      }
+    },
+
+    "aula_tarjeta_clic": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 16,
+      "cuando": "La persona toca la tarjeta del aula. Si lleva directo a la clase, no se manda curso_visto: el inicio de la clase lo cuenta el servidor con clase_iniciada.",
+      "unicidad": "Ninguna: cada clic cuenta.",
+      "propiedades": {
+        "lugar": { "tipo": "enum", "valores": ["inicio"], "obligatoria": true },
+        "curso_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true }
+      }
+    },
+
+    "clase_muestra_vista": {
+      "origen": "cliente",
+      "plataformas": ["landing"],
+      "desde_catalogo": 16,
+      "cuando": "Una clase de muestra de la portada entra en pantalla (la mitad o más visible). Una vez por clase, lugar y carga de página: si la misma clase está en el hero y en la sección, son dos vistas.",
+      "unicidad": "Una por clase, lugar y carga de página.",
+      "propiedades": {
+        "lugar": { "tipo": "enum", "valores": ["hero", "seccion"], "obligatoria": false, "desde_catalogo": 17, "nota": "Dónde está la clase en la portada: hero = la cabecera; seccion = la sección #clases. Opcional para no rechazar lo que la portada mandaba antes; desde el catálogo 17 la portada siempre lo manda." },
+        "pagina": { "tipo": "enum", "valores": ["inicio", "preguntas_enam", "precios", "metodologia", "otra"], "obligatoria": true, "nota": "La página de la portada, como en landing_view." },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true, "nota": "La clase del aula que se muestra (p. ej. pediatria.02-01), no un nombre inventado: así se cruza con aula_clases." }
+      }
+    },
+
+    "clase_muestra_play": {
+      "origen": "cliente",
+      "plataformas": ["landing"],
+      "desde_catalogo": 16,
+      "cuando": "Primer play de una clase de muestra de la portada (el video carga al tocar play). Una vez por clase, lugar y carga de página: pausar y volver a darle no cuenta.",
+      "unicidad": "Una por clase, lugar y carga de página.",
+      "propiedades": {
+        "lugar": { "tipo": "enum", "valores": ["hero", "seccion"], "obligatoria": false, "desde_catalogo": 17, "nota": "Dónde está la clase en la portada: hero = la cabecera; seccion = la sección #clases. Opcional para no rechazar lo que la portada mandaba antes; desde el catálogo 17 la portada siempre lo manda." },
+        "pagina": { "tipo": "enum", "valores": ["inicio", "preguntas_enam", "precios", "metodologia", "otra"], "obligatoria": true },
+        "clase_id": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9.-]{0,99}$", "obligatoria": true }
+      }
+    },
+
+    "registro_visto": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 19,
+      "cuando": "Se abre el formulario de registro (la pantalla con «Continuar con Google» y el registro con correo). Una vez por carga de la pantalla, no por cada re-render. Con signup_started (formulario enviado) separa a quien nunca llegó de quien llegó y no envió.",
+      "unicidad": "Una por carga de la pantalla.",
+      "propiedades": {
+        "desde_portada": { "tipo": "booleano", "obligatoria": false, "nota": "true si llegó con ?aid= desde la portada (solo web)." },
+        "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
+        "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19 }
+      }
+    },
+
+    "registro_abandonado": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 22,
+      "cuando": "La persona sale de la pantalla de registro sin haber enviado el formulario ni entrado con Google o Apple: pagehide, la pestaña pasa a oculta y no vuelve, o navega a otra ruta. Una vez por carga de la pantalla. No sale si hubo signup_started en esa carga. En la web va por sendBeacon.",
+      "unicidad": "Una por carga de la pantalla.",
+      "propiedades": {
+        "segundos": { "tipo": "enum", "enumeracion": "segundos_en_pantalla", "valores": ["menos_10", "10_29", "30_59", "60_179", "180_o_mas"], "obligatoria": true, "nota": "Tiempo desde registro_visto hasta salir, en tramos." },
+        "campos_tocados": { "tipo": "entero", "min": 0, "max": 3, "obligatoria": true, "nota": "Cuántos de nombre, correo y contraseña recibieron foco o escritura. Nunca lo escrito." },
+        "casilla_marcada": { "tipo": "booleano", "obligatoria": true, "nota": "Si marcó la casilla de términos antes de irse." },
+        "toco_google": { "tipo": "booleano", "obligatoria": true, "nota": "Si tocó el botón de Google o Apple (y no terminó)." },
+        "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
+        "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19 }
+      }
+    },
+
+    "registro_fallido": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 19,
+      "cuando": "Un intento de registro o de entrar falla y la persona lo ve: Google o Apple devuelven un error o se cierra su ventana, o el servidor rechaza el alta. Una por intento fallido.",
+      "unicidad": "Ninguna: cada intento cuenta.",
+      "propiedades": {
+        "metodo": { "tipo": "enum", "valores": ["correo", "google", "apple"], "obligatoria": true },
+        "motivo": { "tipo": "enum", "valores": ["google_bloqueado", "proveedor_cancelado", "proveedor_error", "correo_en_uso", "validacion", "terminos_sin_marcar", "datos_invalidos", "codigo_invalido", "red", "otro"], "obligatoria": true, "nota": "google_bloqueado = disallowed_useragent (Google no deja entrar desde un navegador interno) y proveedor_cancelado = la persona cerró la ventana de Google o Apple: solo las apps los pueden saber; la web no los manda (Google Identity Services no avisa a la página) y el bloqueo se mide por diferencia (registro_visto con navegador interno y sin signup_started). proveedor_error = Google o Apple devolvieron algo que el backend rechazó, o no cargó su script; correo_en_uso = el correo ya tiene cuenta (EMAIL_TAKEN); validacion = el SERVIDOR rechazó los datos (422); terminos_sin_marcar (catálogo 20) = tocó «Crear cuenta» sin la casilla de términos; datos_invalidos (catálogo 20) = el navegador rechazó el correo o la contraseña antes de enviar; codigo_invalido = el código de verificación no vale; red = sin respuesta del servidor; otro = lo demás. Una por intento. Nunca el texto del error ni el correo." },
+        "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
+        "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19 }
+      }
+    },
+
+    "recordatorio_pago_rechazado_enviado": {
+      "origen": "servidor",
+      "desde_catalogo": 12,
+      "cuando": "El backend entrega a la pasarela de correo el aviso de un pago de Mercado Pago rechazado: la order queda en action_required (p. ej. waiting_retry) o el pago queda fallido (p. ej. high_risk). Sale 15 min o más después de que el backend ve el rechazo y antes del cierre de las 48 h. Correo comercial, con baja. Se emite tras el envío, en su propia transacción. Un pago recibe este aviso o recordatorio_pago_enviado, nunca los dos.",
+      "unicidad": "Uno por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^mp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_failed y recordatorio_pago_enviado (solo Mercado Pago)." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "mp_status": { "tipo": "enum", "valores": ["action_required", "failed"], "obligatoria": true, "nota": "Estado de la order de Mercado Pago al enviar (pagos.mp_status)." },
+        "mp_status_detail": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": true, "nota": "status_detail de Mercado Pago tal cual (pagos.mp_status_detail), p. ej. waiting_retry, high_risk o rejected_by_issuer. Código de máquina, no mensaje." },
+        "minutos_desde_rechazo": { "tipo": "entero", "min": 15, "max": 2880, "obligatoria": true, "nota": "Minutos desde que el backend vio el rechazo hasta el envío." }
+      }
+    }
+  },
+
+  "rechazos": {
+    "SOBRE_INVALIDO": "400 al lote entero: JSON ilegible, sobre sin `comunes`, más de 50 eventos, `usuario_id` enviado por el cliente o versión de contrato no soportada.",
+    "TIPO_DESCONOCIDO": "El tipo no está en este contrato.",
+    "TIPO_NO_PERMITIDO": "El tipo es de servidor, o no está habilitado para esa plataforma.",
+    "EVENTO_ID_INVALIDO": "evento_id no es un UUID.",
+    "FECHA_FUERA_DE_VENTANA": "ocurrido_en fuera de la ventana de la plataforma.",
+    "PROPIEDAD_DESCONOCIDA": "Una clave que el evento no declara.",
+    "PROPIEDAD_FALTANTE": "Falta una propiedad obligatoria, o una cuya `obligatoria_si` se cumple.",
+    "PROPIEDAD_INVALIDA": "Tipo, rango, patrón o valor fuera de la lista; presente cuando su `ausente_si` se cumple; o fuera de sus plataformas `solo_en`."
+  }
+}

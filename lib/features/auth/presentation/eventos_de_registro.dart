@@ -1,13 +1,7 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/analitica/analitica.dart';
 import '../../../core/error/failure.dart';
-
-/// `celular` o `tableta`, como lo pide el contrato. Nunca el modelo del
-/// teléfono: solo el tamaño de la pantalla.
-String dispositivoDe(BuildContext context) =>
-    MediaQuery.sizeOf(context).shortestSide >= 600 ? 'tableta' : 'celular';
 
 /// El `motivo` de `registro_fallido` para [error] (catálogo 19).
 ///
@@ -24,21 +18,16 @@ String motivoDeFallo(Object error) => switch (error) {
 };
 
 /// Registra `registro_fallido`: un intento de registro o de entrar que la
-/// persona vio fallar.
+/// persona vio fallar. Solo `metodo` y `motivo`: en el contrato, `pantalla`,
+/// `navegador` y `dispositivo` son de la web, y con ellos el servidor rechaza
+/// el evento entero.
 void registrarFallo(
-  WidgetRef ref,
-  BuildContext context, {
+  WidgetRef ref, {
   required String metodo,
-  required String pantalla,
   required String motivo,
 }) => ref
     .read(analiticaProvider)
     .registrar(
       Evento.registroFallido,
-      propiedades: {
-        'metodo': metodo,
-        'motivo': motivo,
-        'pantalla': pantalla,
-        'dispositivo': dispositivoDe(context),
-      },
+      propiedades: {'metodo': metodo, 'motivo': motivo},
     );

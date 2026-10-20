@@ -49,23 +49,10 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
         propiedades: {'pantalla': 'acceso_terminado'},
       );
     // El evento propio del muro (catálogo 6). `plans_viewed` sigue al lado
-    // para no cortar la serie que BI ya tiene. Sin oferta: la app no muestra
-    // descuentos. Una función que el contrato no conoce (sin conexión, otra)
-    // va sin `funcion`.
+    // para no cortar la serie que BI ya tiene.
     analitica.registrar(
       Evento.muroVisto,
-      propiedades: switch (widget.motivo) {
-        CupoAgotado() => {
-          'motivo': 'limite',
-          'recurso': 'preguntas',
-          'con_oferta': 'false',
-        },
-        FuncionDePago(:final funcion) => {
-          'motivo': 'funcion',
-          'funcion': funcion.codigo,
-          'con_oferta': 'false',
-        },
-      },
+      propiedades: propiedadesDelMuro(widget.motivo),
     );
   }
 
@@ -312,6 +299,22 @@ class _GratisSigue extends StatelessWidget {
     );
   }
 }
+
+/// Las propiedades de `muro_visto` para [motivo]. Sin oferta: la app no
+/// muestra descuentos. Una función que el contrato no conoce (sin conexión,
+/// otra) va sin `funcion`, y como ahí es obligatoria, el evento no se encola.
+Map<String, String> propiedadesDelMuro(MotivoDeMuro motivo) => switch (motivo) {
+  CupoAgotado() => {
+    'motivo': 'limite',
+    'recurso': 'preguntas',
+    'con_oferta': 'false',
+  },
+  FuncionDePago(:final funcion) => {
+    'motivo': 'funcion',
+    'funcion': funcion.codigo,
+    'con_oferta': 'false',
+  },
+};
 
 /// La ruta del muro para [motivo].
 String rutaDelMuro(MotivoDeMuro motivo) =>
