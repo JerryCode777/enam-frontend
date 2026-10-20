@@ -604,7 +604,8 @@ class _ClaseBloqueada extends ConsumerWidget {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go(Routes.cursoOf(cursoId));
+                  // Sin pantalla detrás: la clase se abrió por un enlace.
+                  context.go(Routes.cursoOf(cursoId, desde: 'enlace'));
                 }
               },
             ),

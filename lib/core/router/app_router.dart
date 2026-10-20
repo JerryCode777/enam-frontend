@@ -518,7 +518,10 @@ final List<RouteBase> _routes = [
       GoRoute(
         path: ':curso',
         pageBuilder: (context, state) => slidePage(
-          child: CursoScreen(cursoId: state.pathParameters['curso']!),
+          child: CursoScreen(
+            cursoId: state.pathParameters['curso']!,
+            desde: state.uri.queryParameters['desde'],
+          ),
           state: state,
         ),
         routes: [

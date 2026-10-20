@@ -36,7 +36,22 @@ enum Evento {
 
   /// Toca «Sí», «No» o la X de esa pregunta, antes del `PATCH /me`
   /// (catálogo 25). Si se va sin tocar nada, no sale.
-  consentimientoRespuesta('consentimiento_respuesta');
+  consentimientoRespuesta('consentimiento_respuesta'),
+
+  /// Se abre el muro de venta del gratis: el cupo agotado o una función con
+  /// candado (catálogo 6). Uno por cada apertura.
+  muroVisto('muro_visto'),
+
+  /// Se abre la página de un curso del aula (catálogo 10).
+  cursoVisto('curso_visto'),
+
+  /// Se abre el formulario de registro con correo (catálogo 19). Con
+  /// [signupStarted] separa a quien llegó y no envió.
+  registroVisto('registro_visto'),
+
+  /// Un intento de registro o de entrar falla y la persona lo ve: Google o
+  /// Apple dan error o se cancelan, o el servidor rechaza (catálogo 19).
+  registroFallido('registro_fallido');
 
   const Evento(this.nombre);
 
@@ -64,6 +79,54 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
     'lugar': {'aviso', 'fin_dia_gratis'},
     'respuesta': {'si', 'no', 'cerro'},
   },
+  Evento.muroVisto: {
+    'motivo': {'limite', 'funcion'},
+    'recurso': {'preguntas', 'duelo', 'tarjetas', 'completar'},
+    'funcion': {
+      'practica_a_medida',
+      'simulacro',
+      'examen_pasado',
+      'simulacro_nacional',
+      'estadisticas',
+      'quiz_ia',
+      'cursos',
+    },
+  },
+  Evento.cursoVisto: {
+    'desde': {'catalogo', 'inicio', 'muro', 'enlace'},
+  },
+  Evento.registroVisto: {
+    'dispositivo': {'celular', 'tableta', 'pc'},
+  },
+  Evento.registroFallido: {
+    'metodo': {'correo', 'google', 'apple'},
+    'motivo': {
+      'google_bloqueado',
+      'proveedor_cancelado',
+      'proveedor_error',
+      'correo_en_uso',
+      'validacion',
+      'terminos_sin_marcar',
+      'datos_invalidos',
+      'codigo_invalido',
+      'red',
+      'otro',
+    },
+    'pantalla': {'registro', 'login'},
+    'dispositivo': {'celular', 'tableta', 'pc'},
+  },
+};
+
+/// Las propiedades booleanas del contrato. Se registran como `'true'` o
+/// `'false'` y viajan como `true` o `false`: el servidor rechaza la cadena.
+const booleanasDe = <Evento, Set<String>>{
+  Evento.muroVisto: {'con_oferta'},
+};
+
+/// Las propiedades de tipo «código» (un identificador de máquina, nunca texto
+/// escrito por una persona), con el patrón del contrato.
+final codigosDe = <Evento, Map<String, RegExp>>{
+  Evento.cursoVisto: {'curso_id': RegExp(r'^[a-z0-9][a-z0-9.-]{0,99}$')},
 };
 
 /// Las obligatorias. Sin ellas el servidor rechazaría el evento, así que ni se
@@ -74,6 +137,10 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.checkoutStarted: {'plan_id', 'medio'},
   Evento.consentimientoVisto: {'lugar'},
   Evento.consentimientoRespuesta: {'lugar', 'respuesta'},
+  Evento.muroVisto: {'motivo', 'con_oferta'},
+  Evento.cursoVisto: {'curso_id', 'desde'},
+  Evento.registroVisto: {},
+  Evento.registroFallido: {'metodo', 'motivo'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -83,6 +150,10 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.checkoutStarted: {'ios'},
   Evento.consentimientoVisto: {'ios', 'android'},
   Evento.consentimientoRespuesta: {'ios', 'android'},
+  Evento.muroVisto: {'ios', 'android'},
+  Evento.cursoVisto: {'ios', 'android'},
+  Evento.registroVisto: {'ios', 'android'},
+  Evento.registroFallido: {'ios', 'android'},
 };
 
 /// Versión del diseño, para comparar cohortes antes y después del rediseño.
@@ -101,9 +172,16 @@ Map<String, Object>? propiedadesValidas(
 }) {
   if (!plataformasDe[evento]!.contains(plataforma)) return null;
   final admitidas = propiedadesDe[evento]!;
+  final booleanas = booleanasDe[evento] ?? const {};
+  final codigos = codigosDe[evento] ?? const {};
   final limpias = <String, Object>{
     for (final MapEntry(:key, :value) in propiedades.entries)
-      if (admitidas[key]?.contains(value) ?? false) key: value,
+      if (admitidas[key]?.contains(value) ?? false)
+        key: value
+      else if (booleanas.contains(key) && (value == 'true' || value == 'false'))
+        key: value == 'true'
+      else if (codigos[key]?.hasMatch(value) ?? false)
+        key: value,
   };
   if (!obligatoriasDe[evento]!.every(limpias.containsKey)) return null;
   return limpias;

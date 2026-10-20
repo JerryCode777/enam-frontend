@@ -15,6 +15,7 @@ import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
+import 'eventos_de_registro.dart';
 
 /// Pantalla 1.3 — registro.
 ///
@@ -37,6 +38,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   String? _passwordError;
   bool _acepta = false;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Una vez por carga de la pantalla (catálogo 19). Después del primer
+    // cuadro: el tamaño de la pantalla sale del contexto.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(analiticaProvider)
+          .registrar(
+            Evento.registroVisto,
+            propiedades: {'dispositivo': dispositivoDe(context)},
+          );
+    });
+  }
 
   @override
   void dispose() {
@@ -97,16 +114,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       }
     } on ValidationFailure catch (e) {
       if (!mounted) return;
+      _fallo(e);
       setState(() {
         _emailError = e.fieldErrors['email'] ?? e.message;
         _passwordError = e.fieldErrors['password'];
       });
     } on Failure catch (e) {
-      if (mounted) showErrorSnack(context, e.message);
+      if (mounted) {
+        _fallo(e);
+        showErrorSnack(context, e.message);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  void _fallo(Failure e) => registrarFallo(
+    ref,
+    context,
+    metodo: 'correo',
+    pantalla: 'registro',
+    motivo: motivoDeFallo(e),
+  );
 
   @override
   Widget build(BuildContext context) {

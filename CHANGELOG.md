@@ -14,6 +14,12 @@ Las notas para las tiendas de cada versión están en `notas-de-version/`.
   - `PATCH /me {aceptaComerciales, origenConsentimiento: "fin_dia_gratis"}`. Si falla, la tarjeta queda abierta con el error y se puede tocar otra vez.
   - No coincide con el aviso del día gratis: ese se va justo al vencer.
 - **Ajustes:** el interruptor «Novedades y ofertas por correo» (origen `ajustes`), para cambiar la decisión cuando quiera.
+- **Eventos básicos para BI** (20/10/2026, pedido del director). Hasta la 1.1.1 la app solo mandaba `signup_started`, `plans_viewed` y, en iOS, `checkout_started`. Ahora suma:
+  - `muro_visto` (catálogo 6) en cada apertura del muro: `limite` con `recurso: preguntas`, o `funcion` con su código; `con_oferta: false`. `plans_viewed` sigue al lado, para no cortar la serie.
+  - `curso_visto` (catálogo 10) al abrir un curso desde el catálogo (`desde: catalogo`) o por un enlace (`enlace`). Sin origen conocido, no se manda.
+  - `registro_visto` (catálogo 19) al abrir el registro con correo, y `registro_fallido` cuando falla el registro o la entrada: correo, Google o Apple, con su motivo (`correo_en_uso`, `proveedor_cancelado`, `red`…).
+  - La analítica de la app ahora manda booleanos y códigos con el tipo que exige el contrato.
+  - El cupo agotado y la primera práctica ya los cuenta el servidor (`limite_alcanzado`, `first_practice_completed`). `oferta_vista` es solo de la web.
 
 ## 1.1.1 (9): compilada, sin publicar
 

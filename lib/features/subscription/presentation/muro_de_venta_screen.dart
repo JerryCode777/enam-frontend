@@ -43,12 +43,30 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
     super.initState();
     // El muro es la pantalla de planes del gratis: reemplaza a «Acceso
     // terminado», y cuenta como ella hasta que el contrato tenga `muro_visto`.
-    ref
-        .read(analiticaProvider)
-        .registrar(
-          Evento.plansViewed,
-          propiedades: {'pantalla': 'acceso_terminado'},
-        );
+    final analitica = ref.read(analiticaProvider)
+      ..registrar(
+        Evento.plansViewed,
+        propiedades: {'pantalla': 'acceso_terminado'},
+      );
+    // El evento propio del muro (catálogo 6). `plans_viewed` sigue al lado
+    // para no cortar la serie que BI ya tiene. Sin oferta: la app no muestra
+    // descuentos. Una función que el contrato no conoce (sin conexión, otra)
+    // va sin `funcion`.
+    analitica.registrar(
+      Evento.muroVisto,
+      propiedades: switch (widget.motivo) {
+        CupoAgotado() => {
+          'motivo': 'limite',
+          'recurso': 'preguntas',
+          'con_oferta': 'false',
+        },
+        FuncionDePago(:final funcion) => {
+          'motivo': 'funcion',
+          'funcion': funcion.codigo,
+          'con_oferta': 'false',
+        },
+      },
+    );
   }
 
   void _cerrar() {

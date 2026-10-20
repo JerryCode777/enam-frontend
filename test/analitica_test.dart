@@ -21,6 +21,11 @@ void main() {
         // Catálogo 25: la pregunta de correo comercial.
         'consentimiento_visto',
         'consentimiento_respuesta',
+        // Catálogos 6, 10 y 19: el muro, el curso y el registro.
+        'muro_visto',
+        'curso_visto',
+        'registro_visto',
+        'registro_fallido',
       });
       // Pasaron a ser de servidor: si la app los mandara, se rechazarían.
       for (final deServidor in const [
@@ -155,8 +160,12 @@ void main() {
     await tester.tap(find.text('Crear cuenta'));
     await tester.pump();
 
-    expect(registrados.single.$1, Evento.signupStarted);
-    expect(registrados.single.$2, {'metodo': 'correo'});
+    // Al abrirse, registro_visto; al enviar, signup_started.
+    expect(registrados.map((e) => e.$1), [
+      Evento.registroVisto,
+      Evento.signupStarted,
+    ]);
+    expect(registrados.last.$2, {'metodo': 'correo'});
     await tester.pump(const Duration(seconds: 2));
   });
 }
