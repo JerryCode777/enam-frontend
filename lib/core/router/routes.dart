@@ -88,7 +88,10 @@ abstract final class Routes {
   static const cursos = '/cursos';
 
   static const curso = '/cursos/:curso';
-  static String cursoOf(String id) => '/cursos/$id';
+
+  /// [desde] es el origen para `curso_visto` (catalogo, inicio, muro, enlace).
+  static String cursoOf(String id, {String? desde}) =>
+      desde == null ? '/cursos/$id' : '/cursos/$id?desde=$desde';
 
   static const clase = '/cursos/:curso/clase/:clase';
   static String claseOf(String cursoId, String claseId) =>

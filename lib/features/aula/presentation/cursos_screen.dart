@@ -216,7 +216,8 @@ class _TarjetaDeCurso extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: abrible
           ? InkWell(
-              onTap: () => context.irA(Routes.cursoOf(curso.id)),
+              onTap: () =>
+                  context.irA(Routes.cursoOf(curso.id, desde: 'catalogo')),
               child: contenido,
             )
           : Semantics(

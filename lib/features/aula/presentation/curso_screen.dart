@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/analitica/analitica.dart';
+import '../../../core/analitica/evento_al_aparecer.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
@@ -25,12 +27,29 @@ import 'widgets/temario_del_curso.dart';
 /// El botón para seguir lleva a `continuar`, que decide el servidor: la
 /// próxima clase sin completar que la cuenta puede abrir. Como la web.
 class CursoScreen extends ConsumerWidget {
-  const CursoScreen({required this.cursoId, super.key});
+  const CursoScreen({required this.cursoId, this.desde, super.key});
 
   final String cursoId;
 
+  /// De dónde llegó, para `curso_visto`: `catalogo`, `inicio`, `muro` o
+  /// `enlace`. Sin él no se registra: un origen inventado ensucia más que uno
+  /// que falta.
+  final String? desde;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pantalla = _pantalla(context, ref);
+    return switch (desde) {
+      final desde? => EventoAlAparecer(
+        evento: Evento.cursoVisto,
+        propiedades: {'curso_id': cursoId, 'desde': desde},
+        child: pantalla,
+      ),
+      null => pantalla,
+    };
+  }
+
+  Widget _pantalla(BuildContext context, WidgetRef ref) {
     final curso = ref.watch(cursoProvider(cursoId));
 
     return Scaffold(

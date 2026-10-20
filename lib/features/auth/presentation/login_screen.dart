@@ -19,6 +19,7 @@ import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/social_buttons.dart';
 import '../../../shared/widgets/state_banner.dart';
+import 'eventos_de_registro.dart';
 
 /// Pantalla 1.5 — login con correo y contraseña, y con Google.
 ///
@@ -76,10 +77,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingGoogle = true);
     try {
-      await ref
+      final entro = await ref
           .read(authControllerProvider.notifier)
           .signInWithGoogle(aceptaTerminos: true);
+      if (!entro && mounted) _fallo('google', 'proveedor_cancelado');
     } on Object catch (error) {
+      if (mounted) _fallo('google', motivoDeFallo(error));
       // En snackbar y no bajo los campos: el fallo no viene de lo que el
       // usuario escribió, así que señalarle la contraseña sería engañoso.
       if (mounted) {
@@ -98,10 +101,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _loadingApple = true);
     try {
-      await ref
+      final entro = await ref
           .read(authControllerProvider.notifier)
           .signInWithApple(aceptaTerminos: true);
+      if (!entro && mounted) _fallo('apple', 'proveedor_cancelado');
     } on Object catch (error) {
+      if (mounted) _fallo('apple', motivoDeFallo(error));
       if (mounted) {
         showErrorSnack(
           context,
@@ -126,11 +131,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // El fallo llega como excepción, no leyendo el estado: con credenciales
       // malas el usuario sigue sin sesión, esta pantalla no se desmonta y el
       // error se puede enseñar donde toca.
-      if (mounted) _showFailure(error);
+      if (mounted) {
+        _fallo('correo', motivoDeFallo(error));
+        _showFailure(error);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  /// `registro_fallido` desde esta pantalla (catálogo 19).
+  void _fallo(String metodo, String motivo) => registrarFallo(
+    ref,
+    context,
+    metodo: metodo,
+    pantalla: 'login',
+    motivo: motivo,
+  );
 
   void _showFailure(Object error) {
     switch (error) {
