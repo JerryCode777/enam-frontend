@@ -19,6 +19,7 @@ Las notas para las tiendas de cada versión están en `notas-de-version/`.
   - `curso_visto` (catálogo 10) al abrir un curso desde el catálogo (`desde: catalogo`) o por un enlace (`enlace`). Sin origen conocido, no se manda.
   - `registro_visto` (catálogo 19) al abrir el registro con correo, y `registro_fallido` cuando falla el registro o la entrada: correo, Google o Apple, con su motivo (`correo_en_uso`, `proveedor_cancelado`, `red`…).
   - La analítica de la app ahora manda booleanos y códigos con el tipo que exige el contrato.
+  - Sin `dispositivo` ni `pantalla` en el registro: en el contrato son solo de la web, y con ellos el servidor rechazaba el evento entero. `test/contrato_eventos_test.dart` valida cada evento que la app puede mandar contra la copia del contrato del backend, con sus mismas reglas (`solo_en`, `obligatoria_si`, `ausente_si`, tipos).
   - El cupo agotado y la primera práctica ya los cuenta el servidor (`limite_alcanzado`, `first_practice_completed`). `oferta_vista` es solo de la web.
 
 ## 1.1.1 (9): compilada, sin publicar

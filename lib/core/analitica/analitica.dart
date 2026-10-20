@@ -95,9 +95,9 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
   Evento.cursoVisto: {
     'desde': {'catalogo', 'inicio', 'muro', 'enlace'},
   },
-  Evento.registroVisto: {
-    'dispositivo': {'celular', 'tableta', 'pc'},
-  },
+  // `navegador`, `dispositivo` y el resto son solo de la web (`solo_en`): si
+  // la app los manda, el servidor rechaza el evento entero.
+  Evento.registroVisto: {},
   Evento.registroFallido: {
     'metodo': {'correo', 'google', 'apple'},
     'motivo': {
@@ -112,8 +112,6 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
       'red',
       'otro',
     },
-    'pantalla': {'registro', 'login'},
-    'dispositivo': {'celular', 'tableta', 'pc'},
   },
 };
 
@@ -127,6 +125,24 @@ const booleanasDe = <Evento, Set<String>>{
 /// escrito por una persona), con el patrón del contrato.
 final codigosDe = <Evento, Map<String, RegExp>>{
   Evento.cursoVisto: {'curso_id': RegExp(r'^[a-z0-9][a-z0-9.-]{0,99}$')},
+};
+
+/// `obligatoria_si` del contrato: la propiedad es obligatoria cuando otra vale
+/// algo. Sin ella el servidor rechaza el evento entero, así que ni se encola.
+const obligatoriasSiDe = <Evento, Map<String, (String, String)>>{
+  Evento.muroVisto: {
+    'recurso': ('motivo', 'limite'),
+    'funcion': ('motivo', 'funcion'),
+  },
+};
+
+/// `ausente_si` del contrato: la propiedad no puede ir cuando otra vale algo.
+/// Se quita antes de encolar.
+const ausentesSiDe = <Evento, Map<String, (String, String)>>{
+  Evento.muroVisto: {
+    'recurso': ('motivo', 'funcion'),
+    'funcion': ('motivo', 'limite'),
+  },
 };
 
 /// Las obligatorias. Sin ellas el servidor rechazaría el evento, así que ni se
@@ -183,7 +199,15 @@ Map<String, Object>? propiedadesValidas(
       else if (codigos[key]?.hasMatch(value) ?? false)
         key: value,
   };
+  for (final MapEntry(key: clave, value: (hermana, valor))
+      in (ausentesSiDe[evento] ?? const {}).entries) {
+    if (limpias[hermana] == valor) limpias.remove(clave);
+  }
   if (!obligatoriasDe[evento]!.every(limpias.containsKey)) return null;
+  for (final MapEntry(key: clave, value: (hermana, valor))
+      in (obligatoriasSiDe[evento] ?? const {}).entries) {
+    if (limpias[hermana] == valor && !limpias.containsKey(clave)) return null;
+  }
   return limpias;
 }
 

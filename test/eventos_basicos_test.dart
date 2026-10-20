@@ -37,14 +37,16 @@ void main() {
       );
     });
 
-    test('muro_visto: una función que el contrato no conoce se cae sola', () {
+    test('muro_visto: con una función que el contrato no conoce, no sale', () {
+      // Sin `funcion`, que con motivo «funcion» es obligatoria (obligatoria_si),
+      // el servidor rechazaría el evento entero.
       expect(
         propiedadesValidas(Evento.muroVisto, {
           'motivo': 'funcion',
           'funcion': 'sin_conexion',
           'con_oferta': 'false',
         }, plataforma: 'ios'),
-        {'motivo': 'funcion', 'con_oferta': false},
+        isNull,
       );
       // Sin con_oferta, que es obligatoria, ni se encola.
       expect(
@@ -82,12 +84,9 @@ void main() {
           'dispositivo': 'celular',
           'email': 'valeria@unmsm.edu.pe',
         }, plataforma: 'android'),
-        {
-          'metodo': 'google',
-          'motivo': 'proveedor_cancelado',
-          'pantalla': 'login',
-          'dispositivo': 'celular',
-        },
+        // pantalla y dispositivo son solo de la web en el contrato: con
+        // ellos el servidor rechaza el evento entero.
+        {'metodo': 'google', 'motivo': 'proveedor_cancelado'},
       );
     });
 
@@ -259,7 +258,7 @@ void main() {
       await tester.pump();
 
       expect(registrados.single.$1, Evento.registroVisto);
-      expect(registrados.single.$2, {'dispositivo': 'celular'});
+      expect(registrados.single.$2, isEmpty);
 
       final campos = find.byType(TextField);
       await tester.enterText(campos.at(0), 'Valeria Rojas');
@@ -276,8 +275,6 @@ void main() {
       expect(registrados.last.$2, {
         'metodo': 'correo',
         'motivo': 'correo_en_uso',
-        'pantalla': 'registro',
-        'dispositivo': 'celular',
       });
       await tester.pump(const Duration(seconds: 5));
     });

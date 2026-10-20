@@ -141,13 +141,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   /// `registro_fallido` desde esta pantalla (catálogo 19).
-  void _fallo(String metodo, String motivo) => registrarFallo(
-    ref,
-    context,
-    metodo: metodo,
-    pantalla: 'login',
-    motivo: motivo,
-  );
+  void _fallo(String metodo, String motivo) =>
+      registrarFallo(ref, metodo: metodo, motivo: motivo);
 
   void _showFailure(Object error) {
     switch (error) {

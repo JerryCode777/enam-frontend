@@ -42,17 +42,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    // Una vez por carga de la pantalla (catálogo 19). Después del primer
-    // cuadro: el tamaño de la pantalla sale del contexto.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref
-          .read(analiticaProvider)
-          .registrar(
-            Evento.registroVisto,
-            propiedades: {'dispositivo': dispositivoDe(context)},
-          );
-    });
+    // Una vez por carga de la pantalla (catálogo 19). Sin propiedades: las
+    // que tiene el contrato son solo de la web.
+    ref.read(analiticaProvider).registrar(Evento.registroVisto);
   }
 
   @override
@@ -129,13 +121,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
-  void _fallo(Failure e) => registrarFallo(
-    ref,
-    context,
-    metodo: 'correo',
-    pantalla: 'registro',
-    motivo: motivoDeFallo(e),
-  );
+  void _fallo(Failure e) =>
+      registrarFallo(ref, metodo: 'correo', motivo: motivoDeFallo(e));
 
   @override
   Widget build(BuildContext context) {
