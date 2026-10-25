@@ -8,34 +8,28 @@ import '../../../../core/config/contacto.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
 import 'planes_de_apple.dart';
+import 'planes_de_google_play.dart';
 
 /// Cómo se vuelve a tener acceso, según la tienda.
 ///
-/// **Este archivo es el único sitio donde vive esa diferencia.** Estaba resuelta
-/// con cuidado en la pantalla de bloqueo y en ningún sitio más, así que desde
-/// Ajustes → Mi suscripción se llegaba igual a los precios y al formulario de
-/// tarjeta, en iPhone incluido. Una regla que hay que recordar aplicar en cada
-/// pantalla nueva es una regla que se rompe; por eso ahora es un widget y no un
-/// `if` repetido.
+/// **Este archivo es el único sitio donde vive esa diferencia.** Una regla que
+/// hay que recordar aplicar en cada pantalla nueva es una regla que se rompe;
+/// por eso es un widget y no un `if` repetido.
 ///
 /// ---
 ///
-/// Ni App Store ni Google Play dejan cobrar dentro de una app sin llevarse su
-/// comisión, ni llevar a pagar fuera de ellas. Los dos caminos:
+/// Ni App Store ni Google Play dejan cobrar contenido digital dentro de una app
+/// con otro sistema de pago, ni mandar a pagar fuera de ellas. Cada tienda,
+/// con el suyo y nada más:
 ///
-/// - **Android** — **ningún camino de compra.** Google Play no deja enlazar ni
-///   mandar a pagar fuera de Play Billing, y la app no tiene Play Billing. Antes
-///   había un botón que abría la web ya identificado, un enlace por correo y un
-///   «Activar por WhatsApp»: los tres eran llevar a pagar fuera de Play. Ahora
-///   solo se dice que Premium va con la cuenta, sin dónde ni cómo, y quien ya
-///   es Premium entra con su cuenta y lo tiene todo.
-/// - **iOS** — la compra dentro de la app, con App Store, y nada más (guía
-///   3.1.1). Había una nota con la dirección del sitio que abría `/activar` en
-///   la web y un «Activar por WhatsApp» con «quiero activar mi cuenta»: las dos
-///   eran ofrecer un medio de pago que no es App Store.
+/// - **iOS** — App Store (guía 3.1.1): `PlanesDeApple`.
+/// - **Android** — Google Play Billing: `PlanesDeGooglePlay`. Hasta la 1.1.2
+///   Android no tenía ningún camino de compra (se había quitado el pago por la
+///   web, que Play prohíbe) y la pantalla solo decía que Premium iba con la
+///   cuenta: nadie podía comprar desde Android.
 ///
-/// En las dos, WhatsApp queda solo como ayuda. Ninguna enseña un precio fuera
-/// de StoreKit.
+/// En las dos, WhatsApp queda solo como ayuda. Ninguna enseña un precio que
+/// no venga de la tienda, ni un enlace para pagar en la web.
 
 /// Si toca la variante de App Store.
 ///
@@ -70,57 +64,13 @@ class OpcionesDePago extends StatelessWidget {
       );
     }
 
-    // Android: ni botón, ni enlace, ni precio. Solo lo que es verdad para
-    // cualquiera: Premium va con la cuenta.
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PremiumConTuCuenta(),
+        PlanesDeGooglePlay(),
         SizedBox(height: DesignTokens.space4),
         BotonWhatsApp(),
       ],
-    );
-  }
-}
-
-/// En Android, en lugar de un camino de compra: Premium va con la cuenta.
-///
-/// Sin decir dónde ni cómo se compra, sin enlace y sin precio (política de
-/// pagos de Google Play).
-class PremiumConTuCuenta extends StatelessWidget {
-  const PremiumConTuCuenta({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final info = context.states.info;
-    return Container(
-      padding: const EdgeInsets.all(DesignTokens.space4),
-      decoration: BoxDecoration(
-        color: info.tint,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Symbols.workspace_premium,
-            size: 22,
-            fill: 1,
-            color: info.onTint,
-          ),
-          const SizedBox(width: DesignTokens.space3),
-          Expanded(
-            child: Text(
-              'Tu acceso Premium se activa con tu cuenta de ENAM Prep.',
-              style: context.texts.bodyMedium?.copyWith(
-                height: 1.5,
-                fontWeight: FontWeight.w700,
-                color: info.onTint,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

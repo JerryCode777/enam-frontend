@@ -13,8 +13,6 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
-import '../../subscription/presentation/widgets/opciones_de_pago.dart'
-    show enTiendaApple;
 import '../domain/aula_models.dart';
 import '../domain/segundos_vistos.dart';
 import 'aula_providers.dart';
@@ -257,14 +255,11 @@ class _ClasesGratis extends ConsumerWidget {
               height: 1.5,
             ),
           ),
-          // En Android no se vende en la app: sin botón (ver
-          // `abrirMuroDeCursos`).
-          if (enTiendaApple)
-            TextButton(
-              style: TextButton.styleFrom(padding: EdgeInsets.zero),
-              onPressed: () => abrirMuroDeCursos(context, ref),
-              child: const Text('Ver Premium'),
-            ),
+          TextButton(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            onPressed: () => abrirMuroDeCursos(context, ref),
+            child: const Text('Ver Premium'),
+          ),
         ],
       ),
     );

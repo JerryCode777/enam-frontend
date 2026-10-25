@@ -227,7 +227,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Tienes 3 clases gratis'), findsOneWidget);
-      expect(find.text('Gratis'), findsNWidgets(3));
+      // Con «Ver Premium» en el aviso, el temario empieza más abajo y la
+      // lista es perezosa: hasta la primera con candado.
+      await tester.scrollUntilVisible(
+        find.text('Esquema nacional de vacunación'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Gratis', skipOffstage: false), findsNWidgets(3));
 
       // Una clase con candado abre el muro de cursos sin pedir la clase.
       await tocar(tester, find.text('Esquema nacional de vacunación'));
@@ -240,25 +247,27 @@ void main() {
 
   group('Muro en Android', () {
     // Los tests corren en el host, que no es iOS: es la variante de Android.
-    testWidgets('no ofrece comprar: ni «Ver Premium» ni precio', (
-      tester,
-    ) async {
+    // Desde la 1.1.3 se compra con Google Play: «Ver Premium» lleva a los
+    // planes de Play, y nada lleva a pagar fuera.
+    testWidgets('ofrece Premium, sin pagar fuera de Play', (tester) async {
       await tester.pumpWidget(
         montar(tester, en: Routes.cursoOf('medicina'), premium: false),
       );
       await tester.pumpAndSettle();
 
-      // Tampoco el aviso de las clases gratis lleva botón.
-      expect(find.text('Ver Premium'), findsNothing);
+      expect(find.text('Ver Premium'), findsOneWidget);
 
+      await tester.scrollUntilVisible(
+        find.text('Esquema nacional de vacunación'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tocar(tester, find.text('Esquema nacional de vacunación'));
 
-      expect(find.text('Ver Premium'), findsNothing);
-      await tester.scrollUntilVisible(find.text('Entendido'), 300);
-      expect(
-        find.text('Tu acceso Premium se activa con tu cuenta de ENAM Prep.'),
-        findsOneWidget,
-      );
+      expect(find.text('Los cursos completos son de Premium'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Ahora no'), 300);
+      expect(find.textContaining('web'), findsNothing);
+      expect(find.text('Continuar en el navegador'), findsNothing);
     });
   });
 
@@ -500,8 +509,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Los cursos completos son de Premium'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('Entendido'), 300);
-      await tester.tap(find.text('Entendido'));
+      await tester.scrollUntilVisible(find.text('Ahora no'), 300);
+      await tester.tap(find.text('Ahora no'));
       await tester.pumpAndSettle();
 
       expect(find.text('Esta clase es de Premium'), findsOneWidget);

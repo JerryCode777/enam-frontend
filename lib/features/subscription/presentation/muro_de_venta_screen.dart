@@ -136,8 +136,7 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
               child: TextButton(
                 onPressed: _cerrar,
                 child: Text(
-                  // En Android no hay nada que dejar para después.
-                  enTiendaApple ? 'Ahora no' : 'Entendido',
+                  'Ahora no',
                   style: TextStyle(color: context.scheme.onSurfaceVariant),
                 ),
               ),

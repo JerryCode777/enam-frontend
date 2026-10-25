@@ -15,6 +15,6 @@ bool esClaseDePago(Object? error) =>
 ///
 /// Es el muro de venta de la app con la función `cursos`, el mismo que el de
 /// las demás funciones de pago: en iPhone la compra con App Store y en Android
-/// ninguna (ver `OpcionesDePago`).
+/// con Google Play (ver `OpcionesDePago`).
 Future<void> abrirMuroDeCursos(BuildContext context, WidgetRef ref) async =>
     abrirMuro(context, ref, const FuncionDePago(FuncionPremium.cursos));

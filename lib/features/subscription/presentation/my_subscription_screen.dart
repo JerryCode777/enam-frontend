@@ -217,6 +217,8 @@ class _TarjetaPlan extends StatelessWidget {
                 SubscriptionStatus.enGracia => switch (sub.origen) {
                   SubscriptionOrigin.culqi => 'Automática',
                   SubscriptionOrigin.apple => 'Automática, por App Store',
+                  SubscriptionOrigin.googlePlay =>
+                    'Automática, por Google Play',
                   _ => 'Manual',
                 },
                 _ => 'Sin renovación',
@@ -375,6 +377,30 @@ class _AccionesState extends ConsumerState<_Acciones> {
               child: const Text('Abrir mis suscripciones de Apple'),
             ),
           ),
+        ] else if (widget.sub.origen == SubscriptionOrigin.googlePlay) ...[
+          // Igual que App Store: nuestro servidor no detiene un cobro de Play,
+          // así que aquí no hay botón de cancelar.
+          if (_puedeCancelar) ...[
+            const SizedBox(height: DesignTokens.space4),
+            Text(
+              'La renovación la gestiona Google Play. Para cancelarla, ve a Play '
+              'Store → Pagos y suscripciones → Suscripciones.',
+              textAlign: TextAlign.center,
+              style: context.texts.bodyMedium,
+            ),
+            Center(
+              child: TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse(
+                    'https://play.google.com/store/account/subscriptions'
+                    '?package=pe.jakstech.enam_app',
+                  ),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text('Abrir mis suscripciones de Google Play'),
+              ),
+            ),
+          ],
         ] else if (_puedeCancelar) ...[
           const SizedBox(height: DesignTokens.space4),
           Center(

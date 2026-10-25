@@ -86,10 +86,8 @@ abstract final class ApiEndpoints {
 
   // ---------- Suscripciones (Módulo 6) ----------
   //
-  // No hay `/plans` ni `/checkout`: la app no lista precios propios ni cobra
-  // con nuestra pasarela. En iPhone se cobra con el sistema de Apple, que pone
-  // sus propios precios; en Android el pago sigue ocurriendo en la web, porque
-  // Google es más tolerante y así se evita su comisión.
+  // No hay `/plans` ni `/checkout`: la app no cobra con nuestra pasarela. En iPhone se
+  // cobra con App Store y en Android con Google Play, que ponen sus precios.
   static const String subscription = '/subscription';
   static const String cancelSubscription = '/subscription/cancel';
 
@@ -99,6 +97,12 @@ abstract final class ApiEndpoints {
   /// hace Apple contra un Apple ID, y esto es lo único que la ata a una cuenta
   /// nuestra.
   static const String verificarCompraApple = '/subscription/apple/verify';
+
+  /// Canjea una compra de Google Play por acceso (`enam-backend`,
+  /// `GOOGLE-PLAY.md` §9). Con sesión: el servidor comprueba que el
+  /// `obfuscatedAccountId` de la compra sea esta cuenta.
+  static const String verificarCompraGooglePlay =
+      '/subscription/google-play/verify';
 
   /// Manda al correo el enlace para completar la suscripción en la web.
   ///

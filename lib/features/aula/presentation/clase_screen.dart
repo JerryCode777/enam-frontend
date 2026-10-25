@@ -13,8 +13,6 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
-import '../../subscription/presentation/widgets/opciones_de_pago.dart'
-    show enTiendaApple;
 import '../domain/aula_models.dart';
 import '../domain/segundos_vistos.dart';
 import 'aula_providers.dart';
@@ -590,14 +588,11 @@ class _ClaseBloqueada extends ConsumerWidget {
               style: context.texts.bodyMedium,
             ),
             const SizedBox(height: DesignTokens.space5),
-            // En Android no se vende en la app (ver `abrirMuroDeCursos`).
-            if (enTiendaApple) ...[
-              EnamButton(
-                label: 'Ver Premium',
-                onPressed: () => abrirMuroDeCursos(context, ref),
-              ),
-              const SizedBox(height: DesignTokens.space2),
-            ],
+            EnamButton(
+              label: 'Ver Premium',
+              onPressed: () => abrirMuroDeCursos(context, ref),
+            ),
+            const SizedBox(height: DesignTokens.space2),
             EnamOutlinedButton(
               label: 'Ver el temario',
               onPressed: () {

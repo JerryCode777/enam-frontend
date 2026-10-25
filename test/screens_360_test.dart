@@ -1,4 +1,6 @@
 import 'package:enam_app/features/aula/data/mock_aula_repository.dart';
+import 'package:enam_app/features/subscription/data/google_play_iap_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:enam_app/features/aula/presentation/aula_providers.dart';
 import 'package:enam_app/core/mock/mock_data.dart';
 import 'package:enam_app/core/providers.dart';
@@ -264,6 +266,8 @@ Widget _harness(
       universidadesRepositoryProvider.overrideWithValue(
         const _InstantUniversidades(),
       ),
+      // Los planes de Play de «Mi suscripción», sin la espera del mock.
+      googlePlayIapServiceProvider.overrideWithValue(_PlayInstantanea()),
     ],
     child: MaterialApp(
       theme: brightness == Brightness.light ? AppTheme.light : AppTheme.dark,
@@ -299,6 +303,25 @@ class _FakeAuthController extends AuthController {
 ///
 /// En prueba sin empezar, que es como nace todo usuario (RN-03 v2) y el caso
 /// con `expira` nulo — el que rompe cualquier formato de fecha descuidado.
+class _PlayInstantanea extends MockGooglePlayIapService {
+  @override
+  Future<List<ProductDetails>> productos() async => [
+    for (final (id, titulo, precio) in const [
+      ('premium_mensual', 'Premium mensual', 'S/ 69.00'),
+      ('premium_trimestral', 'Premium trimestral', 'S/ 149.00'),
+      ('premium_semestral', 'Premium semestral', 'S/ 259.00'),
+    ])
+      ProductDetails(
+        id: id,
+        title: titulo,
+        description: 'Acceso completo a ENAM Prep.',
+        price: precio,
+        rawPrice: 1,
+        currencyCode: 'PEN',
+      ),
+  ];
+}
+
 class _InstantSubscription implements SubscriptionRepository {
   static const _plan = Plan(
     id: 'mensual',
@@ -331,6 +354,12 @@ class _InstantSubscription implements SubscriptionRepository {
 
   @override
   Future<Subscription> canjearCompraApple(String jws) => current();
+
+  @override
+  Future<CanjeGooglePlay> canjearCompraGooglePlay({
+    required String productId,
+    required String purchaseToken,
+  }) async => CanjeActivado(await current());
 }
 
 /// Sesiones que responden sin latencia.

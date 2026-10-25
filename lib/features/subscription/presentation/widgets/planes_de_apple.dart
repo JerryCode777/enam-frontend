@@ -14,11 +14,11 @@ import '../../../../shared/widgets/enam_button.dart';
 import '../../../../shared/widgets/state_banner.dart';
 import '../../data/apple_iap_service.dart' show planIdDeApple;
 import '../../data/compras_apple_controller.dart';
+import '../../data/fallo_de_tienda.dart';
 
 /// Los planes, comprables con el sistema de pagos de Apple.
 ///
-/// Solo se monta en iPhone. En Android el cobro sigue ocurriendo en la web: allí
-/// no hace falta pagar comisión y el enlace por correo funciona mejor.
+/// Solo se monta en iPhone. En Android, el gemelo es `PlanesDeGooglePlay`.
 ///
 /// ---
 ///
@@ -75,10 +75,28 @@ class _PlanesDeAppleState extends ConsumerState<PlanesDeApple> {
   Future<void> _cargar() async {
     try {
       final productos = await _compras.productos();
-      if (mounted) setState(() => _productos = productos);
+      if (!mounted) return;
+      setState(() => _productos = productos);
+      if (productos.isEmpty) _avisarNoDisponibles();
     } catch (e) {
-      if (mounted) setState(() => _errorAlCargar = '$e');
+      if (!mounted) return;
+      setState(() => _errorAlCargar = '$e');
+      _avisarNoDisponibles(e);
     }
+  }
+
+  /// `planes_no_disponibles`, una vez por apertura: un reintento que vuelve a
+  /// fallar no lo repite.
+  bool _avisado = false;
+
+  void _avisarNoDisponibles([Object? error]) {
+    if (_avisado) return;
+    _avisado = true;
+    registrarPlanesNoDisponibles(
+      ref.read(analiticaProvider),
+      medio: 'apple',
+      error: error,
+    );
   }
 
   void _alCambiar(ResultadoCompra r) {

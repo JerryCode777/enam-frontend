@@ -26,9 +26,13 @@ enum Evento {
   /// Se abre una pantalla con planes o su renovación.
   plansViewed('plans_viewed'),
 
-  /// iOS: se abre la hoja de compra de App Store. En Android el pago es en la
-  /// web, y ahí lo emite la web.
+  /// Se abre la hoja de compra de la tienda: App Store en iOS, Google Play en
+  /// Android (catálogo 18).
   checkoutStarted('checkout_started'),
+
+  /// La pantalla de Planes pidió los productos a la tienda y no puede mostrar
+  /// ninguno: vacío o error (catálogo 33). Uno por apertura de Planes.
+  planesNoDisponibles('planes_no_disponibles'),
 
   /// Se muestra una pregunta de correo comercial (catálogo 25). La del fin
   /// del día gratis sale una sola vez por cuenta.
@@ -70,13 +74,18 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
   },
   Evento.checkoutStarted: {
     'plan_id': {'mensual', 'intensivo', 'semestral'},
-    'medio': {'apple'},
+    'medio': {'apple', 'google_play'},
   },
+  Evento.planesNoDisponibles: {
+    'medio': {'apple', 'google_play'},
+    'motivo': {'vacio', 'error'},
+  },
+  // `planes`: la casilla debajo de los planes de Play (catálogo 34).
   Evento.consentimientoVisto: {
-    'lugar': {'aviso', 'fin_dia_gratis'},
+    'lugar': {'aviso', 'fin_dia_gratis', 'planes'},
   },
   Evento.consentimientoRespuesta: {
-    'lugar': {'aviso', 'fin_dia_gratis'},
+    'lugar': {'aviso', 'fin_dia_gratis', 'planes'},
     'respuesta': {'si', 'no', 'cerro'},
   },
   Evento.muroVisto: {
@@ -125,6 +134,7 @@ const booleanasDe = <Evento, Set<String>>{
 /// escrito por una persona), con el patrón del contrato.
 final codigosDe = <Evento, Map<String, RegExp>>{
   Evento.cursoVisto: {'curso_id': RegExp(r'^[a-z0-9][a-z0-9.-]{0,99}$')},
+  Evento.planesNoDisponibles: {'codigo': RegExp(r'^[a-z0-9_]{1,64}$')},
 };
 
 /// `obligatoria_si` del contrato: la propiedad es obligatoria cuando otra vale
@@ -143,6 +153,7 @@ const ausentesSiDe = <Evento, Map<String, (String, String)>>{
     'recurso': ('motivo', 'funcion'),
     'funcion': ('motivo', 'limite'),
   },
+  Evento.planesNoDisponibles: {'codigo': ('motivo', 'vacio')},
 };
 
 /// Las obligatorias. Sin ellas el servidor rechazaría el evento, así que ni se
@@ -151,6 +162,7 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.signupStarted: {},
   Evento.plansViewed: {'pantalla'},
   Evento.checkoutStarted: {'plan_id', 'medio'},
+  Evento.planesNoDisponibles: {'medio', 'motivo'},
   Evento.consentimientoVisto: {'lugar'},
   Evento.consentimientoRespuesta: {'lugar', 'respuesta'},
   Evento.muroVisto: {'motivo', 'con_oferta'},
@@ -163,13 +175,26 @@ const obligatoriasDe = <Evento, Set<String>>{
 const plataformasDe = <Evento, Set<String>>{
   Evento.signupStarted: {'ios', 'android'},
   Evento.plansViewed: {'ios', 'android'},
-  Evento.checkoutStarted: {'ios'},
+  Evento.checkoutStarted: {'ios', 'android'},
+  Evento.planesNoDisponibles: {'ios', 'android'},
   Evento.consentimientoVisto: {'ios', 'android'},
   Evento.consentimientoRespuesta: {'ios', 'android'},
   Evento.muroVisto: {'ios', 'android'},
   Evento.cursoVisto: {'ios', 'android'},
   Evento.registroVisto: {'ios', 'android'},
   Evento.registroFallido: {'ios', 'android'},
+};
+
+/// Valores que solo existen en una plataforma: el medio de pago es la tienda
+/// del teléfono (catálogo 18: `google_play` solo en Android). Uno fuera de su
+/// plataforma se quita, y si era obligatoria el evento no se encola.
+const soloEnPlataformaDe = <Evento, Map<String, Map<String, String>>>{
+  Evento.checkoutStarted: {
+    'medio': {'apple': 'ios', 'google_play': 'android'},
+  },
+  Evento.planesNoDisponibles: {
+    'medio': {'apple': 'ios', 'google_play': 'android'},
+  },
 };
 
 /// Versión del diseño, para comparar cohortes antes y después del rediseño.
@@ -190,8 +215,12 @@ Map<String, Object>? propiedadesValidas(
   final admitidas = propiedadesDe[evento]!;
   final booleanas = booleanasDe[evento] ?? const {};
   final codigos = codigosDe[evento] ?? const {};
+  final soloEn = soloEnPlataformaDe[evento] ?? const {};
+  final deEstaPlataforma = propiedades.entries.where(
+    (p) => (soloEn[p.key]?[p.value] ?? plataforma) == plataforma,
+  );
   final limpias = <String, Object>{
-    for (final MapEntry(:key, :value) in propiedades.entries)
+    for (final MapEntry(:key, :value) in deEstaPlataforma)
       if (admitidas[key]?.contains(value) ?? false)
         key: value
       else if (booleanas.contains(key) && (value == 'true' || value == 'false'))

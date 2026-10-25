@@ -1,10 +1,18 @@
 {
   "$comentario": "Contrato normativo de eventos de ENAM Prep. Fuente única para backend, web, portada y app. Lo que no está aquí no se acepta. Explicación en contrato/EVENTOS.md.",
   "version_contrato": 1,
-  "version_catalogo": 26,
-  "actualizado": "2026-10-19",
+  "version_catalogo": 34,
+  "actualizado": "2026-10-25",
   "historial_catalogo": {
+    "34": "Consentimiento comercial desde Planes en la app (pedido del backend enam-backend-55 para la app 1.1.3, por decisión de Jerry vía enamprep-3f): debajo de los planes de la tienda va la casilla «Quiero recibir novedades y promociones», desmarcada por defecto (PATCH /me con origenConsentimiento planes). consentimiento_comercial_cambiado.origen suma planes; consentimiento_visto.lugar y consentimiento_respuesta.lugar suman planes, para el denominador (respuesta si = marca, no = desmarca; sin cerro). Sin SQL: son propiedades. El CHECK de users.acepta_comerciales_origen es del backend (su migración 87).",
+    "33": "Planes de las tiendas que no cargan (pedido del director enamprep-3f del 25/10, tras ver que la app Android nunca tuvo Play Billing ni productos en Play Console; la compra llega con la 1.1.3): evento de cliente planes_no_disponibles (ios y android; medio apple | google_play; motivo vacio | error; codigo opcional, solo con error), uno por apertura de Planes en la que la tienda no da ningún plan para comprar. checkout_started con plataforma android y medio google_play ya es válido desde el catálogo 18. Un tipo en el CHECK.",
+    "32": "Tarjetas de repaso pasan a Premium (decisión de Jerry del 25/10 vía el director; pedido de la web enam-prep-web-react-e0): funcion_premium suma tarjetas, así que muro_visto {motivo: funcion, funcion: tarjetas, con_oferta} es válido. Se activa con TARJETAS_GRATIS_POR_DIA=0 en Railway (lo cambia Jerry); desde ahí deja de salir muro_visto/limite_alcanzado con recurso tarjetas. recurso_gratis no cambia (tarjetas queda para la serie anterior). Sin SQL: el CHECK solo mira el tipo. El backend tiene que copiar el catálogo antes de que la web lo envíe: un valor de enum desconocido se rechaza con PROPIEDAD_INVALIDA.",
     "1": "289bf63: los 15 eventos iniciales.",
+    "31": "«¿Qué te frenó hoy?» al salir de Planes (pedido de Jerry del 24/10 vía el director; propuesta de la web enam-prep-web-react-e0, acordada con el backend enam-backend-55): evento de cliente planes_motivo_salida (motivo: caro | no_se_si_sirve | prefiere_yape_transferencia | otra | cerro; con_oferta; con_texto solo con otra), uno por cuenta en toda la vida. El texto opcional de «Otra cosa» (máx. 140) NO viaja en el evento: va al backend (POST aparte, tabla planes_motivos_salida), y enam_bi no lo lee. Un tipo en el CHECK y en el índice eventos_una_vez_por_cuenta.",
+    "30": "checkout_started con medio yape sale al primer gesto de intención sobre el bloque de Yape en /pago («Copiar número», «Guardar el QR» o «Ya pagué»), una vez por visita a /pago y por plan_id, y no al mostrarse el QR, que desde ahora se ve en /pago sin tocar nada; si entra directo a /pago/yape sin gesto previo, al abrirla; si ya salió en /pago, /pago/yape no lo repite; el toque cuenta aunque copiar o guardar falle (aprobado por Jerry el 20/10, según el director; propuesta de la web enam-prep-web-react-e0 con precisiones de BI). La misma regla que la transferencia (29). Propiedades sin cambios. Sin SQL. Corta la serie de checkout_started yape: antes del encendido de CATALOGO_30 cuenta aperturas del QR.",
+    "29": "Transferencia bancaria (BCP) con revisión manual en la web, igual que Yape (aprobado por Jerry el 20/10; propuesta de BI para el backend enam-backend-55): medio suma transferencia en checkout_started (web, al primer gesto sobre el bloque de la transferencia), payment_confirmed y payment_failed (estado rechazado, detalle = motivo); origen_acceso suma transferencia en access_granted, access_expired y correo_bienvenida_premium_enviado; pago_ref y concesion_ref suman tb:<pagos.id> (también en codigo_aplicado). Evento de servidor transferencia_solicitud_enviada (el «Ya pagué», uno por pago, con tipo_transferencia: bcp, otro_banco_inmediata u otro_banco_diferida) y de cliente transferencia_solicitud_fallida. Los eventos de Yape no cambian. Dos tipos en el CHECK y transferencia_solicitud_enviada en eventos_una_vez_por_pago.",
+    "28": "Yape con QR y revisión manual en la web (aprobado por Jerry el 20/10; propuesta de BI acordada con el backend y la web): medio suma yape en checkout_started (web, al ver el QR), payment_confirmed y payment_failed; origen_acceso suma yape en access_granted, access_expired y correo_bienvenida_premium_enviado; pago_ref y concesion_ref suman yp:<pagos.id> (también en codigo_aplicado); payment_failed.estado suma rechazado (solo Yape; detalle = motivo). Evento de servidor yape_solicitud_enviada (el «Ya pagué», uno por pago) y de cliente yape_solicitud_fallida (la web no pudo enviar la solicitud). Dos tipos en el CHECK y yape_solicitud_enviada en eventos_una_vez_por_pago.",
+    "27": "Dónde y cuándo falla el registro con Google, y seguir en Chrome desde un navegador interno (aprobado por el director el 19/10; propuesta de la web con ajustes de BI): registro_fallido suma pantalla (registro | login) y momento (al_cargar | tras_google); evento de cliente abrir_en_navegador (sistema android | ios, navegador); registro_visto suma continua (llegó con ?aidc=, el anonimo_id del navegador interno con marca de tiempo, adoptado solo si se abre en menos de 10 min y el navegador no tiene uno propio). Un tipo en el CHECK.",
     "26": "Recordatorio de la oferta de bienvenida (aprobado por Jerry el 19/10): evento de servidor oferta_bienvenida_recordatorio_enviado, uno por cuenta en toda la vida (campana, horas_para_vencer 1-12, incluye_hasta_enam). Un segundo correo a quien tiene la ventana bienvenida-30 vigente y no pagó, unas 6 h antes de que venza, de 08:00 a 21:00 de Lima y al menos 1 h antes del vencimiento. Propuesta del backend; BI amplió horas_para_vencer a 12 por las ventanas que vencen de noche. Un tipo en el CHECK y en el índice eventos_una_vez_por_cuenta.",
     "25": "Pedir el consentimiento comercial al terminar el día gratis (aprobado por Jerry el 19/10): consentimiento_comercial_cambiado.origen suma fin_dia_gratis (PATCH /me, como aviso). Eventos de cliente consentimiento_visto y consentimiento_respuesta (lugar: aviso | fin_dia_gratis; respuesta: si | no | cerro), para tener el denominador (cuántos vieron la pregunta) y la X, que no llega al servidor. Propuesta del backend (origen) y de la web (eventos), nombres de la web. Dos tipos en el CHECK; el CHECK de users.acepta_comerciales_origen es del backend.",
     "24": "Oferta automática de bienvenida (aprobada por Jerry el 15/10; propuesta del backend con ajustes de BI): evento de servidor oferta_bienvenida_enviada (uno por cuenta en toda la vida: campana, porcentaje, horas_desde_fin_dia_gratis 0-168, incluye_hasta_enam) y oferta_origen suma 'bienvenida' en los 8 lugares (la enumeración y 7 eventos). 30 % sin código, 48 h desde el correo. La vista es oferta_vista con oferta_origen 'bienvenida'; sin píxel de apertura ni campana_correo_enviado. Un tipo en el CHECK y en el índice eventos_una_vez_por_cuenta.",
@@ -102,8 +110,8 @@
       "nota": "Cupo diario del nivel gratis, por día de Lima (catálogo 6): preguntas = respuestas de práctica (hoy 10 al día); duelo = el duelo gratis del día (DUELO_GRATIS_POR_DIA). Catálogo 8: tarjetas = tarjetas distintas calificadas en el día (gratis 10; volver a calificar la misma no gasta); completar = ítems distintos del día (gratis 5). El quiz con IA no es un cupo gratis: el nivel gratis tiene un solo quiz de prueba en la vida (funcion_premium quiz_ia)."
     },
     "funcion_premium": {
-      "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos"],
-      "nota": "Función que el nivel gratis no tiene (catálogo 6). Coincide con details.funcion del 403 FUNCION_PREMIUM. practica_a_medida = práctica por área o tema, o con un filtro distinto de «todas»; estadisticas incluye la nota proyectada y el detalle por área. Catálogo 8: quiz_ia = el quiz con IA cuando el quiz de prueba (uno en la vida) ya se usó. Catálogo 10: cursos = una clase del aula que no es gratis (403 FUNCION_PREMIUM {funcion: cursos}). Las de la fase 2 (repaso, plan_completo) se suman en otro catálogo."
+      "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos", "tarjetas"],
+      "nota": "Función que el nivel gratis no tiene (catálogo 6). Coincide con details.funcion del 403 FUNCION_PREMIUM. practica_a_medida = práctica por área o tema, o con un filtro distinto de «todas»; estadisticas incluye la nota proyectada y el detalle por área. Catálogo 8: quiz_ia = el quiz con IA cuando el quiz de prueba (uno en la vida) ya se usó. Catálogo 10: cursos = una clase del aula que no es gratis (403 FUNCION_PREMIUM {funcion: cursos}). Catálogo 32: tarjetas = las tarjetas de repaso, que pasan a ser Premium (TARJETAS_GRATIS_POR_DIA=0); completar sigue como cupo gratis. Las de la fase 2 (repaso, plan_completo) se suman en otro catálogo."
     }
   },
 
@@ -238,7 +246,7 @@
       "unicidad": "Ninguna: cada intento cuenta.",
       "propiedades": {
         "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
-        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true, "nota": "google_play desde el catálogo 18, solo en android." },
+        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia"], "obligatoria": true, "nota": "google_play desde el catálogo 18, solo en android. yape (catálogo 28), solo en la web: al elegir Yape y mostrarse el QR, una vez por apertura de esa pantalla; desde el catálogo 30, al primer gesto de intención sobre el bloque de Yape en /pago («Copiar número», «Guardar el QR» o «Ya pagué»), una vez por visita a /pago y por plan_id; si entra directo a /pago/yape sin gesto previo, al abrirla, y no se repite si ya salió en /pago. transferencia (catálogo 29), solo en la web: al primer gesto de intención sobre el bloque de la transferencia (copiar el número de cuenta o el CCI, o «Ya pagué»), una vez por visita a /pago y por plan_id; si entra directo a la pantalla de la transferencia sin gesto previo, al abrirla. «Ya pagué» lo emite antes de enviar si todavía no salió en esa visita." },
         "con_oferta": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 2, "nota": "true si el precio que se va a cobrar es el de una oferta (de prueba o de regreso). Solo web." },
         "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4, "nota": "Ausente con con_oferta true = 'prueba' (clientes anteriores al catálogo 4)." }
       }
@@ -317,7 +325,7 @@
       "propiedades": {
         "motivo": { "tipo": "enum", "valores": ["limite", "funcion"], "obligatoria": true },
         "recurso": { "tipo": "enum", "enumeracion": "recurso_gratis", "valores": ["preguntas", "duelo", "tarjetas", "completar"], "obligatoria": false, "obligatoria_si": { "motivo": "limite" }, "ausente_si": { "motivo": "funcion" } },
-        "funcion": { "tipo": "enum", "enumeracion": "funcion_premium", "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos"], "obligatoria": false, "obligatoria_si": { "motivo": "funcion" }, "ausente_si": { "motivo": "limite" } },
+        "funcion": { "tipo": "enum", "enumeracion": "funcion_premium", "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos", "tarjetas"], "obligatoria": false, "obligatoria_si": { "motivo": "funcion" }, "ausente_si": { "motivo": "limite" } },
         "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "El muro mostró una oferta vigente (GET /oferta con descuento)." }
       }
     },
@@ -385,10 +393,10 @@
       "unicidad": "Una por pago.",
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
-        "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<id de transacción> o gp:<orderId de Google Play> (GPA.…; renovaciones GPA.….0, ..1)." },
+        "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|yp|tb):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<id de transacción>, gp:<orderId de Google Play> (GPA.…; renovaciones GPA.….0, ..1), (catálogo 28) yp:<pagos.id> de Yape o (catálogo 29) tb:<pagos.id> de la transferencia bancaria." },
         "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
-        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true },
-        "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": false, "nota": "Obligatorio con Mercado Pago. Con Apple y Google Play la base no conoce el monto cobrado (impuestos, ofertas de la tienda, moneda): no va." },
+        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia"], "obligatoria": true, "nota": "yape (catálogo 28): Yape con QR y revisión manual; transferencia (catálogo 29): transferencia bancaria BCP con revisión manual. Las dos salen al aprobarse la revisión." },
+        "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": false, "nota": "Obligatorio con Mercado Pago y con Yape (catálogo 28). Con Apple y Google Play la base no conoce el monto cobrado (impuestos, ofertas de la tienda, moneda): no va." },
         "moneda": { "tipo": "enum", "valores": ["PEN", "USD"], "obligatoria": false },
         "con_oferta": { "tipo": "booleano", "obligatoria": true, "desde_catalogo": 2, "nota": "true si se cobró el precio de la oferta de prueba. Apple y Google Play: siempre false." },
         "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false }, "desde_catalogo": 2 },
@@ -404,10 +412,10 @@
       "unicidad": "Una por pago.",
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
-        "pago_ref": { "tipo": "codigo", "patron": "^((mp|apple):[A-Za-z0-9._-]{1,80}|gp:[A-Za-z0-9._-]{1,80}(:(gracia|retenida))?)$", "obligatoria": true, "nota": "Como en payment_confirmed. Google Play: gp:<orderId del último cobro bueno>:gracia o :retenida, para no chocar con el payment_confirmed de ese orderId." },
+        "pago_ref": { "tipo": "codigo", "patron": "^((mp|apple|yp|tb):[A-Za-z0-9._-]{1,80}|gp:[A-Za-z0-9._-]{1,80}(:(gracia|retenida))?)$", "obligatoria": true, "nota": "Como en payment_confirmed. Google Play: gp:<orderId del último cobro bueno>:gracia o :retenida, para no chocar con el payment_confirmed de ese orderId." },
         "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
-        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true },
-        "estado": { "tipo": "enum", "valores": ["fallido", "cancelado"], "obligatoria": true },
+        "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia"], "obligatoria": true },
+        "estado": { "tipo": "enum", "valores": ["fallido", "cancelado", "rechazado"], "obligatoria": true, "nota": "rechazado (catálogo 28) solo con medio yape o (catálogo 29) transferencia: el equipo rechazó la solicitud en la revisión (pagos.estado = rechazado). Con Yape y transferencia, detalle es el motivo: monto_distinto, no_encontrada, captura_ilegible u otro." },
         "detalle": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": false, "nota": "status_detail de la pasarela (p. ej. cc_rejected_insufficient_amount). Código de máquina, no mensaje. Google Play: gracia (IN_GRACE_PERIOD, conserva el acceso) o retenida (ON_HOLD, se corta)." },
         "con_oferta": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 2 },
         "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4 }
@@ -420,9 +428,9 @@
       "unicidad": "Una por concesión.",
       "clave_unicidad": ["concesion_ref"],
       "propiedades": {
-        "concesion_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|manual):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<transacción>, gp:<orderId de Google Play> o manual:<uuid generado al activar>." },
+        "concesion_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|yp|tb|manual):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<transacción>, gp:<orderId de Google Play>, yp:<pagos.id> (Yape), tb:<pagos.id> (transferencia, catálogo 29) o manual:<uuid generado al activar>." },
         "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam", "trial"], "obligatoria": true },
-        "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "manual"], "obligatoria": true },
+        "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia", "manual"], "obligatoria": true },
         "dias": { "tipo": "entero", "min": 1, "max": 400, "obligatoria": true },
         "desde_prueba": { "tipo": "booleano", "obligatoria": true, "nota": "true si la cuenta estaba en su prueba (sin empezar, en curso o vencida) y nunca había pagado." },
         "con_oferta": { "tipo": "booleano", "obligatoria": true, "desde_catalogo": 2, "nota": "true si la concesión viene de un pago con el precio de la oferta. Manual, Apple y Google Play: false." },
@@ -438,7 +446,7 @@
       "clave_unicidad": ["usuario_id", "vencimiento"],
       "propiedades": {
         "plan_id": { "tipo": "enum", "valores": ["trial", "mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
-        "origen_acceso": { "tipo": "enum", "valores": ["sistema", "mercadopago", "apple", "google_play", "manual"], "obligatoria": true },
+        "origen_acceso": { "tipo": "enum", "valores": ["sistema", "mercadopago", "apple", "google_play", "yape", "transferencia", "manual"], "obligatoria": true },
         "vencimiento": { "tipo": "fecha", "obligatoria": true },
         "motivo": { "tipo": "enum", "valores": ["vencimiento", "reembolso"], "obligatoria": false, "desde_catalogo": 18, "nota": "reembolso = el pago se devolvió o se revocó y el acceso se cortó antes de tiempo. Ausente = vencimiento (los eventos anteriores al catálogo 18)." }
       }
@@ -458,6 +466,101 @@
       }
     },
 
+    "yape_solicitud_enviada": {
+      "origen": "servidor",
+      "desde_catalogo": 28,
+      "cuando": "La persona pagó al QR de Yape y envió la solicitud («Ya pagué»: número de operación y captura); el backend la acepta, crea la fila de pagos con medio yape y estado en_revision, y el equipo la revisa (12 h como máximo). Al resolverse salen payment_confirmed (aprobado) o payment_failed con estado rechazado.",
+      "unicidad": "Una por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^yp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "yp:<pagos.id>: el mismo de payment_confirmed o payment_failed al resolverse." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "El precio que se pidió pagar (la misma función de precio que Mercado Pago, con ofertas y códigos). Nunca el monto que dice la captura." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true },
+        "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } }
+      }
+    },
+
+    "yape_solicitud_fallida": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 28,
+      "cuando": "La web no pudo enviar la solicitud de Yape y la persona lo ve: la web la frena antes de enviar (captura muy pesada, falta o formato) o el backend la rechaza al recibirla (operación repetida, ya hay una en revisión) o no responde. Una por intento fallido.",
+      "unicidad": "Ninguna: cada intento cuenta.",
+      "propiedades": {
+        "motivo": { "tipo": "enum", "valores": ["captura_pesada", "formato", "operacion_repetida", "ya_en_revision", "red", "otro"], "obligatoria": true, "nota": "formato = falta la captura o no es una imagen válida, o el número de operación no tiene el formato. Nunca la captura, el número de operación ni el monto." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false }
+      }
+    },
+
+    "transferencia_solicitud_enviada": {
+      "origen": "servidor",
+      "desde_catalogo": 29,
+      "cuando": "La persona hizo la transferencia a la cuenta BCP de la empresa y envió la solicitud («Ya pagué»: número de operación y captura); el backend la acepta, crea la fila de pagos con medio transferencia y estado en_revision, y el equipo la revisa (12 h como máximo). Al resolverse salen payment_confirmed (aprobado) o payment_failed con estado rechazado.",
+      "unicidad": "Una por pago.",
+      "clave_unicidad": ["pago_ref"],
+      "propiedades": {
+        "pago_ref": { "tipo": "codigo", "patron": "^tb:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "tb:<pagos.id>: el mismo de payment_confirmed o payment_failed al resolverse." },
+        "tipo_transferencia": { "tipo": "enum", "valores": ["bcp", "otro_banco_inmediata", "otro_banco_diferida"], "obligatoria": true, "nota": "El que eligió la persona en el formulario (pagos_manuales.tipo_transferencia). Define el plazo de la revisión: 12 h con bcp y otro_banco_inmediata; con otro_banco_diferida, el siguiente día hábil + 12 h." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "El precio que se pidió pagar (la misma función de precio que Mercado Pago, con ofertas y códigos). Nunca el monto que dice la captura." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true },
+        "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } }
+      }
+    },
+
+    "transferencia_solicitud_fallida": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 29,
+      "cuando": "La web no pudo enviar la solicitud de la transferencia y la persona lo ve: la web la frena antes de enviar (captura muy pesada, falta o formato) o el backend la rechaza al recibirla (operación repetida, ya hay una en revisión) o no responde. Una por intento fallido.",
+      "unicidad": "Ninguna: cada intento cuenta.",
+      "propiedades": {
+        "motivo": { "tipo": "enum", "valores": ["captura_pesada", "formato", "operacion_repetida", "ya_en_revision", "red", "otro"], "obligatoria": true, "nota": "Como en yape_solicitud_fallida. Nunca la captura, el número de operación, la cuenta de origen ni el monto." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false }
+      }
+    },
+
+    "planes_motivo_salida": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 31,
+      "cuando": "La persona responde (o cierra sin responder) la tarjeta «¿Qué te frenó hoy?». Aparece tras planes_salida con salida cerro (la X o atrás), o con abandono si vuelve a la pestaña; nunca tras eligio_plan ni whatsapp. Una sola vez por persona en toda la vida.",
+      "unicidad": "Una por cuenta en toda la vida (índice eventos_una_vez_por_cuenta).",
+      "clave_unicidad": ["usuario_id"],
+      "propiedades": {
+        "motivo": { "tipo": "enum", "valores": ["caro", "no_se_si_sirve", "prefiere_yape_transferencia", "otra", "cerro"], "obligatoria": true, "nota": "cerro = cerró la tarjeta sin responder: es el denominador de quienes la vieron." },
+        "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "Como en planes_salida: Planes mostraba una oferta vigente." },
+        "con_texto": { "tipo": "booleano", "obligatoria": false, "obligatoria_si": { "motivo": "otra" }, "nota": "Solo con motivo otra: si escribió algo en el campo opcional. El texto nunca viaja en el evento: va al backend aparte (planes_motivos_salida), fuera de la analítica." }
+      }
+    },
+    "planes_no_disponibles": {
+      "origen": "cliente",
+      "plataformas": ["ios", "android"],
+      "desde_catalogo": 33,
+      "cuando": "La pantalla de Planes de la app pidió los productos a la tienda (StoreKit en iOS, Play Billing en Android) y no puede mostrar ningún plan para comprar: la tienda respondió sin productos para los ids pedidos (vacio), o falló la consulta o la conexión con la facturación (error). Uno por apertura de Planes con ese resultado: si en la misma apertura se reintenta y vuelve a fallar, no se repite. Si la tienda da algunos planes y otros no, no sale.",
+      "unicidad": "Ninguna: cada apertura de Planes cuenta.",
+      "propiedades": {
+        "medio": { "tipo": "enum", "valores": ["apple", "google_play"], "obligatoria": true, "nota": "apple en iOS y google_play en Android." },
+        "motivo": { "tipo": "enum", "valores": ["vacio", "error"], "obligatoria": true, "nota": "vacio = la tienda respondió bien pero sin productos para los ids pedidos (producto no creado, inactivo o con otro id). error = falló la consulta o la conexión con la facturación." },
+        "codigo": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": false, "ausente_si": { "motivo": "vacio" }, "nota": "Solo con error: el código de máquina de la tienda en minúsculas, nunca el mensaje. Android: BillingResponseCode (p. ej. billing_unavailable, service_unavailable, developer_error, network_error). iOS: el código de StoreKit (p. ej. network_error, unknown)." }
+      }
+    },
+
+    "abrir_en_navegador": {
+      "origen": "cliente",
+      "plataformas": ["web"],
+      "desde_catalogo": 27,
+      "cuando": "En un navegador interno (Facebook, Instagram, TikTok…), la persona toca el botón para seguir en el navegador del teléfono: «Abrir en Chrome» (intent:// en Android) o «Copiar enlace» (iPhone). El enlace lleva ?aidc= (EVENTOS.md §37).",
+      "unicidad": "Ninguna: cada toque cuenta.",
+      "propiedades": {
+        "sistema": { "tipo": "enum", "valores": ["android", "ios"], "obligatoria": true, "nota": "android = «Abrir en Chrome»; ios = «Copiar enlace»." },
+        "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": true, "nota": "El navegador interno desde el que se tocó. Calculado en el cliente; el user agent no viaja." }
+      }
+    },
+
     "consentimiento_visto": {
       "origen": "cliente",
       "plataformas": ["web", "ios", "android"],
@@ -465,7 +568,7 @@
       "cuando": "Se muestra una pregunta de correo comercial (la del aviso de Inicio o la del fin del día gratis). Una vez por aparición en pantalla, no por cada re-render. Solo con sesión iniciada.",
       "unicidad": "Ninguna: cada aparición cuenta. La de fin_dia_gratis sale una sola vez por cuenta.",
       "propiedades": {
-        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis"], "obligatoria": true, "nota": "Qué pregunta es; el mismo valor que consentimiento_comercial_cambiado.origen si la persona responde sí o no." }
+        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis", "planes"], "obligatoria": true, "nota": "Qué pregunta es; el mismo valor que consentimiento_comercial_cambiado.origen si la persona responde sí o no. planes (catálogo 34) = la casilla debajo de los planes de la tienda en la app: sale una vez por apertura de Planes en la que se ve la casilla, solo a quien no aceptó (si ya aceptó, la casilla no se muestra o no cuenta)." }
       }
     },
 
@@ -476,7 +579,7 @@
       "cuando": "La persona responde la pregunta de correo comercial: toca «Sí» o «No», o la cierra con la X. Sale al tocar, antes del PATCH /me. Si se va sin tocar nada, no sale.",
       "unicidad": "Una por aparición de la pregunta.",
       "propiedades": {
-        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis"], "obligatoria": true },
+        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis", "planes"], "obligatoria": true, "nota": "Con planes (catálogo 34): si = marca la casilla; no = la desmarca después de haberla marcado en la misma apertura; cerro no se usa (la casilla empieza desmarcada: no tocarla no es una respuesta)." },
         "respuesta": { "tipo": "enum", "valores": ["si", "no", "cerro"], "obligatoria": true, "nota": "cerro = la X: no hay PATCH y el consentimiento queda sin decidir. La verdad del consentimiento es consentimiento_comercial_cambiado (servidor); este evento da la X y el denominador." }
       }
     },
@@ -601,9 +704,9 @@
       "unicidad": "Uno por pago.",
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
-        "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_confirmed: mp:<pagos.id>, apple:<id de transacción> o gp:<orderId>." },
+        "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|yp|tb):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_confirmed: mp:<pagos.id>, apple:<id de transacción> o gp:<orderId>." },
         "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
-        "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play"], "obligatoria": true, "nota": "Como en access_granted, sin 'manual': la activación manual no manda este correo." },
+        "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia"], "obligatoria": true, "nota": "Como en access_granted, sin 'manual': la activación manual no manda este correo." },
         "minutos_desde_pago": { "tipo": "entero", "min": 0, "max": 2880, "obligatoria": true, "nota": "Minutos de la aprobación del pago al envío. Suele ser 0; con reintentos, hasta 48 h." }
       }
     },
@@ -615,7 +718,7 @@
       "unicidad": "Uno por pago.",
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
-        "pago_ref": { "tipo": "codigo", "patron": "^mp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El pago (checkout) creado con el código: el mismo pago_ref de payment_confirmed." },
+        "pago_ref": { "tipo": "codigo", "patron": "^(mp|yp|tb):[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El pago (checkout) creado con el código: el mismo pago_ref de payment_confirmed. Con Yape (catálogo 28), yp:<pagos.id>, y con transferencia (catálogo 29), tb:<pagos.id>, al enviar la solicitud." },
         "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "Id interno del código, no su texto." },
         "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
         "descuento_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "La verdad del descuento, sea el código de % o de monto." },
@@ -644,7 +747,7 @@
       "unicidad": "Ninguna: cada cambio es un evento.",
       "propiedades": {
         "acepta": { "tipo": "booleano", "obligatoria": true, "nota": "El valor nuevo: true = acepta correo comercial." },
-        "origen": { "tipo": "enum", "valores": ["registro", "ajustes", "aviso", "baja", "fin_dia_gratis"], "obligatoria": true, "nota": "Dónde cambió (users.acepta_comerciales_origen). baja = el enlace de baja de un correo (acepta = false). fin_dia_gratis (catálogo 25) = la pregunta que sale una vez, en Inicio, en la primera visita después de que venció el día gratis, a quien no había decidido. Es una propiedad: no es el origen del evento (cliente o servidor)." },
+        "origen": { "tipo": "enum", "valores": ["registro", "ajustes", "aviso", "baja", "fin_dia_gratis", "planes"], "obligatoria": true, "nota": "Dónde cambió (users.acepta_comerciales_origen). baja = el enlace de baja de un correo (acepta = false). fin_dia_gratis (catálogo 25) = la pregunta que sale una vez, en Inicio, en la primera visita después de que venció el día gratis, a quien no había decidido. planes (catálogo 34) = la casilla «Quiero recibir novedades y promociones» debajo de los planes de la tienda en la app (PATCH /me con origenConsentimiento planes). Es una propiedad: no es el origen del evento (cliente o servidor)." },
         "antes": { "tipo": "enum", "valores": ["si", "no", "sin_decidir"], "obligatoria": true, "nota": "El valor anterior. sin_decidir = acepta_comerciales_en era null (primera decisión)." }
       }
     },
@@ -747,6 +850,7 @@
       "unicidad": "Una por carga de la pantalla.",
       "propiedades": {
         "desde_portada": { "tipo": "booleano", "obligatoria": false, "nota": "true si llegó con ?aid= desde la portada (solo web)." },
+        "continua": { "tipo": "booleano", "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 27, "nota": "true si el anonimo_id de esta carga se adoptó de ?aidc= (la persona venía de un navegador interno y tocó abrir_en_navegador). Ausente = no llegó con ?aidc= o no se adoptó. Reglas en EVENTOS.md §37." },
         "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
         "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19 }
       }
@@ -777,6 +881,8 @@
       "propiedades": {
         "metodo": { "tipo": "enum", "valores": ["correo", "google", "apple"], "obligatoria": true },
         "motivo": { "tipo": "enum", "valores": ["google_bloqueado", "proveedor_cancelado", "proveedor_error", "correo_en_uso", "validacion", "terminos_sin_marcar", "datos_invalidos", "codigo_invalido", "red", "otro"], "obligatoria": true, "nota": "google_bloqueado = disallowed_useragent (Google no deja entrar desde un navegador interno) y proveedor_cancelado = la persona cerró la ventana de Google o Apple: solo las apps los pueden saber; la web no los manda (Google Identity Services no avisa a la página) y el bloqueo se mide por diferencia (registro_visto con navegador interno y sin signup_started). proveedor_error = Google o Apple devolvieron algo que el backend rechazó, o no cargó su script; correo_en_uso = el correo ya tiene cuenta (EMAIL_TAKEN); validacion = el SERVIDOR rechazó los datos (422); terminos_sin_marcar (catálogo 20) = tocó «Crear cuenta» sin la casilla de términos; datos_invalidos (catálogo 20) = el navegador rechazó el correo o la contraseña antes de enviar; codigo_invalido = el código de verificación no vale; red = sin respuesta del servidor; otro = lo demás. Una por intento. Nunca el texto del error ni el correo." },
+        "pantalla": { "tipo": "enum", "valores": ["registro", "login"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 27, "nota": "En qué pantalla falló: /registro o /login (entrar)." },
+        "momento": { "tipo": "enum", "valores": ["al_cargar", "tras_google"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 27, "nota": "Solo con metodo google y motivo proveedor_error. al_cargar = el script de Google (accounts.google.com/gsi/client) no cargó, al montar la pantalla y sin que la persona toque nada; tras_google = Google dio la credencial y POST /auth/google la rechazó (cualquier error que no sea de red)." },
         "navegador": { "tipo": "enum", "enumeracion": "navegador", "valores": ["normal", "tiktok", "instagram", "facebook", "whatsapp", "otro_interno"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19, "nota": "Calculado en el cliente; el user agent no viaja." },
         "dispositivo": { "tipo": "enum", "enumeracion": "dispositivo", "valores": ["celular", "tableta", "pc"], "obligatoria": false, "solo_en": ["web"], "desde_catalogo": 19 }
       }

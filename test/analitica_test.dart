@@ -18,6 +18,8 @@ void main() {
         'signup_started',
         'plans_viewed',
         'checkout_started',
+        // Catálogo 33: Planes sin productos de la tienda.
+        'planes_no_disponibles',
         // Catálogo 25: la pregunta de correo comercial.
         'consentimiento_visto',
         'consentimiento_respuesta',
@@ -73,19 +75,17 @@ void main() {
       );
     });
 
-    test('checkout_started es solo de iOS', () {
-      const props = {'plan_id': 'intensivo', 'medio': 'apple'};
+    test('checkout_started: App Store en iOS, Google Play en Android', () {
+      const apple = {'plan_id': 'intensivo', 'medio': 'apple'};
       expect(
-        propiedadesValidas(Evento.checkoutStarted, props, plataforma: 'ios'),
-        props,
+        propiedadesValidas(Evento.checkoutStarted, apple, plataforma: 'ios'),
+        apple,
       );
+      // Catálogo 18.
+      const play = {'plan_id': 'mensual', 'medio': 'google_play'};
       expect(
-        propiedadesValidas(
-          Evento.checkoutStarted,
-          props,
-          plataforma: 'android',
-        ),
-        isNull,
+        propiedadesValidas(Evento.checkoutStarted, play, plataforma: 'android'),
+        play,
       );
     });
   });

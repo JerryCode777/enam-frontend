@@ -73,5 +73,6 @@ const _$SubscriptionOriginEnumMap = {
   SubscriptionOrigin.manual: 'manual',
   SubscriptionOrigin.bot: 'bot',
   SubscriptionOrigin.apple: 'apple',
+  SubscriptionOrigin.googlePlay: 'google_play',
   SubscriptionOrigin.desconocido: 'desconocido',
 };
