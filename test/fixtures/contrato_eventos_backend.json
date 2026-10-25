@@ -1,9 +1,10 @@
 {
   "$comentario": "Contrato normativo de eventos de ENAM Prep. Fuente única para backend, web, portada y app. Lo que no está aquí no se acepta. Explicación en contrato/EVENTOS.md.",
   "version_contrato": 1,
-  "version_catalogo": 33,
+  "version_catalogo": 34,
   "actualizado": "2026-10-25",
   "historial_catalogo": {
+    "34": "Consentimiento comercial desde Planes en la app (pedido del backend enam-backend-55 para la app 1.1.3, por decisión de Jerry vía enamprep-3f): debajo de los planes de la tienda va la casilla «Quiero recibir novedades y promociones», desmarcada por defecto (PATCH /me con origenConsentimiento planes). consentimiento_comercial_cambiado.origen suma planes; consentimiento_visto.lugar y consentimiento_respuesta.lugar suman planes, para el denominador (respuesta si = marca, no = desmarca; sin cerro). Sin SQL: son propiedades. El CHECK de users.acepta_comerciales_origen es del backend (su migración 87).",
     "33": "Planes de las tiendas que no cargan (pedido del director enamprep-3f del 25/10, tras ver que la app Android nunca tuvo Play Billing ni productos en Play Console; la compra llega con la 1.1.3): evento de cliente planes_no_disponibles (ios y android; medio apple | google_play; motivo vacio | error; codigo opcional, solo con error), uno por apertura de Planes en la que la tienda no da ningún plan para comprar. checkout_started con plataforma android y medio google_play ya es válido desde el catálogo 18. Un tipo en el CHECK.",
     "32": "Tarjetas de repaso pasan a Premium (decisión de Jerry del 25/10 vía el director; pedido de la web enam-prep-web-react-e0): funcion_premium suma tarjetas, así que muro_visto {motivo: funcion, funcion: tarjetas, con_oferta} es válido. Se activa con TARJETAS_GRATIS_POR_DIA=0 en Railway (lo cambia Jerry); desde ahí deja de salir muro_visto/limite_alcanzado con recurso tarjetas. recurso_gratis no cambia (tarjetas queda para la serie anterior). Sin SQL: el CHECK solo mira el tipo. El backend tiene que copiar el catálogo antes de que la web lo envíe: un valor de enum desconocido se rechaza con PROPIEDAD_INVALIDA.",
     "1": "289bf63: los 15 eventos iniciales.",
@@ -567,7 +568,7 @@
       "cuando": "Se muestra una pregunta de correo comercial (la del aviso de Inicio o la del fin del día gratis). Una vez por aparición en pantalla, no por cada re-render. Solo con sesión iniciada.",
       "unicidad": "Ninguna: cada aparición cuenta. La de fin_dia_gratis sale una sola vez por cuenta.",
       "propiedades": {
-        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis"], "obligatoria": true, "nota": "Qué pregunta es; el mismo valor que consentimiento_comercial_cambiado.origen si la persona responde sí o no." }
+        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis", "planes"], "obligatoria": true, "nota": "Qué pregunta es; el mismo valor que consentimiento_comercial_cambiado.origen si la persona responde sí o no. planes (catálogo 34) = la casilla debajo de los planes de la tienda en la app: sale una vez por apertura de Planes en la que se ve la casilla, solo a quien no aceptó (si ya aceptó, la casilla no se muestra o no cuenta)." }
       }
     },
 
@@ -578,7 +579,7 @@
       "cuando": "La persona responde la pregunta de correo comercial: toca «Sí» o «No», o la cierra con la X. Sale al tocar, antes del PATCH /me. Si se va sin tocar nada, no sale.",
       "unicidad": "Una por aparición de la pregunta.",
       "propiedades": {
-        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis"], "obligatoria": true },
+        "lugar": { "tipo": "enum", "valores": ["aviso", "fin_dia_gratis", "planes"], "obligatoria": true, "nota": "Con planes (catálogo 34): si = marca la casilla; no = la desmarca después de haberla marcado en la misma apertura; cerro no se usa (la casilla empieza desmarcada: no tocarla no es una respuesta)." },
         "respuesta": { "tipo": "enum", "valores": ["si", "no", "cerro"], "obligatoria": true, "nota": "cerro = la X: no hay PATCH y el consentimiento queda sin decidir. La verdad del consentimiento es consentimiento_comercial_cambiado (servidor); este evento da la X y el denominador." }
       }
     },
@@ -746,7 +747,7 @@
       "unicidad": "Ninguna: cada cambio es un evento.",
       "propiedades": {
         "acepta": { "tipo": "booleano", "obligatoria": true, "nota": "El valor nuevo: true = acepta correo comercial." },
-        "origen": { "tipo": "enum", "valores": ["registro", "ajustes", "aviso", "baja", "fin_dia_gratis"], "obligatoria": true, "nota": "Dónde cambió (users.acepta_comerciales_origen). baja = el enlace de baja de un correo (acepta = false). fin_dia_gratis (catálogo 25) = la pregunta que sale una vez, en Inicio, en la primera visita después de que venció el día gratis, a quien no había decidido. Es una propiedad: no es el origen del evento (cliente o servidor)." },
+        "origen": { "tipo": "enum", "valores": ["registro", "ajustes", "aviso", "baja", "fin_dia_gratis", "planes"], "obligatoria": true, "nota": "Dónde cambió (users.acepta_comerciales_origen). baja = el enlace de baja de un correo (acepta = false). fin_dia_gratis (catálogo 25) = la pregunta que sale una vez, en Inicio, en la primera visita después de que venció el día gratis, a quien no había decidido. planes (catálogo 34) = la casilla «Quiero recibir novedades y promociones» debajo de los planes de la tienda en la app (PATCH /me con origenConsentimiento planes). Es una propiedad: no es el origen del evento (cliente o servidor)." },
         "antes": { "tipo": "enum", "valores": ["si", "no", "sin_decidir"], "obligatoria": true, "nota": "El valor anterior. sin_decidir = acepta_comerciales_en era null (primera decisión)." }
       }
     },

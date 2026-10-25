@@ -80,11 +80,12 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
     'medio': {'apple', 'google_play'},
     'motivo': {'vacio', 'error'},
   },
+  // `planes`: la casilla debajo de los planes de Play (catálogo 34).
   Evento.consentimientoVisto: {
-    'lugar': {'aviso', 'fin_dia_gratis'},
+    'lugar': {'aviso', 'fin_dia_gratis', 'planes'},
   },
   Evento.consentimientoRespuesta: {
-    'lugar': {'aviso', 'fin_dia_gratis'},
+    'lugar': {'aviso', 'fin_dia_gratis', 'planes'},
     'respuesta': {'si', 'no', 'cerro'},
   },
   Evento.muroVisto: {

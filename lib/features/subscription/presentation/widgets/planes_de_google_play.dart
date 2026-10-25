@@ -12,6 +12,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
 import '../../../../shared/widgets/enam_button.dart';
 import '../../../../shared/widgets/state_banner.dart';
+import '../../../consentimiento/data/consentimiento_repository.dart';
 import '../../data/compras_apple_controller.dart'
     show EstadoCompra, ResultadoCompra;
 import '../../data/compras_google_play_controller.dart';
@@ -53,6 +54,13 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
 
   /// Cuál se está comprando, para que el spinner salga en su botón.
   String? _comprando;
+
+  /// Si en esta apertura va la casilla de novedades: solo a quien no las
+  /// aceptó. Se decide una vez, con los planes y la cuenta ya cargados, y no
+  /// cambia al marcarla. `null`: todavía no se sabe.
+  bool? _conNovedades;
+  bool _novedades = false;
+  bool _guardandoNovedades = false;
 
   @override
   void initState() {
@@ -118,6 +126,42 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
     }
   }
 
+  void _registrarNovedades(Evento evento, [String? respuesta]) => ref
+      .read(analiticaProvider)
+      .registrar(
+        evento,
+        propiedades: {'lugar': 'planes', 'respuesta': ?respuesta},
+      );
+
+  Future<void> _cambiarNovedades(bool acepta) async {
+    // Al tocar, antes del PATCH: «si» al marcar, «no» al desmarcar.
+    _registrarNovedades(Evento.consentimientoRespuesta, acepta ? 'si' : 'no');
+    final mensajero = ScaffoldMessenger.maybeOf(context);
+    setState(() {
+      _novedades = acepta;
+      _guardandoNovedades = true;
+    });
+    try {
+      final actualizado = await ref
+          .read(consentimientoRepositoryProvider)
+          .decidir(acepta: acepta, origen: OrigenConsentimiento.planes);
+      ref.read(authControllerProvider.notifier).setUser(actualizado);
+    } on Object {
+      // La casilla vuelve a lo guardado: marcada sin guardar engañaría.
+      if (mounted) setState(() => _novedades = !acepta);
+      mensajero?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No pudimos guardar tu preferencia. Revisa tu conexión e '
+            'inténtalo otra vez.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _guardandoNovedades = false);
+    }
+  }
+
   bool get _ocupado =>
       _estado == EstadoCompra.comprando || _estado == EstadoCompra.registrando;
 
@@ -164,7 +208,13 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
       );
     }
 
-    final cuentaId = ref.watch(currentUserProvider)?.id;
+    final user = ref.watch(currentUserProvider);
+    final cuentaId = user?.id;
+    if (_conNovedades == null && user != null) {
+      _conNovedades = user.aceptaComerciales != true;
+      // Uno por apertura en la que se ve la casilla (catálogo 34).
+      if (_conNovedades!) _registrarNovedades(Evento.consentimientoVisto);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -187,6 +237,16 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
             onComprar: _ocupado || cuentaId == null
                 ? null
                 : () => _comprar(p, cuentaId),
+          ),
+          const SizedBox(height: DesignTokens.space3),
+        ],
+
+        if (_conNovedades ?? false) ...[
+          _CasillaDeNovedades(
+            value: _novedades,
+            onChanged: _guardandoNovedades
+                ? null
+                : (v) => unawaited(_cambiarNovedades(v)),
           ),
           const SizedBox(height: DesignTokens.space3),
         ],
@@ -275,6 +335,71 @@ class _Plan extends StatelessWidget {
             onPressed: onComprar,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Textos de la casilla de novedades. Neutros a propósito: la política de
+/// Google Play no deja mencionar la web, pagos fuera de Play ni descuentos que
+/// solo estén allí. Eso, si acaso, va después en el correo.
+const tituloNovedadesEnPlanes = 'Quiero recibir novedades y promociones';
+const detalleNovedadesEnPlanes =
+    'Te enviaremos novedades, simulacros y promociones a tu correo. Puedes '
+    'darte de baja cuando quieras.';
+
+/// El consentimiento comercial debajo de los planes (catálogo 34): desmarcado
+/// por defecto (Ley 29733) y sin condicionar la compra.
+class _CasillaDeNovedades extends StatelessWidget {
+  const _CasillaDeNovedades({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final alCambiar = onChanged;
+    return MergeSemantics(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        onTap: alCambiar == null ? null : () => alCambiar(!value),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
+              value: value,
+              onChanged: alCambiar == null
+                  ? null
+                  : (v) => alCambiar(v ?? false),
+            ),
+            const SizedBox(width: DesignTokens.space1),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: DesignTokens.space3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tituloNovedadesEnPlanes,
+                      style: context.texts.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.scheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detalleNovedadesEnPlanes,
+                      style: context.texts.bodySmall?.copyWith(
+                        height: 1.4,
+                        color: context.scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

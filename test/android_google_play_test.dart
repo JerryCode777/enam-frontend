@@ -4,6 +4,7 @@ import 'package:enam_app/core/analitica/analitica.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
+import 'package:enam_app/features/consentimiento/data/consentimiento_repository.dart';
 import 'package:enam_app/features/duelo/domain/duelo_models.dart';
 import 'package:enam_app/features/profile/presentation/help_screen.dart';
 import 'package:enam_app/features/subscription/data/google_play_iap_service.dart';
@@ -13,6 +14,8 @@ import 'package:enam_app/features/subscription/domain/subscription_models.dart';
 import 'package:enam_app/features/subscription/presentation/access_ended_screen.dart';
 import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
 import 'package:enam_app/features/subscription/presentation/widgets/opciones_de_pago.dart';
+import 'package:enam_app/features/subscription/presentation/widgets/planes_de_google_play.dart'
+    show detalleNovedadesEnPlanes, tituloNovedadesEnPlanes;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,6 +103,7 @@ void main() {
 
       expect(t.tienda.compradas, [('premium_mensual', 'u1')]);
       expect(t.analitica.registrados, [
+        'consentimiento_visto lugar=planes',
         'checkout_started plan_id=mensual medio=google_play',
       ]);
     });
@@ -174,6 +178,106 @@ void main() {
         'planes_no_disponibles medio=google_play motivo=error '
             'codigo=billing_unavailable',
       ]);
+    });
+  });
+
+  group('la casilla de novedades debajo de los planes', () {
+    Finder casilla() => find.text(tituloNovedadesEnPlanes);
+
+    Future<void> verCasilla(WidgetTester tester) async {
+      await tester.scrollUntilVisible(casilla(), 300);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('desmarcada, con un texto que no habla de la web', (
+      tester,
+    ) async {
+      final t = _Montaje(sub: _expirada);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+      await verCasilla(tester);
+
+      // La única casilla de Planes.
+      expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+      final texto = '$tituloNovedadesEnPlanes $detalleNovedadesEnPlanes'
+          .toLowerCase();
+      for (final p in ['web', 'pag', 'descuento', 'precio', 'enamprep.com']) {
+        expect(texto, isNot(contains(p)), reason: p);
+      }
+      sinPagoFueraDePlay(tester);
+      // Uno por apertura; nada se guarda hasta que la toque.
+      expect(t.analitica.registrados, ['consentimiento_visto lugar=planes']);
+      expect(t.consentimiento.decisiones, isEmpty);
+    });
+
+    testWidgets('marcar guarda el sí con origen planes; desmarcar, el no', (
+      tester,
+    ) async {
+      final t = _Montaje(sub: _expirada);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+      await verCasilla(tester);
+
+      await tester.tap(casilla());
+      await tester.pumpAndSettle();
+      await tester.tap(casilla());
+      await tester.pumpAndSettle();
+
+      expect(t.consentimiento.decisiones, [
+        (true, OrigenConsentimiento.planes),
+        (false, OrigenConsentimiento.planes),
+      ]);
+      expect(t.analitica.registrados, [
+        'consentimiento_visto lugar=planes',
+        'consentimiento_respuesta lugar=planes respuesta=si',
+        'consentimiento_respuesta lugar=planes respuesta=no',
+      ]);
+      // Sigue a la vista aunque la cuenta ya haya decidido.
+      expect(casilla(), findsOneWidget);
+    });
+
+    testWidgets('si no se pudo guardar, vuelve a desmarcarse y lo dice', (
+      tester,
+    ) async {
+      final t = _Montaje(sub: _expirada)..consentimiento.falla = true;
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+      await verCasilla(tester);
+
+      await tester.tap(casilla());
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widgetList<Checkbox>(find.byType(Checkbox)).map((c) => c.value),
+        everyElement(isFalse),
+      );
+      expect(find.textContaining('No pudimos guardar'), findsOneWidget);
+    });
+
+    testWidgets('quien ya aceptó no la ve, y no se mide', (tester) async {
+      final t = _Montaje(sub: _expirada, aceptaComerciales: true);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+
+      expect(casilla(), findsNothing);
+      expect(t.analitica.registrados, isEmpty);
+    });
+
+    testWidgets('quien dijo que no sí la ve', (tester) async {
+      final t = _Montaje(sub: _expirada, aceptaComerciales: false);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+      await verCasilla(tester);
+
+      expect(casilla(), findsOneWidget);
+    });
+
+    testWidgets('sin planes no hay casilla', (tester) async {
+      final t = _Montaje(sub: _expirada, productos: const []);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+
+      expect(casilla(), findsNothing);
     });
   });
 
@@ -259,15 +363,19 @@ class _Montaje {
     required this.sub,
     List<ProductDetails>? productos,
     FalloDeTienda? falla,
+    this.aceptaComerciales,
   }) : tienda = _TiendaFalsa(productos ?? _productosDePlay, falla);
 
   final Subscription sub;
+  final bool? aceptaComerciales;
   final _TiendaFalsa tienda;
   final analitica = _Capturadora();
+  final consentimiento = _Consentimiento();
 
   Widget montar(Widget pantalla) => ProviderScope(
     overrides: [
-      authControllerProvider.overrideWith(_ConSesion.new),
+      authControllerProvider.overrideWith(() => _ConSesion(aceptaComerciales)),
+      consentimientoRepositoryProvider.overrideWithValue(consentimiento),
       subscriptionProvider.overrideWith((ref) async => sub),
       subscriptionRepositoryProvider.overrideWithValue(_Repo(sub)),
       googlePlayIapServiceProvider.overrideWithValue(tienda),
@@ -368,15 +476,36 @@ final _premiumPorPlay = _premiumPorLaWeb.copyWith(
 );
 
 class _ConSesion extends AuthController {
+  _ConSesion(this.aceptaComerciales);
+
+  final bool? aceptaComerciales;
+
   @override
-  Future<AuthState> build() async => const AuthSignedIn(
-    User(
-      id: 'u1',
-      email: 'valeria.rojas@unmsm.edu.pe',
-      nombre: 'Valeria Rojas',
-      emailVerificado: true,
-    ),
-  );
+  Future<AuthState> build() async => AuthSignedIn(_usuario(aceptaComerciales));
+}
+
+User _usuario(bool? aceptaComerciales) => User(
+  id: 'u1',
+  email: 'valeria.rojas@unmsm.edu.pe',
+  nombre: 'Valeria Rojas',
+  emailVerificado: true,
+  aceptaComerciales: aceptaComerciales,
+);
+
+/// Anota cada decisión; con [falla], el PATCH revienta.
+class _Consentimiento implements ConsentimientoRepository {
+  final decisiones = <(bool, OrigenConsentimiento)>[];
+  bool falla = false;
+
+  @override
+  Future<User> decidir({
+    required bool acepta,
+    required OrigenConsentimiento origen,
+  }) async {
+    if (falla) throw Exception('sin red');
+    decisiones.add((acepta, origen));
+    return _usuario(acepta);
+  }
 }
 
 class _Repo implements SubscriptionRepository {

@@ -11,7 +11,10 @@ enum OrigenConsentimiento {
   ajustes('ajustes'),
 
   /// La tarjeta del inicio al terminar el día gratis (19/10/2026).
-  finDiaGratis('fin_dia_gratis');
+  finDiaGratis('fin_dia_gratis'),
+
+  /// La casilla debajo de los planes de la tienda (catálogo 34, app 1.1.3).
+  planes('planes');
 
   const OrigenConsentimiento(this.valor);
 
