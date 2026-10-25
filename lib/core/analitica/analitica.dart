@@ -184,6 +184,18 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.registroFallido: {'ios', 'android'},
 };
 
+/// Valores que solo existen en una plataforma: el medio de pago es la tienda
+/// del teléfono (catálogo 18: `google_play` solo en Android). Uno fuera de su
+/// plataforma se quita, y si era obligatoria el evento no se encola.
+const soloEnPlataformaDe = <Evento, Map<String, Map<String, String>>>{
+  Evento.checkoutStarted: {
+    'medio': {'apple': 'ios', 'google_play': 'android'},
+  },
+  Evento.planesNoDisponibles: {
+    'medio': {'apple': 'ios', 'google_play': 'android'},
+  },
+};
+
 /// Versión del diseño, para comparar cohortes antes y después del rediseño.
 const versionVisual = 'rediseno-2026-09';
 
@@ -202,8 +214,12 @@ Map<String, Object>? propiedadesValidas(
   final admitidas = propiedadesDe[evento]!;
   final booleanas = booleanasDe[evento] ?? const {};
   final codigos = codigosDe[evento] ?? const {};
+  final soloEn = soloEnPlataformaDe[evento] ?? const {};
+  final deEstaPlataforma = propiedades.entries.where(
+    (p) => (soloEn[p.key]?[p.value] ?? plataforma) == plataforma,
+  );
   final limpias = <String, Object>{
-    for (final MapEntry(:key, :value) in propiedades.entries)
+    for (final MapEntry(:key, :value) in deEstaPlataforma)
       if (admitidas[key]?.contains(value) ?? false)
         key: value
       else if (booleanas.contains(key) && (value == 'true' || value == 'false'))

@@ -100,10 +100,7 @@ void main() {
 
       expect(t.tienda.compradas, [('premium_mensual', 'u1')]);
       expect(t.analitica.registrados, [
-        (
-          Evento.checkoutStarted,
-          {'plan_id': 'mensual', 'medio': 'google_play'},
-        ),
+        'checkout_started plan_id=mensual medio=google_play',
       ]);
     });
 
@@ -152,10 +149,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(t.analitica.registrados, [
-        (
-          Evento.planesNoDisponibles,
-          {'medio': 'google_play', 'motivo': 'vacio'},
-        ),
+        'planes_no_disponibles medio=google_play motivo=vacio',
       ]);
     });
 
@@ -177,14 +171,8 @@ void main() {
         findsOneWidget,
       );
       expect(t.analitica.registrados, [
-        (
-          Evento.planesNoDisponibles,
-          {
-            'medio': 'google_play',
-            'motivo': 'error',
-            'codigo': 'billing_unavailable',
-          },
-        ),
+        'planes_no_disponibles medio=google_play motivo=error '
+            'codigo=billing_unavailable',
       ]);
     });
   });
@@ -327,11 +315,18 @@ class _TiendaFalsa implements GooglePlayIapService {
 }
 
 class _Capturadora implements Analitica {
-  final registrados = <(Evento, Map<String, String>)>[];
+  /// «nombre clave=valor …», para comparar por contenido.
+  final registrados = <String>[];
 
   @override
   void registrar(Evento evento, {Map<String, String> propiedades = const {}}) =>
-      registrados.add((evento, propiedades));
+      registrados.add(
+        [
+          evento.nombre,
+          for (final MapEntry(:key, :value) in propiedades.entries)
+            '$key=$value',
+        ].join(' '),
+      );
 
   @override
   Future<void> enviarPendientes() async {}

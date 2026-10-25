@@ -210,15 +210,11 @@ void main() {
           expect(find.textContaining(palabra), findsNothing, reason: palabra);
         }
         // Ninguna tienda lleva a pagar fuera: en iPhone, App Store; en
-        // Android no se vende en la app.
+        // Android, Google Play.
         expect(find.text('Continuar en el navegador'), findsNothing);
+        expect(find.textContaining('web'), findsNothing);
         if (!ios) {
-          await tester.scrollUntilVisible(
-            find.text(
-              'Tu acceso Premium se activa con tu cuenta de ENAM Prep.',
-            ),
-            300,
-          );
+          await tester.scrollUntilVisible(find.text('Ahora no'), 300);
         }
         debugDefaultTargetPlatformOverride = null;
       });
@@ -246,11 +242,10 @@ void main() {
       await _asentar(tester);
       expect(find.byType(MuroDeVentaScreen), findsOneWidget);
 
-      // En Android dice «Entendido»: no hay nada que comprar después.
-      await tester.scrollUntilVisible(find.text('Entendido'), 300);
-      await tester.ensureVisible(find.text('Entendido'));
+      await tester.scrollUntilVisible(find.text('Ahora no'), 300);
+      await tester.ensureVisible(find.text('Ahora no'));
       await _asentar(tester);
-      await tester.tap(find.text('Entendido'));
+      await tester.tap(find.text('Ahora no'));
       await _asentar(tester);
       expect(find.byType(MuroDeVentaScreen), findsNothing);
       expect(find.text('abrir'), findsOneWidget);

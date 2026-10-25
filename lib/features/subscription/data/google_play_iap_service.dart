@@ -165,7 +165,7 @@ bool _esPlanBase(ProductDetails p) {
 
 /// Tienda de mentira, para recorrer la pantalla de planes sin Play.
 ///
-/// Devuelve los tres productos con los precios de la web escritos a mano:
+/// Devuelve los tres productos con los precios de Play escritos a mano:
 /// son datos de ejemplo para pintar la pantalla, y en cuanto se apagan los
 /// mocks vienen de Play. La compra no hace nada.
 class MockGooglePlayIapService implements GooglePlayIapService {
@@ -184,24 +184,24 @@ class MockGooglePlayIapService implements GooglePlayIapService {
         id: 'premium_mensual',
         title: 'Premium mensual',
         description: 'Acceso completo a ENAM Prep durante un mes.',
-        price: 'S/ 59.00',
-        rawPrice: 59,
+        price: 'S/ 69.00',
+        rawPrice: 69,
         currencyCode: 'PEN',
       ),
       ProductDetails(
         id: 'premium_trimestral',
         title: 'Premium trimestral',
         description: 'Acceso completo a ENAM Prep durante tres meses.',
-        price: 'S/ 129.00',
-        rawPrice: 129,
+        price: 'S/ 149.00',
+        rawPrice: 149,
         currencyCode: 'PEN',
       ),
       ProductDetails(
         id: 'premium_semestral',
         title: 'Premium semestral',
         description: 'Acceso completo a ENAM Prep durante seis meses.',
-        price: 'S/ 229.00',
-        rawPrice: 229,
+        price: 'S/ 259.00',
+        rawPrice: 259,
         currencyCode: 'PEN',
       ),
     ];

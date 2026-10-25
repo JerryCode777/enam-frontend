@@ -270,7 +270,7 @@ class _RepoFalso implements SubscriptionRepository {
     required String productId,
     required String purchaseToken,
   }) async {
-    await Future<void>.delayed(demora);
+    if (demora > Duration.zero) await Future<void>.delayed(demora);
     if (falla case final f?) throw f;
     canjeadas.add((productId, purchaseToken));
     if (pendiente) {

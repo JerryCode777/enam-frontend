@@ -168,7 +168,15 @@ void main() {
       for (final pantalla in propiedadesDe[Evento.plansViewed]!['pantalla']!)
         (Evento.plansViewed, {'pantalla': pantalla}),
       for (final plan in propiedadesDe[Evento.checkoutStarted]!['plan_id']!)
-        (Evento.checkoutStarted, {'plan_id': plan, 'medio': 'apple'}),
+        for (final medio in const ['apple', 'google_play'])
+          (Evento.checkoutStarted, {'plan_id': plan, 'medio': medio}),
+      for (final medio in const ['apple', 'google_play']) ...[
+        (Evento.planesNoDisponibles, {'medio': medio, 'motivo': 'vacio'}),
+        (
+          Evento.planesNoDisponibles,
+          {'medio': medio, 'motivo': 'error', 'codigo': 'billing_unavailable'},
+        ),
+      ],
       for (final lugar in const ['aviso', 'fin_dia_gratis']) ...[
         (Evento.consentimientoVisto, {'lugar': lugar}),
         for (final r in const ['si', 'no', 'cerro'])
@@ -198,6 +206,9 @@ void main() {
 
     for (final (evento, props) in casos) {
       for (final plataforma in plataformasDe[evento]!) {
+        // La tienda de la otra plataforma no se prueba ahí: no se encola.
+        final soloEn = soloEnPlataformaDe[evento]?['medio']?[props['medio']];
+        if (soloEn != null && soloEn != plataforma) continue;
         test('${evento.nombre} $props en $plataforma', () {
           final limpias = propiedadesValidas(
             evento,
