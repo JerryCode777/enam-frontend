@@ -78,7 +78,10 @@ class BrandGradient extends StatelessWidget {
                 ),
               ),
             ),
-            child,
+            // Positioned.fill: un hijo sin posición recibe restricciones sueltas y
+            // se encoge a su contenido, pegado a la izquierda (el splash salía
+            // corrido en iPhone). Así ocupa todo el ancho y se centra.
+            Positioned.fill(child: child),
           ],
         ),
       ),
