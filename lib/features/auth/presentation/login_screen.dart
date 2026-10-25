@@ -83,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .read(authControllerProvider.notifier)
           .signInWithGoogle(
             aceptaTerminos: true,
-            aceptaComerciales: _comerciales,
+            aceptaComerciales: comercialesDelAlta(_comerciales),
           );
       if (!entro && mounted) _fallo('google', 'proveedor_cancelado');
     } on Object catch (error) {
@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .read(authControllerProvider.notifier)
           .signInWithApple(
             aceptaTerminos: true,
-            aceptaComerciales: _comerciales,
+            aceptaComerciales: comercialesDelAlta(_comerciales),
           );
       if (!entro && mounted) _fallo('apple', 'proveedor_cancelado');
     } on Object catch (error) {

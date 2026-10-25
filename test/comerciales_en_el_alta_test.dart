@@ -103,23 +103,26 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('arranca desmarcada y sin marcarla también se crea la cuenta', (
-      tester,
-    ) async {
-      await montar(tester);
+    testWidgets(
+      'arranca desmarcada, y sin marcarla la cuenta queda sin decidir',
+      (tester) async {
+        await montar(tester);
 
-      expect(find.text(textoCasillaComerciales), findsOneWidget);
-      final casilla = tester.widget<Checkbox>(
-        find.descendant(
-          of: find.byType(CasillaDeComerciales),
-          matching: find.byType(Checkbox),
-        ),
-      );
-      expect(casilla.value, isFalse);
+        expect(find.text(textoCasillaComerciales), findsOneWidget);
+        final casilla = tester.widget<Checkbox>(
+          find.descendant(
+            of: find.byType(CasillaDeComerciales),
+            matching: find.byType(Checkbox),
+          ),
+        );
+        expect(casilla.value, isFalse);
 
-      await llenarYEnviar(tester);
-      expect(auth.comerciales, [false]);
-    });
+        await llenarYEnviar(tester);
+        // Ni «no»: sin el campo. Así le sigue saliendo la pregunta del fin del
+        // día gratis.
+        expect(auth.comerciales, [null]);
+      },
+    );
 
     testWidgets('tocar el texto la marca, y viaja marcada', (tester) async {
       await montar(tester);
@@ -130,6 +133,12 @@ void main() {
 
       expect(auth.comerciales, [true]);
     });
+  });
+
+  test('sin marcar no se manda nada: la cuenta queda sin decidir', () {
+    // Vale para el correo, Google y Apple: las tres altas pasan por aquí.
+    expect(comercialesDelAlta(false), isNull);
+    expect(comercialesDelAlta(true), isTrue);
   });
 
   test('el texto no habla de la web, de pagos ni de descuentos', () {

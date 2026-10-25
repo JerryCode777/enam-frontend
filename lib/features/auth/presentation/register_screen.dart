@@ -103,7 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             // ella; lo que faltaba era que el dato llegara al servidor. Sin él
             // responde 422 CONSENT_REQUIRED y no se crea ninguna cuenta.
             aceptaTerminos: _acepta,
-            aceptaComerciales: _comerciales,
+            aceptaComerciales: comercialesDelAlta(_comerciales),
           );
       if (mounted) {
         context.go(Routes.verifyEmail, extra: _email.text.trim());
