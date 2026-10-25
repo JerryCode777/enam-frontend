@@ -13,6 +13,7 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/state_banner.dart';
 import '../../auth/domain/auth_models.dart';
 
 /// Pantalla 9.1 — ajustes y cuenta (incluye 9.2 notificaciones y 9.3 tema).
@@ -394,16 +395,30 @@ class _Cuenta extends ConsumerWidget {
           SwitchListTile(
             value: user?.aceptaComerciales ?? false,
             onChanged: (acepta) async {
-              final actualizado = await ref
-                  .read(consentimientoRepositoryProvider)
-                  .decidir(
-                    acepta: acepta,
-                    origen: OrigenConsentimiento.ajustes,
+              try {
+                final actualizado = await ref
+                    .read(consentimientoRepositoryProvider)
+                    .decidir(
+                      acepta: acepta,
+                      origen: OrigenConsentimiento.ajustes,
+                    );
+                ref.read(authControllerProvider.notifier).setUser(actualizado);
+              } on Object {
+                // El interruptor no se mueve: sigue mostrando lo guardado.
+                if (context.mounted) {
+                  showErrorSnack(
+                    context,
+                    'No pudimos guardar el cambio. Revisa tu conexión e '
+                    'inténtalo otra vez.',
                   );
-              ref.read(authControllerProvider.notifier).setUser(actualizado);
+                }
+              }
             },
             secondary: const Icon(Symbols.mail),
             title: const Text('Novedades y ofertas por correo'),
+            subtitle: const Text(
+              'Opcional. Puedes darte de baja cuando quieras.',
+            ),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           ListTile(

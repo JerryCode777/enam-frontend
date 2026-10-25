@@ -15,12 +15,14 @@ import '../../../shared/widgets/auth_scaffold.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../consentimiento/presentation/casilla_de_comerciales.dart';
 import 'eventos_de_registro.dart';
 
 /// Pantalla 1.3 — registro.
 ///
 /// El consentimiento de términos es obligatorio y explícito (RNF-06, Ley 29733):
-/// la casilla arranca desmarcada y sin ella el botón queda deshabilitado.
+/// la casilla arranca desmarcada y sin ella el botón queda deshabilitado. La de
+/// correos comerciales va aparte, también desmarcada, y no bloquea nada.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -37,6 +39,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   String? _emailError;
   String? _passwordError;
   bool _acepta = false;
+  bool _comerciales = false;
   bool _loading = false;
 
   @override
@@ -100,6 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             // ella; lo que faltaba era que el dato llegara al servidor. Sin él
             // responde 422 CONSENT_REQUIRED y no se crea ninguna cuenta.
             aceptaTerminos: _acepta,
+            aceptaComerciales: comercialesDelAlta(_comerciales),
           );
       if (mounted) {
         context.go(Routes.verifyEmail, extra: _email.text.trim());
@@ -175,6 +179,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ? null
               : (v) => setState(() => _acepta = v ?? false),
           onTapTerms: () => context.irA(Routes.terms),
+        ),
+        CasillaDeComerciales(
+          value: _comerciales,
+          onChanged: _loading ? null : (v) => setState(() => _comerciales = v),
         ),
         EnamButton(
           label: 'Crear cuenta',

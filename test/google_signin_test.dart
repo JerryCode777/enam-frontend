@@ -157,6 +157,9 @@ class _FakeGoogle implements GoogleSignInService {
 /// Todo igual que el mock salvo el canje, que revienta.
 class _RepoQueFalla extends MockAuthRepository {
   @override
-  Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async =>
-      throw Exception('backend caído');
+  Future<User> loginConGoogle(
+    String idToken, {
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  }) async => throw Exception('backend caído');
 }

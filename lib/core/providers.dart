@@ -417,7 +417,12 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// persona ya creía haber terminado, y era el paso donde más gente se caía.
   /// El parámetro sigue existiendo para que quede explícito quién consiente y
   /// dónde, en vez de que el cliente lo dé por hecho en silencio.
-  Future<bool> signInWithGoogle({bool aceptaTerminos = false}) async {
+  ///
+  /// [aceptaComerciales] es la casilla de correos comerciales de la pantalla.
+  Future<bool> signInWithGoogle({
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  }) async {
     // El diálogo nativo se abre **antes** de pasar a cargando: si se pusiera
     // antes, cancelar dejaría un spinner colgado hasta la siguiente acción.
     final String? idToken;
@@ -432,7 +437,11 @@ class AuthController extends AsyncNotifier<AuthState> {
     try {
       final user = await ref
           .read(authRepositoryProvider)
-          .loginConGoogle(idToken, aceptaTerminos: aceptaTerminos);
+          .loginConGoogle(
+            idToken,
+            aceptaTerminos: aceptaTerminos,
+            aceptaComerciales: aceptaComerciales,
+          );
       state = AsyncData(AuthSignedIn(user));
       return true;
     } catch (_) {
@@ -448,7 +457,10 @@ class AuthController extends AsyncNotifier<AuthState> {
   ///
   /// [aceptaTerminos] funciona igual que en Google: lo da el aviso que está a
   /// la vista junto a los botones.
-  Future<bool> signInWithApple({bool aceptaTerminos = false}) async {
+  Future<bool> signInWithApple({
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  }) async {
     // Igual que con Google: el diálogo nativo se abre **antes** de pasar a
     // cargando, para que cancelar no deje un spinner colgado.
     final AppleCredential? credencial;
@@ -469,6 +481,7 @@ class AuthController extends AsyncNotifier<AuthState> {
             identityToken: credencial.identityToken,
             nombre: credencial.nombre,
             aceptaTerminos: aceptaTerminos,
+            aceptaComerciales: aceptaComerciales,
           );
       state = AsyncData(AuthSignedIn(user));
       return true;

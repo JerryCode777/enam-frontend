@@ -18,11 +18,16 @@ abstract interface class AuthRepository {
   /// [aceptaTerminos] es obligatorio (RNF-06, Ley 29733) y el servidor lo
   /// exige: sin él responde 422 `CONSENT_REQUIRED` y la cuenta no se crea. La
   /// casilla ya estaba en la pantalla; lo que faltaba era que el dato llegara.
+  ///
+  /// [aceptaComerciales] es la otra casilla, la de correos comerciales:
+  /// opcional y desmarcada. Hasta la 1.1.3 la app no lo mandaba nunca, y en
+  /// Android solo el 2 % de las cuentas lo había aceptado (la web, 12 %).
   Future<void> register({
     required String email,
     required String password,
     required String nombre,
     required bool aceptaTerminos,
+    bool? aceptaComerciales,
   });
 
   /// RF-02. Guarda los tokens y devuelve el usuario.
@@ -41,7 +46,14 @@ abstract interface class AuthRepository {
   /// creada no vuelve a pedirlo. Lo da el aviso legal que la pantalla enseña
   /// junto a los botones —«Al continuar, aceptas…»—, así que el toque es el
   /// consentimiento y no hace falta un paso aparte.
-  Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false});
+  ///
+  /// [aceptaComerciales], como en [register]: el servidor lo ignora si la
+  /// cuenta ya existía.
+  Future<User> loginConGoogle(
+    String idToken, {
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  });
 
   /// Canjea el `identityToken` de Apple por una sesión propia.
   ///
@@ -52,6 +64,7 @@ abstract interface class AuthRepository {
     required String identityToken,
     String? nombre,
     bool aceptaTerminos = false,
+    bool? aceptaComerciales,
   });
 
   Future<void> logout();
@@ -158,6 +171,7 @@ class ApiAuthRepository implements AuthRepository {
     required String password,
     required String nombre,
     required bool aceptaTerminos,
+    bool? aceptaComerciales,
   }) async {
     await _client.post<Map<String, dynamic>>(
       ApiEndpoints.register,
@@ -166,6 +180,7 @@ class ApiAuthRepository implements AuthRepository {
         'password': password,
         'nombre': nombre,
         'aceptaTerminos': aceptaTerminos,
+        'aceptaComerciales': ?aceptaComerciales,
         'anonimoId': ?await _anonimo(),
       },
     );
@@ -188,12 +203,17 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async {
+  Future<User> loginConGoogle(
+    String idToken, {
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  }) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.google,
       data: {
         'idToken': idToken,
         'aceptaTerminos': aceptaTerminos,
+        'aceptaComerciales': ?aceptaComerciales,
         'anonimoId': ?await _anonimo(),
       },
     );
@@ -212,6 +232,7 @@ class ApiAuthRepository implements AuthRepository {
     required String identityToken,
     String? nombre,
     bool aceptaTerminos = false,
+    bool? aceptaComerciales,
   }) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiEndpoints.apple,
@@ -219,6 +240,7 @@ class ApiAuthRepository implements AuthRepository {
         'identityToken': identityToken,
         'nombre': ?nombre,
         'aceptaTerminos': aceptaTerminos,
+        'aceptaComerciales': ?aceptaComerciales,
         'anonimoId': ?await _anonimo(),
       },
     );
