@@ -207,4 +207,13 @@ class _RepoFalso implements SubscriptionRepository {
     origen: SubscriptionOrigin.apple,
     inicia: DateTime.utc(2026, 8, 2),
   );
+
+  @override
+  Future<CanjeGooglePlay> canjearCompraGooglePlay({
+    required String productId,
+    required String purchaseToken,
+  }) async => CanjeActivado(await current());
+
+  @override
+  Future<Set<String>> planesOfrecidos() async => const {};
 }

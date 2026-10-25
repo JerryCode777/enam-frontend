@@ -22,6 +22,8 @@ import '../features/stats/data/stats_repository.dart';
 import '../features/stats/domain/stats_models.dart';
 import '../features/subscription/data/apple_iap_service.dart';
 import '../features/subscription/data/compras_apple_controller.dart';
+import '../features/subscription/data/compras_google_play_controller.dart';
+import '../features/subscription/data/google_play_iap_service.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/acceso.dart';
 import '../features/subscription/domain/subscription_models.dart';
@@ -562,16 +564,39 @@ final comprasAppleControllerProvider = Provider<ComprasAppleController>((ref) {
   );
 });
 
+/// Habla con Google Play Billing. Falso con mocks, para recorrer la pantalla de
+/// planes sin Play.
+final googlePlayIapServiceProvider = Provider<GooglePlayIapService>((ref) {
+  if (AppConfig.useMocks) return MockGooglePlayIapService();
+  return GooglePlayIapServiceImpl();
+});
+
+/// Como [comprasAppleControllerProvider], para Google Play. Sin `autoDispose`
+/// por lo mismo: si alguien paga y sale de la pantalla, la compra la termina
+/// este controlador.
+final comprasGooglePlayControllerProvider =
+    Provider<ComprasGooglePlayController>((ref) {
+      return ComprasGooglePlayController(
+        tienda: ref.watch(googlePlayIapServiceProvider),
+        suscripciones: ref.watch(subscriptionRepositoryProvider),
+      );
+    });
+
+/// Los planes que el servidor ofrece a esta cuenta en esta plataforma.
+final planesOfrecidosProvider = FutureProvider.autoDispose<Set<String>>((ref) {
+  ref.watch(currentUserProvider.select((u) => u?.id));
+  return ref.watch(subscriptionRepositoryProvider).planesOfrecidos();
+});
+
 final subscriptionProvider = FutureProvider<Subscription>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) throw StateError('Sin sesión: no hay suscripción');
   return ref.watch(subscriptionRepositoryProvider).current();
 });
 
-// No hay `plansProvider` ni `planProvider`, y no es un olvido: la app no lista
-// planes ni enseña precios. Las tiendas no dejan cobrar dentro sin su comisión,
-// así que el catálogo y el importe viven en la web y en el correo, que además
-// es donde pueden cambiar sin publicar una versión nueva.
+// Los precios no salen de nuestro servidor: los pone la tienda (StoreKit o
+// Play), que es lo que exigen las dos. De `GET /plans` solo se mira qué planes
+// se ofrecen ([planesOfrecidosProvider]).
 //
 // El plan que el usuario YA tiene llega dentro de `GET /subscription`, y de ahí
 // lo saca «Mi suscripción» para poder decir su nombre y hasta cuándo vale.

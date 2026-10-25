@@ -4,7 +4,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:in_app_purchase/in_app_purchase.dart';
 
-import '../../../core/error/failure.dart';
+import 'fallo_de_tienda.dart';
 
 /// Los identificadores de los productos, tal como están en App Store Connect.
 ///
@@ -86,11 +86,17 @@ class AppleIapServiceImpl implements AppleIapService {
 
   @override
   Future<List<ProductDetails>> productos() async {
-    final respuesta = await _tienda.queryProductDetails(productosApple.toSet());
+    final ProductDetailsResponse respuesta;
+    try {
+      respuesta = await _tienda.queryProductDetails(productosApple.toSet());
+    } catch (e) {
+      throw FalloDeTienda('$e', codigo: codigoDeTienda(e));
+    }
 
-    if (respuesta.error != null) {
-      throw UnknownFailure(
-        'No pudimos cargar los planes. ${respuesta.error!.message}',
+    if (respuesta.error case final error?) {
+      throw FalloDeTienda(
+        'No pudimos cargar los planes. ${error.message}',
+        codigo: codigoDeTienda(error),
       );
     }
 

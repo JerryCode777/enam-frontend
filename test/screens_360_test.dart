@@ -331,6 +331,15 @@ class _InstantSubscription implements SubscriptionRepository {
 
   @override
   Future<Subscription> canjearCompraApple(String jws) => current();
+
+  @override
+  Future<CanjeGooglePlay> canjearCompraGooglePlay({
+    required String productId,
+    required String purchaseToken,
+  }) async => CanjeActivado(await current());
+
+  @override
+  Future<Set<String>> planesOfrecidos() async => const {};
 }
 
 /// Sesiones que responden sin latencia.

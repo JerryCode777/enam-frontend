@@ -21,6 +21,11 @@ enum EstadoCompra {
   registrando,
 
   listo,
+
+  /// La tienda todavía no confirmó el pago (Google Play: pago pendiente, 202
+  /// del servidor). No es un error: se activa solo cuando se confirme.
+  pendiente,
+
   error,
 }
 

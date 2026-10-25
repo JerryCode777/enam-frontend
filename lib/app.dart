@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,8 @@ import 'core/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/design_tokens.dart';
+import 'features/subscription/presentation/widgets/opciones_de_pago.dart'
+    show enTiendaApple;
 
 class EnamApp extends ConsumerStatefulWidget {
   const EnamApp({super.key});
@@ -37,6 +40,17 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
         unawaited(ref.read(analiticaProvider).enviarPendientes());
       }
     });
+
+    // Android: al abrir con sesión, o al iniciarla, se vuelve a mandar al
+    // servidor lo que se compró en Play y quedó sin registrar (pagó y se cerró
+    // la app, sin red, otro teléfono). Es idempotente en el servidor.
+    ref.listenManual(currentUserProvider.select((u) => u?.id), (_, id) {
+      if (id != null && !enTiendaApple && !kIsWeb) {
+        unawaited(
+          ref.read(comprasGooglePlayControllerProvider).restaurarEnSilencio(),
+        );
+      }
+    }, fireImmediately: true);
   }
 
   @override

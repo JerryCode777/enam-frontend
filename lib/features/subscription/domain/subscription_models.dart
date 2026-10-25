@@ -27,6 +27,12 @@ enum SubscriptionOrigin {
   /// se queda su comisión y deposita en otra moneda y con otro calendario.
   apple,
 
+  /// Comprada con Google Play Billing en la app de Android (`google_play`).
+  ///
+  /// Como [apple]: la renovación y la cancelación las gestiona la tienda, no
+  /// nuestro servidor.
+  googlePlay,
+
   /// Un medio que este cliente todavía no conoce.
   ///
   /// Existe para que la app NO se caiga cuando el servidor añada uno nuevo.

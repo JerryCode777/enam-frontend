@@ -2,6 +2,7 @@ import '../../../core/config/api_endpoints.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/acceso.dart';
+import 'google_play_iap_service.dart' show paqueteGooglePlay, productoHastaEnam;
 import '../domain/subscription_models.dart';
 
 /// Suscripciones y planes (Módulo 6 del SSD).
@@ -47,6 +48,42 @@ abstract interface class SubscriptionRepository {
   /// arranque, y así hasta que entre. Es lo que impide que alguien pague y se
   /// quede sin acceso.
   Future<Subscription> canjearCompraApple(String jws);
+
+  /// Canjea una compra de Google Play por acceso
+  /// (`POST /subscription/google-play/verify`).
+  ///
+  /// Si esto lanza, la compra **no** se completa: se vuelve a mandar en la
+  /// próxima apertura (`restaurar`). Un pago pendiente en Play (202) no es un
+  /// fallo: vuelve como [CanjePendiente].
+  Future<CanjeGooglePlay> canjearCompraGooglePlay({
+    required String productId,
+    required String purchaseToken,
+  });
+
+  /// Los `id` de los planes que el servidor le ofrece a esta cuenta en esta
+  /// plataforma (`GET /plans`, con `X-Plataforma`). Sirve para no enseñar
+  /// «Hasta tu ENAM» a quien no le corresponde o cuando ya no se vende.
+  Future<Set<String>> planesOfrecidos();
+}
+
+/// Lo que respondió el servidor al canjear una compra de Google Play.
+sealed class CanjeGooglePlay {
+  const CanjeGooglePlay();
+}
+
+/// 200: la compra da acceso.
+final class CanjeActivado extends CanjeGooglePlay {
+  const CanjeActivado(this.suscripcion);
+
+  final Subscription suscripcion;
+}
+
+/// 202: Play todavía no confirmó el pago. La compra queda guardada a nombre de
+/// la cuenta y el servidor la aplica cuando Play avise.
+final class CanjePendiente extends CanjeGooglePlay {
+  const CanjePendiente(this.mensaje);
+
+  final String mensaje;
 }
 
 class ApiSubscriptionRepository implements SubscriptionRepository {
@@ -93,6 +130,41 @@ class ApiSubscriptionRepository implements SubscriptionRepository {
       data: {'jws': jws},
     );
     return Subscription.fromJson(data);
+  }
+
+  @override
+  Future<CanjeGooglePlay> canjearCompraGooglePlay({
+    required String productId,
+    required String purchaseToken,
+  }) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiEndpoints.verificarCompraGooglePlay,
+      data: {
+        'packageName': paqueteGooglePlay,
+        'productId': productId,
+        'purchaseToken': purchaseToken,
+        'tipo': productId == productoHastaEnam ? 'unica' : 'suscripcion',
+      },
+    );
+    // El 202 trae `{"estado": "pendiente", "mensaje"}`; el 200, la
+    // suscripción, cuyo estado es `activa` o `en_gracia`.
+    if (data['estado'] == 'pendiente') {
+      return CanjePendiente(
+        data['mensaje'] as String? ??
+            'Tu pago está pendiente en Google Play. Te daremos acceso en '
+                'cuanto se confirme.',
+      );
+    }
+    return CanjeActivado(Subscription.fromJson(data));
+  }
+
+  @override
+  Future<Set<String>> planesOfrecidos() async {
+    final data = await _client.get<List<dynamic>>(ApiEndpoints.planes);
+    return {
+      for (final p in data)
+        if (p case {'id': final String id}) id,
+    };
   }
 }
 
@@ -270,4 +342,21 @@ class MockSubscriptionRepository implements SubscriptionRepository {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     return current();
   }
+
+  @override
+  Future<CanjeGooglePlay> canjearCompraGooglePlay({
+    required String productId,
+    required String purchaseToken,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    return CanjeActivado(await current());
+  }
+
+  @override
+  Future<Set<String>> planesOfrecidos() async => {
+    'hasta-enam',
+    'mensual',
+    'intensivo',
+    'semestral',
+  };
 }
