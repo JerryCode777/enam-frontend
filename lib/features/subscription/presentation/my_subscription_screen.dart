@@ -217,10 +217,6 @@ class _TarjetaPlan extends StatelessWidget {
                 SubscriptionStatus.enGracia => switch (sub.origen) {
                   SubscriptionOrigin.culqi => 'Automática',
                   SubscriptionOrigin.apple => 'Automática, por App Store',
-                  // «Hasta tu ENAM» es un pago único: no se renueva.
-                  SubscriptionOrigin.googlePlay
-                      when sub.plan.id == 'hasta-enam' =>
-                    'Sin renovación',
                   SubscriptionOrigin.googlePlay =>
                     'Automática, por Google Play',
                   _ => 'Manual',
@@ -383,9 +379,8 @@ class _AccionesState extends ConsumerState<_Acciones> {
           ),
         ] else if (widget.sub.origen == SubscriptionOrigin.googlePlay) ...[
           // Igual que App Store: nuestro servidor no detiene un cobro de Play,
-          // así que aquí no hay botón de cancelar. «Hasta tu ENAM» es un pago
-          // único: no hay renovación que gestionar.
-          if (_puedeCancelar && widget.sub.plan.id != 'hasta-enam') ...[
+          // así que aquí no hay botón de cancelar.
+          if (_puedeCancelar) ...[
             const SizedBox(height: DesignTokens.space4),
             Text(
               'La renovación la gestiona Google Play. Para cancelarla, ve a Play '

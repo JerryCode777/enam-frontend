@@ -155,13 +155,11 @@ void main() {
   group('los productos de Play', () {
     test('ids y planes del servidor', () {
       expect(productosGooglePlay, [
-        'hasta_enam_2026',
         'premium_mensual',
         'premium_trimestral',
         'premium_semestral',
       ]);
       expect(productosGooglePlay.map(planIdDeGooglePlay), [
-        'hasta-enam',
         'mensual',
         'intensivo',
         'semestral',
@@ -280,9 +278,6 @@ class _RepoFalso implements SubscriptionRepository {
     }
     return CanjeActivado(_suscripcion);
   }
-
-  @override
-  Future<Set<String>> planesOfrecidos() async => {'mensual'};
 
   @override
   Future<Subscription> canjearCompraApple(String jws) async => _suscripcion;

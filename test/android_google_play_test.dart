@@ -107,19 +107,18 @@ void main() {
       ]);
     });
 
-    testWidgets('«Hasta tu ENAM» solo si el servidor lo ofrece', (
+    testWidgets('solo las tres suscripciones, sin «(ENAM Prep)»', (
       tester,
     ) async {
-      final sin = _Montaje(sub: _expirada, ofrecidos: {'mensual'});
-      await tester.pumpWidget(sin.montar(const Scaffold(body: _Opciones())));
+      final t = _Montaje(sub: _expirada);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
       await tester.pumpAndSettle();
-      expect(find.text('Hasta tu ENAM'), findsNothing);
 
-      final con = _Montaje(sub: _expirada, ofrecidos: {'hasta-enam'});
-      await tester.pumpWidget(con.montar(const Scaffold(body: _Opciones())));
-      await tester.pumpAndSettle();
-      expect(find.text('Hasta tu ENAM'), findsOneWidget);
-      expect(find.text('Comprar'), findsOneWidget);
+      expect(find.text('Premium mensual'), findsOneWidget);
+      expect(find.text('Premium trimestral'), findsOneWidget);
+      expect(find.text('Premium semestral'), findsOneWidget);
+      expect(find.textContaining('(ENAM Prep)'), findsNothing);
+      expect(find.textContaining('Hasta tu ENAM'), findsNothing);
     });
 
     testWidgets('quien ya pagó ve «Ya tienes Premium», no precios', (
@@ -207,16 +206,6 @@ void main() {
       );
       expect(find.text('Cancelar renovación'), findsNothing);
     });
-
-    testWidgets('«Hasta tu ENAM» no se renueva', (tester) async {
-      final t = _Montaje(sub: _hastaEnamPorPlay);
-      await tester.pumpWidget(t.montar(const MySubscriptionScreen()));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Sin renovación'), findsOneWidget);
-      expect(find.text('Abrir mis suscripciones de Google Play'), findsNothing);
-      expect(find.text('Cancelar renovación'), findsNothing);
-    });
   });
 
   testWidgets('quien es Premium por la web puede cancelar la renovación', (
@@ -252,7 +241,7 @@ void main() {
   });
 }
 
-/// [OpcionesDePago] con sitio para desplazarse: son cuatro planes.
+/// [OpcionesDePago] con sitio para desplazarse: son tres planes.
 class _Opciones extends StatelessWidget {
   const _Opciones();
 
@@ -272,7 +261,6 @@ ProductDetails _producto(String id, String titulo, String precio) =>
     );
 
 final _productosDePlay = [
-  _producto('hasta_enam_2026', 'Hasta tu ENAM', 'S/ 99.00'),
   _producto('premium_mensual', 'Premium mensual', 'S/ 59.00'),
   _producto('premium_trimestral', 'Premium trimestral', 'S/ 129.00'),
   _producto('premium_semestral', 'Premium semestral', 'S/ 229.00'),
@@ -283,11 +271,9 @@ class _Montaje {
     required this.sub,
     List<ProductDetails>? productos,
     FalloDeTienda? falla,
-    this.ofrecidos = const {'mensual', 'intensivo', 'semestral'},
   }) : tienda = _TiendaFalsa(productos ?? _productosDePlay, falla);
 
   final Subscription sub;
-  final Set<String> ofrecidos;
   final _TiendaFalsa tienda;
   final analitica = _Capturadora();
 
@@ -295,7 +281,7 @@ class _Montaje {
     overrides: [
       authControllerProvider.overrideWith(_ConSesion.new),
       subscriptionProvider.overrideWith((ref) async => sub),
-      subscriptionRepositoryProvider.overrideWithValue(_Repo(sub, ofrecidos)),
+      subscriptionRepositoryProvider.overrideWithValue(_Repo(sub)),
       googlePlayIapServiceProvider.overrideWithValue(tienda),
       analiticaProvider.overrideWithValue(analitica),
       // Sin pase de duelo: el botón del duelo gratis no se pinta.
@@ -386,16 +372,6 @@ final _premiumPorPlay = _premiumPorLaWeb.copyWith(
   acceso: const AccesoPremium(),
 );
 
-final _hastaEnamPorPlay = _premiumPorPlay.copyWith(
-  id: 's4',
-  plan: const Plan(
-    id: 'hasta-enam',
-    nombre: 'Hasta tu ENAM',
-    precioCentimos: 9900,
-    duracionDias: 28,
-  ),
-);
-
 class _ConSesion extends AuthController {
   @override
   Future<AuthState> build() async => const AuthSignedIn(
@@ -409,10 +385,9 @@ class _ConSesion extends AuthController {
 }
 
 class _Repo implements SubscriptionRepository {
-  _Repo(this.sub, this.ofrecidos);
+  _Repo(this.sub);
 
   final Subscription sub;
-  final Set<String> ofrecidos;
 
   @override
   Future<Subscription> current() async => sub;
@@ -436,7 +411,4 @@ class _Repo implements SubscriptionRepository {
     required String productId,
     required String purchaseToken,
   }) async => CanjeActivado(sub);
-
-  @override
-  Future<Set<String>> planesOfrecidos() async => ofrecidos;
 }

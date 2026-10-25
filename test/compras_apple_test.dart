@@ -213,7 +213,4 @@ class _RepoFalso implements SubscriptionRepository {
     required String productId,
     required String purchaseToken,
   }) async => CanjeActivado(await current());
-
-  @override
-  Future<Set<String>> planesOfrecidos() async => const {};
 }

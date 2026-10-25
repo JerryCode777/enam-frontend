@@ -86,7 +86,7 @@ abstract final class ApiEndpoints {
 
   // ---------- Suscripciones (Módulo 6) ----------
   //
-  // No hay `/checkout`: la app no cobra con nuestra pasarela. En iPhone se
+  // No hay `/plans` ni `/checkout`: la app no cobra con nuestra pasarela. En iPhone se
   // cobra con App Store y en Android con Google Play, que ponen sus precios.
   static const String subscription = '/subscription';
   static const String cancelSubscription = '/subscription/cancel';
@@ -103,11 +103,6 @@ abstract final class ApiEndpoints {
   /// `obfuscatedAccountId` de la compra sea esta cuenta.
   static const String verificarCompraGooglePlay =
       '/subscription/google-play/verify';
-
-  /// Los planes que se le ofrecen a esta cuenta en esta plataforma. La app no
-  /// pinta sus precios (los pone la tienda): solo mira qué planes hay, para no
-  /// enseñar «Hasta tu ENAM» cuando no corresponde.
-  static const String planes = '/plans';
 
   /// Manda al correo el enlace para completar la suscripción en la web.
   ///

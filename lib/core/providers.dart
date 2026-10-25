@@ -582,21 +582,14 @@ final comprasGooglePlayControllerProvider =
       );
     });
 
-/// Los planes que el servidor ofrece a esta cuenta en esta plataforma.
-final planesOfrecidosProvider = FutureProvider.autoDispose<Set<String>>((ref) {
-  ref.watch(currentUserProvider.select((u) => u?.id));
-  return ref.watch(subscriptionRepositoryProvider).planesOfrecidos();
-});
-
 final subscriptionProvider = FutureProvider<Subscription>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) throw StateError('Sin sesión: no hay suscripción');
   return ref.watch(subscriptionRepositoryProvider).current();
 });
 
-// Los precios no salen de nuestro servidor: los pone la tienda (StoreKit o
-// Play), que es lo que exigen las dos. De `GET /plans` solo se mira qué planes
-// se ofrecen ([planesOfrecidosProvider]).
+// No hay `plansProvider` ni `planProvider`: los planes y sus precios los pone
+// la tienda (StoreKit o Play), que es lo que exigen las dos.
 //
 // El plan que el usuario YA tiene llega dentro de `GET /subscription`, y de ahí
 // lo saca «Mi suscripción» para poder decir su nombre y hasta cuándo vale.

@@ -73,7 +73,7 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
     'pantalla': {'planes', 'acceso_terminado', 'perfil', 'otra'},
   },
   Evento.checkoutStarted: {
-    'plan_id': {'mensual', 'intensivo', 'semestral', 'hasta-enam'},
+    'plan_id': {'mensual', 'intensivo', 'semestral'},
     'medio': {'apple', 'google_play'},
   },
   Evento.planesNoDisponibles: {

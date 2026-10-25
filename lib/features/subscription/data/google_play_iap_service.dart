@@ -15,23 +15,17 @@ const paqueteGooglePlay = 'pe.jakstech.enam_app';
 /// Los `productId` de Play Console, los del servidor (`enam-backend`,
 /// `GOOGLE-PLAY.md` §2).
 ///
-/// El orden es el de la pantalla: «Hasta tu ENAM» primero, que es el que el
-/// servidor recomienda mientras se vende, y luego la escalera de suscripciones.
+/// Las tres son suscripciones, en el orden de la pantalla.
 const productosGooglePlay = <String>[
-  'hasta_enam_2026',
   'premium_mensual',
   'premium_trimestral',
   'premium_semestral',
 ];
 
-/// El de pago único. Las demás son suscripciones.
-const productoHastaEnam = 'hasta_enam_2026';
-
 /// El `plan_id` del servidor para cada producto de Google Play. Explícito, como
 /// en `GOOGLE_PLAY_PRODUCTOS`: el trimestral se llama `intensivo` por historia.
 /// `null` si el producto no se conoce.
 String? planIdDeGooglePlay(String productId) => switch (productId) {
-  'hasta_enam_2026' => 'hasta-enam',
   'premium_mensual' => 'mensual',
   'premium_trimestral' => 'intensivo',
   'premium_semestral' => 'semestral',
@@ -115,9 +109,8 @@ class GooglePlayIapServiceImpl implements GooglePlayIapService {
     ProductDetails producto, {
     required String cuentaId,
   }) async {
-    // `buyNonConsumable` también para «Hasta tu ENAM»: no se consume, queda
-    // comprado. Con `buyConsumable` Play lo daría por gastado y no se podría
-    // restaurar.
+    // `buyNonConsumable` es el de las suscripciones: `buyConsumable` es para
+    // lo que se gasta.
     //
     // `applicationUserName` llega a Play como `obfuscatedAccountId`. El
     // servidor lo compara con quien verifica: si no coincide, 409. Es el UUID
@@ -172,7 +165,7 @@ bool _esPlanBase(ProductDetails p) {
 
 /// Tienda de mentira, para recorrer la pantalla de planes sin Play.
 ///
-/// Devuelve los cuatro productos con los precios de la web escritos a mano:
+/// Devuelve los tres productos con los precios de la web escritos a mano:
 /// son datos de ejemplo para pintar la pantalla, y en cuanto se apagan los
 /// mocks vienen de Play. La compra no hace nada.
 class MockGooglePlayIapService implements GooglePlayIapService {
@@ -187,14 +180,6 @@ class MockGooglePlayIapService implements GooglePlayIapService {
   Future<List<ProductDetails>> productos() async {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     return [
-      ProductDetails(
-        id: 'hasta_enam_2026',
-        title: 'Hasta tu ENAM',
-        description: 'Acceso completo hasta el día del ENAM. Pago único.',
-        price: 'S/ 99.00',
-        rawPrice: 99,
-        currencyCode: 'PEN',
-      ),
       ProductDetails(
         id: 'premium_mensual',
         title: 'Premium mensual',

@@ -16,8 +16,7 @@ import '../../data/compras_apple_controller.dart'
     show EstadoCompra, ResultadoCompra;
 import '../../data/compras_google_play_controller.dart';
 import '../../data/fallo_de_tienda.dart';
-import '../../data/google_play_iap_service.dart'
-    show planIdDeGooglePlay, productoHastaEnam;
+import '../../data/google_play_iap_service.dart' show planIdDeGooglePlay;
 import '../../domain/acceso.dart';
 import '../../domain/subscription_models.dart';
 
@@ -165,15 +164,6 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
       );
     }
 
-    // «Hasta tu ENAM» solo si el servidor lo ofrece a esta cuenta: puede dar
-    // otra convocatoria, o ya no estar a la venta. Si no se sabe, no.
-    final ofrecidos = ref.watch(planesOfrecidosProvider).value;
-    final visibles = [
-      for (final p in productos)
-        if (p.id != productoHastaEnam ||
-            (ofrecidos?.contains('hasta-enam') ?? false))
-          p,
-    ];
     final cuentaId = ref.watch(currentUserProvider)?.id;
 
     return Column(
@@ -190,7 +180,7 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
           const SizedBox(height: DesignTokens.space3),
         ],
 
-        for (final p in visibles) ...[
+        for (final p in productos) ...[
           _Plan(
             producto: p,
             cargando: _comprando == p.id,
@@ -236,7 +226,6 @@ class _Plan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
-    final unico = producto.id == productoHastaEnam;
 
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
@@ -281,7 +270,7 @@ class _Plan extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space3),
           EnamButton(
-            label: unico ? 'Comprar' : 'Suscribirme',
+            label: 'Suscribirme',
             loading: cargando,
             onPressed: onComprar,
           ),
@@ -315,8 +304,7 @@ class _LetraPequena extends StatelessWidget {
             'El pago se carga a tu cuenta de Google Play al confirmar. Las '
             'suscripciones se renuevan solas por el mismo periodo y al mismo '
             'precio hasta que las canceles, cuando quieras, en Play Store → '
-            'Pagos y suscripciones → Suscripciones. «Hasta tu ENAM» es un pago '
-            'único: no se renueva.',
+            'Pagos y suscripciones → Suscripciones.',
             style: estilo,
           ),
           const SizedBox(height: DesignTokens.space2),
