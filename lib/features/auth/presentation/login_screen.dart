@@ -19,6 +19,7 @@ import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/social_buttons.dart';
 import '../../../shared/widgets/state_banner.dart';
+import '../../consentimiento/presentation/casilla_de_comerciales.dart';
 import 'eventos_de_registro.dart';
 
 /// Pantalla 1.5 — login con correo y contraseña, y con Google.
@@ -42,6 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _loading = false;
   bool _loadingGoogle = false;
   bool _loadingApple = false;
+  bool _comerciales = false;
 
   /// Cualquier login en curso: bloquea el resto de la pantalla, para que no se
   /// puedan lanzar dos a la vez.
@@ -79,7 +81,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final entro = await ref
           .read(authControllerProvider.notifier)
-          .signInWithGoogle(aceptaTerminos: true);
+          .signInWithGoogle(
+            aceptaTerminos: true,
+            aceptaComerciales: _comerciales,
+          );
       if (!entro && mounted) _fallo('google', 'proveedor_cancelado');
     } on Object catch (error) {
       if (mounted) _fallo('google', motivoDeFallo(error));
@@ -103,7 +108,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final entro = await ref
           .read(authControllerProvider.notifier)
-          .signInWithApple(aceptaTerminos: true);
+          .signInWithApple(
+            aceptaTerminos: true,
+            aceptaComerciales: _comerciales,
+          );
       if (!entro && mounted) _fallo('apple', 'proveedor_cancelado');
     } on Object catch (error) {
       if (mounted) _fallo('apple', motivoDeFallo(error));
@@ -242,6 +250,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: _submit,
                       ),
                       if (_hayProveedores) const SeparadorAuth(),
+                      // Google y Apple también crean cuentas, y desde aquí:
+                      // la casilla vale para el alta y el servidor la ignora
+                      // en una cuenta que ya existía. Antes de los botones,
+                      // para que se vea antes de tocarlos.
+                      if (_hayProveedores)
+                        CasillaDeComerciales(
+                          value: _comerciales,
+                          onChanged: _ocupado
+                              ? null
+                              : (v) => setState(() => _comerciales = v),
+                        ),
                       if (AppConfig.googleSignInHabilitado)
                         GoogleButton(
                           loading: _loadingGoogle,

@@ -264,7 +264,7 @@ void main() {
       await tester.enterText(campos.at(0), 'Valeria Rojas');
       await tester.enterText(campos.at(1), 'existente@enam.pe');
       await tester.enterText(campos.at(2), 'una-clave-larga');
-      await tester.tap(find.byType(Checkbox));
+      await tester.tap(find.byType(Checkbox).first);
       await tester.pump();
       await tester.tap(find.text('Crear cuenta'));
       // El doble responde con una espera, como la red.

@@ -39,14 +39,18 @@ class _AuthListo implements AuthRepository {
       _user;
 
   @override
-  Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async =>
-      _user;
+  Future<User> loginConGoogle(
+    String idToken, {
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  }) async => _user;
 
   @override
   Future<User> loginConApple({
     required String identityToken,
     String? nombre,
     bool aceptaTerminos = false,
+    bool? aceptaComerciales,
   }) async => _user;
 
   @override
@@ -58,6 +62,7 @@ class _AuthListo implements AuthRepository {
     required String password,
     required String nombre,
     required bool aceptaTerminos,
+    bool? aceptaComerciales,
   }) async {}
 
   @override

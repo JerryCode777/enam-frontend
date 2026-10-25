@@ -29,6 +29,7 @@ class MockAuthRepository implements AuthRepository {
     required String password,
     required String nombre,
     required bool aceptaTerminos,
+    bool? aceptaComerciales,
   }) async {
     await Future<void>.delayed(_delay);
     if (email == 'existente@enam.pe') {
@@ -56,6 +57,7 @@ class MockAuthRepository implements AuthRepository {
       email: email,
       nombre: nombre,
       emailVerificado: false,
+      aceptaComerciales: aceptaComerciales,
     );
   }
 
@@ -87,7 +89,11 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<User> loginConGoogle(String idToken, {bool aceptaTerminos = false}) async {
+  Future<User> loginConGoogle(
+    String idToken, {
+    bool aceptaTerminos = false,
+    bool? aceptaComerciales,
+  }) async {
     await Future<void>.delayed(_delay);
 
     // Cuenta nueva sin consentimiento: el servidor real responde lo mismo, y
@@ -102,12 +108,13 @@ class MockAuthRepository implements AuthRepository {
 
     // Cuenta de Google recién creada: entra sin perfil, así se puede recorrer
     // el flujo de completar perfil (RF-04) que es el caso real más común.
-    return _current = const User(
+    return _current = User(
       id: 'mock-user-google',
       email: 'estudiante@gmail.com',
       nombre: 'Estudiante Google',
       // Google ya verificó el correo, así que no se vuelve a pedir.
       emailVerificado: true,
+      aceptaComerciales: aceptaComerciales,
     );
   }
 
@@ -116,6 +123,7 @@ class MockAuthRepository implements AuthRepository {
     required String identityToken,
     String? nombre,
     bool aceptaTerminos = false,
+    bool? aceptaComerciales,
   }) async {
     await Future<void>.delayed(_delay);
 
@@ -134,6 +142,7 @@ class MockAuthRepository implements AuthRepository {
       email: 'abc123@privaterelay.appleid.com',
       nombre: nombre ?? 'Estudiante Apple',
       emailVerificado: true,
+      aceptaComerciales: aceptaComerciales,
     );
   }
 
