@@ -25,6 +25,9 @@ import 'widgets/opciones_de_pago.dart';
 ///   saber qué es antes de que le hablen de pagar (RP-02).
 /// - **Sin ofertas.** El descuento es solo de la web, por las normas de las
 ///   tiendas; aquí no se muestra ni se menciona.
+/// - **Compacto**: el encabezado, lo que incluye y los planes caben en una
+///   pantalla de teléfono, con el botón de comprar a la vista sin desplazarse
+///   (pedido de Jerry, 25/10/2026).
 /// - El cobro, según la tienda, en [OpcionesDePago]: App Store en iPhone. En
 ///   Android la app no vende (política de pagos de Google Play): solo dice que
 ///   Premium va con la cuenta.
@@ -118,20 +121,20 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
         top: false,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space6,
+            DesignTokens.space5,
             0,
-            DesignTokens.space6,
-            DesignTokens.space6,
+            DesignTokens.space5,
+            DesignTokens.space5,
           ),
           children: [
             _Encabezado(icono: icono, titular: titular, bajada: bajada),
-            const SizedBox(height: DesignTokens.space5),
-            const _QueIncluye(),
             const SizedBox(height: DesignTokens.space4),
-            _GratisSigue(porDia: porDia, diaGratis: diaGratis),
-            const SizedBox(height: DesignTokens.space5),
-            const OpcionesDePago(),
+            const _QueIncluye(),
             const SizedBox(height: DesignTokens.space3),
+            _GratisSigue(porDia: porDia, diaGratis: diaGratis),
+            const SizedBox(height: DesignTokens.space4),
+            const OpcionesDePago(),
+            const SizedBox(height: DesignTokens.space2),
             Center(
               child: TextButton(
                 onPressed: _cerrar,
@@ -165,24 +168,30 @@ class _Encabezado extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(DesignTokens.space3),
-          decoration: BoxDecoration(
-            color: info.tint,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          ),
-          child: Icon(icono, size: 28, fill: 1, color: info.onTint),
-        ),
-        const SizedBox(height: DesignTokens.space4),
-        Text(
-          titular,
-          style: context.texts.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            height: DesignTokens.lineHeightTight,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(DesignTokens.space2),
+              decoration: BoxDecoration(
+                color: info.tint,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
+              child: Icon(icono, size: 22, fill: 1, color: info.onTint),
+            ),
+            const SizedBox(width: DesignTokens.space3),
+            Expanded(
+              child: Text(
+                titular,
+                style: context.texts.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: DesignTokens.lineHeightTight,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: DesignTokens.space2),
-        Text(bajada, style: context.texts.bodyLarge?.copyWith(height: 1.5)),
+        Text(bajada, style: context.texts.bodyMedium?.copyWith(height: 1.45)),
       ],
     );
   }
@@ -205,7 +214,7 @@ class _QueIncluye extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.scheme;
     return Container(
-      padding: const EdgeInsets.all(DesignTokens.space4),
+      padding: const EdgeInsets.all(DesignTokens.space3),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -222,18 +231,19 @@ class _QueIncluye extends StatelessWidget {
               color: scheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: DesignTokens.space3),
+          const SizedBox(height: DesignTokens.space2),
           for (final (icono, texto) in _lineas)
             Padding(
-              padding: const EdgeInsets.only(bottom: DesignTokens.space2),
+              padding: const EdgeInsets.only(bottom: DesignTokens.space1 + 2),
               child: Row(
                 children: [
-                  Icon(icono, size: 20, color: scheme.primary),
-                  const SizedBox(width: DesignTokens.space3),
+                  Icon(icono, size: 18, color: scheme.primary),
+                  const SizedBox(width: DesignTokens.space2 + 2),
                   Expanded(
                     child: Text(
                       texto,
-                      style: context.texts.bodyMedium?.copyWith(
+                      style: context.texts.bodySmall?.copyWith(
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -263,7 +273,7 @@ class _GratisSigue extends StatelessWidget {
   Widget build(BuildContext context) {
     final success = context.states.success;
     return Container(
-      padding: const EdgeInsets.all(DesignTokens.space4),
+      padding: const EdgeInsets.all(DesignTokens.space3),
       decoration: BoxDecoration(
         color: success.tint,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -271,8 +281,8 @@ class _GratisSigue extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Symbols.check_circle, size: 21, fill: 1, color: success.onTint),
-          const SizedBox(width: DesignTokens.space3),
+          Icon(Symbols.check_circle, size: 18, fill: 1, color: success.onTint),
+          const SizedBox(width: DesignTokens.space2 + 2),
           Expanded(
             child: Text(
               switch ((diaGratis, porDia)) {
@@ -286,8 +296,9 @@ class _GratisSigue extends StatelessWidget {
                   'Tu cuenta gratis sigue: preguntas cada día con su '
                       'explicación, y tu avance guardado.',
               },
-              style: context.texts.bodyMedium?.copyWith(
-                height: 1.5,
+              style: context.texts.bodySmall?.copyWith(
+                fontSize: 13,
+                height: 1.4,
                 color: success.onTint,
                 fontWeight: FontWeight.w600,
               ),

@@ -53,6 +53,17 @@ abstract class GradePoint with _$GradePoint {
     /// un número, que es una regla escondida esperando a romperse.
     String? tipo,
     int? totalPreguntas,
+
+    /// `finalizada` o `expirada`. Un simulacro abandonado se cierra solo al
+    /// acabarse el tiempo y queda `expirada`, con nota 0 aunque no se haya
+    /// respondido nada: en producción el historial se llenaba de «0.00».
+    ///
+    /// Nulo cuando el servidor no lo manda, y entonces cuenta como terminado,
+    /// que es lo que el historial supuso siempre.
+    String? estado,
+
+    /// Cuántas preguntas respondió. Nulo si el servidor no lo manda.
+    int? respondidas,
   }) = _GradePoint;
 
   const GradePoint._();
@@ -66,6 +77,14 @@ abstract class GradePoint with _$GradePoint {
   /// se sabe, así que la interfaz no debe afirmar ninguna de las dos cosas.
   bool? get esCompleto =>
       totalPreguntas == null ? null : totalPreguntas! >= 180;
+
+  /// Si terminó con nota. Solo esos la muestran y entran a la evolución.
+  bool get terminado => estado == null || estado == 'finalizada';
+
+  /// Si va en el historial: los terminados, y los que se quedaron sin
+  /// terminar con algo respondido («Sin terminar»). Uno vencido sin ninguna
+  /// respuesta no es un intento, es un examen que se abrió y se dejó.
+  bool get vaEnElHistorial => terminado || (respondidas ?? 0) > 0;
 }
 
 /// Días seguidos practicando (RF-49).
@@ -117,6 +136,16 @@ abstract class DashboardStats with _$DashboardStats {
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) =>
       _$DashboardStatsFromJson(json);
+
+  /// Lo que va en «Tu historial»: sin los vencidos que no tienen respuestas.
+  List<GradePoint> get historial =>
+      evolucion.where((p) => p.vaEnElHistorial).toList(growable: false);
+
+  /// Las notas para la evolución: solo los terminados. Un «Sin terminar» no
+  /// tiene nota, y dibujarlo como 0 hundiría la línea por algo que no se
+  /// rindió.
+  List<GradePoint> get notas =>
+      evolucion.where((p) => p.terminado).toList(growable: false);
 
   double get coberturaBanco =>
       preguntasTotalesBanco == 0 ? 0 : preguntasVistas / preguntasTotalesBanco;

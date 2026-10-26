@@ -17,6 +17,7 @@ void main() {
     WidgetTester tester, {
     List<NationalMock> nacionales = const [],
     List<OpenSession> abiertas = const [],
+    DashboardStats stats = const DashboardStats(notaProyectada: 0),
   }) async {
     tester.view
       ..physicalSize = const Size(393, 1400) * 3
@@ -28,9 +29,7 @@ void main() {
         overrides: [
           nacionalesProvider.overrideWith((_) async => nacionales),
           sesionesAbiertasProvider.overrideWith((_) async => abiertas),
-          dashboardProvider.overrideWith(
-            (_) async => const DashboardStats(notaProyectada: 0),
-          ),
+          dashboardProvider.overrideWith((_) async => stats),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -77,9 +76,7 @@ void main() {
     expect(find.text('Inscribirme'), findsOneWidget);
   });
 
-  testWidgets('un simulacro a medias se ofrece para continuar', (
-    tester,
-  ) async {
+  testWidgets('un simulacro a medias se ofrece para continuar', (tester) async {
     await montar(
       tester,
       abiertas: [
@@ -95,5 +92,86 @@ void main() {
 
     expect(find.textContaining('A medias'), findsOneWidget);
     expect(find.textContaining('pregunta 42 de 180'), findsOneWidget);
+  });
+
+  group('tu historial', () {
+    // Lo que se vio en producción: simulacros abandonados que vencieron solos
+    // (`expirada`), casi todos sin respuestas, salían como «0.00».
+    final stats = DashboardStats(
+      notaProyectada: 0,
+      evolucion: [
+        GradePoint(
+          fecha: DateTime(2026, 8, 1),
+          nota: 13.25,
+          estado: 'finalizada',
+          respondidas: 40,
+        ),
+        GradePoint(
+          fecha: DateTime(2026, 8, 2),
+          nota: 0,
+          estado: 'expirada',
+          respondidas: 0,
+        ),
+        GradePoint(
+          fecha: DateTime(2026, 8, 2),
+          nota: 0,
+          estado: 'expirada',
+          respondidas: 0,
+        ),
+        GradePoint(
+          fecha: DateTime(2026, 8, 3),
+          nota: 2.5,
+          estado: 'expirada',
+          respondidas: 12,
+        ),
+      ],
+    );
+
+    testWidgets('sin los vencidos vacíos, y los vencidos a medias sin nota', (
+      tester,
+    ) async {
+      await montar(tester, stats: stats);
+
+      expect(find.text('TU HISTORIAL'), findsOneWidget);
+      expect(find.text('13.25'), findsOneWidget);
+      expect(find.text('Sin terminar'), findsOneWidget);
+      expect(find.text('0.00'), findsNothing);
+      expect(find.text('2.50'), findsNothing);
+      expect(find.text('2 ago 2026'), findsNothing);
+    });
+
+    testWidgets('solo vencidos vacíos: como si no hubiera rendido ninguno', (
+      tester,
+    ) async {
+      await montar(
+        tester,
+        stats: DashboardStats(
+          notaProyectada: 0,
+          evolucion: [
+            GradePoint(
+              fecha: DateTime(2026, 8, 2),
+              nota: 0,
+              estado: 'expirada',
+              respondidas: 0,
+            ),
+          ],
+        ),
+      );
+
+      expect(find.text('Aún no rindes ningún simulacro'), findsOneWidget);
+      expect(find.text('0.00'), findsNothing);
+    });
+
+    test('la evolución solo dibuja los terminados', () {
+      expect(stats.notas.map((p) => p.nota), [13.25]);
+      expect(stats.historial, hasLength(2));
+    });
+
+    test('sin estado, como antes: terminado y con nota', () {
+      // Un servidor que todavía no manda el campo no esconde nada.
+      final viejo = GradePoint(fecha: DateTime(2026, 7, 1), nota: 11);
+      expect(viejo.terminado, isTrue);
+      expect(viejo.vaEnElHistorial, isTrue);
+    });
   });
 }

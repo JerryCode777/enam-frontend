@@ -57,7 +57,7 @@ class SimulacroHubScreen extends ConsumerWidget {
                 const SizedBox(height: DesignTokens.space3),
                 const _TarjetaNacional(),
                 const SizedBox(height: DesignTokens.space5),
-                _Historial(evolucion: stats?.evolucion ?? const []),
+                _Historial(evolucion: stats?.historial ?? const []),
               ],
             ),
           ),
@@ -402,7 +402,18 @@ class _FilaHistorial extends StatelessWidget {
     final states = context.states;
     final nota = punto.nota;
     final fecha = punto.fecha;
-    final aprueba = Blueprint.isPassing(nota);
+    // Solo un simulacro terminado tiene nota: uno que venció a medias dice
+    // «Sin terminar», no un 0.00 que se lee como un examen reprobado.
+    final terminado = punto.terminado;
+    final aprueba = terminado && Blueprint.isPassing(nota);
+    final color = switch ((terminado, aprueba)) {
+      (false, _) => (
+        context.scheme.surfaceContainerHighest,
+        context.scheme.onSurfaceVariant,
+      ),
+      (true, true) => (states.success.tint, states.success.onTint),
+      (true, false) => (states.warning.tint, states.warning.onTint),
+    };
 
     return Padding(
       padding: EdgeInsets.only(bottom: esUltimo ? 0 : DesignTokens.space3),
@@ -420,15 +431,15 @@ class _FilaHistorial extends StatelessWidget {
               vertical: 2,
             ),
             decoration: BoxDecoration(
-              color: aprueba ? states.success.tint : states.warning.tint,
+              color: color.$1,
               borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
             ),
             child: Text(
               // Siempre 2 decimales (RN-01).
-              nota.toStringAsFixed(2),
+              terminado ? nota.toStringAsFixed(2) : 'Sin terminar',
               style: context.texts.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: aprueba ? states.success.onTint : states.warning.onTint,
+                color: color.$2,
               ),
             ),
           ),
