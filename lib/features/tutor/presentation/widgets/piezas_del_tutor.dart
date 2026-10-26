@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/analitica/analitica.dart';
 import '../../../../core/domain/taxonomy.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/providers.dart';
@@ -105,6 +106,12 @@ class _TarjetaPracticarState extends ConsumerState<TarjetaPracticar> {
     return nodo?.nombre ?? 'todas las áreas';
   }
 
+  void _registrar({required bool marcadorValido}) => registrarAccionDelTutor(
+    ref.read(analiticaProvider),
+    'practicar',
+    marcadorValido: marcadorValido,
+  );
+
   Future<void> _empezar() async {
     if (_creando) return;
     setState(() => _creando = true);
@@ -119,8 +126,14 @@ class _TarjetaPracticarState extends ConsumerState<TarjetaPracticar> {
               cantidadPreguntas: p.cantidad,
             ),
           );
+      _registrar(marcadorValido: true);
       if (mounted) context.irA(Routes.practiceSessionOf(sesion.id));
     } on Failure catch (e) {
+      // Un área o tema que no existe vuelve como 404 o 422: el tutor citó mal.
+      // El muro o un fallo de red no dicen nada del marcador.
+      _registrar(
+        marcadorValido: e is! NotFoundFailure && e is! ValidationFailure,
+      );
       if (!mounted) return;
       if (!atenderFaltaDeAcceso(context, ref, e)) {
         showErrorSnack(context, e.message);
@@ -220,6 +233,16 @@ class _PreguntaCitada extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pregunta = ref.watch(_preguntaCitadaProvider(id));
+    // `abrir_pregunta` cuando se sabe si existía: un 404 es una cita mal
+    // hecha del tutor (catálogo 36).
+    ref.listen(_preguntaCitadaProvider(id), (antes, ahora) {
+      if (antes?.isLoading != true || ahora.isLoading) return;
+      registrarAccionDelTutor(
+        ref.read(analiticaProvider),
+        'abrir_pregunta',
+        marcadorValido: ahora.error is! NotFoundFailure,
+      );
+    });
     const padding = EdgeInsets.fromLTRB(
       DesignTokens.space5,
       0,

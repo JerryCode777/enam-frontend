@@ -59,7 +59,15 @@ enum Evento {
 
   /// La app llamó al diálogo nativo de valoración de la tienda, tras un buen
   /// resultado. El sistema no dice si lo enseñó: es «se pidió», no «se vio».
-  valoracionPedida('valoracion_pedida');
+  valoracionPedida('valoracion_pedida'),
+
+  /// Catálogo 36: se abrió el tutor con IA, con el servidor diciendo que
+  /// está disponible. Uno por apertura.
+  tutorAbierto('tutor_abierto'),
+
+  /// Catálogo 36: un toque en una respuesta del tutor (cita, práctica,
+  /// respuesta rápida, 👍/👎, copiar, «No entiendo»).
+  tutorAccion('tutor_accion');
 
   const Evento(this.nombre);
 
@@ -103,6 +111,8 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
       'estadisticas',
       'quiz_ia',
       'cursos',
+      // Catálogo 36: la prueba gratis del tutor se acabó.
+      'tutor',
     },
   },
   Evento.cursoVisto: {
@@ -129,12 +139,38 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
   Evento.valoracionPedida: {
     'momento': {'practica', 'simulacro', 'examen_pasado', 'clase'},
   },
+  // Sin `clase` ni `historial` todavía: la app aún no abre el tutor desde
+  // una clase ni tiene historial.
+  Evento.tutorAbierto: {
+    'origen': {'inicio', 'explicacion', 'muro'},
+    'contexto': {'ninguno', 'pregunta'},
+    'nivel': {'gratis', 'premium'},
+  },
+  Evento.tutorAccion: {
+    'accion': {
+      'abrir_pregunta',
+      'abrir_clase',
+      'practicar',
+      'opcion',
+      'util_si',
+      'util_no',
+      'copiar',
+      'no_entiendo',
+    },
+  },
 };
 
 /// Las propiedades booleanas del contrato. Se registran como `'true'` o
 /// `'false'` y viajan como `true` o `false`: el servidor rechaza la cadena.
 const booleanasDe = <Evento, Set<String>>{
   Evento.muroVisto: {'con_oferta'},
+  Evento.tutorAccion: {'marcador_valido'},
+};
+
+/// Las propiedades enteras del contrato, con su mínimo y su máximo. Se
+/// registran como texto y viajan como número: el servidor rechaza la cadena.
+const enterasDe = <Evento, Map<String, (int, int)>>{
+  Evento.tutorAbierto: {'restantes': (0, 1000)},
 };
 
 /// Las propiedades de tipo «código» (un identificador de máquina, nunca texto
@@ -177,6 +213,8 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.registroVisto: {},
   Evento.registroFallido: {'metodo', 'motivo'},
   Evento.valoracionPedida: {'momento'},
+  Evento.tutorAbierto: {'origen', 'contexto', 'nivel', 'restantes'},
+  Evento.tutorAccion: {'accion'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -193,6 +231,9 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.registroFallido: {'ios', 'android'},
   // Catálogo 35.
   Evento.valoracionPedida: {'ios', 'android'},
+  // Catálogo 36.
+  Evento.tutorAbierto: {'ios', 'android'},
+  Evento.tutorAccion: {'ios', 'android'},
 };
 
 /// Valores que solo existen en una plataforma: el medio de pago es la tienda
@@ -225,6 +266,7 @@ Map<String, Object>? propiedadesValidas(
   final admitidas = propiedadesDe[evento]!;
   final booleanas = booleanasDe[evento] ?? const {};
   final codigos = codigosDe[evento] ?? const {};
+  final enteras = enterasDe[evento] ?? const {};
   final soloEn = soloEnPlataformaDe[evento] ?? const {};
   final deEstaPlataforma = propiedades.entries.where(
     (p) => (soloEn[p.key]?[p.value] ?? plataforma) == plataforma,
@@ -236,7 +278,9 @@ Map<String, Object>? propiedadesValidas(
       else if (booleanas.contains(key) && (value == 'true' || value == 'false'))
         key: value == 'true'
       else if (codigos[key]?.hasMatch(value) ?? false)
-        key: value,
+        key: value
+      else if (_entero(value, enteras[key]) != null)
+        key: _entero(value, enteras[key])!,
   };
   for (final MapEntry(key: clave, value: (hermana, valor))
       in (ausentesSiDe[evento] ?? const {}).entries) {
@@ -248,6 +292,14 @@ Map<String, Object>? propiedadesValidas(
     if (limpias[hermana] == valor && !limpias.containsKey(clave)) return null;
   }
   return limpias;
+}
+
+/// [valor] como entero dentro de [rango], o `null` si no lo es.
+int? _entero(String valor, (int, int)? rango) {
+  if (rango == null) return null;
+  final n = int.tryParse(valor);
+  if (n == null || n < rango.$1 || n > rango.$2) return null;
+  return n;
 }
 
 /// La versión tal como la pide el contrato: la de pubspec (`1.0.0+7`), y en

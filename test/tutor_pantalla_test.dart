@@ -1,3 +1,4 @@
+import 'package:enam_app/core/analitica/analitica.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/router/routes.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
@@ -204,6 +205,58 @@ void main() {
     expect(find.byType(TextField), findsNothing);
   });
 
+  group('analítica (catálogo 36)', () {
+    testWidgets('tutor_abierto una vez, con el contexto y lo que queda', (
+      tester,
+    ) async {
+      await _montar(
+        tester,
+        _rapido(restantesPrueba: 7),
+        contexto: const ContextoDelTutor.pregunta(id: 'q-1'),
+      );
+      await _escribir(tester, 'Hola');
+
+      expect(_eventos.registrados.where((e) => e.startsWith('tutor_abierto')), [
+        'tutor_abierto origen=explicacion contexto=pregunta nivel=gratis '
+            'restantes=7',
+      ]);
+    });
+
+    testWidgets('tutor_accion por cada toque en una respuesta', (tester) async {
+      await _montar(tester, _rapido());
+      await _escribir(tester, 'Explícame la metformina');
+
+      await tester.tap(find.byTooltip('Copiar'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Me sirvió'));
+      await tester.pump();
+      // Quitarla no cuenta.
+      await tester.tap(find.byTooltip('Me sirvió'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('No entiendo'));
+      await tester.pump();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pump();
+      await tester.tap(find.text('Ver pregunta'));
+      await _esperar(tester);
+      Navigator.of(tester.element(find.textContaining('Gestante'))).pop();
+      await _esperar(tester);
+      await tester.tap(find.text('Sí, pregúntame'));
+      await _esperar(tester);
+      await tester.tap(find.text('Empezar'));
+      await _esperar(tester);
+
+      expect(_eventos.registrados.where((e) => e.startsWith('tutor_accion')), [
+        'tutor_accion accion=copiar',
+        'tutor_accion accion=util_si',
+        'tutor_accion accion=no_entiendo',
+        'tutor_accion accion=abrir_pregunta marcador_valido=true',
+        'tutor_accion accion=opcion',
+        'tutor_accion accion=practicar marcador_valido=true',
+      ]);
+    });
+  });
+
   group('«Pregúntale al tutor»', () {
     testWidgets('no ocupa nada con el interruptor apagado', (tester) async {
       await tester.pumpWidget(
@@ -310,6 +363,7 @@ Future<void> _montar(
         tutorActivoProvider.overrideWithValue(true),
         tutorRepositoryProvider.overrideWithValue(fake),
         sessionRepositoryProvider.overrideWithValue(MockSessionRepository()),
+        analiticaProvider.overrideWithValue(_eventos = _Analitica()),
       ],
       child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
     ),
@@ -330,4 +384,22 @@ Future<void> _esperar(WidgetTester tester) async {
   for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+late _Analitica _eventos;
+
+class _Analitica implements Analitica {
+  final registrados = <String>[];
+
+  @override
+  void registrar(Evento evento, {Map<String, String> propiedades = const {}}) =>
+      registrados.add(
+        [
+          evento.nombre,
+          for (final p in propiedades.entries) '${p.key}=${p.value}',
+        ].join(' '),
+      );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

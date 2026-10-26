@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/analitica/analitica.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -43,6 +44,16 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
   void initState() {
     super.initState();
     ref.read(tutorControllerProvider.notifier).iniciar(widget.contexto);
+    // Una vez por apertura, y solo si el servidor dice que está disponible.
+    ref.read(estadoDelServicioProvider.future).then((servicio) {
+      if (!mounted || servicio == null || !servicio.disponible) return;
+      ref
+          .read(analiticaProvider)
+          .registrar(
+            Evento.tutorAbierto,
+            propiedades: propiedadesDeApertura(widget.contexto, servicio),
+          );
+    });
   }
 
   @override
@@ -105,7 +116,13 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
                     )
                   : _Conversacion(
                       estado: estado,
-                      onOpcion: (s) => _enviar(s, TipoDeMensaje.sugerencia),
+                      onOpcion: (s) {
+                        registrarAccionDelTutor(
+                          ref.read(analiticaProvider),
+                          'opcion',
+                        );
+                        _enviar(s, TipoDeMensaje.sugerencia);
+                      },
                     ),
             ),
             switch (estado.bloqueo) {
@@ -491,8 +508,15 @@ class _RespuestaDelTutorState extends ConsumerState<RespuestaDelTutor> {
                     TextoDeRespuesta(:final markdown) => TextoDelTutor(
                       markdown: markdown,
                       onPregunta: (id) => abrirPreguntaCitada(context, id),
-                      onClase: (curso, clase) =>
-                          context.irA(Routes.claseOf(curso, clase)),
+                      onClase: (curso, clase) {
+                        // Sin `marcador_valido`: la clase la carga su
+                        // pantalla, y aquí no se sabe si existía.
+                        registrarAccionDelTutor(
+                          ref.read(analiticaProvider),
+                          'abrir_clase',
+                        );
+                        context.irA(Routes.claseOf(curso, clase));
+                      },
                     ),
                     final PracticaPropuesta p => TarjetaPracticar(practica: p),
                     OpcionesRapidas(:final opciones) =>
@@ -523,8 +547,15 @@ class _RespuestaDelTutorState extends ConsumerState<RespuestaDelTutor> {
                 _BarraDeAcciones(
                   mensaje: m,
                   noEntiendoAbierto: _noEntiendoAbierto,
-                  onNoEntiendo: () =>
-                      setState(() => _noEntiendoAbierto = !_noEntiendoAbierto),
+                  onNoEntiendo: () {
+                    if (!_noEntiendoAbierto) {
+                      registrarAccionDelTutor(
+                        ref.read(analiticaProvider),
+                        'no_entiendo',
+                      );
+                    }
+                    setState(() => _noEntiendoAbierto = !_noEntiendoAbierto);
+                  },
                 ),
                 if (_noEntiendoAbierto)
                   _FormularioNoEntiendo(
@@ -616,6 +647,7 @@ class _BarraDeAcciones extends ConsumerWidget {
           icono: Symbols.content_copy,
           tooltip: 'Copiar',
           onPressed: () async {
+            registrarAccionDelTutor(ref.read(analiticaProvider), 'copiar');
             await Clipboard.setData(
               ClipboardData(text: textoParaCopiar(mensaje.texto)),
             );

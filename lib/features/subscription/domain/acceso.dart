@@ -147,9 +147,8 @@ enum FuncionPremium {
         'Todas las clases de todo el temario, cada una con su práctica. Las '
         'clases gratis siguen abiertas.',
   ),
-  /// La prueba gratis del tutor se acabó (403 `FUNCION_PREMIUM` con
-  /// `funcion: tutor`). BI todavía no lo tiene en `funcion_premium`: hasta
-  /// entonces `muro_visto` no se encola desde aquí, como con [otra].
+  /// La prueba gratis del tutor se acabó: 15 mensajes en la vida de la cuenta
+  /// (403 `FUNCION_PREMIUM` con `funcion: tutor`, catálogo 36).
   tutor(
     'tutor',
     titulo: 'Sigue con el tutor en Premium',

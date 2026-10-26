@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:enam_app/core/analitica/analitica.dart';
 import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
+import 'package:enam_app/features/tutor/domain/tutor_models.dart';
+import 'package:enam_app/features/tutor/presentation/tutor_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Cada evento que la app puede mandar, contra el contrato que valida el
@@ -87,6 +89,10 @@ void main() {
       final valido = switch (p['tipo']) {
         'enum' => value is String && valoresDe(p).contains(value),
         'booleano' => value is bool,
+        'entero' =>
+          value is int &&
+              value >= (p['min'] as int) &&
+              value <= (p['max'] as int),
         'codigo' =>
           value is String && RegExp(p['patron'] as String).hasMatch(value),
         _ => false,
@@ -112,6 +118,7 @@ void main() {
           ...propiedadesDe[e]!.keys,
           ...?booleanasDe[e],
           ...?codigosDe[e]?.keys,
+          ...?enterasDe[e]?.keys,
         };
         for (final k in enviables) {
           expect(contratoProps, contains(k), reason: '$k no está declarada');
@@ -129,6 +136,10 @@ void main() {
           }
           if (booleanasDe[e]?.contains(k) ?? false) {
             expect(p['tipo'], 'booleano', reason: k);
+          }
+          if (enterasDe[e]?[k] case (final min, final max)) {
+            expect(p['tipo'], 'entero', reason: k);
+            expect((p['min'], p['max']), (min, max), reason: k);
           }
           if (codigosDe[e]?[k] case final patron?) {
             expect(p['tipo'], 'codigo', reason: k);
@@ -192,6 +203,27 @@ void main() {
       for (final metodo in const ['correo', 'google', 'apple'])
         for (final motivo in propiedadesDe[Evento.registroFallido]!['motivo']!)
           (Evento.registroFallido, {'metodo': metodo, 'motivo': motivo}),
+      // Catálogo 36: el tutor.
+      for (final origen in OrigenDelTutor.values)
+        for (final premium in const [false, true])
+          (
+            Evento.tutorAbierto,
+            propiedadesDeApertura(
+              origen == OrigenDelTutor.explicacion
+                  ? const ContextoDelTutor.pregunta(id: 'q-1')
+                  : ContextoDelTutor(origen: origen),
+              EstadoDelServicio(
+                premium: premium,
+                restantesPrueba: premium ? null : 0,
+                restantesHoy: premium ? 50 : null,
+              ),
+            ),
+          ),
+      for (final accion in propiedadesDe[Evento.tutorAccion]!['accion']!)
+        (Evento.tutorAccion, {'accion': accion}),
+      for (final accion in const ['abrir_pregunta', 'practicar'])
+        for (final valido in const ['true', 'false'])
+          (Evento.tutorAccion, {'accion': accion, 'marcador_valido': valido}),
     ];
 
     /// Funciones que el contrato no conoce: el muro no puede mandar

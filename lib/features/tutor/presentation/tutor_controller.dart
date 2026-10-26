@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/analitica/analitica.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
@@ -107,6 +108,13 @@ class TutorController extends Notifier<EstadoDelTutor> {
     final mensaje = state.mensajes.where((m) => m.id == mensajeId).firstOrNull;
     if (mensaje == null) return;
     final nuevo = mensaje.util == util ? null : util;
+    // Quitar la valoración no cuenta como toque (catálogo 36).
+    if (nuevo != null) {
+      registrarAccionDelTutor(
+        ref.read(analiticaProvider),
+        nuevo ? 'util_si' : 'util_no',
+      );
+    }
     _cambiar(mensajeId, (m) => m.copyWith(util: () => nuevo));
     try {
       await _repo.valorar(mensajeId, util: nuevo);
@@ -240,6 +248,37 @@ class TutorController extends Notifier<EstadoDelTutor> {
 
   String _idLocal() => 'local-${_locales++}';
 }
+
+/// `tutor_accion` (catálogo 36): un toque en una respuesta del tutor.
+///
+/// [marcadorValido] va solo con `abrir_pregunta`, `abrir_clase` y
+/// `practicar`, y es `false` cuando el id que escribió el tutor no existía.
+void registrarAccionDelTutor(
+  Analitica analitica,
+  String accion, {
+  bool? marcadorValido,
+}) => analitica.registrar(
+  Evento.tutorAccion,
+  propiedades: {
+    'accion': accion,
+    if (marcadorValido != null) 'marcador_valido': '$marcadorValido',
+  },
+);
+
+/// Las propiedades de `tutor_abierto` (catálogo 36). `restantes` es lo que
+/// queda de la prueba en gratis y del día en Premium; sin él, que es
+/// obligatorio, el evento no se encola.
+Map<String, String> propiedadesDeApertura(
+  ContextoDelTutor contexto,
+  EstadoDelServicio servicio,
+) => {
+  'origen': contexto.origen.codigo,
+  'contexto': contexto.sobreUnaPregunta ? 'pregunta' : 'ninguno',
+  'nivel': servicio.premium ? 'premium' : 'gratis',
+  if ((servicio.premium ? servicio.restantesHoy : servicio.restantesPrueba)
+      case final n?)
+    'restantes': '$n',
+};
 
 /// Los dos 403 del contrato que cierran el tutor.
 BloqueoDelTutor? _bloqueoPor(Object error) {
