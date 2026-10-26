@@ -55,7 +55,11 @@ enum Evento {
 
   /// Un intento de registro o de entrar falla y la persona lo ve: Google o
   /// Apple dan error o se cancelan, o el servidor rechaza (catálogo 19).
-  registroFallido('registro_fallido');
+  registroFallido('registro_fallido'),
+
+  /// La app llamó al diálogo nativo de valoración de la tienda, tras un buen
+  /// resultado. El sistema no dice si lo enseñó: es «se pidió», no «se vio».
+  valoracionPedida('valoracion_pedida');
 
   const Evento(this.nombre);
 
@@ -122,6 +126,9 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
       'otro',
     },
   },
+  Evento.valoracionPedida: {
+    'momento': {'practica', 'simulacro', 'examen_pasado', 'clase'},
+  },
 };
 
 /// Las propiedades booleanas del contrato. Se registran como `'true'` o
@@ -169,6 +176,7 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.cursoVisto: {'curso_id', 'desde'},
   Evento.registroVisto: {},
   Evento.registroFallido: {'metodo', 'motivo'},
+  Evento.valoracionPedida: {'momento'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -183,6 +191,8 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.cursoVisto: {'ios', 'android'},
   Evento.registroVisto: {'ios', 'android'},
   Evento.registroFallido: {'ios', 'android'},
+  // Catálogo 35.
+  Evento.valoracionPedida: {'ios', 'android'},
 };
 
 /// Valores que solo existen en una plataforma: el medio de pago es la tienda

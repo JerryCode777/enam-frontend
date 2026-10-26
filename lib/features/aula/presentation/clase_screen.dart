@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,10 +7,12 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/providers.dart';
 import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../core/valoracion/pedir_valoracion.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
@@ -75,6 +79,36 @@ class _Contenido extends ConsumerStatefulWidget {
 class _ContenidoState extends ConsumerState<_Contenido> {
   late bool _vista = widget.clase.progreso.completada;
 
+  /// Si la terminó en esta visita. La valoración se pide al salir, no al
+  /// completarse: eso pasa al 90 % y el diálogo taparía el final del video.
+  bool _terminadaAhora = false;
+
+  // Se leen al montar: en `dispose` ya no se puede usar `ref`.
+  late final PedirValoracion _valoracion;
+  DateTime? _cuentaCreada;
+
+  @override
+  void initState() {
+    super.initState();
+    _valoracion = ref.read(pedirValoracionProvider);
+  }
+
+  @override
+  void dispose() {
+    if (_terminadaAhora) {
+      unawaited(
+        _valoracion
+            .siTocara(
+              momento: MomentoDeValoracion.clase,
+              buenResultado: true,
+              cuentaCreada: _cuentaCreada,
+            )
+            .catchError((Object _) => false),
+      );
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final clase = widget.clase;
@@ -93,7 +127,11 @@ class _ContenidoState extends ConsumerState<_Contenido> {
           ReproductorDeClase(
             key: ValueKey(clase.id),
             clase: clase,
-            alCompletar: () => setState(() => _vista = true),
+            alCompletar: () => setState(() {
+              _vista = true;
+              _terminadaAhora = true;
+              _cuentaCreada = ref.read(currentUserProvider)?.creadoEn;
+            }),
           )
         else
           _SinVideo(clase: clase, curso: curso),

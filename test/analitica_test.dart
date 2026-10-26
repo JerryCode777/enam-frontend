@@ -28,6 +28,7 @@ void main() {
         'curso_visto',
         'registro_visto',
         'registro_fallido',
+        'valoracion_pedida',
       });
       // Pasaron a ser de servidor: si la app los mandara, se rechazarían.
       for (final deServidor in const [

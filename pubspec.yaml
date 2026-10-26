@@ -70,6 +70,7 @@ dependencies:
   # Lo propio de Play Billing: el `offerToken` del plan base de cada
   # suscripción y `GooglePlayPurchaseParam`. Ya venía de forma transitiva.
   in_app_purchase_android: ^0.5.4
+  in_app_review: ^2.0.12
 
 dev_dependencies:
   flutter_test:
