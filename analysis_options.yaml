@@ -4,6 +4,9 @@ analyzer:
   exclude:
     - "**/*.freezed.dart"
     - "**/*.g.dart"
+    - build/**
+    - android/**
+    - ios/**
 
   errors:
     # Un caso de modelo sin cubrir en un switch es un bug esperando a ocurrir.
