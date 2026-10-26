@@ -7,6 +7,7 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../tutor/presentation/widgets/piezas_del_tutor.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 import 'widgets/option_card.dart';
@@ -287,6 +288,13 @@ class _TarjetaRevisionState extends State<_TarjetaRevision> {
                             height: DesignTokens.lineHeightRelaxed,
                           ),
                         ),
+                      ),
+                      // La revisión es después de cerrar el simulacro: ya no
+                      // hay examen que proteger. Sin tutor no ocupa nada.
+                      PreguntaleAlTutor(
+                        preguntaId: widget.pregunta.id,
+                        enunciado: widget.pregunta.enunciado,
+                        espacioArriba: DesignTokens.space2,
                       ),
                     ],
                   ],

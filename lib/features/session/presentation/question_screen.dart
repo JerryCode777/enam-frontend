@@ -19,6 +19,7 @@ import '../../../shared/widgets/state_banner.dart';
 import '../../catalog/presentation/catalog_providers.dart';
 import '../../subscription/domain/acceso.dart';
 import '../../subscription/presentation/muro_de_venta_screen.dart';
+import '../../tutor/presentation/widgets/piezas_del_tutor.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
 import 'widgets/option_card.dart';
@@ -774,6 +775,12 @@ class _Explicacion extends StatelessWidget {
                 ),
               ),
             ],
+            // Con el tutor apagado no ocupa nada.
+            PreguntaleAlTutor(
+              preguntaId: pregunta.id,
+              enunciado: pregunta.enunciado,
+              espacioArriba: DesignTokens.space4,
+            ),
           ],
         ),
       ),

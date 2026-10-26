@@ -135,6 +135,13 @@ abstract final class AppConfig {
           ? googleServerClientIdAndroid
           : googleServerClientId;
 
+  /// El tutor con IA (fase 1). Apagado por defecto: no sale a nadie hasta que
+  /// Jerry lo pruebe. Para probarlo: `--dart-define=TUTOR_ACTIVO=true`.
+  ///
+  /// Aun encendido, el tutor solo aparece si el servidor dice que está
+  /// disponible para esa cuenta (`GET /tutor/estado`).
+  static const bool tutorActivo = bool.fromEnvironment('TUTOR_ACTIVO');
+
   /// Si el botón de Google tiene sentido en esta build.
   ///
   /// Con el client ID por defecto esto es cierto siempre, y ese es el objetivo:

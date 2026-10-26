@@ -97,6 +97,10 @@ abstract final class Routes {
   static String claseOf(String cursoId, String claseId) =>
       '/cursos/$cursoId/clase/$claseId';
 
+  // ---------- Tutor con IA ----------
+  /// `extra`: un `ContextoDelTutor` (opcional).
+  static const tutor = '/tutor';
+
   // ---------- Ranking (Módulo 5) ----------
   static const ranking = '/ranking';
 

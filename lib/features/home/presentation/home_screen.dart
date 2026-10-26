@@ -25,6 +25,7 @@ import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../../consentimiento/presentation/tarjeta_de_comerciales.dart';
 import '../../subscription/presentation/widgets/aviso_del_dia_gratis.dart';
 import '../../subscription/presentation/widgets/etiqueta_premium.dart';
+import '../../tutor/presentation/tutor_controller.dart';
 import '../domain/siguiente_accion.dart';
 
 /// Lo que el inicio propone ahora, o `null` mientras no hay con qué decidirlo.
@@ -488,6 +489,19 @@ class _Estudiar extends ConsumerWidget {
             : '${gratis.preguntasPorDia} preguntas al día, de todas las áreas',
         onTap: () => context.irA(Routes.practiceConfig),
       ),
+      // El tutor con IA, solo con el interruptor encendido y si el servidor
+      // dice que esta cuenta lo tiene.
+      if (ref.watch(tutorVisibleProvider))
+        _Fila(
+          icono: Symbols.forum,
+          titulo: 'Pregúntale al tutor',
+          etiqueta: const EtiquetaEstado(
+            texto: 'Nuevo',
+            tipo: BannerKind.success,
+          ),
+          detalle: 'Resuelve tus dudas y te dice qué practicar',
+          onTap: () => context.irA(Routes.tutor),
+        ),
       // Como «Cursos» en «Más formas de estudiar» de la web: «Muy pronto»
       // mientras ningún curso tiene clases, y «Nuevo» cuando ya hay.
       _Fila(
