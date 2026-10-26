@@ -1,4 +1,5 @@
 import 'package:enam_app/core/config/app_config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// El botón de Google no puede desaparecer por un parámetro que nadie sabe.
@@ -31,6 +32,28 @@ void main() {
       isNot(contains('sknu20f23ircn9h50qssen6p7nh1mhk5')),
       reason: 'ese es el de iOS, el que vive en Info.plist',
     );
+  });
+
+  group('por plataforma', () {
+    test('Android usa el client ID web del proyecto enam-play', () {
+      // En el proyecto viejo faltaba la huella SHA-1 de Google Play y nadie
+      // puede entrar a agregarla; los clientes Android están en enam-play.
+      final id = AppConfig.googleServerClientIdPara(TargetPlatform.android);
+      expect(id, AppConfig.googleServerClientIdAndroid);
+      expect(id, startsWith('253395866936-'));
+      expect(id, endsWith('.apps.googleusercontent.com'));
+    });
+
+    test('iOS sigue con el del proyecto viejo, donde vive su cliente iOS', () {
+      expect(
+        AppConfig.googleServerClientIdPara(TargetPlatform.iOS),
+        AppConfig.googleServerClientId,
+      );
+      expect(
+        AppConfig.googleServerClientIdPara(TargetPlatform.iOS),
+        startsWith('776242647673-'),
+      );
+    });
   });
 
   test('el botón se ofrece sin pasar ningún define', () {

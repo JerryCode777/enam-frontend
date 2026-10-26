@@ -16,7 +16,8 @@
 /// ruidosamente, en vez de golpear producción por accidente.
 library;
 
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kReleaseMode;
 
 enum Environment {
   dev,
@@ -107,6 +108,33 @@ abstract final class AppConfig {
         '776242647673-ftoserm7trib6ab6c47dn2ogholhavfj.apps.googleusercontent.com',
   );
 
+  /// El client ID web que usa **Android**, de otro proyecto de Google Cloud.
+  ///
+  /// En Android Google valida la app contra un cliente Android del mismo
+  /// proyecto que el client ID web: paquete más huella SHA-1. Al proyecto
+  /// 776242647673 le faltaba la huella con la que firma Google Play, y ya nadie
+  /// tiene acceso a él para agregarla, así que todo intento desde la versión de
+  /// la tienda fallaba (y en la analítica parecía que el usuario cancelaba).
+  /// Los clientes Android, con la huella de Play y la de subida, están ahora en
+  /// el proyecto enam-play (253395866936), y este es su client ID web.
+  ///
+  /// iOS sigue con [googleServerClientId]: su cliente iOS vive en el proyecto
+  /// viejo y el SDK exige que ambos sean del mismo.
+  ///
+  /// Se puede sobreescribir con
+  /// `--dart-define=GOOGLE_SERVER_CLIENT_ID_ANDROID=…`.
+  static const String googleServerClientIdAndroid = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID_ANDROID',
+    defaultValue:
+        '253395866936-74dc14bs93v5k2ligbt34tf3jel6t015.apps.googleusercontent.com',
+  );
+
+  /// El client ID web que corresponde a [plataforma].
+  static String googleServerClientIdPara(TargetPlatform plataforma) =>
+      plataforma == TargetPlatform.android
+          ? googleServerClientIdAndroid
+          : googleServerClientId;
+
   /// Si el botón de Google tiene sentido en esta build.
   ///
   /// Con el client ID por defecto esto es cierto siempre, y ese es el objetivo:
@@ -119,7 +147,7 @@ abstract final class AppConfig {
   /// clone el repositorio, y el fallo al tocar al menos dice qué pasa; un botón
   /// que no está no dice nada.
   static bool get googleSignInHabilitado =>
-      useMocks || googleServerClientId.isNotEmpty;
+      useMocks || googleServerClientIdPara(defaultTargetPlatform).isNotEmpty;
 
   /// Dónde se paga: la web de ENAM Prep.
   ///
