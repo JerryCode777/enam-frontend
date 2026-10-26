@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -104,10 +105,14 @@ class PedirValoracion {
   /// [cuentaCreada] es la fecha de alta que manda el servidor. Sin ella se usa
   /// el primer día que esta instalación vio una sesión terminada, que nunca
   /// es antes del alta: se queda corto, nunca largo.
+  ///
+  /// [sesionesFinalizadas] es la cuenta del servidor: sobrevive a reinstalar.
+  /// Se usa la mayor entre esa y la del teléfono.
   Future<bool> siTocara({
     required MomentoDeValoracion momento,
     required bool buenResultado,
     DateTime? cuentaCreada,
+    int? sesionesFinalizadas,
     DateTime? ahora,
   }) async {
     if (!buenResultado) return false;
@@ -118,7 +123,8 @@ class PedirValoracion {
     final desde = cuentaCreada ?? await _anotarDesde(prefs, momentoActual);
     if (momentoActual.difference(desde).inDays < diasDeCuenta) return false;
 
-    final sesiones = prefs.getStringList(_claveSesiones)?.length ?? 0;
+    final locales = prefs.getStringList(_claveSesiones)?.length ?? 0;
+    final sesiones = max(locales, sesionesFinalizadas ?? 0);
     if (sesiones < sesionesMinimas) return false;
 
     final ultima = prefs.getInt(_claveUltima);
@@ -170,6 +176,11 @@ void alTerminarSesion(
 }) {
   final valoracion = ref.read(pedirValoracionProvider);
   final cuentaCreada = ref.read(currentUserProvider)?.creadoEn;
+  // La del inicio, si ya cargó: no se pide al servidor solo para esto. Puede
+  // venir sin la sesión que acaba de terminar; la del teléfono sí la tiene.
+  final finalizadas = ref.exists(dashboardProvider)
+      ? ref.read(dashboardProvider).value?.sesionesFinalizadas
+      : null;
   unawaited(() async {
     try {
       await valoracion.anotarSesionTerminada(sessionId);
@@ -177,6 +188,7 @@ void alTerminarSesion(
         momento: momento,
         buenResultado: buenResultado,
         cuentaCreada: cuentaCreada,
+        sesionesFinalizadas: finalizadas,
       );
     } on Object {
       // La tienda puede fallar o no estar; da igual: no se pide.

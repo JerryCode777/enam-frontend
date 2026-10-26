@@ -880,7 +880,9 @@ mixin _$DashboardStats {
 /// usando los pesos del blueprint, en escala vigesimal.
 ///
 /// SIEMPRE se muestra junto a la advertencia de que es una estimación.
- double get notaProyectada; List<AreaPerformance> get porArea; List<GradePoint> get evolucion; int get preguntasVistas; int get preguntasTotalesBanco; int get simulacrosCompletados;/// La racha de días seguidos.
+ double get notaProyectada; List<AreaPerformance> get porArea; List<GradePoint> get evolucion; int get preguntasVistas; int get preguntasTotalesBanco; int get simulacrosCompletados;/// Sesiones finalizadas de cualquier tipo, sin abiertas ni vencidas.
+/// Nula si el servidor no la manda (antes de enam-backend #128).
+ int? get sesionesFinalizadas;/// La racha de días seguidos.
 ///
 /// Nula si el servidor no la manda, y entonces la tarjeta **no se pinta**.
 /// Estuvo escrita a mano en la pantalla —18 días, siempre— y un número que
@@ -899,16 +901,16 @@ $DashboardStatsCopyWith<DashboardStats> get copyWith => _$DashboardStatsCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other.porArea, porArea)&&const DeepCollectionEquality().equals(other.evolucion, evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.racha, racha) || other.racha == racha));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other.porArea, porArea)&&const DeepCollectionEquality().equals(other.evolucion, evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.sesionesFinalizadas, sesionesFinalizadas) || other.sesionesFinalizadas == sesionesFinalizadas)&&(identical(other.racha, racha) || other.racha == racha));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(porArea),const DeepCollectionEquality().hash(evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,racha);
+int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(porArea),const DeepCollectionEquality().hash(evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,sesionesFinalizadas,racha);
 
 @override
 String toString() {
-  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, racha: $racha)';
+  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, sesionesFinalizadas: $sesionesFinalizadas, racha: $racha)';
 }
 
 
@@ -919,7 +921,7 @@ abstract mixin class $DashboardStatsCopyWith<$Res>  {
   factory $DashboardStatsCopyWith(DashboardStats value, $Res Function(DashboardStats) _then) = _$DashboardStatsCopyWithImpl;
 @useResult
 $Res call({
- double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, Racha? racha
+ double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, int? sesionesFinalizadas, Racha? racha
 });
 
 
@@ -936,7 +938,7 @@ class _$DashboardStatsCopyWithImpl<$Res>
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? racha = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? sesionesFinalizadas = freezed,Object? racha = freezed,}) {
   return _then(_self.copyWith(
 notaProyectada: null == notaProyectada ? _self.notaProyectada : notaProyectada // ignore: cast_nullable_to_non_nullable
 as double,porArea: null == porArea ? _self.porArea : porArea // ignore: cast_nullable_to_non_nullable
@@ -944,7 +946,8 @@ as List<AreaPerformance>,evolucion: null == evolucion ? _self.evolucion : evoluc
 as List<GradePoint>,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,preguntasTotalesBanco: null == preguntasTotalesBanco ? _self.preguntasTotalesBanco : preguntasTotalesBanco // ignore: cast_nullable_to_non_nullable
 as int,simulacrosCompletados: null == simulacrosCompletados ? _self.simulacrosCompletados : simulacrosCompletados // ignore: cast_nullable_to_non_nullable
-as int,racha: freezed == racha ? _self.racha : racha // ignore: cast_nullable_to_non_nullable
+as int,sesionesFinalizadas: freezed == sesionesFinalizadas ? _self.sesionesFinalizadas : sesionesFinalizadas // ignore: cast_nullable_to_non_nullable
+as int?,racha: freezed == racha ? _self.racha : racha // ignore: cast_nullable_to_non_nullable
 as Racha?,
   ));
 }
@@ -1042,10 +1045,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  Racha? racha)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  int? sesionesFinalizadas,  Racha? racha)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DashboardStats() when $default != null:
-return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.racha);case _:
+return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.sesionesFinalizadas,_that.racha);case _:
   return orElse();
 
 }
@@ -1063,10 +1066,10 @@ return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.pregunt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  Racha? racha)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  int? sesionesFinalizadas,  Racha? racha)  $default,) {final _that = this;
 switch (_that) {
 case _DashboardStats():
-return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.racha);case _:
+return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.sesionesFinalizadas,_that.racha);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1083,10 +1086,10 @@ return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.pregunt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  Racha? racha)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double notaProyectada,  List<AreaPerformance> porArea,  List<GradePoint> evolucion,  int preguntasVistas,  int preguntasTotalesBanco,  int simulacrosCompletados,  int? sesionesFinalizadas,  Racha? racha)?  $default,) {final _that = this;
 switch (_that) {
 case _DashboardStats() when $default != null:
-return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.racha);case _:
+return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.preguntasVistas,_that.preguntasTotalesBanco,_that.simulacrosCompletados,_that.sesionesFinalizadas,_that.racha);case _:
   return null;
 
 }
@@ -1098,7 +1101,7 @@ return $default(_that.notaProyectada,_that.porArea,_that.evolucion,_that.pregunt
 @JsonSerializable()
 
 class _DashboardStats extends DashboardStats {
-  const _DashboardStats({required this.notaProyectada, final  List<AreaPerformance> porArea = const [], final  List<GradePoint> evolucion = const [], this.preguntasVistas = 0, this.preguntasTotalesBanco = 0, this.simulacrosCompletados = 0, this.racha}): _porArea = porArea,_evolucion = evolucion,super._();
+  const _DashboardStats({required this.notaProyectada, final  List<AreaPerformance> porArea = const [], final  List<GradePoint> evolucion = const [], this.preguntasVistas = 0, this.preguntasTotalesBanco = 0, this.simulacrosCompletados = 0, this.sesionesFinalizadas, this.racha}): _porArea = porArea,_evolucion = evolucion,super._();
   factory _DashboardStats.fromJson(Map<String, dynamic> json) => _$DashboardStatsFromJson(json);
 
 /// Nota proyectada (RN-04): promedio ponderado del % de acierto por área
@@ -1123,6 +1126,9 @@ class _DashboardStats extends DashboardStats {
 @override@JsonKey() final  int preguntasVistas;
 @override@JsonKey() final  int preguntasTotalesBanco;
 @override@JsonKey() final  int simulacrosCompletados;
+/// Sesiones finalizadas de cualquier tipo, sin abiertas ni vencidas.
+/// Nula si el servidor no la manda (antes de enam-backend #128).
+@override final  int? sesionesFinalizadas;
 /// La racha de días seguidos.
 ///
 /// Nula si el servidor no la manda, y entonces la tarjeta **no se pinta**.
@@ -1144,16 +1150,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other._porArea, _porArea)&&const DeepCollectionEquality().equals(other._evolucion, _evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.racha, racha) || other.racha == racha));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DashboardStats&&(identical(other.notaProyectada, notaProyectada) || other.notaProyectada == notaProyectada)&&const DeepCollectionEquality().equals(other._porArea, _porArea)&&const DeepCollectionEquality().equals(other._evolucion, _evolucion)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.preguntasTotalesBanco, preguntasTotalesBanco) || other.preguntasTotalesBanco == preguntasTotalesBanco)&&(identical(other.simulacrosCompletados, simulacrosCompletados) || other.simulacrosCompletados == simulacrosCompletados)&&(identical(other.sesionesFinalizadas, sesionesFinalizadas) || other.sesionesFinalizadas == sesionesFinalizadas)&&(identical(other.racha, racha) || other.racha == racha));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(_porArea),const DeepCollectionEquality().hash(_evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,racha);
+int get hashCode => Object.hash(runtimeType,notaProyectada,const DeepCollectionEquality().hash(_porArea),const DeepCollectionEquality().hash(_evolucion),preguntasVistas,preguntasTotalesBanco,simulacrosCompletados,sesionesFinalizadas,racha);
 
 @override
 String toString() {
-  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, racha: $racha)';
+  return 'DashboardStats(notaProyectada: $notaProyectada, porArea: $porArea, evolucion: $evolucion, preguntasVistas: $preguntasVistas, preguntasTotalesBanco: $preguntasTotalesBanco, simulacrosCompletados: $simulacrosCompletados, sesionesFinalizadas: $sesionesFinalizadas, racha: $racha)';
 }
 
 
@@ -1164,7 +1170,7 @@ abstract mixin class _$DashboardStatsCopyWith<$Res> implements $DashboardStatsCo
   factory _$DashboardStatsCopyWith(_DashboardStats value, $Res Function(_DashboardStats) _then) = __$DashboardStatsCopyWithImpl;
 @override @useResult
 $Res call({
- double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, Racha? racha
+ double notaProyectada, List<AreaPerformance> porArea, List<GradePoint> evolucion, int preguntasVistas, int preguntasTotalesBanco, int simulacrosCompletados, int? sesionesFinalizadas, Racha? racha
 });
 
 
@@ -1181,7 +1187,7 @@ class __$DashboardStatsCopyWithImpl<$Res>
 
 /// Create a copy of DashboardStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? racha = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? notaProyectada = null,Object? porArea = null,Object? evolucion = null,Object? preguntasVistas = null,Object? preguntasTotalesBanco = null,Object? simulacrosCompletados = null,Object? sesionesFinalizadas = freezed,Object? racha = freezed,}) {
   return _then(_DashboardStats(
 notaProyectada: null == notaProyectada ? _self.notaProyectada : notaProyectada // ignore: cast_nullable_to_non_nullable
 as double,porArea: null == porArea ? _self._porArea : porArea // ignore: cast_nullable_to_non_nullable
@@ -1189,7 +1195,8 @@ as List<AreaPerformance>,evolucion: null == evolucion ? _self._evolucion : evolu
 as List<GradePoint>,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,preguntasTotalesBanco: null == preguntasTotalesBanco ? _self.preguntasTotalesBanco : preguntasTotalesBanco // ignore: cast_nullable_to_non_nullable
 as int,simulacrosCompletados: null == simulacrosCompletados ? _self.simulacrosCompletados : simulacrosCompletados // ignore: cast_nullable_to_non_nullable
-as int,racha: freezed == racha ? _self.racha : racha // ignore: cast_nullable_to_non_nullable
+as int,sesionesFinalizadas: freezed == sesionesFinalizadas ? _self.sesionesFinalizadas : sesionesFinalizadas // ignore: cast_nullable_to_non_nullable
+as int?,racha: freezed == racha ? _self.racha : racha // ignore: cast_nullable_to_non_nullable
 as Racha?,
   ));
 }

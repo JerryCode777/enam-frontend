@@ -67,6 +67,22 @@ void main() {
     expect(tienda.peticiones, 0);
   });
 
+  test('tras reinstalar, vale la cuenta del servidor', () async {
+    // El teléfono no recuerda ninguna; el servidor sabe que van 12.
+    await servicio.anotarSesionTerminada('nueva', ahora: alta);
+
+    expect(
+      await servicio.siTocara(
+        momento: MomentoDeValoracion.simulacro,
+        buenResultado: true,
+        cuentaCreada: alta,
+        sesionesFinalizadas: 12,
+        ahora: hoy,
+      ),
+      isTrue,
+    );
+  });
+
   test('una sesión que se vuelve a abrir no cuenta dos veces', () async {
     for (var i = 0; i < 3; i++) {
       await servicio.anotarSesionTerminada('la-misma', ahora: alta);

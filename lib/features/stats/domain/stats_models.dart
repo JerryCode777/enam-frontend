@@ -123,6 +123,10 @@ abstract class DashboardStats with _$DashboardStats {
     @Default(0) int preguntasTotalesBanco,
     @Default(0) int simulacrosCompletados,
 
+    /// Sesiones finalizadas de cualquier tipo, sin abiertas ni vencidas.
+    /// Nula si el servidor no la manda (antes de enam-backend #128).
+    int? sesionesFinalizadas,
+
     /// La racha de días seguidos.
     ///
     /// Nula si el servidor no la manda, y entonces la tarjeta **no se pinta**.

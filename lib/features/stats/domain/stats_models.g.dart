@@ -76,6 +76,7 @@ _DashboardStats _$DashboardStatsFromJson(
   preguntasVistas: (json['preguntasVistas'] as num?)?.toInt() ?? 0,
   preguntasTotalesBanco: (json['preguntasTotalesBanco'] as num?)?.toInt() ?? 0,
   simulacrosCompletados: (json['simulacrosCompletados'] as num?)?.toInt() ?? 0,
+  sesionesFinalizadas: (json['sesionesFinalizadas'] as num?)?.toInt(),
   racha: json['racha'] == null
       ? null
       : Racha.fromJson(json['racha'] as Map<String, dynamic>),
@@ -89,6 +90,7 @@ Map<String, dynamic> _$DashboardStatsToJson(_DashboardStats instance) =>
       'preguntasVistas': instance.preguntasVistas,
       'preguntasTotalesBanco': instance.preguntasTotalesBanco,
       'simulacrosCompletados': instance.simulacrosCompletados,
+      'sesionesFinalizadas': instance.sesionesFinalizadas,
       'racha': instance.racha,
     };
 
