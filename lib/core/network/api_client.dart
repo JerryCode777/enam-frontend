@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -114,6 +116,60 @@ class ApiClient {
       return response.data;
     } on DioException catch (e) {
       throw _toFailure(e);
+    }
+  }
+
+  /// Un POST cuya respuesta llega por partes (SSE, el tutor).
+  ///
+  /// Devuelve los bytes tal como llegan; quien llama los interpreta. Si el
+  /// servidor responde con error **antes** de abrir el stream, el cuerpo es el
+  /// JSON de siempre, pero Dio lo entrega como stream: se lee entero y se
+  /// traduce al [Failure] de cualquier otra petición, con su `code` y sus
+  /// `details`.
+  Future<Stream<List<int>>> postStream(
+    String path, {
+    Object? data,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await _dio.post<ResponseBody>(
+        path,
+        data: data,
+        cancelToken: cancelToken,
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {'Accept': 'text/event-stream'},
+          // El servidor manda un `: ping` cada 15 s mientras piensa.
+          receiveTimeout: const Duration(seconds: 45),
+        ),
+      );
+      final body = response.data;
+      if (body == null) {
+        throw const UnknownFailure('El servidor devolvió una respuesta vacía.');
+      }
+      return body.stream;
+    } on DioException catch (e) {
+      final response = e.response;
+      final body = response?.data;
+      if (response == null || body is! ResponseBody) throw _toFailure(e);
+
+      Object? json;
+      try {
+        final texto = await utf8.decodeStream(body.stream);
+        json = texto.isEmpty ? null : jsonDecode(texto);
+      } catch (_) {
+        json = null;
+      }
+      throw _toFailure(
+        e.copyWith(
+          response: Response<Object?>(
+            requestOptions: response.requestOptions,
+            statusCode: response.statusCode,
+            headers: response.headers,
+            data: json,
+          ),
+        ),
+      );
     }
   }
 

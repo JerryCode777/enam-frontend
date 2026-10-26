@@ -191,4 +191,13 @@ abstract final class ApiEndpoints {
 
   /// Lo último a medias. 204 si no hay nada.
   static const String aulaContinuar = '/aula/continuar';
+
+  // ---------- Tutor (TUTOR-CONTRATO.md) ----------
+  static const String tutorEstado = '/tutor/estado';
+
+  /// SSE: la respuesta llega por partes.
+  static const String tutorChat = '/tutor/chat';
+  static String tutorPregunta(String id) => '/tutor/preguntas/$id';
+  static String tutorValoracion(String mensajeId) =>
+      '/tutor/mensajes/$mensajeId/valoracion';
 }

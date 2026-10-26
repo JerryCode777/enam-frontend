@@ -29,6 +29,9 @@ void main() {
         'registro_visto',
         'registro_fallido',
         'valoracion_pedida',
+        // Catálogo 36: el tutor con IA.
+        'tutor_abierto',
+        'tutor_accion',
       });
       // Pasaron a ser de servidor: si la app los mandara, se rechazarían.
       for (final deServidor in const [

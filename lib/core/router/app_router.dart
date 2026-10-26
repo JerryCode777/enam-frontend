@@ -51,6 +51,8 @@ import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../../features/duelo/presentation/duelo_partida_screen.dart';
 import '../../features/duelo/presentation/elegir_oponente_screen.dart';
+import '../../features/tutor/domain/tutor_models.dart';
+import '../../features/tutor/presentation/tutor_screen.dart';
 import '../../features/duelo/presentation/tengo_un_codigo_screen.dart';
 import '../providers.dart';
 import '../theme/app_theme.dart';
@@ -555,6 +557,20 @@ final List<RouteBase> _routes = [
   //
   // El ORDEN importa: la ruta estática va antes que el comodín, para que
   // `/duelo/partida/xxx` no se lea como un código de retador.
+  // El tutor con IA, encima de todo y con atrás. Detrás de `TUTOR_ACTIVO`:
+  // con el interruptor apagado ningún botón lleva aquí.
+  GoRoute(
+    path: Routes.tutor,
+    pageBuilder: (context, state) => slidePage(
+      child: TutorScreen(
+        contexto: switch (state.extra) {
+          final ContextoDelTutor c => c,
+          _ => const ContextoDelTutor(),
+        },
+      ),
+      state: state,
+    ),
+  ),
   GoRoute(
     path: Routes.duelo,
     pageBuilder: (context, state) =>

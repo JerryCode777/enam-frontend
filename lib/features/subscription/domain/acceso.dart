@@ -147,6 +147,15 @@ enum FuncionPremium {
         'Todas las clases de todo el temario, cada una con su práctica. Las '
         'clases gratis siguen abiertas.',
   ),
+  /// La prueba gratis del tutor se acabó: 15 mensajes en la vida de la cuenta
+  /// (403 `FUNCION_PREMIUM` con `funcion: tutor`, catálogo 36).
+  tutor(
+    'tutor',
+    titulo: 'Sigue con el tutor en Premium',
+    vistaPrevia:
+        'Usaste tus mensajes de prueba. Con Premium le preguntas al tutor '
+        'todos los días: te explica cada pregunta y te dice qué practicar.',
+  ),
   otra(
     'otra',
     titulo: 'Esto es Premium',

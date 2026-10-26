@@ -1,9 +1,10 @@
 {
   "$comentario": "Contrato normativo de eventos de ENAM Prep. Fuente única para backend, web, portada y app. Lo que no está aquí no se acepta. Explicación en contrato/EVENTOS.md.",
   "version_contrato": 1,
-  "version_catalogo": 35,
+  "version_catalogo": 36,
   "actualizado": "2026-10-26",
   "historial_catalogo": {
+    "36": "Tutor con IA, fase 1 (pedido de enam-backend-55, detrás de TUTOR_ACTIVO; contrato de la API v3 en TUTOR-CONTRATO.md, PR #131 del backend). Tres tipos nuevos: tutor_abierto (cliente, una por apertura del tutor), tutor_mensaje (servidor, una por mensaje que llegó al modelo; sin texto) y tutor_accion (cliente: chips, tarjeta de práctica, opciones, 👍/👎, copiar, no entiendo). Cupos de Jerry: gratis, una prueba de 15 mensajes en la vida de la cuenta; Premium, 50 al día. La prueba gastada es como la de quiz_ia: funcion_premium suma tutor (muro_visto con motivo funcion). El tope Premium no es un cupo gratis y no usa limite_alcanzado: se ve en tutor_mensaje (nivel premium, restantes 0). restantes es el de la prueba con nivel gratis y el del día con premium. El costo en dólares no va en eventos: está en tutor_uso. Revisado el 26/10 antes de que nadie lo copiara (la primera versión tenía 3 al día gratis con limite_alcanzado).",
     "35": "valoracion_pedida (pedido de enam-frontend-0c para la app 1.1.5, por decisión de Jerry vía enamprep-3f): la app llamó al diálogo nativo de valoración de la tienda (InAppReview.requestReview) tras un buen resultado. Es «se pidió», no «se vio»: la tienda no dice si lo enseñó. momento = practica | simulacro | examen_pasado | clase. Sin pregunta previa propia (Apple y Play prohíben filtrar quién valora). Un tipo nuevo en el CHECK, sin índice único (el tope de uno cada 30 días por instalación es del cliente).",
     "34": "Consentimiento comercial desde Planes en la app (pedido del backend enam-backend-55 para la app 1.1.3, por decisión de Jerry vía enamprep-3f): debajo de los planes de la tienda va la casilla «Quiero recibir novedades y promociones», desmarcada por defecto (PATCH /me con origenConsentimiento planes). consentimiento_comercial_cambiado.origen suma planes; consentimiento_visto.lugar y consentimiento_respuesta.lugar suman planes, para el denominador (respuesta si = marca, no = desmarca; sin cerro). Sin SQL: son propiedades. El CHECK de users.acepta_comerciales_origen es del backend (su migración 87).",
     "33": "Planes de las tiendas que no cargan (pedido del director enamprep-3f del 25/10, tras ver que la app Android nunca tuvo Play Billing ni productos en Play Console; la compra llega con la 1.1.3): evento de cliente planes_no_disponibles (ios y android; medio apple | google_play; motivo vacio | error; codigo opcional, solo con error), uno por apertura de Planes en la que la tienda no da ningún plan para comprar. checkout_started con plataforma android y medio google_play ya es válido desde el catálogo 18. Un tipo en el CHECK.",
@@ -106,13 +107,17 @@
       "valores": ["menos_10", "10_29", "30_59", "60_179", "180_o_mas"],
       "nota": "Tiempo en una pantalla, en tramos de segundos enteros, con bordes inclusivos y sin solaparse: menos de 10 s, 10–29 s, 30–59 s, 1–3 min y 3 min o más. Nunca el número exacto (catálogo 9)."
     },
+    "tutor_origen": {
+      "valores": ["inicio", "explicacion", "muro", "clase", "historial"],
+      "nota": "Punto de entrada del tutor con IA (catálogo 36), igual que contexto.origen de POST /tutor/chat: inicio, explicacion (debajo de la explicación de una pregunta), muro (el muro de venta), clase (una clase del aula) e historial (una conversación anterior)."
+    },
     "recurso_gratis": {
       "valores": ["preguntas", "duelo", "tarjetas", "completar"],
       "nota": "Cupo diario del nivel gratis, por día de Lima (catálogo 6): preguntas = respuestas de práctica (hoy 10 al día); duelo = el duelo gratis del día (DUELO_GRATIS_POR_DIA). Catálogo 8: tarjetas = tarjetas distintas calificadas en el día (gratis 10; volver a calificar la misma no gasta); completar = ítems distintos del día (gratis 5). El quiz con IA no es un cupo gratis: el nivel gratis tiene un solo quiz de prueba en la vida (funcion_premium quiz_ia)."
     },
     "funcion_premium": {
-      "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos", "tarjetas"],
-      "nota": "Función que el nivel gratis no tiene (catálogo 6). Coincide con details.funcion del 403 FUNCION_PREMIUM. practica_a_medida = práctica por área o tema, o con un filtro distinto de «todas»; estadisticas incluye la nota proyectada y el detalle por área. Catálogo 8: quiz_ia = el quiz con IA cuando el quiz de prueba (uno en la vida) ya se usó. Catálogo 10: cursos = una clase del aula que no es gratis (403 FUNCION_PREMIUM {funcion: cursos}). Catálogo 32: tarjetas = las tarjetas de repaso, que pasan a ser Premium (TARJETAS_GRATIS_POR_DIA=0); completar sigue como cupo gratis. Las de la fase 2 (repaso, plan_completo) se suman en otro catálogo."
+      "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos", "tarjetas", "tutor"],
+      "nota": "Función que el nivel gratis no tiene (catálogo 6). Coincide con details.funcion del 403 FUNCION_PREMIUM. practica_a_medida = práctica por área o tema, o con un filtro distinto de «todas»; estadisticas incluye la nota proyectada y el detalle por área. Catálogo 8: quiz_ia = el quiz con IA cuando el quiz de prueba (uno en la vida) ya se usó. Catálogo 10: cursos = una clase del aula que no es gratis (403 FUNCION_PREMIUM {funcion: cursos}). Catálogo 32: tarjetas = las tarjetas de repaso, que pasan a ser Premium (TARJETAS_GRATIS_POR_DIA=0); completar sigue como cupo gratis. Catálogo 36: tutor = el tutor con IA cuando la cuenta gratis ya gastó su prueba (TUTOR_PRUEBA_GRATIS_TOTAL, 15 mensajes en la vida de la cuenta; 403 FUNCION_PREMIUM {funcion: tutor}), como quiz_ia. Las de la fase 2 (repaso, plan_completo) se suman en otro catálogo."
     }
   },
 
@@ -326,7 +331,7 @@
       "propiedades": {
         "motivo": { "tipo": "enum", "valores": ["limite", "funcion"], "obligatoria": true },
         "recurso": { "tipo": "enum", "enumeracion": "recurso_gratis", "valores": ["preguntas", "duelo", "tarjetas", "completar"], "obligatoria": false, "obligatoria_si": { "motivo": "limite" }, "ausente_si": { "motivo": "funcion" } },
-        "funcion": { "tipo": "enum", "enumeracion": "funcion_premium", "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos", "tarjetas"], "obligatoria": false, "obligatoria_si": { "motivo": "funcion" }, "ausente_si": { "motivo": "limite" } },
+        "funcion": { "tipo": "enum", "enumeracion": "funcion_premium", "valores": ["practica_a_medida", "simulacro", "examen_pasado", "simulacro_nacional", "estadisticas", "quiz_ia", "cursos", "tarjetas", "tutor"], "obligatoria": false, "obligatoria_si": { "motivo": "funcion" }, "ausente_si": { "motivo": "limite" } },
         "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "El muro mostró una oferta vigente (GET /oferta con descuento)." }
       }
     },
@@ -550,6 +555,50 @@
       }
     },
 
+    "tutor_abierto": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 36,
+      "cuando": "Se abre la pantalla del tutor con IA, con GET /tutor/estado en disponible true. Una por apertura, no por cada re-render ni al volver de una pregunta o clase citada dentro de la misma apertura. Solo con sesión iniciada.",
+      "unicidad": "Ninguna: cada apertura cuenta.",
+      "propiedades": {
+        "origen": { "tipo": "enum", "enumeracion": "tutor_origen", "valores": ["inicio", "explicacion", "muro", "clase", "historial"], "obligatoria": true, "nota": "El punto de entrada; el mismo valor que manda en contexto.origen del primer mensaje." },
+        "contexto": { "tipo": "enum", "valores": ["ninguno", "pregunta", "clase"], "obligatoria": true, "nota": "pregunta = se abrió con contexto.preguntaId («Pregúntale al tutor» bajo la explicación); clase = con contexto.claseId; ninguno = sin contexto." },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true, "nota": "El plan de GET /tutor/estado (premium incluye la prueba de 24 h y los planes). Define el cupo: gratis usa la prueba de 15 y premium los 50 del día." },
+        "restantes": { "tipo": "entero", "min": 0, "max": 1000, "obligatoria": true, "nota": "cupo.restantes de GET /tutor/estado al abrir. Con nivel gratis es lo que queda de la prueba (cupo.tipo prueba, 15 en la vida); con premium, lo que queda del día (cupo.tipo dia, 50). Con 0, la persona abre el tutor sin mensajes." }
+      }
+    },
+    "tutor_mensaje": {
+      "origen": "servidor",
+      "desde_catalogo": 36,
+      "cuando": "POST /tutor/chat pasó las validaciones y el cupo y llamó al modelo: uno por mensaje del alumno (también reintento y no_entiendo), al cerrar el stream (fin o error). Los errores antes del stream (401, 404, 409, 422, 403 FUNCION_PREMIUM, 403 LIMITE_DIARIO, 503) no lo mandan. Nunca el texto del alumno ni el del tutor, ni ids de pregunta, clase, sesión o mensaje.",
+      "unicidad": "Ninguna: cada mensaje cuenta.",
+      "propiedades": {
+        "sesion_nueva": { "tipo": "booleano", "obligatoria": true, "nota": "El mensaje abrió una conversación (llegó sin sesionId)." },
+        "tipo": { "tipo": "enum", "valores": ["normal", "sugerencia", "no_entiendo", "reintento"], "obligatoria": true, "nota": "El tipo de la petición. sugerencia incluye tocar una sugerencia de /tutor/estado y los botones [opciones:…]." },
+        "origen": { "tipo": "enum", "enumeracion": "tutor_origen", "valores": ["inicio", "explicacion", "muro", "clase", "historial"], "obligatoria": false, "nota": "contexto.origen de la petición, o el de la conversación si este mensaje no lo trae. Ausente si nunca llegó." },
+        "nivel": { "tipo": "enum", "valores": ["gratis", "premium"], "obligatoria": true, "nota": "El plan con el que se atendió, como en /tutor/estado: gratis gasta la prueba y premium el cupo del día (los mensajes con Premium no gastan la prueba)." },
+        "herramientas": { "tipo": "entero", "min": 0, "max": 3, "obligatoria": true, "nota": "Rondas de herramientas que usó el tutor en este mensaje (hasta 3)." },
+        "tokens_entrada": { "tipo": "entero", "min": 0, "max": 1000000, "obligatoria": true, "nota": "Fichas de entrada facturadas, sumando todas las rondas (con las de caché). El costo en dólares no va aquí: está en tutor_uso." },
+        "tokens_salida": { "tipo": "entero", "min": 0, "max": 100000, "obligatoria": true, "nota": "Fichas de salida facturadas, sumando todas las rondas." },
+        "modelo": { "tipo": "codigo", "patron": "^[a-z0-9][a-z0-9._-]{0,63}$", "obligatoria": true, "nota": "El id del modelo del proveedor, en minúsculas (p. ej. claude-sonnet-5-5)." },
+        "resultado": { "tipo": "enum", "valores": ["ok", "error_proveedor", "interrumpido"], "obligatoria": true, "nota": "ok = cerró con fin. error_proveedor = error PROVEEDOR_CAIDO (no respondió o cortó). interrumpido = error INTERRUMPIDO (el servidor se apagó)." },
+        "gasto_cupo": { "tipo": "booleano", "obligatoria": true, "nota": "Llegó el primer delta y el mensaje gastó 1 del cupo. Con resultado ok siempre es true." },
+        "restantes": { "tipo": "entero", "min": 0, "max": 1000, "obligatoria": true, "nota": "cupo.restantes de fin, después de este mensaje. Con nivel gratis es lo que queda de la prueba: con 0, este mensaje gastó la prueba (pasa una vez por cuenta). Con premium es lo que queda del día: con 0, la cuenta llegó al tope Premium." },
+        "ms_primer_texto": { "tipo": "entero", "min": 0, "max": 600000, "obligatoria": false, "nota": "Milisegundos desde la petición hasta el primer delta. Ausente si no llegó ninguno." }
+      }
+    },
+    "tutor_accion": {
+      "origen": "cliente",
+      "plataformas": ["web", "ios", "android"],
+      "desde_catalogo": 36,
+      "cuando": "La persona toca algo en una respuesta del tutor: un chip [pregunta:…] o [clase:…], la tarjeta [comp:practica:…], un botón [opciones:…], 👍 o 👎, Copiar o No entiendo. Una por toque. Quitar la valoración (util null) no lo manda.",
+      "unicidad": "Ninguna: cada toque cuenta.",
+      "propiedades": {
+        "accion": { "tipo": "enum", "valores": ["abrir_pregunta", "abrir_clase", "practicar", "opcion", "util_si", "util_no", "copiar", "no_entiendo"], "obligatoria": true, "nota": "practicar = tocó «Practicar ahora» (la práctica se mide aparte, con sus eventos de siempre). opcion = un botón de respuesta rápida. util_si y util_no = 👍 y 👎 (POST /tutor/mensajes/:id/valoracion)." },
+        "marcador_valido": { "tipo": "booleano", "obligatoria": false, "nota": "Solo con abrir_pregunta, abrir_clase y practicar: false si el id no existía (404 al abrir o la práctica no se pudo crear con ese id), es decir, si el tutor inventó o citó mal un id. Ausente con las demás acciones." }
+      }
+    },
     "valoracion_pedida": {
       "origen": "cliente",
       "plataformas": ["ios", "android"],

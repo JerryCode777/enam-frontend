@@ -10,6 +10,8 @@ import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../tutor/domain/tutor_models.dart';
+import '../../tutor/presentation/tutor_controller.dart';
 import '../domain/acceso.dart';
 import 'access_ended_screen.dart';
 import 'widgets/opciones_de_pago.dart';
@@ -132,6 +134,7 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
             const _QueIncluye(),
             const SizedBox(height: DesignTokens.space3),
             _GratisSigue(porDia: porDia, diaGratis: diaGratis),
+            if (widget.motivo is CupoAgotado) const _MientrasTantoElTutor(),
             const SizedBox(height: DesignTokens.space4),
             const OpcionesDePago(),
             const SizedBox(height: DesignTokens.space2),
@@ -305,6 +308,32 @@ class _GratisSigue extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Se acabaron las preguntas de hoy, pero el tutor puede seguir: es otra
+/// forma de estudiar mientras tanto. Solo con tutor y con mensajes de prueba.
+class _MientrasTantoElTutor extends ConsumerWidget {
+  const _MientrasTantoElTutor();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tutor = ref.watch(estadoDelServicioProvider).value;
+    final quedan = (tutor?.restantesPrueba ?? 0) > 0;
+    if (!ref.watch(tutorVisibleProvider) || !quedan) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: DesignTokens.space2),
+      child: TextButton.icon(
+        icon: const Icon(Symbols.forum, size: 20),
+        label: const Text('Mientras tanto, pregúntale al tutor'),
+        onPressed: () => context.irA(
+          Routes.tutor,
+          extra: const ContextoDelTutor(origen: OrigenDelTutor.muro),
+        ),
       ),
     );
   }
