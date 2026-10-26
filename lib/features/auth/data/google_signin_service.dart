@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/config/app_config.dart';
@@ -26,7 +27,7 @@ class GoogleSignInServiceImpl implements GoogleSignInService {
   Future<void> _inicializar() async {
     if (_inicializado) return;
     await GoogleSignIn.instance.initialize(
-      serverClientId: AppConfig.googleServerClientId,
+      serverClientId: AppConfig.googleServerClientIdPara(defaultTargetPlatform),
     );
     _inicializado = true;
   }
