@@ -23,6 +23,11 @@ import '../../domain/subscription_models.dart';
 
 /// Los planes, comprables con Google Play Billing. Solo en Android.
 ///
+/// Compactos a propósito (pedido de Jerry, 25/10/2026): los tres planes en
+/// filas que se eligen y **un solo** botón, para que quepan en una pantalla de
+/// teléfono sin desplazarse. Con una tarjeta y un botón por plan había que
+/// bajar mucho para ver el semestral.
+///
 /// El gemelo de `PlanesDeApple`: el precio sale de Play y nunca de un valor
 /// nuestro, y la compra solo se da por terminada cuando el servidor la
 /// registra (`ComprasGooglePlayController`).
@@ -52,8 +57,11 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
   EstadoCompra _estado = EstadoCompra.quieto;
   String? _mensaje;
 
-  /// Cuál se está comprando, para que el spinner salga en su botón.
-  String? _comprando;
+  /// El plan elegido. Arranca en el primero de Play (el mensual).
+  String? _elegido;
+
+  /// Si hay una compra en marcha, para el spinner del botón.
+  bool _comprando = false;
 
   /// Si en esta apertura va la casilla de novedades: solo a quien no las
   /// aceptó. Se decide una vez, con los planes y la cuenta ya cargados, y no
@@ -115,7 +123,7 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
       _mensaje = r.mensaje;
       if (r.estado != EstadoCompra.comprando &&
           r.estado != EstadoCompra.registrando) {
-        _comprando = null;
+        _comprando = false;
       }
     });
 
@@ -166,7 +174,7 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
       _estado == EstadoCompra.comprando || _estado == EstadoCompra.registrando;
 
   void _comprar(ProductDetails p, String cuentaId) {
-    setState(() => _comprando = p.id);
+    setState(() => _comprando = true);
     if (planIdDeGooglePlay(p.id) case final plan?) {
       ref
           .read(analiticaProvider)
@@ -208,6 +216,11 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
       );
     }
 
+    final elegido = productos.firstWhere(
+      (p) => p.id == _elegido,
+      orElse: () => productos.first,
+    );
+
     final user = ref.watch(currentUserProvider);
     final cuentaId = user?.id;
     if (_conNovedades == null && user != null) {
@@ -231,15 +244,22 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
         ],
 
         for (final p in productos) ...[
-          _Plan(
+          _FilaPlan(
             producto: p,
-            cargando: _comprando == p.id,
-            onComprar: _ocupado || cuentaId == null
-                ? null
-                : () => _comprar(p, cuentaId),
+            elegido: p.id == elegido.id,
+            onTap: _ocupado ? null : () => setState(() => _elegido = p.id),
           ),
-          const SizedBox(height: DesignTokens.space3),
+          const SizedBox(height: DesignTokens.space2),
         ],
+        const SizedBox(height: DesignTokens.space1),
+        EnamButton(
+          label: 'Suscribirme',
+          loading: _comprando,
+          onPressed: _ocupado || cuentaId == null
+              ? null
+              : () => _comprar(elegido, cuentaId),
+        ),
+        const SizedBox(height: DesignTokens.space2),
 
         if (_conNovedades ?? false) ...[
           _CasillaDeNovedades(
@@ -267,16 +287,17 @@ bool _yaTienePremium(Subscription sub) =>
     (sub.estado == SubscriptionStatus.activa ||
         sub.estado == SubscriptionStatus.enGracia);
 
-class _Plan extends StatelessWidget {
-  const _Plan({
+/// Un plan en una fila: se elige tocándolo, y se compra con el botón de abajo.
+class _FilaPlan extends StatelessWidget {
+  const _FilaPlan({
     required this.producto,
-    required this.cargando,
-    required this.onComprar,
+    required this.elegido,
+    required this.onTap,
   });
 
   final ProductDetails producto;
-  final bool cargando;
-  final VoidCallback? onComprar;
+  final bool elegido;
+  final VoidCallback? onTap;
 
   /// Play añade el nombre de la app entre paréntesis: «Premium mensual (ENAM
   /// Prep)». En nuestra propia pantalla sobra.
@@ -286,55 +307,66 @@ class _Plan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
+    final radio = BorderRadius.circular(DesignTokens.radiusMd);
 
-    return Container(
-      padding: const EdgeInsets.all(DesignTokens.space4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _titulo,
+    return Semantics(
+      button: true,
+      selected: elegido,
+      child: Material(
+        color: elegido ? context.states.info.tint : scheme.surfaceContainer,
+        borderRadius: radio,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radio,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space3,
+              vertical: DesignTokens.space3,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: radio,
+              border: Border.all(
+                color: elegido ? scheme.primary : scheme.outlineVariant,
+                width: elegido ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  elegido
+                      ? Symbols.radio_button_checked
+                      : Symbols.radio_button_unchecked,
+                  size: 20,
+                  fill: elegido ? 1 : 0,
+                  color: elegido ? scheme.primary : scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: DesignTokens.space2 + 2),
+                Expanded(
+                  child: Text(
+                    _titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.texts.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.space2),
+                // El precio, tal cual lo formatea Play para el país de la
+                // cuenta.
+                Text(
+                  producto.price,
                   style: context.texts.bodyLarge?.copyWith(
                     fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                     color: scheme.onSurface,
                   ),
                 ),
-              ),
-              // El precio, tal cual lo formatea Play para el país de la cuenta.
-              Text(
-                producto.price,
-                style: context.texts.bodyLarge?.copyWith(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: scheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            producto.description,
-            style: context.texts.bodySmall?.copyWith(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
+              ],
             ),
           ),
-          const SizedBox(height: DesignTokens.space3),
-          EnamButton(
-            label: 'Suscribirme',
-            loading: cargando,
-            onPressed: onComprar,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -368,20 +400,21 @@ class _CasillaDeNovedades extends StatelessWidget {
           children: [
             Checkbox(
               value: value,
+              visualDensity: VisualDensity.compact,
               onChanged: alCambiar == null
                   ? null
                   : (v) => alCambiar(v ?? false),
             ),
-            const SizedBox(width: DesignTokens.space1),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: DesignTokens.space3),
+                padding: const EdgeInsets.only(top: DesignTokens.space2 + 2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       tituloNovedadesEnPlanes,
-                      style: context.texts.bodyMedium?.copyWith(
+                      style: context.texts.bodySmall?.copyWith(
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: context.scheme.onSurface,
                       ),
@@ -390,7 +423,8 @@ class _CasillaDeNovedades extends StatelessWidget {
                     Text(
                       detalleNovedadesEnPlanes,
                       style: context.texts.bodySmall?.copyWith(
-                        height: 1.4,
+                        fontSize: 11.5,
+                        height: 1.35,
                         color: context.scheme.onSurfaceVariant,
                       ),
                     ),

@@ -30,6 +30,8 @@ _GradePoint _$GradePointFromJson(Map<String, dynamic> json) => _GradePoint(
   sessionId: json['sessionId'] as String?,
   tipo: json['tipo'] as String?,
   totalPreguntas: (json['totalPreguntas'] as num?)?.toInt(),
+  estado: json['estado'] as String?,
+  respondidas: (json['respondidas'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$GradePointToJson(_GradePoint instance) =>
@@ -39,6 +41,8 @@ Map<String, dynamic> _$GradePointToJson(_GradePoint instance) =>
       'sessionId': instance.sessionId,
       'tipo': instance.tipo,
       'totalPreguntas': instance.totalPreguntas,
+      'estado': instance.estado,
+      'respondidas': instance.respondidas,
     };
 
 _Racha _$RachaFromJson(Map<String, dynamic> json) => _Racha(

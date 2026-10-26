@@ -12,6 +12,7 @@ import 'package:enam_app/features/subscription/data/subscription_repository.dart
 import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/domain/subscription_models.dart';
 import 'package:enam_app/features/subscription/presentation/access_ended_screen.dart';
+import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
 import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
 import 'package:enam_app/features/subscription/presentation/widgets/opciones_de_pago.dart';
 import 'package:enam_app/features/subscription/presentation/widgets/planes_de_google_play.dart'
@@ -85,7 +86,8 @@ void main() {
 
         expect(find.text('Premium mensual'), findsOneWidget);
         expect(find.text('S/ 59.00'), findsOneWidget);
-        expect(find.text('Suscribirme'), findsNWidgets(3));
+        // Un solo botón para los tres planes.
+        expect(find.text('Suscribirme'), findsOneWidget);
         expect(find.text('Restaurar compras'), findsOneWidget);
         sinPagoFueraDePlay(tester);
       });
@@ -98,7 +100,8 @@ void main() {
       await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Suscribirme').first);
+      // El mensual llega elegido.
+      await tester.tap(find.text('Suscribirme'));
       await tester.pump();
 
       expect(t.tienda.compradas, [('premium_mensual', 'u1')]);
@@ -106,6 +109,57 @@ void main() {
         'consentimiento_visto lugar=planes',
         'checkout_started plan_id=mensual medio=google_play',
       ]);
+    });
+
+    testWidgets('se elige el plan tocando su fila, y se compra ese', (
+      tester,
+    ) async {
+      final t = _Montaje(sub: _expirada);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Premium semestral'));
+      await tester.pump();
+      await tester.tap(find.text('Suscribirme'));
+      await tester.pump();
+
+      expect(t.tienda.compradas, [('premium_semestral', 'u1')]);
+      expect(
+        t.analitica.registrados,
+        contains('checkout_started plan_id=semestral medio=google_play'),
+      );
+    });
+
+    testWidgets('en el muro, los tres planes y el botón caben sin desplazarse', (
+      tester,
+    ) async {
+      // Un teléfono Android común (412 × 915). Antes había que bajar mucho para
+      // ver el semestral.
+      tester.view
+        ..devicePixelRatio = 2.625
+        ..physicalSize = const Size(412, 915) * 2.625;
+      addTearDown(tester.view.reset);
+
+      final t = _Montaje(sub: _expirada);
+      await tester.pumpWidget(
+        t.montar(
+          const MuroDeVentaScreen(motivo: FuncionDePago(FuncionPremium.cursos)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final texto in [
+        'Premium mensual',
+        'Premium trimestral',
+        'Premium semestral',
+        'Suscribirme',
+      ]) {
+        expect(
+          tester.getRect(find.text(texto)).bottom,
+          lessThanOrEqualTo(915),
+          reason: texto,
+        );
+      }
     });
 
     testWidgets('solo las tres suscripciones, sin «(ENAM Prep)»', (

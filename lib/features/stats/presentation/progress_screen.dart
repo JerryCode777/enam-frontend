@@ -125,9 +125,9 @@ class _Contenido extends ConsumerWidget {
         ],
         const SizedBox(height: DesignTokens.space5),
         _PorArea(porArea: stats.porArea),
-        if (stats.evolucion.length > 1) ...[
+        if (stats.notas.length > 1) ...[
           const SizedBox(height: DesignTokens.space5),
-          _Evolucion(puntos: stats.evolucion),
+          _Evolucion(puntos: stats.notas),
         ],
       ],
     );

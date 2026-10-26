@@ -298,7 +298,14 @@ mixin _$GradePoint {
 ///
 /// Con `totalPreguntas` bastaría; `tipo` evita que el cliente lo deduzca de
 /// un número, que es una regla escondida esperando a romperse.
- String? get tipo; int? get totalPreguntas;
+ String? get tipo; int? get totalPreguntas;/// `finalizada` o `expirada`. Un simulacro abandonado se cierra solo al
+/// acabarse el tiempo y queda `expirada`, con nota 0 aunque no se haya
+/// respondido nada: en producción el historial se llenaba de «0.00».
+///
+/// Nulo cuando el servidor no lo manda, y entonces cuenta como terminado,
+/// que es lo que el historial supuso siempre.
+ String? get estado;/// Cuántas preguntas respondió. Nulo si el servidor no lo manda.
+ int? get respondidas;
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -311,16 +318,16 @@ $GradePointCopyWith<GradePoint> get copyWith => _$GradePointCopyWithImpl<GradePo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.respondidas, respondidas) || other.respondidas == respondidas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId,tipo,totalPreguntas);
+int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId,tipo,totalPreguntas,estado,respondidas);
 
 @override
 String toString() {
-  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId, tipo: $tipo, totalPreguntas: $totalPreguntas)';
+  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId, tipo: $tipo, totalPreguntas: $totalPreguntas, estado: $estado, respondidas: $respondidas)';
 }
 
 
@@ -331,7 +338,7 @@ abstract mixin class $GradePointCopyWith<$Res>  {
   factory $GradePointCopyWith(GradePoint value, $Res Function(GradePoint) _then) = _$GradePointCopyWithImpl;
 @useResult
 $Res call({
- DateTime fecha, double nota, String? sessionId, String? tipo, int? totalPreguntas
+ DateTime fecha, double nota, String? sessionId, String? tipo, int? totalPreguntas, String? estado, int? respondidas
 });
 
 
@@ -348,13 +355,15 @@ class _$GradePointCopyWithImpl<$Res>
 
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,Object? tipo = freezed,Object? totalPreguntas = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,Object? tipo = freezed,Object? totalPreguntas = freezed,Object? estado = freezed,Object? respondidas = freezed,}) {
   return _then(_self.copyWith(
 fecha: null == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
 as DateTime,nota: null == nota ? _self.nota : nota // ignore: cast_nullable_to_non_nullable
 as double,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String?,tipo: freezed == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
 as String?,totalPreguntas: freezed == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int?,estado: freezed == estado ? _self.estado : estado // ignore: cast_nullable_to_non_nullable
+as String?,respondidas: freezed == respondidas ? _self.respondidas : respondidas // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }
@@ -440,10 +449,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas,  String? estado,  int? respondidas)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GradePoint() when $default != null:
-return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas);case _:
+return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas,_that.estado,_that.respondidas);case _:
   return orElse();
 
 }
@@ -461,10 +470,10 @@ return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPre
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas,  String? estado,  int? respondidas)  $default,) {final _that = this;
 switch (_that) {
 case _GradePoint():
-return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas);case _:
+return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas,_that.estado,_that.respondidas);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -481,10 +490,10 @@ return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPre
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime fecha,  double nota,  String? sessionId,  String? tipo,  int? totalPreguntas,  String? estado,  int? respondidas)?  $default,) {final _that = this;
 switch (_that) {
 case _GradePoint() when $default != null:
-return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas);case _:
+return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPreguntas,_that.estado,_that.respondidas);case _:
   return null;
 
 }
@@ -496,7 +505,7 @@ return $default(_that.fecha,_that.nota,_that.sessionId,_that.tipo,_that.totalPre
 @JsonSerializable()
 
 class _GradePoint extends GradePoint {
-  const _GradePoint({required this.fecha, required this.nota, this.sessionId, this.tipo, this.totalPreguntas}): super._();
+  const _GradePoint({required this.fecha, required this.nota, this.sessionId, this.tipo, this.totalPreguntas, this.estado, this.respondidas}): super._();
   factory _GradePoint.fromJson(Map<String, dynamic> json) => _$GradePointFromJson(json);
 
 @override final  DateTime fecha;
@@ -512,6 +521,15 @@ class _GradePoint extends GradePoint {
 /// un número, que es una regla escondida esperando a romperse.
 @override final  String? tipo;
 @override final  int? totalPreguntas;
+/// `finalizada` o `expirada`. Un simulacro abandonado se cierra solo al
+/// acabarse el tiempo y queda `expirada`, con nota 0 aunque no se haya
+/// respondido nada: en producción el historial se llenaba de «0.00».
+///
+/// Nulo cuando el servidor no lo manda, y entonces cuenta como terminado,
+/// que es lo que el historial supuso siempre.
+@override final  String? estado;
+/// Cuántas preguntas respondió. Nulo si el servidor no lo manda.
+@override final  int? respondidas;
 
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
@@ -526,16 +544,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GradePoint&&(identical(other.fecha, fecha) || other.fecha == fecha)&&(identical(other.nota, nota) || other.nota == nota)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.totalPreguntas, totalPreguntas) || other.totalPreguntas == totalPreguntas)&&(identical(other.estado, estado) || other.estado == estado)&&(identical(other.respondidas, respondidas) || other.respondidas == respondidas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId,tipo,totalPreguntas);
+int get hashCode => Object.hash(runtimeType,fecha,nota,sessionId,tipo,totalPreguntas,estado,respondidas);
 
 @override
 String toString() {
-  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId, tipo: $tipo, totalPreguntas: $totalPreguntas)';
+  return 'GradePoint(fecha: $fecha, nota: $nota, sessionId: $sessionId, tipo: $tipo, totalPreguntas: $totalPreguntas, estado: $estado, respondidas: $respondidas)';
 }
 
 
@@ -546,7 +564,7 @@ abstract mixin class _$GradePointCopyWith<$Res> implements $GradePointCopyWith<$
   factory _$GradePointCopyWith(_GradePoint value, $Res Function(_GradePoint) _then) = __$GradePointCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime fecha, double nota, String? sessionId, String? tipo, int? totalPreguntas
+ DateTime fecha, double nota, String? sessionId, String? tipo, int? totalPreguntas, String? estado, int? respondidas
 });
 
 
@@ -563,13 +581,15 @@ class __$GradePointCopyWithImpl<$Res>
 
 /// Create a copy of GradePoint
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,Object? tipo = freezed,Object? totalPreguntas = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? fecha = null,Object? nota = null,Object? sessionId = freezed,Object? tipo = freezed,Object? totalPreguntas = freezed,Object? estado = freezed,Object? respondidas = freezed,}) {
   return _then(_GradePoint(
 fecha: null == fecha ? _self.fecha : fecha // ignore: cast_nullable_to_non_nullable
 as DateTime,nota: null == nota ? _self.nota : nota // ignore: cast_nullable_to_non_nullable
 as double,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String?,tipo: freezed == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_non_nullable
 as String?,totalPreguntas: freezed == totalPreguntas ? _self.totalPreguntas : totalPreguntas // ignore: cast_nullable_to_non_nullable
+as int?,estado: freezed == estado ? _self.estado : estado // ignore: cast_nullable_to_non_nullable
+as String?,respondidas: freezed == respondidas ? _self.respondidas : respondidas // ignore: cast_nullable_to_non_nullable
 as int?,
   ));
 }
