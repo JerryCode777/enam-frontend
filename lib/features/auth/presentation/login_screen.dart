@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +23,12 @@ import '../../../shared/widgets/social_buttons.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../consentimiento/presentation/casilla_de_comerciales.dart';
 import 'eventos_de_registro.dart';
+import 'verify_email_screen.dart' show CodigoPorVerificar;
+
+/// El 403 del login con un correo que todavía no se verificó. El servidor ya
+/// mandó un código nuevo: se va a escribirlo.
+bool esCorreoSinVerificar(Object error) =>
+    error is ForbiddenFailure && error.code == 'EMAIL_NOT_VERIFIED';
 
 /// Pantalla 1.5 — login con correo y contraseña, y con Google.
 ///
@@ -44,6 +52,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _loadingGoogle = false;
   bool _loadingApple = false;
   bool _comerciales = false;
+
+  /// El correo de un registro que se quedó sin escribir su código, si hay.
+  String? _pendiente;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_leerPendiente());
+  }
+
+  Future<void> _leerPendiente() async {
+    try {
+      final email = await ref.read(appPrefsProvider).verificacionPendiente();
+      if (mounted && email != null) setState(() => _pendiente = email);
+    } on Object {
+      // Sin preferencias no hay aviso; el login sigue igual.
+    }
+  }
 
   /// Cualquier login en curso: bloquea el resto de la pantalla, para que no se
   /// puedan lanzar dos a la vez.
@@ -87,7 +113,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
       if (!entro && mounted) _fallo('google', 'proveedor_cancelado');
     } on Object catch (error) {
-      if (mounted) _fallo('google', motivoDeFallo(error));
+      // Lo que falla dentro de Google —una configuración, la huella SHA— llega
+      // como `UnknownFailure`: es del proveedor, no «otro».
+      if (mounted) {
+        _fallo(
+          'google',
+          error is UnknownFailure ? 'proveedor_error' : motivoDeFallo(error),
+        );
+      }
       // En snackbar y no bajo los campos: el fallo no viene de lo que el
       // usuario escribió, así que señalarle la contraseña sería engañoso.
       if (mounted) {
@@ -139,10 +172,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // El fallo llega como excepción, no leyendo el estado: con credenciales
       // malas el usuario sigue sin sesión, esta pantalla no se desmonta y el
       // error se puede enseñar donde toca.
-      if (mounted) {
-        _fallo('correo', motivoDeFallo(error));
-        _showFailure(error);
+      if (!mounted) return;
+      if (esCorreoSinVerificar(error)) {
+        // No es un error: le falta el código, y acaba de salir uno nuevo.
+        // Antes se quedaba aquí con un aviso y sin forma de escribirlo.
+        final email = _email.text.trim();
+        await ref.read(appPrefsProvider).guardarVerificacionPendiente(email);
+        if (mounted) {
+          context.go(Routes.verifyEmail, extra: CodigoPorVerificar(email));
+        }
+        return;
       }
+      _fallo('correo', motivoDeFallo(error));
+      _showFailure(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -195,6 +237,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   child: AuthCard(
                     children: [
+                      if (_pendiente case final pendiente?)
+                        _CodigoPendiente(
+                          email: pendiente,
+                          onTap: _ocupado
+                              ? null
+                              : () => context.go(
+                                  Routes.verifyEmail,
+                                  // El código pudo vencer: reenviar, ya.
+                                  extra: CodigoPorVerificar(
+                                    pendiente,
+                                    recienEnviado: false,
+                                  ),
+                                ),
+                        ),
                       EnamTextField(
                         label: 'Correo',
                         controller: _email,
@@ -310,6 +366,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Un registro que se quedó sin escribir su código: la vuelta a escribirlo.
+class _CodigoPendiente extends StatelessWidget {
+  const _CodigoPendiente({required this.email, required this.onTap});
+
+  final String email;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return StateBanner(
+      kind: BannerKind.info,
+      message: 'Te falta verificar $email.',
+      action: TextButton(
+        onPressed: onTap,
+        child: const Text('Ingresar código'),
       ),
     );
   }

@@ -276,6 +276,15 @@ class _Prefs implements AppPrefs {
 
   @override
   Future<void> marcarComercialesPreguntado(String userId) async {}
+
+  @override
+  Future<String?> verificacionPendiente() async => null;
+
+  @override
+  Future<void> guardarVerificacionPendiente(String email) async {}
+
+  @override
+  Future<void> olvidarVerificacionPendiente() async {}
 }
 
 class _RepoConSesion extends MockAuthRepository {
