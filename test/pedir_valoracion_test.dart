@@ -130,6 +130,24 @@ void main() {
     },
   );
 
+  test('el evento pasa la lista cerrada del contrato en las dos tiendas', () {
+    for (final plataforma in ['ios', 'android']) {
+      for (final momento in MomentoDeValoracion.values) {
+        expect(
+          propiedadesValidas(Evento.valoracionPedida, {
+            'momento': momento.codigo,
+          }, plataforma: plataforma),
+          {'momento': momento.codigo},
+        );
+      }
+    }
+    // Sin `momento`, obligatorio, no se encola.
+    expect(
+      propiedadesValidas(Evento.valoracionPedida, {}, plataforma: 'android'),
+      isNull,
+    );
+  });
+
   group('qué es un buen resultado', () {
     test('práctica: 70 % o más en 10 preguntas o más', () {
       expect(PedirValoracion.practicaBuena(correctas: 7, total: 10), isTrue);

@@ -176,6 +176,7 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.cursoVisto: {'curso_id', 'desde'},
   Evento.registroVisto: {},
   Evento.registroFallido: {'metodo', 'motivo'},
+  Evento.valoracionPedida: {'momento'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -190,6 +191,8 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.cursoVisto: {'ios', 'android'},
   Evento.registroVisto: {'ios', 'android'},
   Evento.registroFallido: {'ios', 'android'},
+  // Catálogo 35.
+  Evento.valoracionPedida: {'ios', 'android'},
 };
 
 /// Valores que solo existen en una plataforma: el medio de pago es la tienda
