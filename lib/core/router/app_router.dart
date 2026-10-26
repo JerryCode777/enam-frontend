@@ -334,10 +334,16 @@ final List<RouteBase> _routes = [
   ),
   GoRoute(
     path: Routes.verifyEmail,
-    // El correo llega por `extra` desde el registro; si se entra directo, la
-    // pantalla lo lee del usuario en sesión.
-    builder: (context, state) =>
-        SiempreClaro(child: VerifyEmailScreen(email: state.extra as String?)),
+    // El correo llega por `extra` desde el registro o el login; si se entra
+    // directo, la pantalla lo lee del usuario en sesión.
+    builder: (context, state) => SiempreClaro(
+      child: switch (state.extra) {
+        CodigoPorVerificar(:final email, :final recienEnviado) =>
+          VerifyEmailScreen(email: email, codigoRecienEnviado: recienEnviado),
+        final String email => VerifyEmailScreen(email: email),
+        _ => const VerifyEmailScreen(),
+      },
+    ),
   ),
   GoRoute(
     path: Routes.forgotPassword,

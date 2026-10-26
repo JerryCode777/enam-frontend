@@ -165,6 +165,15 @@ class PrefsEnMemoria implements AppPrefs {
 
   @override
   Future<void> marcarComercialesPreguntado(String userId) async {}
+
+  @override
+  Future<String?> verificacionPendiente() async => null;
+
+  @override
+  Future<void> guardarVerificacionPendiente(String email) async {}
+
+  @override
+  Future<void> olvidarVerificacionPendiente() async {}
 }
 
 /// Decodifica de verdad las imágenes que haya en pantalla antes de capturar.

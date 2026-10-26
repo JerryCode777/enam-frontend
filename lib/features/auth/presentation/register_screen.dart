@@ -17,6 +17,7 @@ import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../consentimiento/presentation/casilla_de_comerciales.dart';
 import 'eventos_de_registro.dart';
+import 'verify_email_screen.dart' show CodigoPorVerificar;
 
 /// Pantalla 1.3 — registro.
 ///
@@ -41,6 +42,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _acepta = false;
   bool _comerciales = false;
   bool _loading = false;
+
+  /// El correo ya tiene cuenta. Puede ser una sin verificar —el registro se
+  /// cortó, o el correo del código no salió—: se ofrece ir al código.
+  bool _correoEnUso = false;
 
   @override
   void initState() {
@@ -105,6 +110,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             aceptaTerminos: _acepta,
             aceptaComerciales: comercialesDelAlta(_comerciales),
           );
+      // Se recuerda: si cierra la app antes de escribir el código, el login
+      // lo trae de vuelta aquí.
+      await ref
+          .read(appPrefsProvider)
+          .guardarVerificacionPendiente(_email.text.trim());
       if (mounted) {
         context.go(Routes.verifyEmail, extra: _email.text.trim());
       }
@@ -113,6 +123,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _fallo(e);
       setState(() {
         _emailError = e.fieldErrors['email'] ?? e.message;
+        _correoEnUso = e.code == 'EMAIL_TAKEN';
         _passwordError = e.fieldErrors['password'];
       });
     } on Failure catch (e) {
@@ -123,6 +134,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Al código de una cuenta que ya existe, con el reenvío a mano: el que
+  /// llegó (si llegó) pudo vencer. Si ya estaba verificada, el código no hace
+  /// falta y la pantalla lleva al login.
+  Future<void> _irAlCodigo() async {
+    final email = _email.text.trim();
+    await ref.read(appPrefsProvider).guardarVerificacionPendiente(email);
+    if (!mounted) return;
+    context.go(
+      Routes.verifyEmail,
+      extra: CodigoPorVerificar(email, recienEnviado: false),
+    );
   }
 
   void _fallo(Failure e) =>
@@ -156,9 +180,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           autofillHints: const [AutofillHints.email],
           enabled: !_loading,
           onChanged: (_) {
-            if (_emailError != null) setState(() => _emailError = null);
+            if (_emailError != null || _correoEnUso) {
+              setState(() {
+                _emailError = null;
+                _correoEnUso = false;
+              });
+            }
           },
         ),
+        if (_correoEnUso)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _irAlCodigo,
+              child: const Text(
+                '¿No verificaste tu correo? Ingresa el código',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
         EnamTextField(
           label: 'Contraseña',
           controller: _password,

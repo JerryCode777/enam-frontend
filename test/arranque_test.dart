@@ -199,6 +199,15 @@ class _PrefsFalsas implements AppPrefs {
 
   @override
   Future<void> marcarComercialesPreguntado(String userId) async {}
+
+  @override
+  Future<String?> verificacionPendiente() async => null;
+
+  @override
+  Future<void> guardarVerificacionPendiente(String email) async {}
+
+  @override
+  Future<void> olvidarVerificacionPendiente() async {}
 }
 
 /// Usuario con sesión válida y perfil completo.

@@ -45,8 +45,7 @@ class AppPrefs {
   }
 
   /// Para poder volver a probar el flujo desde cero en desarrollo.
-  Future<void> reiniciarPrueba() async =>
-      (await _prefs).remove(_kInicioPrueba);
+  Future<void> reiniciarPrueba() async => (await _prefs).remove(_kInicioPrueba);
 
   static const _kNacionalesInscritos = 'nacionales_inscritos';
 
@@ -81,4 +80,21 @@ class AppPrefs {
     if (actuales.contains(userId)) return;
     await prefs.setStringList(_kComercialesPreguntado, [...actuales, userId]);
   }
+
+  /// El correo de un registro que todavía no escribió su código.
+  ///
+  /// El registro no deja sesión: hasta verificar, la app no sabe quién es. Sin
+  /// esto, quien cerraba la app con el código a medias volvía al login y no
+  /// había manera de llegar otra vez a la pantalla del código (un 10-15 % de
+  /// las cuentas nunca se verificaba).
+  static const _kVerificacionPendiente = 'verificacion_pendiente';
+
+  Future<String?> verificacionPendiente() async =>
+      (await _prefs).getString(_kVerificacionPendiente);
+
+  Future<void> guardarVerificacionPendiente(String email) async =>
+      (await _prefs).setString(_kVerificacionPendiente, email);
+
+  Future<void> olvidarVerificacionPendiente() async =>
+      (await _prefs).remove(_kVerificacionPendiente);
 }

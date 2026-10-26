@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -13,6 +14,47 @@ import '../../../core/theme/motion.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/fondo_claro.dart';
 import '../../../shared/widgets/state_banner.dart';
+import 'eventos_de_registro.dart';
+
+/// A dónde va la pantalla del código: el correo, y si el código acaba de
+/// salir (al registrarse, o al entrar con la cuenta sin verificar) o no (al
+/// volver desde el login con un registro a medias, cuando el código pudo
+/// vencer y el reenvío tiene que estar a mano).
+class CodigoPorVerificar {
+  const CodigoPorVerificar(this.email, {this.recienEnviado = true});
+
+  final String email;
+  final bool recienEnviado;
+}
+
+/// Deja solo los dígitos del código y corta en [largo].
+///
+/// Se pega del correo —«123 456», «123-456», « 123456 »— y antes `maxLength`
+/// cortaba lo pegado **antes** de quitar nada: «123 456» quedaba en «123 45»,
+/// seis caracteres que se mandaban y el servidor rechazaba.
+class SoloDigitosDelCodigo extends TextInputFormatter {
+  const SoloDigitosDelCodigo(this.largo);
+
+  final int largo;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var digitos = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digitos.length > largo) digitos = digitos.substring(0, largo);
+    if (digitos == newValue.text) return newValue;
+    return TextEditingValue(
+      text: digitos,
+      selection: TextSelection.collapsed(offset: digitos.length),
+    );
+  }
+}
+
+/// La pista bajo el código. Pequeña y siempre a la vista: el correo suele
+/// caer en spam o en Promociones, y es lo primero que hay que mirar.
+const pistaDeSpam = '¿No te llegó? Revisa tu carpeta de spam o promociones.';
 
 /// Pantalla 1.4 — verificación de correo con código.
 ///
@@ -21,10 +63,18 @@ import '../../../shared/widgets/state_banner.dart';
 /// certificado del dominio no estaba listo, y en spam un enlace es justo lo que
 /// a la gente le enseñaron a no pulsar.
 class VerifyEmailScreen extends ConsumerStatefulWidget {
-  const VerifyEmailScreen({this.email, super.key});
+  const VerifyEmailScreen({
+    this.email,
+    this.codigoRecienEnviado = true,
+    super.key,
+  });
 
   /// Correo al que se envió el código. Si es nulo, se lee del usuario en sesión.
   final String? email;
+
+  /// Si el código acaba de salir. Si no, «Reenviar código» está disponible
+  /// desde el principio, sin esperar el minuto.
+  final bool codigoRecienEnviado;
 
   @override
   ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -39,7 +89,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   final _codigo = TextEditingController();
 
   Timer? _timer;
-  int _restante = _cooldown;
+  int _restante = 0;
   bool _enviando = false;
   bool _verificando = false;
   String? _codigoError;
@@ -47,7 +97,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
-    _startCooldown();
+    if (widget.codigoRecienEnviado) _startCooldown();
   }
 
   @override
@@ -59,7 +109,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   Future<void> _verificar(String email) async {
     if (_verificando) return;
-    if (_codigo.text.length != _largoCodigo) {
+    final codigo = _codigo.text;
+    if (codigo.length != _largoCodigo) {
       setState(() => _codigoError = 'El código tiene $_largoCodigo dígitos.');
       return;
     }
@@ -71,7 +122,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     try {
       final usuario = await ref
           .read(authRepositoryProvider)
-          .verificarConCodigo(email: email, codigo: _codigo.text);
+          .verificarConCodigo(email: email, codigo: codigo);
+      // Verificada (o ya lo estaba): ya no hay código pendiente que retomar.
+      await ref.read(appPrefsProvider).olvidarVerificacionPendiente();
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,8 +149,17 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       context.go(Routes.login);
     } on Failure catch (e) {
       if (!mounted) return;
+      if (e is ValidationFailure) {
+        registrarFallo(ref, metodo: 'correo', motivo: 'codigo_invalido');
+      }
       setState(() {
-        _codigoError = e.message;
+        _codigoError = switch (e) {
+          // Sin mensaje propio del servidor: decir qué hacer, no solo que no.
+          ValidationFailure(:final message) when message.isEmpty =>
+            'Ese código no es válido o ya venció. Revisa el último correo o '
+                'pide uno nuevo.',
+          _ => e.message,
+        };
         _codigo.clear();
       });
     } finally {
@@ -105,9 +167,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     }
   }
 
-  void _startCooldown() {
+  void _startCooldown([int segundos = _cooldown]) {
     _timer?.cancel();
-    setState(() => _restante = _cooldown);
+    setState(() => _restante = segundos);
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_restante <= 1) {
         t.cancel();
@@ -134,6 +196,11 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Te enviamos un código nuevo.')),
       );
+    } on RateLimitFailure catch (e) {
+      // Demasiado pronto: la espera es la que dice el servidor.
+      if (!mounted) return;
+      _startCooldown(e.retryAfter?.inSeconds ?? _cooldown);
+      showErrorSnack(context, e.message);
     } on Failure catch (e) {
       if (mounted) showErrorSnack(context, e.message);
     } finally {
@@ -209,8 +276,24 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                       error: _codigoError,
                       largo: _largoCodigo,
                       enabled: !_verificando,
-                      onChanged: () => setState(() => _codigoError = null),
+                      onChanged: () {
+                        setState(() => _codigoError = null);
+                        // Pegado o autocompletado entero: se verifica solo.
+                        if (_codigo.text.length == _largoCodigo) {
+                          unawaited(_verificar(email));
+                        }
+                      },
                       onSubmit: () => _verificar(email),
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
+                    const Text(
+                      pistaDeSpam,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: DesignTokens.textSecondaryLight,
+                      ),
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     // El principal, sólido; el reenvío, con borde (el mismo
@@ -356,7 +439,8 @@ class _CampoCodigo extends StatelessWidget {
           keyboardType: TextInputType.number,
           autofillHints: const [AutofillHints.oneTimeCode],
           textInputAction: TextInputAction.done,
-          maxLength: largo,
+          // Sin `maxLength`: cortaba lo pegado antes de limpiarlo.
+          inputFormatters: [SoloDigitosDelCodigo(largo)],
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 30,
@@ -368,7 +452,6 @@ class _CampoCodigo extends StatelessWidget {
           onChanged: (_) => onChanged(),
           onSubmitted: (_) => onSubmit(),
           decoration: InputDecoration(
-            counterText: '',
             hintText: '000000',
             hintStyle: const TextStyle(
               fontSize: 30,
