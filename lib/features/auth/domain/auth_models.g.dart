@@ -22,6 +22,9 @@ _User _$UserFromJson(Map<String, dynamic> json) => _User(
   emailVerificado: json['emailVerificado'] as bool? ?? false,
   ocultoEnRanking: json['ocultoEnRanking'] as bool? ?? false,
   aceptaComerciales: json['aceptaComerciales'] as bool?,
+  creadoEn: json['creadoEn'] == null
+      ? null
+      : DateTime.parse(json['creadoEn'] as String),
 );
 
 Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
@@ -36,6 +39,7 @@ Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
   'emailVerificado': instance.emailVerificado,
   'ocultoEnRanking': instance.ocultoEnRanking,
   'aceptaComerciales': instance.aceptaComerciales,
+  'creadoEn': instance.creadoEn?.toIso8601String(),
 };
 
 const _$UserRoleEnumMap = {

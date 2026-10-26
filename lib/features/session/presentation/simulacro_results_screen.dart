@@ -10,6 +10,7 @@ import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/area_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../core/valoracion/pedir_valoracion.dart';
 import '../../../features/catalog/presentation/catalog_providers.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
@@ -40,7 +41,18 @@ class SimulacroResultsScreen extends ConsumerWidget {
         // El sonido del resultado, una vez: bueno con 11 o más, malo si no.
         data: (s) => SonarAlAparecer(
           sonido: sonidoDeResultado(nota: _notaDe(s.session)),
-          child: _Contenido(session: s.session),
+          // Tras una nota aprobatoria, la valoración de la tienda (si toca).
+          child: ValoracionAlAparecer(
+            sessionId: s.session.id,
+            momento: s.session.tipo == SessionType.examenPasado
+                ? MomentoDeValoracion.examenPasado
+                : MomentoDeValoracion.simulacro,
+            buenResultado:
+                s.session.estado == SessionStatus.finalizada &&
+                PedirValoracion.notaBuena(_notaDe(s.session)),
+            finalizadaEn: s.session.finalizadaEn,
+            child: _Contenido(session: s.session),
+          ),
         ),
       ),
     );

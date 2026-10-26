@@ -11,6 +11,7 @@ import '../../../core/sonido/proveedor_sonidos.dart';
 import '../../../core/sonido/sonidos.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../core/valoracion/pedir_valoracion.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
 import '../../../shared/widgets/sonar_al_aparecer.dart';
@@ -42,7 +43,17 @@ class SessionSummaryScreen extends ConsumerWidget {
         // El sonido del resultado, una vez: bueno con 11 o más, malo si no.
         data: (s) => SonarAlAparecer(
           sonido: sonidoDeResultado(nota: _notaDe(s.session)),
-          child: _Contenido(session: s.session),
+          // Tras una buena práctica, la valoración de la tienda (si toca).
+          child: ValoracionAlAparecer(
+            sessionId: s.session.id,
+            momento: MomentoDeValoracion.practica,
+            buenResultado: PedirValoracion.practicaBuena(
+              correctas: s.session.correctas,
+              total: s.session.totalPreguntas,
+            ),
+            finalizadaEn: s.session.finalizadaEn,
+            child: _Contenido(session: s.session),
+          ),
         ),
       ),
     );

@@ -54,6 +54,9 @@ abstract class User with _$User {
     /// Correos comerciales (`users.acepta_comerciales`): `true` sí, `false`
     /// no, y `null` si todavía no decidió, que no es lo mismo que «no».
     bool? aceptaComerciales,
+
+    /// Cuándo se creó la cuenta. Nula si el servidor no la manda.
+    DateTime? creadoEn,
   }) = _User;
 
   const User._();

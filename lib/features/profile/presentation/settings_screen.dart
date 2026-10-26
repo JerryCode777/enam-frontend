@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +13,7 @@ import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../../core/valoracion/pedir_valoracion.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
@@ -321,7 +324,9 @@ class _Sonidos extends ConsumerWidget {
       child: Column(
         children: [
           SwitchListTile(
-            secondary: Icon(prefs.activo ? Symbols.volume_up : Symbols.volume_off),
+            secondary: Icon(
+              prefs.activo ? Symbols.volume_up : Symbols.volume_off,
+            ),
             title: const Text('Sonidos'),
             subtitle: const Text(
               'Al elegir, al acertar o fallar en la práctica y al ver tu '
@@ -443,11 +448,11 @@ class _Cuenta extends ConsumerWidget {
   }
 }
 
-class _Ayuda extends StatelessWidget {
+class _Ayuda extends ConsumerWidget {
   const _Ayuda();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: Column(
         children: [
@@ -456,6 +461,17 @@ class _Ayuda extends StatelessWidget {
             title: const Text('Ayuda y contacto'),
             trailing: const Icon(Symbols.chevron_right, size: 20),
             onTap: () => context.irA(Routes.help),
+          ),
+          Divider(height: 1, color: context.scheme.outlineVariant),
+          // La ficha de la tienda, para quien quiera calificar cuando quiera.
+          // Sin preguntar antes si le gusta: eso sería filtrar las reseñas.
+          ListTile(
+            leading: const Icon(Symbols.star),
+            title: const Text('Califica ENAM Prep'),
+            trailing: const Icon(Symbols.open_in_new, size: 20),
+            onTap: () => unawaited(
+              ref.read(pedirValoracionProvider).abrirFicha().catchError((_) {}),
+            ),
           ),
           Divider(height: 1, color: context.scheme.outlineVariant),
           ListTile(
