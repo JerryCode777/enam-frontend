@@ -64,6 +64,8 @@ class ComprasGooglePlayController {
 
   Future<List<ProductDetails>> productos() => _tienda.productos();
 
+  Future<DiagnosticoDePlay> diagnostico() => _tienda.diagnostico();
+
   Future<void> comprar(
     ProductDetails producto, {
     required String cuentaId,

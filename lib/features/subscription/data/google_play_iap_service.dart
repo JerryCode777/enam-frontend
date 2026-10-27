@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'fallo_de_tienda.dart';
 
@@ -62,12 +63,70 @@ abstract interface class GooglePlayIapService {
   /// servidor la haya registrado** (el servidor ya hace el acknowledge; esto
   /// es la otra mitad del contrato de `in_app_purchase`).
   Future<void> completar(PurchaseDetails compra);
+
+  /// Por qué Play pudo no dar planes: lo que devolvió la última consulta, el
+  /// país de la cuenta de Play y quién instaló la app. Nunca lanza: lo que no
+  /// se pueda saber queda en `null`.
+  Future<DiagnosticoDePlay> diagnostico();
 }
+
+/// Lo que se mide cuando Planes queda vacío en Android (26/10/2026: 5 de ~7
+/// personas reales no vieron ningún plan, y la prueba de Jerry sí los veía).
+///
+/// Las hipótesis que separa:
+/// - **País:** los planes base solo están configurados para PE. Una cuenta de
+///   Play de otro país no recibe ninguno → [pais].
+/// - **Instalación:** una app que Play no instaló (APK suelto, adb) no tiene
+///   productos → [instalador].
+/// - **Nuestro filtro:** Play los dio y los descartamos → [productosTienda]
+///   mayor que cero con la lista vacía.
+class DiagnosticoDePlay {
+  const DiagnosticoDePlay({
+    this.pais,
+    this.productosTienda,
+    this.noEncontrados,
+    this.instalador,
+  });
+
+  /// País de facturación de Play (BillingConfig), ISO 3166 en minúsculas.
+  final String? pais;
+
+  /// Entradas que devolvió Play **antes** de [elegirUnoPorProducto].
+  final int? productosTienda;
+
+  /// Cuántos de los ids pedidos Play dijo no encontrar (`notFoundIDs`).
+  final int? noEncontrados;
+
+  /// `play`, `otro` o `ninguno` (ver [instaladorDe]).
+  final String? instalador;
+
+  /// Las propiedades de `planes_no_disponibles`, solo las que se saben.
+  Map<String, String> get propiedades => {
+    'pais_tienda': ?pais,
+    'productos_tienda': ?productosTienda?.toString(),
+    'no_encontrados': ?noEncontrados?.toString(),
+    'instalador': ?instalador,
+  };
+}
+
+/// Quién instaló la app, en las tres clases que importan.
+///
+/// `com.android.vending` es Play Store (y `com.google.android.feedback`, el
+/// nombre que daban versiones viejas). Sin instalador es un APK suelto o adb:
+/// así Play no reconoce la instalación y no da productos.
+String instaladorDe(String? paquete) => switch (paquete) {
+  null || '' => 'ninguno',
+  'com.android.vending' || 'com.google.android.feedback' => 'play',
+  _ => 'otro',
+};
 
 class GooglePlayIapServiceImpl implements GooglePlayIapService {
   GooglePlayIapServiceImpl({InAppPurchase? tienda}) : _inyectada = tienda;
 
   final InAppPurchase? _inyectada;
+
+  /// Lo que devolvió Play en la última consulta, para [diagnostico].
+  ({int productos, int noEncontrados})? _ultima;
 
   /// Perezosa: este servicio se crea al arrancar la app (para restaurar
   /// compras), también donde no hay Play, y `InAppPurchase.instance` falla
@@ -98,6 +157,10 @@ class GooglePlayIapServiceImpl implements GooglePlayIapService {
     } catch (e) {
       throw FalloDeTienda('$e', codigo: codigoDeTienda(e));
     }
+    _ultima = (
+      productos: respuesta.productDetails.length,
+      noEncontrados: respuesta.notFoundIDs.length,
+    );
     if (respuesta.error case final error?) {
       throw FalloDeTienda(error.message, codigo: codigoDeTienda(error));
     }
@@ -133,6 +196,38 @@ class GooglePlayIapServiceImpl implements GooglePlayIapService {
   Future<void> completar(PurchaseDetails compra) async {
     if (compra.pendingCompletePurchase) {
       await _tienda.completePurchase(compra);
+    }
+  }
+
+  @override
+  Future<DiagnosticoDePlay> diagnostico() async {
+    return DiagnosticoDePlay(
+      pais: await _pais(),
+      productosTienda: _ultima?.productos,
+      noEncontrados: _ultima?.noEncontrados,
+      instalador: await _instalador(),
+    );
+  }
+
+  /// El país de la cuenta de Play, o `null` si Play no lo dice a tiempo (con
+  /// la facturación caída, por ejemplo).
+  Future<String?> _pais() async {
+    try {
+      final codigo = await _tienda.countryCode().timeout(
+        const Duration(seconds: 3),
+      );
+      final pais = codigo.trim().toLowerCase();
+      return RegExp(r'^[a-z]{2}$').hasMatch(pais) ? pais : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _instalador() async {
+    try {
+      return instaladorDe((await PackageInfo.fromPlatform()).installerStore);
+    } catch (_) {
+      return null;
     }
   }
 }
@@ -221,4 +316,7 @@ class MockGooglePlayIapService implements GooglePlayIapService {
 
   @override
   Future<void> completar(PurchaseDetails compra) async {}
+
+  @override
+  Future<DiagnosticoDePlay> diagnostico() async => const DiagnosticoDePlay();
 }

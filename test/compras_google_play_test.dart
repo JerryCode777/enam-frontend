@@ -257,6 +257,9 @@ class _TiendaFalsa implements GooglePlayIapService {
 
   @override
   Future<void> restaurar() async => restauraciones++;
+
+  @override
+  Future<DiagnosticoDePlay> diagnostico() async => const DiagnosticoDePlay();
 }
 
 class _RepoFalso implements SubscriptionRepository {

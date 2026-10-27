@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:enam_app/core/analitica/analitica.dart';
+import 'package:enam_app/core/config/contacto.dart';
 import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
@@ -197,18 +198,49 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos cargar los planes. Inténtalo más tarde.'),
+        find.text(
+          'Los planes no están disponibles en tu cuenta de Google Play en '
+          'este momento. Escríbenos y te ayudamos.',
+        ),
         findsOneWidget,
       );
+      expect(find.text('Escríbenos por WhatsApp'), findsOneWidget);
       sinPagoFueraDePlay(tester);
 
       // Reintentar dentro de la misma apertura no repite el evento.
       await tester.tap(find.text('Reintentar'));
       await tester.pumpAndSettle();
 
+      // Con el diagnóstico (catálogo 37): país, lo que dio Play e instalador.
       expect(t.analitica.registrados, [
-        'planes_no_disponibles medio=google_play motivo=vacio',
+        'planes_no_disponibles medio=google_play motivo=vacio '
+            'pais_tienda=us productos_tienda=0 no_encontrados=3 '
+            'instalador=play',
       ]);
+    });
+
+    testWidgets('«Escríbenos» abre WhatsApp con el problema ya escrito', (
+      tester,
+    ) async {
+      Uri? abierto;
+      final original = Contacto.lanzador;
+      Contacto.lanzador = (uri) async {
+        abierto = uri;
+        return true;
+      };
+      addTearDown(() => Contacto.lanzador = original);
+
+      final t = _Montaje(sub: _expirada, productos: const []);
+      await tester.pumpWidget(t.montar(const Scaffold(body: _Opciones())));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Escríbenos por WhatsApp'));
+      await tester.pump();
+
+      expect(abierto?.host, 'wa.me');
+      expect(
+        abierto?.queryParameters['text'],
+        contains('no me aparecen los planes de Google Play'),
+      );
     });
 
     testWidgets('error: con el código de Play, nunca el mensaje', (
@@ -225,12 +257,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos cargar los planes. Inténtalo más tarde.'),
+        find.text(
+          'No pudimos cargar los planes. Inténtalo de nuevo o escríbenos y '
+          'te ayudamos.',
+        ),
         findsOneWidget,
       );
+      expect(find.text('Escríbenos por WhatsApp'), findsOneWidget);
+      sinPagoFueraDePlay(tester);
       expect(t.analitica.registrados, [
         'planes_no_disponibles medio=google_play motivo=error '
-            'codigo=billing_unavailable',
+            'codigo=billing_unavailable pais_tienda=us productos_tienda=3 '
+            'no_encontrados=0 instalador=play',
       ]);
     });
   });
@@ -474,6 +512,16 @@ class _TiendaFalsa implements GooglePlayIapService {
 
   @override
   Future<void> completar(PurchaseDetails compra) async {}
+
+  /// Como el caso real del 26/10: una cuenta de Play de otro país, a la que
+  /// Play no le da ninguno de los tres productos.
+  @override
+  Future<DiagnosticoDePlay> diagnostico() async => DiagnosticoDePlay(
+    pais: 'us',
+    productosTienda: _productos.length,
+    noEncontrados: productosGooglePlay.length - _productos.length,
+    instalador: 'play',
+  );
 }
 
 class _Capturadora implements Analitica {
