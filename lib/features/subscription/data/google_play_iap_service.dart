@@ -109,15 +109,35 @@ class DiagnosticoDePlay {
   };
 }
 
-/// Quién instaló la app, en las tres clases que importan.
+/// Quién instaló la app, en las tres clases del contrato: `play`, `otro`
+/// (otra tienda) y `ninguno` (un APK suelto o adb).
 ///
 /// `com.android.vending` es Play Store (y `com.google.android.feedback`, el
-/// nombre que daban versiones viejas). Sin instalador es un APK suelto o adb:
-/// así Play no reconoce la instalación y no da productos.
+/// nombre que daban versiones viejas).
+///
+/// Desde Android 11, `installerStore` es quien **inició** la instalación, y
+/// un APK suelto o adb ya no dan `null`: dan el instalador del sistema o la
+/// shell. Eso es `ninguno`, no otra tienda. Pasó en la 1.1.7: el robot de
+/// prelanzamiento de Play, que instala por adb, llegaba como `otro`.
 String instaladorDe(String? paquete) => switch (paquete) {
   null || '' => 'ninguno',
   'com.android.vending' || 'com.google.android.feedback' => 'play',
+  _ when _sinTienda.contains(paquete) => 'ninguno',
   _ => 'otro',
+};
+
+/// Los que instalan sin tienda: adb y los instaladores de paquetes del
+/// sistema (el de AOSP, el de Google y los de los fabricantes más comunes
+/// en Perú).
+const _sinTienda = {
+  'com.android.shell',
+  'com.android.packageinstaller',
+  'com.google.android.packageinstaller',
+  'com.samsung.android.packageinstaller',
+  'com.miui.packageinstaller',
+  'com.huawei.appmarket.packageinstaller',
+  'com.oplus.packageinstaller',
+  'com.coloros.packageinstaller',
 };
 
 class GooglePlayIapServiceImpl implements GooglePlayIapService {
