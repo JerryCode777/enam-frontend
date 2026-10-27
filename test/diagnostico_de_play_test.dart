@@ -9,7 +9,15 @@ void main() {
     expect(instaladorDe('com.google.android.feedback'), 'play');
     expect(instaladorDe(null), 'ninguno');
     expect(instaladorDe(''), 'ninguno');
-    expect(instaladorDe('com.google.android.packageinstaller'), 'otro');
+    // Desde Android 11 un APK suelto o adb dicen quién los instaló: no es
+    // otra tienda (la 1.1.7 los mandaba como `otro`).
+    expect(instaladorDe('com.android.shell'), 'ninguno');
+    expect(instaladorDe('com.google.android.packageinstaller'), 'ninguno');
+    expect(instaladorDe('com.android.packageinstaller'), 'ninguno');
+    expect(instaladorDe('com.miui.packageinstaller'), 'ninguno');
+    // Otra tienda sí es `otro`.
+    expect(instaladorDe('com.huawei.appmarket'), 'otro');
+    expect(instaladorDe('com.sec.android.app.samsungapps'), 'otro');
   });
 
   test('solo viaja lo que se sabe', () {
