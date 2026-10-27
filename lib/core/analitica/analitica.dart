@@ -83,6 +83,8 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
   Evento.planesNoDisponibles: {
     'medio': {'apple', 'google_play'},
     'motivo': {'vacio', 'error'},
+    // Catálogo 37: quién instaló la app (diagnóstico de Planes vacío).
+    'instalador': {'play', 'otro', 'ninguno'},
   },
   // `planes`: la casilla debajo de los planes de Play (catálogo 34).
   Evento.consentimientoVisto: {
@@ -137,11 +139,25 @@ const booleanasDe = <Evento, Set<String>>{
   Evento.muroVisto: {'con_oferta'},
 };
 
+/// Las propiedades enteras del contrato, con su mínimo y su máximo. Se
+/// registran como texto y viajan como número: el servidor rechaza la cadena.
+const enterasDe = <Evento, Map<String, (int, int)>>{
+  // Catálogo 37: lo que devolvió Play antes de filtrar, y lo que no encontró.
+  Evento.planesNoDisponibles: {
+    'productos_tienda': (0, 50),
+    'no_encontrados': (0, 10),
+  },
+};
+
 /// Las propiedades de tipo «código» (un identificador de máquina, nunca texto
 /// escrito por una persona), con el patrón del contrato.
 final codigosDe = <Evento, Map<String, RegExp>>{
   Evento.cursoVisto: {'curso_id': RegExp(r'^[a-z0-9][a-z0-9.-]{0,99}$')},
-  Evento.planesNoDisponibles: {'codigo': RegExp(r'^[a-z0-9_]{1,64}$')},
+  Evento.planesNoDisponibles: {
+    'codigo': RegExp(r'^[a-z0-9_]{1,64}$'),
+    // Catálogo 37: el país de facturación de Play.
+    'pais_tienda': RegExp(r'^[a-z]{2}$'),
+  },
 };
 
 /// `obligatoria_si` del contrato: la propiedad es obligatoria cuando otra vale
@@ -225,6 +241,7 @@ Map<String, Object>? propiedadesValidas(
   final admitidas = propiedadesDe[evento]!;
   final booleanas = booleanasDe[evento] ?? const {};
   final codigos = codigosDe[evento] ?? const {};
+  final enteras = enterasDe[evento] ?? const {};
   final soloEn = soloEnPlataformaDe[evento] ?? const {};
   final deEstaPlataforma = propiedades.entries.where(
     (p) => (soloEn[p.key]?[p.value] ?? plataforma) == plataforma,
@@ -236,7 +253,9 @@ Map<String, Object>? propiedadesValidas(
       else if (booleanas.contains(key) && (value == 'true' || value == 'false'))
         key: value == 'true'
       else if (codigos[key]?.hasMatch(value) ?? false)
-        key: value,
+        key: value
+      else if (_entero(value, enteras[key]) != null)
+        key: _entero(value, enteras[key])!,
   };
   for (final MapEntry(key: clave, value: (hermana, valor))
       in (ausentesSiDe[evento] ?? const {}).entries) {
@@ -248,6 +267,14 @@ Map<String, Object>? propiedadesValidas(
     if (limpias[hermana] == valor && !limpias.containsKey(clave)) return null;
   }
   return limpias;
+}
+
+/// [valor] como entero dentro de [rango], o `null` si no lo es.
+int? _entero(String valor, (int, int)? rango) {
+  if (rango == null) return null;
+  final n = int.tryParse(valor);
+  if (n == null || n < rango.$1 || n > rango.$2) return null;
+  return n;
 }
 
 /// La versión tal como la pide el contrato: la de pubspec (`1.0.0+7`), y en

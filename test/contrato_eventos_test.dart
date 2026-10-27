@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:enam_app/core/analitica/analitica.dart';
+import 'package:enam_app/features/subscription/data/google_play_iap_service.dart';
 import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +88,10 @@ void main() {
       final valido = switch (p['tipo']) {
         'enum' => value is String && valoresDe(p).contains(value),
         'booleano' => value is bool,
+        'entero' =>
+          value is int &&
+              value >= (p['min'] as int) &&
+              value <= (p['max'] as int),
         'codigo' =>
           value is String && RegExp(p['patron'] as String).hasMatch(value),
         _ => false,
@@ -112,6 +117,7 @@ void main() {
           ...propiedadesDe[e]!.keys,
           ...?booleanasDe[e],
           ...?codigosDe[e]?.keys,
+          ...?enterasDe[e]?.keys,
         };
         for (final k in enviables) {
           expect(contratoProps, contains(k), reason: '$k no está declarada');
@@ -129,6 +135,10 @@ void main() {
           }
           if (booleanasDe[e]?.contains(k) ?? false) {
             expect(p['tipo'], 'booleano', reason: k);
+          }
+          if (enterasDe[e]?[k] case (final min, final max)) {
+            expect(p['tipo'], 'entero', reason: k);
+            expect((p['min'], p['max']), (min, max), reason: k);
           }
           if (codigosDe[e]?[k] case final patron?) {
             expect(p['tipo'], 'codigo', reason: k);
@@ -175,6 +185,20 @@ void main() {
         (
           Evento.planesNoDisponibles,
           {'medio': medio, 'motivo': 'error', 'codigo': 'billing_unavailable'},
+        ),
+        // Catálogo 37: con el diagnóstico de Play.
+        (
+          Evento.planesNoDisponibles,
+          {
+            'medio': medio,
+            'motivo': 'vacio',
+            ...const DiagnosticoDePlay(
+              pais: 'pe',
+              productosTienda: 0,
+              noEncontrados: 3,
+              instalador: 'play',
+            ).propiedades,
+          },
         ),
       ],
       for (final lugar in const ['aviso', 'fin_dia_gratis']) ...[

@@ -43,10 +43,14 @@ String codigoDeTienda(Object error) {
 /// Quien lo llama se encarga de mandarlo **una vez por apertura** de Planes:
 /// un reintento que vuelve a fallar no lo repite. Si faltan solo algunos
 /// planes, no se llama.
+///
+/// [diagnostico] son las propiedades del diagnóstico de la tienda
+/// (`DiagnosticoDePlay.propiedades`), para saber por qué no hubo planes.
 void registrarPlanesNoDisponibles(
   Analitica analitica, {
   required String medio,
   Object? error,
+  Map<String, String> diagnostico = const {},
 }) {
   analitica.registrar(
     Evento.planesNoDisponibles,
@@ -58,6 +62,7 @@ void registrarPlanesNoDisponibles(
         'motivo': 'error',
         'codigo': error is FalloDeTienda ? error.codigo : 'desconocido',
       },
+      ...diagnostico,
     },
   );
 }
