@@ -7,7 +7,6 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/analitica/analitica.dart';
-import '../../../../core/config/contacto.dart';
 import '../../../../core/providers.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/theme/state_colors.dart';
@@ -22,6 +21,7 @@ import '../../data/google_play_iap_service.dart'
     show DiagnosticoDePlay, planIdDeGooglePlay;
 import '../../domain/acceso.dart';
 import '../../domain/subscription_models.dart';
+import 'sin_planes.dart';
 
 /// Los planes, comprables con Google Play Billing. Solo en Android.
 ///
@@ -210,7 +210,12 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
 
     final productos = _productos;
     if (_fallo || (productos != null && productos.isEmpty)) {
-      return _SinPlanes(vacio: !_fallo, onReintentar: _reintentar);
+      return SinPlanes(
+        tienda: 'Google Play',
+        plataforma: 'Android',
+        vacio: !_fallo,
+        onReintentar: _reintentar,
+      );
     }
     if (productos == null) {
       return const Padding(
@@ -280,50 +285,6 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
           onPressed: _ocupado ? null : () => unawaited(_compras.restaurar()),
           child: const Text('Restaurar compras'),
         ),
-      ],
-    );
-  }
-}
-
-/// Play no dio ningún plan. No es un callejón sin salida: se puede reintentar
-/// y escribirnos, y una persona ayuda.
-///
-/// **Nada de la web** (política de pagos de Google Play): ni enlaces ni
-/// «paga en otro sitio».
-class _SinPlanes extends StatelessWidget {
-  const _SinPlanes({required this.vacio, required this.onReintentar});
-
-  /// Play respondió sin planes. Si no, la consulta falló.
-  final bool vacio;
-  final VoidCallback onReintentar;
-
-  /// Lo que se le dice a quien ayuda, ya escrito.
-  static const mensajeDeAyuda =
-      'Hola, en la app de ENAM Prep (Android) no me aparecen los planes de '
-      'Google Play.';
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        StateBanner(
-          kind: BannerKind.info,
-          message: vacio
-              ? 'Los planes no están disponibles en tu cuenta de Google Play '
-                    'en este momento. Escríbenos y te ayudamos.'
-              : 'No pudimos cargar los planes. Inténtalo de nuevo o '
-                    'escríbenos y te ayudamos.',
-        ),
-        const SizedBox(height: DesignTokens.space3),
-        EnamButton(
-          label: 'Escríbenos por WhatsApp',
-          icon: Symbols.chat,
-          onPressed: () => unawaited(
-            Contacto.abrir(Contacto.soporte(mensaje: mensajeDeAyuda)),
-          ),
-        ),
-        TextButton(onPressed: onReintentar, child: const Text('Reintentar')),
       ],
     );
   }

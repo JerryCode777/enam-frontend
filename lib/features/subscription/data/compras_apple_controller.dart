@@ -4,6 +4,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../core/error/failure.dart';
 import 'apple_iap_service.dart';
+import 'fallo_de_tienda.dart' show DiagnosticoDeTienda;
 import 'subscription_repository.dart';
 
 /// En qué punto está la compra, para que la pantalla lo pueda contar.
@@ -78,6 +79,8 @@ class ComprasAppleController {
   }
 
   Future<List<ProductDetails>> productos() => _tienda.productos();
+
+  Future<DiagnosticoDeTienda> diagnostico() => _tienda.diagnostico();
 
   Future<void> comprar(ProductDetails producto) async {
     _emitir(EstadoCompra.comprando);

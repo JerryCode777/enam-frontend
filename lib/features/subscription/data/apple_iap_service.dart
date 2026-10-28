@@ -70,13 +70,30 @@ abstract interface class AppleIapService {
   /// **Solo después de que el servidor la haya registrado.** Antes de eso, dejar
   /// la transacción sin completar es lo que garantiza que no se pierda.
   Future<void> completar(PurchaseDetails compra);
+
+  /// Por qué no hubo planes: lo que devolvió la última consulta y el país de
+  /// la cuenta de App Store. Nunca lanza.
+  Future<DiagnosticoDeTienda> diagnostico();
 }
+
+/// El código con el que StoreKit 2 dice «no hay productos».
+///
+/// Pese al nombre, **no es un fallo de conexión**: el plugin lo lanza cuando
+/// Apple responde bien pero con la lista vacía (`SK2Product.products`). Los
+/// fallos de verdad llegan como `storekit2_products_error`. Las 6 personas de
+/// iOS sin planes del 27 y 28/10 recibieron este: App Store no les dio
+/// ninguno de los tres productos. Esperar más o reintentar no lo cambia; es
+/// configuración (App Store Connect) o disponibilidad del país.
+const sinProductosDeStoreKit = 'storekit_no_response';
 
 class AppleIapServiceImpl implements AppleIapService {
   AppleIapServiceImpl({InAppPurchase? tienda})
     : _tienda = tienda ?? InAppPurchase.instance;
 
   final InAppPurchase _tienda;
+
+  /// Lo que devolvió App Store en la última consulta, para [diagnostico].
+  ({int productos, int noEncontrados})? _ultima;
 
   @override
   Future<bool> disponible() async {
@@ -92,6 +109,14 @@ class AppleIapServiceImpl implements AppleIapService {
     } catch (e) {
       throw FalloDeTienda('$e', codigo: codigoDeTienda(e));
     }
+
+    _ultima = (
+      productos: respuesta.productDetails.length,
+      noEncontrados: respuesta.notFoundIDs.length,
+    );
+
+    // App Store respondió, sin productos: es «vacío», no un error.
+    if (respuesta.error?.code == sinProductosDeStoreKit) return const [];
 
     if (respuesta.error case final error?) {
       throw FalloDeTienda(
@@ -128,7 +153,61 @@ class AppleIapServiceImpl implements AppleIapService {
       await _tienda.completePurchase(compra);
     }
   }
+
+  @override
+  Future<DiagnosticoDeTienda> diagnostico() async {
+    String? pais;
+    try {
+      pais = paisDeAppStore(
+        await _tienda.countryCode().timeout(const Duration(seconds: 3)),
+      );
+    } catch (_) {
+      pais = null;
+    }
+    return DiagnosticoDeTienda(
+      pais: pais,
+      productosTienda: _ultima?.productos,
+      noEncontrados: _ultima?.noEncontrados,
+    );
+  }
 }
+
+/// El país de App Store en dos letras minúsculas, como pide el contrato.
+///
+/// `Storefront.countryCode` de StoreKit 2 da **tres** letras (ISO 3166-1
+/// alfa-3, «PER»); StoreKit 1 daba lo mismo. Se traducen los países que se
+/// esperan aquí. Uno que no esté en la lista no se manda: mejor sin país que
+/// con uno inventado.
+String? paisDeAppStore(String codigo) {
+  final c = codigo.trim().toUpperCase();
+  if (RegExp(r'^[A-Z]{2}$').hasMatch(c)) return c.toLowerCase();
+  return _alfa3[c];
+}
+
+const _alfa3 = {
+  'PER': 'pe',
+  'USA': 'us',
+  'MEX': 'mx',
+  'COL': 'co',
+  'CHL': 'cl',
+  'ECU': 'ec',
+  'BOL': 'bo',
+  'ARG': 'ar',
+  'VEN': 've',
+  'BRA': 'br',
+  'ESP': 'es',
+  'ITA': 'it',
+  'CAN': 'ca',
+  'PRY': 'py',
+  'URY': 'uy',
+  'PAN': 'pa',
+  'CRI': 'cr',
+  'DOM': 'do',
+  'GTM': 'gt',
+  'DEU': 'de',
+  'FRA': 'fr',
+  'GBR': 'gb',
+};
 
 /// Tienda de mentira, para recorrer la pantalla de planes sin App Store.
 ///
@@ -188,4 +267,8 @@ class MockAppleIapService implements AppleIapService {
 
   @override
   Future<void> completar(PurchaseDetails compra) async {}
+
+  @override
+  Future<DiagnosticoDeTienda> diagnostico() async =>
+      const DiagnosticoDeTienda();
 }

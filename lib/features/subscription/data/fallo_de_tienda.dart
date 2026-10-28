@@ -66,3 +66,44 @@ void registrarPlanesNoDisponibles(
     },
   );
 }
+
+/// Lo que se mide cuando Planes queda vacío (catálogo 37). Nació en Android
+/// (26/10/2026: 5 de ~7 personas reales no vieron ningún plan, y la prueba de
+/// Jerry sí los veía) y sirve igual en iPhone, sin [instalador].
+///
+/// Las hipótesis que separa:
+/// - **País:** los planes base solo están configurados para PE. Una cuenta de
+///   Play de otro país no recibe ninguno → [pais].
+/// - **Instalación:** una app que Play no instaló (APK suelto, adb) no tiene
+///   productos → [instalador].
+/// - **Nuestro filtro:** Play los dio y los descartamos → [productosTienda]
+///   mayor que cero con la lista vacía.
+class DiagnosticoDeTienda {
+  const DiagnosticoDeTienda({
+    this.pais,
+    this.productosTienda,
+    this.noEncontrados,
+    this.instalador,
+  });
+
+  /// País de la cuenta de la tienda (BillingConfig de Play, Storefront de
+  /// App Store), ISO 3166 de dos letras en minúsculas.
+  final String? pais;
+
+  /// Entradas que devolvió la tienda **antes** de nuestro filtro.
+  final int? productosTienda;
+
+  /// Cuántos de los ids pedidos la tienda no encontró (`notFoundIDs`).
+  final int? noEncontrados;
+
+  /// Solo Android: `play`, `otro` o `ninguno` (ver `instaladorDe`).
+  final String? instalador;
+
+  /// Las propiedades de `planes_no_disponibles`, solo las que se saben.
+  Map<String, String> get propiedades => {
+    'pais_tienda': ?pais,
+    'productos_tienda': ?productosTienda?.toString(),
+    'no_encontrados': ?noEncontrados?.toString(),
+    'instalador': ?instalador,
+  };
+}
