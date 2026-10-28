@@ -8,7 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'fallo_de_tienda.dart';
 
-export 'fallo_de_tienda.dart' show FalloDeTienda;
+export 'fallo_de_tienda.dart' show DiagnosticoDeTienda, FalloDeTienda;
 
 /// El nombre de la app en Google Play. El servidor lo exige en cada compra.
 const paqueteGooglePlay = 'pe.jakstech.enam_app';
@@ -70,44 +70,8 @@ abstract interface class GooglePlayIapService {
   Future<DiagnosticoDePlay> diagnostico();
 }
 
-/// Lo que se mide cuando Planes queda vacío en Android (26/10/2026: 5 de ~7
-/// personas reales no vieron ningún plan, y la prueba de Jerry sí los veía).
-///
-/// Las hipótesis que separa:
-/// - **País:** los planes base solo están configurados para PE. Una cuenta de
-///   Play de otro país no recibe ninguno → [pais].
-/// - **Instalación:** una app que Play no instaló (APK suelto, adb) no tiene
-///   productos → [instalador].
-/// - **Nuestro filtro:** Play los dio y los descartamos → [productosTienda]
-///   mayor que cero con la lista vacía.
-class DiagnosticoDePlay {
-  const DiagnosticoDePlay({
-    this.pais,
-    this.productosTienda,
-    this.noEncontrados,
-    this.instalador,
-  });
-
-  /// País de facturación de Play (BillingConfig), ISO 3166 en minúsculas.
-  final String? pais;
-
-  /// Entradas que devolvió Play **antes** de [elegirUnoPorProducto].
-  final int? productosTienda;
-
-  /// Cuántos de los ids pedidos Play dijo no encontrar (`notFoundIDs`).
-  final int? noEncontrados;
-
-  /// `play`, `otro` o `ninguno` (ver [instaladorDe]).
-  final String? instalador;
-
-  /// Las propiedades de `planes_no_disponibles`, solo las que se saben.
-  Map<String, String> get propiedades => {
-    'pais_tienda': ?pais,
-    'productos_tienda': ?productosTienda?.toString(),
-    'no_encontrados': ?noEncontrados?.toString(),
-    'instalador': ?instalador,
-  };
-}
+/// El diagnóstico de Play es el de cualquier tienda (ver [DiagnosticoDeTienda]).
+typedef DiagnosticoDePlay = DiagnosticoDeTienda;
 
 /// Quién instaló la app, en las tres clases del contrato: `play`, `otro`
 /// (otra tienda) y `ninguno` (un APK suelto o adb).
