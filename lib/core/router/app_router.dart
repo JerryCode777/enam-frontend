@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/system/domain/actualizacion.dart';
 import '../../features/aula/presentation/clase_screen.dart';
 import '../../features/aula/presentation/curso_screen.dart';
 import '../../features/aula/presentation/cursos_screen.dart';
@@ -80,6 +81,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   // Sin esto el bloqueo por acceso llegaría tarde: la suscripción se resuelve
   // después del login, y nada dispararía un nuevo redirect.
   ref.listen(subscriptionProvider, (_, _) => notifier.value++);
+  // La mínima llega de /config cuando ya se navegó: sin esto, la app seguiría
+  // abierta en una versión que el servidor dice que ya no sirve.
+  ref.listen(actualizacionObligatoriaProvider, (_, _) => notifier.value++);
   ref.onDispose(notifier.dispose);
 
   return GoRouter(
@@ -182,6 +186,7 @@ String? _redirect(Ref ref, GoRouterState state) => decidirDestino(
   startup: ref.read(startupProvider),
   suscripcion: ref.read(subscriptionProvider),
   here: state.matchedLocation,
+  actualizar: ref.read(actualizacionObligatoriaProvider),
 );
 
 /// Decide a dónde mandar al usuario. `null` lo deja pasar.
@@ -195,7 +200,14 @@ String? decidirDestino({
   required AsyncValue<Startup> startup,
   required AsyncValue<Subscription> suscripcion,
   required String here,
+  bool actualizar = false,
 }) {
+  // Por debajo de la versión mínima no se sigue, con sesión o sin ella: la
+  // pantalla lanza la actualización de la tienda.
+  if (actualizar) {
+    return here == Routes.updateRequired ? null : Routes.updateRequired;
+  }
+
   // Aún leyendo el storage, o el splash no ha cumplido su tiempo mínimo:
   // quedarse en splash y no parpadear al login.
   //

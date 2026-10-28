@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/enam_button.dart';
+import '../../subscription/presentation/widgets/opciones_de_pago.dart'
+    show enTiendaApple;
+import '../data/actualizador.dart';
 
 /// Pantallas de sistema que no venían en el diseño.
 ///
@@ -40,16 +44,34 @@ class MaintenanceScreen extends StatelessWidget {
   }
 }
 
-/// Versión mínima no soportada.
+/// Versión por debajo de la mínima que pide el servidor (`/config`).
 ///
-/// Ocurre cuando el contrato de la API cambió de forma incompatible. Es un
-/// callejón sin salida a propósito: dejar entrar a una versión que va a fallar
-/// en runtime es peor que bloquearla.
-class UpdateRequiredScreen extends StatelessWidget {
+/// Un callejón sin salida a propósito, salvo por la tienda: dejar seguir a una
+/// versión que el servidor ya no atiende —o que, como la 1.1.1 en Android, no
+/// puede cobrar— es peor que pedir un minuto para actualizar.
+///
+/// En Android lanza sola, una vez, la actualización inmediata de Play; si
+/// Play no la ofrece, el botón abre la ficha. En iPhone el botón abre App
+/// Store.
+class UpdateRequiredScreen extends ConsumerStatefulWidget {
   const UpdateRequiredScreen({super.key});
 
-  static const _playStore =
-      'https://play.google.com/store/apps/details?id=pe.jakstech.enam_app';
+  @override
+  ConsumerState<UpdateRequiredScreen> createState() =>
+      _UpdateRequiredScreenState();
+}
+
+class _UpdateRequiredScreenState extends ConsumerState<UpdateRequiredScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Sin esperar a que lo toque: es lo único que se puede hacer aquí.
+    if (!enTiendaApple) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(ref.read(actualizadorProvider).actualizarYa());
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +80,12 @@ class UpdateRequiredScreen extends StatelessWidget {
       color: context.states.info,
       titulo: 'Actualiza para continuar',
       cuerpo:
-          'Esta versión de la app ya no es compatible. La actualización es '
-          'rápida y no pierdes nada de tu progreso.',
-      accion: ('Actualizar en Play Store', () async {
-        final uri = Uri.parse(_playStore);
-        if (await canLaunchUrl(uri)) await launchUrl(uri);
-      }),
+          'Hay una versión nueva de ENAM Prep. La actualización es rápida y '
+          'no pierdes nada de tu progreso.',
+      accion: (
+        enTiendaApple ? 'Actualizar en App Store' : 'Actualizar en Google Play',
+        () => ref.read(actualizadorProvider).actualizarYa(),
+      ),
     );
   }
 }
