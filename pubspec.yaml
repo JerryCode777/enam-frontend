@@ -2,7 +2,7 @@ name: enam_app
 description: "ENAM Prep — Preparación para el Examen Nacional de Medicina del Perú"
 publish_to: 'none'
 
-version: 1.1.8+16
+version: 1.1.9+17
 
 environment:
   sdk: ^3.12.2
@@ -71,6 +71,11 @@ dependencies:
   # suscripción y `GooglePlayPurchaseParam`. Ya venía de forma transitiva.
   in_app_purchase_android: ^0.5.4
   in_app_review: ^2.0.12
+  # Actualizar desde dentro de la app (Play In-App Updates): flexible cuando hay
+  # una versión nueva y obligatoria cuando el servidor dice que la instalada ya
+  # no sirve (`minVersionAndroid` en /config). Solo Android; en iOS es una
+  # pantalla con el enlace a App Store.
+  in_app_update: ^5.0.0
 
 dev_dependencies:
   flutter_test:

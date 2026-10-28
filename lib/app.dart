@@ -10,6 +10,8 @@ import 'core/providers.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/design_tokens.dart';
+import 'features/system/data/actualizador.dart';
+import 'features/system/domain/actualizacion.dart';
 import 'features/subscription/presentation/widgets/opciones_de_pago.dart'
     show enTiendaApple;
 
@@ -21,10 +23,22 @@ class EnamApp extends ConsumerStatefulWidget {
 }
 
 class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
+  /// Para avisar desde aquí, fuera de cualquier pantalla, que la versión
+  /// nueva ya se descargó.
+  final _mensajero = GlobalKey<ScaffoldMessengerState>();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Una vez por arranque: si Play tiene una versión nueva, la ofrece y la
+    // descarga mientras se estudia (la flexible). No cuando la instalada ya
+    // está por debajo de la mínima: de eso se encarga «Actualiza para
+    // continuar», con la inmediata.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => unawaited(_ofrecerVersionNueva()),
+    );
 
     // El número de atención lo dice el servidor. Se pide aquí, sin esperarlo y
     // sin bloquear nada: si no llega, la app arranca igual con el compilado,
@@ -59,6 +73,25 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  Future<void> _ofrecerVersionNueva() async {
+    if (kIsWeb || enTiendaApple) return;
+    if (ref.read(actualizacionObligatoriaProvider)) return;
+    final actualizador = ref.read(actualizadorProvider);
+    if (!await actualizador.descargarSiHayNueva() || !mounted) return;
+    _mensajero.currentState?.showSnackBar(
+      SnackBar(
+        // Se queda hasta que la toque: reiniciar a mitad de una pregunta sin
+        // que lo pida sería perderle el hilo.
+        duration: const Duration(days: 1),
+        content: const Text('La nueva versión de ENAM Prep está lista.'),
+        action: SnackBarAction(
+          label: 'Reiniciar',
+          onPressed: () => unawaited(actualizador.instalarDescargada()),
+        ),
+      ),
+    );
+  }
+
   /// Al volver de segundo plano se vuelve a preguntar por la suscripción.
   ///
   /// La prueba dura 24 h y el cron del servidor corre cada hora, así que puede
@@ -84,6 +117,7 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
 
     return MaterialApp.router(
       title: 'ENAM Prep',
+      scaffoldMessengerKey: _mensajero,
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: AppTheme.light,

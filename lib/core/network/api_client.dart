@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
+import '../config/version_de_la_app.dart';
 import '../error/failure.dart';
 import '../storage/token_storage.dart';
 import 'auth_interceptor.dart';
@@ -68,7 +69,12 @@ class ApiClient {
     contentType: Headers.jsonContentType,
     // De qué app viene: el servidor lo guarda como `plataforma_alta` al crear
     // una cuenta (contrato de eventos). No identifica a nadie.
-    headers: {'X-Plataforma': plataformaDeLaApp},
+    headers: {
+      'X-Plataforma': plataformaDeLaApp,
+      // Con qué versión habla el servidor: así puede pedirle a una vieja que
+      // se actualice (sin Play Billing antes de la 1.1.3, por ejemplo).
+      'X-Version-App': ?VersionDeLaApp.instalada,
+    },
     // Manejamos los códigos de error nosotros, en _toFailure.
     validateStatus: (status) => status != null && status < 400,
   );

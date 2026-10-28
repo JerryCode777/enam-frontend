@@ -344,6 +344,12 @@ void abrirMuro(BuildContext context, WidgetRef ref, MotivoDeMuro motivo) {
 /// terminado». Devuelve `true` si lo atendió; si no, el error es de otra cosa
 /// y lo muestra quien llama.
 bool atenderFaltaDeAcceso(BuildContext context, WidgetRef ref, Object error) {
+  // Una versión que el servidor considera vieja (`ACTUALIZA_LA_APP`, hoy solo
+  // las de antes de la 1.1.3): a la pantalla que la actualiza.
+  if (error is ForbiddenFailure && error.code == 'ACTUALIZA_LA_APP') {
+    context.irA(Routes.updateRequired);
+    return true;
+  }
   if (motivoDelMuro(error) case final motivo?) {
     abrirMuro(context, ref, motivo);
     return true;
