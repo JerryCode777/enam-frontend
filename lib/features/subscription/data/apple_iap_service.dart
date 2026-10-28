@@ -184,8 +184,12 @@ String? paisDeAppStore(String codigo) {
   return _alfa3[c];
 }
 
+/// Los 13 países donde está la app (y sus suscripciones, desde el 28/10),
+/// más los que es fácil encontrarse.
 const _alfa3 = {
   'PER': 'pe',
+  'SUR': 'sr',
+  'GUY': 'gy',
   'USA': 'us',
   'MEX': 'mx',
   'COL': 'co',

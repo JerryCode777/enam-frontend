@@ -67,6 +67,15 @@ void main() {
     expect(paisDeAppStore('PER'), 'pe');
     expect(paisDeAppStore('usa'), 'us');
     expect(paisDeAppStore('PE'), 'pe');
+    // Los 13 de la app, todos con su país.
+    for (final (a3, a2) in const [
+      ('PER', 'pe'), ('ARG', 'ar'), ('BOL', 'bo'), ('BRA', 'br'),
+      ('CHL', 'cl'), ('COL', 'co'), ('ECU', 'ec'), ('PRY', 'py'),
+      ('URY', 'uy'), ('VEN', 've'), ('SUR', 'sr'), ('GUY', 'gy'),
+      ('MEX', 'mx'),
+    ]) {
+      expect(paisDeAppStore(a3), a2, reason: a3);
+    }
     // Uno que no se conoce no se inventa.
     expect(paisDeAppStore('ZZZ'), isNull);
     expect(paisDeAppStore(''), isNull);
