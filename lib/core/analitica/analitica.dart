@@ -70,7 +70,11 @@ enum Evento {
   notifProgramada('notif_programada'),
 
   /// Catálogo 38: se tocó un recordatorio y abrió la app.
-  notifAbierta('notif_abierta');
+  notifAbierta('notif_abierta'),
+
+  /// Catálogo 40: cómo terminó una compra en la tienda, después de
+  /// `checkout_started` (completada, cancelada, pendiente o con error).
+  checkoutResultado('checkout_resultado');
 
   const Evento(this.nombre);
 
@@ -153,6 +157,13 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
     'tipo': {'diario', 'cupo'},
     'variante': {'preguntas', 'racha', 'examen', 'cupo'},
   },
+  Evento.checkoutResultado: {
+    'medio': {'apple', 'google_play'},
+    'plan_id': {'mensual', 'intensivo', 'semestral'},
+    'resultado': {'completado', 'cancelado', 'pendiente', 'error'},
+    'etapa': {'tienda', 'servidor'},
+    'intento': {'compra', 'reintento'},
+  },
 };
 
 /// Las propiedades booleanas del contrato. Se registran como `'true'` o
@@ -182,6 +193,8 @@ final codigosDe = <Evento, Map<String, RegExp>>{
     // Catálogo 37: el país de facturación de Play.
     'pais_tienda': RegExp(r'^[a-z]{2}$'),
   },
+  // Catálogo 40: el código de la tienda o del servidor, solo con error.
+  Evento.checkoutResultado: {'codigo': RegExp(r'^[a-z0-9_]{1,64}$')},
 };
 
 /// `obligatoria_si` del contrato: la propiedad es obligatoria cuando otra vale
@@ -192,6 +205,7 @@ const obligatoriasSiDe = <Evento, Map<String, (String, String)>>{
     'funcion': ('motivo', 'funcion'),
   },
   Evento.notifProgramada: {'hora': ('tipo', 'diario')},
+  Evento.checkoutResultado: {'etapa': ('resultado', 'error')},
 };
 
 /// `ausente_si` del contrato: la propiedad no puede ir cuando otra vale algo.
@@ -222,6 +236,7 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.notifPermiso: {'respuesta', 'origen'},
   Evento.notifProgramada: {'tipo'},
   Evento.notifAbierta: {'tipo', 'variante'},
+  Evento.checkoutResultado: {'medio', 'resultado', 'intento'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -242,6 +257,8 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.notifPermiso: {'ios', 'android'},
   Evento.notifProgramada: {'ios', 'android'},
   Evento.notifAbierta: {'ios', 'android'},
+  // Catálogo 40.
+  Evento.checkoutResultado: {'ios', 'android'},
 };
 
 /// Valores que solo existen en una plataforma: el medio de pago es la tienda

@@ -33,6 +33,8 @@ void main() {
         'notif_permiso',
         'notif_programada',
         'notif_abierta',
+        // Catálogo 40: el desenlace de una compra en la tienda.
+        'checkout_resultado',
       });
       // Pasaron a ser de servidor: si la app los mandara, se rechazarían.
       for (final deServidor in const [

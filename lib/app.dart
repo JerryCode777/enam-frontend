@@ -83,6 +83,12 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
           ref.read(comprasGooglePlayControllerProvider).restaurarEnSilencio(),
         );
       }
+      // iPhone: escuchar ya al arrancar. StoreKit entrega entonces lo que
+      // quedó sin completar (pagó y se cerró la app) y se registra solo; hasta
+      // la 1.1.9 eso esperaba a que la persona volviera a abrir Planes.
+      if (id != null && enTiendaApple && !kIsWeb) {
+        ref.read(comprasAppleControllerProvider).escuchar();
+      }
     }, fireImmediately: true);
   }
 

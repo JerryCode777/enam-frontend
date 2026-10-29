@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../../core/analitica/analitica.dart';
 import '../../../core/error/failure.dart';
 import 'apple_iap_service.dart';
+import 'resultado_de_checkout.dart';
 import 'subscription_repository.dart';
 
 /// En qué punto está la compra, para que la pantalla lo pueda contar.
@@ -49,11 +51,17 @@ class ComprasAppleController {
   ComprasAppleController({
     required AppleIapService tienda,
     required SubscriptionRepository suscripciones,
+    Analitica analitica = const AnaliticaNula(),
   }) : _tienda = tienda,
-       _suscripciones = suscripciones;
+       _suscripciones = suscripciones,
+       _analitica = analitica;
 
   final AppleIapService _tienda;
   final SubscriptionRepository _suscripciones;
+  final Analitica _analitica;
+
+  /// El producto de la compra que la persona empezó, hasta su desenlace.
+  String? _enCompra;
 
   StreamSubscription<List<PurchaseDetails>>? _escucha;
 
@@ -62,11 +70,13 @@ class ComprasAppleController {
   /// Lo que le va pasando a la compra en curso.
   Stream<ResultadoCompra> get resultados => _resultados.stream;
 
-  /// Se llama al abrir la pantalla de compra.
+  /// Se llama al arrancar la app con sesión y al abrir la pantalla de compra.
   ///
   /// Al suscribirse, StoreKit entrega también las transacciones que quedaron sin
   /// completar en sesiones anteriores. Ahí es donde se recupera solo quien pagó
-  /// y se quedó sin acceso porque falló la red.
+  /// y se quedó sin acceso porque falló la red. Hasta la 1.1.9 solo se llamaba
+  /// al abrir Planes: quien pagaba y cerraba la app quedaba sin Premium hasta
+  /// volver a Planes.
   void escuchar() {
     _escucha ??= _tienda.compras.listen(_atender);
   }
@@ -81,10 +91,17 @@ class ComprasAppleController {
 
   Future<void> comprar(ProductDetails producto) async {
     _emitir(EstadoCompra.comprando);
+    _enCompra = producto.id;
     try {
       await _tienda.comprar(producto);
     } catch (e) {
       _emitir(EstadoCompra.error, 'No pudimos abrir la compra. $e');
+      _medir(
+        producto.id,
+        ResultadoDeCheckout.error,
+        etapa: EtapaDelFallo.tienda,
+        codigo: codigoDeCompraFallida(e),
+      );
     }
   }
 
@@ -101,18 +118,27 @@ class ComprasAppleController {
     for (final compra in compras) {
       switch (compra.status) {
         case PurchaseStatus.pending:
+          // «Pedir permiso» (Compartir en familia): se decide fuera de la app.
           _emitir(EstadoCompra.comprando);
+          _medir(compra.productID, ResultadoDeCheckout.pendiente);
 
         case PurchaseStatus.canceled:
           // Cancelar no es un error: quien cierra la hoja de Apple no ha hecho
           // nada mal y no tiene que ver un mensaje rojo.
           _emitir(EstadoCompra.quieto);
+          _medir(compra.productID, ResultadoDeCheckout.cancelado);
           await _tienda.completar(compra);
 
         case PurchaseStatus.error:
           _emitir(
             EstadoCompra.error,
             compra.error?.message ?? 'La compra no se pudo completar.',
+          );
+          _medir(
+            compra.productID,
+            ResultadoDeCheckout.error,
+            etapa: EtapaDelFallo.tienda,
+            codigo: codigoDeCompraFallida(compra.error),
           );
           // Se completa igualmente: una compra fallida que quede en la cola
           // reaparecería en cada arranque enseñando el mismo error para siempre.
@@ -146,9 +172,21 @@ class ComprasAppleController {
       // El dinero ya salió. El mensaje tiene que decir eso y tranquilizar, no
       // sugerir que vuelva a pagar.
       _emitir(EstadoCompra.error, _mensajeDeFallo(e));
+      _medir(
+        compra.productID,
+        ResultadoDeCheckout.error,
+        etapa: EtapaDelFallo.servidor,
+        codigo: codigoDeServidor(e),
+      );
       return;
-    } catch (_) {
+    } catch (e) {
       _emitir(EstadoCompra.error, _mensajeGenerico);
+      _medir(
+        compra.productID,
+        ResultadoDeCheckout.error,
+        etapa: EtapaDelFallo.servidor,
+        codigo: codigoDeServidor(e),
+      );
       return;
     }
 
@@ -156,6 +194,32 @@ class ComprasAppleController {
     // salir de la cola de Apple sin riesgo.
     await _tienda.completar(compra);
     _emitir(EstadoCompra.listo);
+    _medir(compra.productID, ResultadoDeCheckout.completado);
+  }
+
+  /// `checkout_resultado`. StoreKit solo vuelve a entregar lo que quedó sin
+  /// completar, así que aquí todo desenlace cuenta (no hay ruido de arranque
+  /// como en Play).
+  void _medir(
+    String productId,
+    ResultadoDeCheckout resultado, {
+    EtapaDelFallo? etapa,
+    String? codigo,
+  }) {
+    final id = productId.isEmpty ? _enCompra : productId;
+    final origen = _enCompra != null && (id == _enCompra || productId.isEmpty)
+        ? OrigenDelCheckout.compra
+        : OrigenDelCheckout.reintento;
+    if (origen == OrigenDelCheckout.compra) _enCompra = null;
+    registrarResultadoDeCheckout(
+      _analitica,
+      medio: 'apple',
+      planId: id == null ? null : planIdDeApple(id),
+      resultado: resultado,
+      origen: origen,
+      etapa: etapa,
+      codigo: codigo,
+    );
   }
 
   static const _mensajeGenerico =
