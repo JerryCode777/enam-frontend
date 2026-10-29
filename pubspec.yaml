@@ -2,7 +2,7 @@ name: enam_app
 description: "ENAM Prep — Preparación para el Examen Nacional de Medicina del Perú"
 publish_to: 'none'
 
-version: 1.1.9+17
+version: 1.1.10+18
 
 environment:
   sdk: ^3.12.2
@@ -76,6 +76,12 @@ dependencies:
   # no sirve (`minVersionAndroid` en /config). Solo Android; en iOS es una
   # pantalla con el enlace a App Store.
   in_app_update: ^5.0.0
+  # Recordatorios locales (fase 1 de notificaciones): el diario a la hora que
+  # elige la persona y «tu cupo gratis se renovó». Sin servidor ni llaves.
+  flutter_local_notifications: ^22.3.1
+  # Programar a una hora del reloj de la persona, no en UTC.
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:

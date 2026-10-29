@@ -8,10 +8,13 @@ import 'core/analitica/analitica.dart';
 import 'core/config/app_config.dart';
 import 'core/providers.dart';
 import 'core/router/app_router.dart';
+import 'core/router/navegar.dart';
+import 'core/router/routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/design_tokens.dart';
 import 'features/system/data/actualizador.dart';
 import 'features/system/domain/actualizacion.dart';
+import 'features/recordatorios/presentation/recordatorios_controller.dart';
 import 'features/subscription/presentation/widgets/opciones_de_pago.dart'
     show enTiendaApple;
 
@@ -46,6 +49,22 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
     // porque una preferencia no se pudo leer.
     unawaited(ref.read(configuracionRemotaProvider).cargar());
 
+    // Recordatorios locales: el plugin, el aviso que abrió la app (si fue
+    // uno) y la semana de avisos con los datos de hoy.
+    unawaited(_iniciarRecordatorios());
+    ref.listenManual(avisoTocadoProvider, (_, _) => _atenderAviso());
+    ref.listenManual(
+      currentUserProvider.select((u) => u?.perfilCompleto),
+      (_, _) => _atenderAviso(),
+    );
+    // La racha llega con el dashboard, después de arrancar: el texto de
+    // «no pierdas tu racha» la necesita.
+    ref.listenManual(
+      dashboardProvider.select((d) => d.value?.racha?.dias),
+      (_, _) =>
+          unawaited(ref.read(recordatoriosProvider.notifier).reprogramar()),
+    );
+
     // Los eventos que quedaron en la cola de la vez anterior, y cada vez que
     // vuelve la red: sin señal se guardan hasta siete días.
     unawaited(ref.read(analiticaProvider).enviarPendientes());
@@ -71,6 +90,42 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _iniciarRecordatorios() async {
+    final notificador = ref.read(notificadorProvider);
+    final tocado = ref.read(avisoTocadoProvider.notifier);
+    try {
+      await notificador.iniciar(alTocar: tocado.tocado);
+      if (await notificador.payloadDeArranque() case final p?) tocado.tocado(p);
+      await ref.read(recordatoriosProvider.notifier).reprogramar();
+    } catch (_) {
+      // Sin recordatorios la app sigue igual: no es motivo para no arrancar.
+    }
+  }
+
+  /// Un aviso tocado lleva a practicar, pero solo con la sesión lista: si no,
+  /// espera a que la persona entre (y complete su perfil).
+  void _atenderAviso() {
+    final payload = ref.read(avisoTocadoProvider);
+    final user = ref.read(currentUserProvider);
+    if (payload == null || user == null || !user.perfilCompleto) return;
+    ref.read(avisoTocadoProvider.notifier).atendido();
+    if (propiedadesDeAbierta(payload) case final propiedades?) {
+      ref
+          .read(analiticaProvider)
+          .registrar(Evento.notifAbierta, propiedades: propiedades);
+    }
+    // Tras el cuadro: el router puede estar todavía saliendo del splash. Con
+    // `irA`, que decide si apilar o cambiar de pestaña.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contexto = ref
+          .read(routerProvider)
+          .routerDelegate
+          .navigatorKey
+          .currentContext;
+      if (mounted && contexto != null) contexto.irA(Routes.practiceConfig);
+    });
   }
 
   Future<void> _ofrecerVersionNueva() async {
@@ -107,6 +162,8 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
       // apps ya instaladas sin esperar a que alguien las cierre del todo.
       unawaited(ref.read(configuracionRemotaProvider).cargar());
       unawaited(ref.read(analiticaProvider).enviarPendientes());
+      // Por si apagó las notificaciones en el teléfono, o cambió el día.
+      unawaited(ref.read(recordatoriosProvider.notifier).reprogramar());
     }
   }
 

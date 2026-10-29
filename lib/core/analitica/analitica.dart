@@ -59,7 +59,18 @@ enum Evento {
 
   /// La app llamó al diálogo nativo de valoración de la tienda, tras un buen
   /// resultado. El sistema no dice si lo enseñó: es «se pidió», no «se vio».
-  valoracionPedida('valoracion_pedida');
+  valoracionPedida('valoracion_pedida'),
+
+  /// Catálogo 38: la decisión sobre el permiso de notificaciones (la nuestra
+  /// en la pantalla previa, o la del sistema).
+  notifPermiso('notif_permiso'),
+
+  /// Catálogo 38: se programó un recordatorio por algo que hizo la persona
+  /// (encenderlo, cambiar la hora) o por topar el cupo. No al reprogramar.
+  notifProgramada('notif_programada'),
+
+  /// Catálogo 38: se tocó un recordatorio y abrió la app.
+  notifAbierta('notif_abierta');
 
   const Evento(this.nombre);
 
@@ -131,6 +142,17 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
   Evento.valoracionPedida: {
     'momento': {'practica', 'simulacro', 'examen_pasado', 'clase'},
   },
+  Evento.notifPermiso: {
+    'respuesta': {'concedido', 'denegado', 'ahora_no'},
+    'origen': {'pre_pantalla', 'ajustes'},
+  },
+  Evento.notifProgramada: {
+    'tipo': {'diario', 'cupo'},
+  },
+  Evento.notifAbierta: {
+    'tipo': {'diario', 'cupo'},
+    'variante': {'preguntas', 'racha', 'examen', 'cupo'},
+  },
 };
 
 /// Las propiedades booleanas del contrato. Se registran como `'true'` o
@@ -147,6 +169,8 @@ const enterasDe = <Evento, Map<String, (int, int)>>{
     'productos_tienda': (0, 50),
     'no_encontrados': (0, 10),
   },
+  // Catálogo 38: la hora local elegida para el recordatorio diario.
+  Evento.notifProgramada: {'hora': (0, 23)},
 };
 
 /// Las propiedades de tipo «código» (un identificador de máquina, nunca texto
@@ -167,6 +191,7 @@ const obligatoriasSiDe = <Evento, Map<String, (String, String)>>{
     'recurso': ('motivo', 'limite'),
     'funcion': ('motivo', 'funcion'),
   },
+  Evento.notifProgramada: {'hora': ('tipo', 'diario')},
 };
 
 /// `ausente_si` del contrato: la propiedad no puede ir cuando otra vale algo.
@@ -177,6 +202,7 @@ const ausentesSiDe = <Evento, Map<String, (String, String)>>{
     'funcion': ('motivo', 'limite'),
   },
   Evento.planesNoDisponibles: {'codigo': ('motivo', 'vacio')},
+  Evento.notifProgramada: {'hora': ('tipo', 'cupo')},
 };
 
 /// Las obligatorias. Sin ellas el servidor rechazaría el evento, así que ni se
@@ -193,6 +219,9 @@ const obligatoriasDe = <Evento, Set<String>>{
   Evento.registroVisto: {},
   Evento.registroFallido: {'metodo', 'motivo'},
   Evento.valoracionPedida: {'momento'},
+  Evento.notifPermiso: {'respuesta', 'origen'},
+  Evento.notifProgramada: {'tipo'},
+  Evento.notifAbierta: {'tipo', 'variante'},
 };
 
 /// En qué plataformas de la app existe cada evento.
@@ -209,6 +238,10 @@ const plataformasDe = <Evento, Set<String>>{
   Evento.registroFallido: {'ios', 'android'},
   // Catálogo 35.
   Evento.valoracionPedida: {'ios', 'android'},
+  // Catálogo 38.
+  Evento.notifPermiso: {'ios', 'android'},
+  Evento.notifProgramada: {'ios', 'android'},
+  Evento.notifAbierta: {'ios', 'android'},
 };
 
 /// Valores que solo existen en una plataforma: el medio de pago es la tienda

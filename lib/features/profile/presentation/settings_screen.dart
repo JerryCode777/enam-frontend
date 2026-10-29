@@ -18,6 +18,8 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/state_banner.dart';
 import '../../auth/domain/auth_models.dart';
+import '../../recordatorios/domain/recordatorios.dart';
+import '../../recordatorios/presentation/recordatorios_controller.dart';
 
 /// Pantalla 9.1 — ajustes y cuenta (incluye 9.2 notificaciones y 9.3 tema).
 class SettingsScreen extends ConsumerWidget {
@@ -200,39 +202,48 @@ class _Estudio extends ConsumerStatefulWidget {
 }
 
 class _EstudioState extends ConsumerState<_Estudio> {
-  bool _recordatorio = true;
   bool _avisosNacional = true;
-  TimeOfDay _hora = const TimeOfDay(hour: 21, minute: 0);
 
   @override
   Widget build(BuildContext context) {
+    // El recordatorio de verdad (fase 1 de notificaciones): lo guardado y lo
+    // que deja el sistema. Antes este interruptor no hacía nada.
+    final estado = ref.watch(recordatoriosProvider).value;
+    final encendido = estado?.encendido ?? false;
+    final ajustes = estado?.ajustes;
+    final hora = TimeOfDay(
+      hour: ajustes?.hora ?? AjustesDeRecordatorio.horaPorDefecto,
+      minute: ajustes?.minuto ?? 0,
+    );
+
     return Card(
       child: Column(
         children: [
           SwitchListTile(
-            value: _recordatorio,
-            onChanged: (v) => setState(() => _recordatorio = v),
+            value: encendido,
+            onChanged: estado == null ? null : _cambiarRecordatorio,
             secondary: const Icon(Symbols.notifications),
             title: const Text('Recordatorio diario'),
             subtitle: Text(
-              _recordatorio
-                  ? 'Todos los días · ${_hora.format(context)}'
+              encendido
+                  ? 'Todos los días · ${hora.format(context)}, si aún no '
+                        'practicaste'
                   : 'Apagado',
               style: context.texts.bodySmall?.copyWith(fontSize: 13),
             ),
           ),
-          if (_recordatorio) ...[
+          if (encendido) ...[
             Divider(height: 1, color: context.scheme.outlineVariant),
             ListTile(
               leading: const Icon(Symbols.schedule),
               title: const Text('Hora del recordatorio'),
               trailing: Text(
-                _hora.format(context),
+                hora.format(context),
                 style: context.texts.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              onTap: _elegirHora,
+              onTap: () => _elegirHora(hora),
             ),
           ],
           Divider(height: 1, color: context.scheme.outlineVariant),
@@ -258,9 +269,33 @@ class _EstudioState extends ConsumerState<_Estudio> {
     );
   }
 
-  Future<void> _elegirHora() async {
-    final elegida = await showTimePicker(context: context, initialTime: _hora);
-    if (elegida != null) setState(() => _hora = elegida);
+  Future<void> _elegirHora(TimeOfDay actual) async {
+    final elegida = await showTimePicker(context: context, initialTime: actual);
+    if (elegida == null) return;
+    await ref
+        .read(recordatoriosProvider.notifier)
+        .cambiarHora(elegida.hour, elegida.minute);
+  }
+
+  /// Encender pide el permiso al sistema, que solo muestra su diálogo la
+  /// primera vez. Si ya dijo que no, no se insiste: se dice dónde cambiarlo.
+  Future<void> _cambiarRecordatorio(bool encender) async {
+    final controller = ref.read(recordatoriosProvider.notifier);
+    if (!encender) {
+      await controller.apagar();
+      return;
+    }
+    final mensajero = ScaffoldMessenger.maybeOf(context);
+    if (!await controller.activar(OrigenDelPermiso.ajustes)) {
+      mensajero?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Las notificaciones de ENAM Prep están desactivadas. Puedes '
+            'activarlas en los ajustes de tu teléfono.',
+          ),
+        ),
+      );
+    }
   }
 }
 

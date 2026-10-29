@@ -5,6 +5,7 @@ import 'package:enam_app/core/analitica/analitica.dart';
 import 'package:enam_app/features/subscription/data/google_play_iap_service.dart';
 import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/presentation/muro_de_venta_screen.dart';
+import 'package:enam_app/features/recordatorios/presentation/recordatorios_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Cada evento que la app puede mandar, contra el contrato que valida el
@@ -216,6 +217,24 @@ void main() {
       for (final metodo in const ['correo', 'google', 'apple'])
         for (final motivo in propiedadesDe[Evento.registroFallido]!['motivo']!)
           (Evento.registroFallido, {'metodo': metodo, 'motivo': motivo}),
+      // Catálogo 38: las notificaciones locales, como las arma la app.
+      for (final (respuesta, origen) in const [
+        ('concedido', 'pre_pantalla'),
+        ('denegado', 'pre_pantalla'),
+        ('ahora_no', 'pre_pantalla'),
+        ('concedido', 'ajustes'),
+        ('denegado', 'ajustes'),
+      ])
+        (Evento.notifPermiso, {'respuesta': respuesta, 'origen': origen}),
+      (Evento.notifProgramada, {'tipo': 'diario', 'hora': '20'}),
+      (Evento.notifProgramada, {'tipo': 'cupo'}),
+      for (final payload in const [
+        'diario:preguntas',
+        'diario:racha',
+        'diario:examen',
+        'cupo:cupo',
+      ])
+        (Evento.notifAbierta, propiedadesDeAbierta(payload)!),
     ];
 
     /// Funciones que el contrato no conoce: el muro no puede mandar
