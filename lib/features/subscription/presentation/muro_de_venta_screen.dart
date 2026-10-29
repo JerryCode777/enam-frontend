@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +12,7 @@ import '../../../core/router/navegar.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/state_colors.dart';
+import '../../recordatorios/presentation/recordatorios_controller.dart';
 import '../domain/acceso.dart';
 import 'access_ended_screen.dart';
 import 'widgets/opciones_de_pago.dart';
@@ -336,6 +339,11 @@ String rutaDelMuro(MotivoDeMuro motivo) =>
 /// del inicio tiene que bajar a lo que diga el servidor al volver.
 void abrirMuro(BuildContext context, WidgetRef ref, MotivoDeMuro motivo) {
   ref.invalidate(subscriptionProvider);
+  // Topó el cupo de hoy: mañana temprano, «tu cupo gratis se renovó» (si
+  // tiene los recordatorios encendidos).
+  if (motivo is CupoAgotado) {
+    unawaited(ref.read(recordatoriosProvider.notifier).cupoAgotado());
+  }
   context.irA(rutaDelMuro(motivo));
 }
 

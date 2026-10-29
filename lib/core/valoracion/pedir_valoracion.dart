@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/recordatorios/presentation/pre_pantalla_de_recordatorio.dart';
+import '../../features/recordatorios/presentation/recordatorios_controller.dart';
 import '../analitica/analitica.dart';
 import '../domain/blueprint.dart';
 import '../providers.dart';
@@ -219,14 +221,28 @@ class _ValoracionAlAparecerState extends ConsumerState<ValoracionAlAparecer> {
   void initState() {
     super.initState();
     // Tras el primer cuadro: que el resultado se vea antes que el diálogo.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final recien = recienTerminada(widget.finalizadaEn);
+      final recordatorios = ref.read(recordatoriosProvider.notifier);
+
+      // La primera sesión terminada es cuando se ofrece el recordatorio. Esa
+      // vez no se pide además la valoración: dos diálogos seguidos son uno de
+      // más (la sesión igual se anota).
+      var ofrecido = false;
+      if (recien) {
+        unawaited(recordatorios.sesionTerminada());
+        if (await recordatorios.debePreguntar() && mounted) {
+          ofrecido = true;
+          await ofrecerRecordatorio(context, ref);
+        }
+      }
       if (!mounted) return;
       alTerminarSesion(
         ref,
         sessionId: widget.sessionId,
         momento: widget.momento,
-        buenResultado:
-            widget.buenResultado && recienTerminada(widget.finalizadaEn),
+        buenResultado: widget.buenResultado && recien && !ofrecido,
       );
     });
   }
