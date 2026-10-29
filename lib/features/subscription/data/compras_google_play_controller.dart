@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../../core/analitica/analitica.dart';
 import '../../../core/error/failure.dart';
 import 'compras_apple_controller.dart' show EstadoCompra, ResultadoCompra;
 import 'google_play_iap_service.dart';
+import 'resultado_de_checkout.dart';
 import 'subscription_repository.dart';
 
 /// Orquesta una compra de Google Play de punta a punta.
@@ -33,11 +35,19 @@ class ComprasGooglePlayController {
   ComprasGooglePlayController({
     required GooglePlayIapService tienda,
     required SubscriptionRepository suscripciones,
+    Analitica analitica = const AnaliticaNula(),
   }) : _tienda = tienda,
-       _suscripciones = suscripciones;
+       _suscripciones = suscripciones,
+       _analitica = analitica;
 
   final GooglePlayIapService _tienda;
   final SubscriptionRepository _suscripciones;
+  final Analitica _analitica;
+
+  /// El producto de la compra que la persona empezó, hasta su desenlace. Lo
+  /// que llegue sin esto es un reintento (lo que quedó a medias, restaurado al
+  /// abrir la app).
+  String? _enCompra;
 
   StreamSubscription<List<PurchaseDetails>>? _escucha;
 
@@ -71,10 +81,17 @@ class ComprasGooglePlayController {
     required String cuentaId,
   }) async {
     _emitir(EstadoCompra.comprando);
+    _enCompra = producto.id;
     try {
       await _tienda.comprar(producto, cuentaId: cuentaId);
     } catch (e) {
       _emitir(EstadoCompra.error, 'No pudimos abrir la compra. $e');
+      _medir(
+        producto.id,
+        ResultadoDeCheckout.error,
+        etapa: EtapaDelFallo.tienda,
+        codigo: codigoDeCompraFallida(e),
+      );
     }
   }
 
@@ -114,11 +131,18 @@ class ComprasGooglePlayController {
         case PurchaseStatus.canceled:
           // Cerrar la hoja de Play no es un error.
           _emitir(EstadoCompra.quieto);
+          _medir(compra.productID, ResultadoDeCheckout.cancelado);
 
         case PurchaseStatus.error:
           _emitir(
             EstadoCompra.error,
             compra.error?.message ?? 'La compra no se pudo completar.',
+          );
+          _medir(
+            compra.productID,
+            ResultadoDeCheckout.error,
+            etapa: EtapaDelFallo.tienda,
+            codigo: codigoDeCompraFallida(compra.error),
           );
 
         case PurchaseStatus.purchased:
@@ -133,6 +157,12 @@ class ComprasGooglePlayController {
     if (token.isEmpty || !_enCurso.add(token)) return;
     _emitir(EstadoCompra.registrando);
 
+    // Lo ya reconocido que Play vuelve a entregar al abrir la app (quien ya
+    // es Premium) se manda igual al servidor, pero no se mide: no es una
+    // compra, y contarla inflaría «completado» en cada arranque.
+    final medir =
+        compra.productID == _enCompra || compra.pendingCompletePurchase;
+
     try {
       final canje = await _suscripciones.canjearCompraGooglePlay(
         productId: compra.productID,
@@ -143,10 +173,20 @@ class ComprasGooglePlayController {
           // Solo aquí: el servidor ya dio el acceso.
           await _tienda.completar(compra);
           _emitir(EstadoCompra.listo);
+          if (medir) _medir(compra.productID, ResultadoDeCheckout.completado);
         case CanjePendiente(:final mensaje):
           _emitir(EstadoCompra.pendiente, mensaje);
+          if (medir) _medir(compra.productID, ResultadoDeCheckout.pendiente);
       }
     } on Failure catch (e) {
+      if (medir) {
+        _medir(
+          compra.productID,
+          ResultadoDeCheckout.error,
+          etapa: EtapaDelFallo.servidor,
+          codigo: codigoDeServidor(e),
+        );
+      }
       if (_esPasajero(e)) {
         // El dinero ya salió (o está por salir). No se completa: se vuelve a
         // mandar en la próxima apertura.
@@ -158,11 +198,43 @@ class ComprasGooglePlayController {
         _emitir(EstadoCompra.error, e.message);
         await _tienda.completar(compra);
       }
-    } catch (_) {
+    } catch (e) {
       _emitir(EstadoCompra.error, _mensajeGenerico);
+      if (medir) {
+        _medir(
+          compra.productID,
+          ResultadoDeCheckout.error,
+          etapa: EtapaDelFallo.servidor,
+          codigo: codigoDeServidor(e),
+        );
+      }
     } finally {
       _enCurso.remove(token);
     }
+  }
+
+  /// `checkout_resultado`. El de la compra que la persona empezó cierra esa
+  /// compra: lo siguiente que llegue ya es un reintento.
+  void _medir(
+    String productId,
+    ResultadoDeCheckout resultado, {
+    EtapaDelFallo? etapa,
+    String? codigo,
+  }) {
+    final id = productId.isEmpty ? _enCompra : productId;
+    final origen = _enCompra != null && (id == _enCompra || productId.isEmpty)
+        ? OrigenDelCheckout.compra
+        : OrigenDelCheckout.reintento;
+    if (origen == OrigenDelCheckout.compra) _enCompra = null;
+    registrarResultadoDeCheckout(
+      _analitica,
+      medio: 'google_play',
+      planId: id == null ? null : planIdDeGooglePlay(id),
+      resultado: resultado,
+      origen: origen,
+      etapa: etapa,
+      codigo: codigo,
+    );
   }
 
   static const _mensajeGenerico =

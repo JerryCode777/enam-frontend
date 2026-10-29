@@ -27,6 +27,7 @@ import '../features/subscription/data/google_play_iap_service.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/domain/acceso.dart';
 import '../features/subscription/domain/subscription_models.dart';
+import 'analitica/analitica.dart';
 import 'analitica/identidad_anonima.dart';
 import 'config/app_config.dart';
 import 'config/configuracion_remota.dart';
@@ -579,6 +580,7 @@ final comprasAppleControllerProvider = Provider<ComprasAppleController>((ref) {
   return ComprasAppleController(
     tienda: ref.watch(appleIapServiceProvider),
     suscripciones: ref.watch(subscriptionRepositoryProvider),
+    analitica: ref.watch(analiticaProvider),
   );
 });
 
@@ -597,6 +599,7 @@ final comprasGooglePlayControllerProvider =
       return ComprasGooglePlayController(
         tienda: ref.watch(googlePlayIapServiceProvider),
         suscripciones: ref.watch(subscriptionRepositoryProvider),
+        analitica: ref.watch(analiticaProvider),
       );
     });
 
