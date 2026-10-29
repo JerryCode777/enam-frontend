@@ -15,6 +15,7 @@ import '../../../../shared/widgets/state_banner.dart';
 import '../../data/apple_iap_service.dart' show planIdDeApple;
 import '../../data/compras_apple_controller.dart';
 import '../../data/fallo_de_tienda.dart';
+import 'sin_planes.dart';
 
 /// Los planes, comprables con el sistema de pagos de Apple.
 ///
@@ -77,11 +78,11 @@ class _PlanesDeAppleState extends ConsumerState<PlanesDeApple> {
       final productos = await _compras.productos();
       if (!mounted) return;
       setState(() => _productos = productos);
-      if (productos.isEmpty) _avisarNoDisponibles();
+      if (productos.isEmpty) unawaited(_avisarNoDisponibles());
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorAlCargar = '$e');
-      _avisarNoDisponibles(e);
+      unawaited(_avisarNoDisponibles(e));
     }
   }
 
@@ -89,13 +90,20 @@ class _PlanesDeAppleState extends ConsumerState<PlanesDeApple> {
   /// fallar no lo repite.
   bool _avisado = false;
 
-  void _avisarNoDisponibles([Object? error]) {
+  Future<void> _avisarNoDisponibles([Object? error]) async {
     if (_avisado) return;
     _avisado = true;
+    // Con el diagnóstico (catálogo 37): el país de App Store y lo que dio.
+    final analitica = ref.read(analiticaProvider);
+    final diagnostico = await _compras.diagnostico().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => const DiagnosticoDeTienda(),
+    );
     registrarPlanesNoDisponibles(
-      ref.read(analiticaProvider),
+      analitica,
       medio: 'apple',
       error: error,
+      diagnostico: diagnostico.propiedades,
     );
   }
 
@@ -123,32 +131,26 @@ class _PlanesDeAppleState extends ConsumerState<PlanesDeApple> {
 
   @override
   Widget build(BuildContext context) {
-    if (_errorAlCargar != null) {
-      return StateBanner(
-        kind: BannerKind.error,
-        message: 'No pudimos cargar los planes.',
-        action: TextButton(
-          onPressed: () {
-            setState(() => _errorAlCargar = null);
-            unawaited(_cargar());
-          },
-          child: const Text('Reintentar'),
-        ),
+    final productos = _productos;
+    if (_errorAlCargar != null || (productos != null && productos.isEmpty)) {
+      return SinPlanes(
+        tienda: 'App Store',
+        plataforma: 'iPhone',
+        vacio: _errorAlCargar == null,
+        onReintentar: () {
+          setState(() {
+            _errorAlCargar = null;
+            _productos = null;
+          });
+          unawaited(_cargar());
+        },
       );
     }
 
-    final productos = _productos;
     if (productos == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: DesignTokens.space6),
         child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (productos.isEmpty) {
-      return const StateBanner(
-        kind: BannerKind.info,
-        message: 'Los planes no están disponibles ahora mismo. Inténtalo en un '
-            'momento.',
       );
     }
 

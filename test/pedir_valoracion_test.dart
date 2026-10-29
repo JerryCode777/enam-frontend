@@ -179,6 +179,8 @@ void main() {
     SharedPreferences.setMockInitialValues({
       'valoracion_sesiones_terminadas': ['a', 'b'],
       'valoracion_desde_ms': DateTime(2026).millisecondsSinceEpoch,
+      // Ya se le ofreció el recordatorio: esa vez no se pide la valoración.
+      'recordatorio_preguntado': true,
     });
 
     await tester.pumpWidget(

@@ -5,6 +5,7 @@ import 'package:enam_app/features/subscription/data/apple_iap_service.dart';
 import 'package:enam_app/features/subscription/data/compras_apple_controller.dart';
 import 'package:enam_app/features/subscription/data/subscription_repository.dart';
 import 'package:enam_app/features/subscription/domain/subscription_models.dart';
+import 'package:enam_app/features/subscription/data/fallo_de_tienda.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
@@ -167,6 +168,10 @@ class _TiendaFalsa implements AppleIapService {
 
   @override
   Future<void> restaurar() async {}
+
+  @override
+  Future<DiagnosticoDeTienda> diagnostico() async =>
+      const DiagnosticoDeTienda();
 }
 
 class _RepoFalso implements SubscriptionRepository {

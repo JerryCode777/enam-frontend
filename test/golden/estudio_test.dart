@@ -19,6 +19,7 @@ import 'package:enam_app/features/subscription/presentation/my_subscription_scre
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import '../ayuda/offline.dart';
@@ -40,6 +41,9 @@ import '_comun.dart';
 /// ```
 void main() {
   setUpAll(() async {
+    // Los resultados piden la valoración y ofrecen el recordatorio, y los dos
+    // leen preferencias. Aquí ya se le ofreció: la captura es del resultado.
+    SharedPreferences.setMockInitialValues({'recordatorio_preguntado': true});
     await initializeDateFormatting('es');
     await cargarFuentes();
     congelarReloj(DateTime.utc(2026, 7, 30, 17));
