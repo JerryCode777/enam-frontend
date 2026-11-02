@@ -21,6 +21,7 @@ import '../../subscription/domain/acceso.dart';
 import '../../subscription/presentation/muro_de_venta_screen.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
+import 'widgets/imagenes_de_pregunta.dart';
 import 'widgets/option_card.dart';
 import 'widgets/watermark.dart';
 
@@ -364,107 +365,12 @@ class _TarjetaEnunciado extends StatelessWidget {
             // La decisión tipográfica más importante de la app: se lee cansado y
             // son varios párrafos.
             Text(pregunta.enunciado, style: AppTheme.clinicalCase(context)),
-            if (pregunta.imagenes.isNotEmpty) ...[
+            if (pregunta.imagenesAMostrar.isNotEmpty) ...[
               const SizedBox(height: DesignTokens.space3 + 2),
-              _AdjuntoImagen(url: pregunta.imagenes.first),
+              ImagenesDePregunta(imagenes: pregunta.imagenesAMostrar),
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _AdjuntoImagen extends StatelessWidget {
-  const _AdjuntoImagen({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.scheme;
-
-    return InkWell(
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (context) => _VisorImagen(url: url),
-      ),
-      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      child: Container(
-        padding: const EdgeInsets.all(DesignTokens.space2 + 2),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          border: Border.all(color: scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: scheme.outlineVariant,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-              ),
-              child: Icon(
-                Symbols.imagesmode,
-                size: 22,
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(width: DesignTokens.space2 + 2),
-            Expanded(
-              child: Text(
-                'Imagen adjunta · toca para ampliar',
-                style: context.texts.bodySmall,
-              ),
-            ),
-            Icon(
-              Symbols.open_in_full,
-              size: 20,
-              color: scheme.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Visor a pantalla completa con zoom. Radiografías y EKG no se leen en miniatura.
-class _VisorImagen extends StatelessWidget {
-  const _VisorImagen({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      backgroundColor: Colors.black,
-      child: Stack(
-        children: [
-          InteractiveViewer(
-            maxScale: 5,
-            child: Center(
-              child: Icon(
-                Symbols.imagesmode,
-                size: 96,
-                color: Colors.white.withValues(alpha: 0.3),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                icon: const Icon(Symbols.close, color: Colors.white),
-                tooltip: 'Cerrar',
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

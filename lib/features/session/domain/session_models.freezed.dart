@@ -291,6 +291,287 @@ as String?,
 
 
 /// @nodoc
+mixin _$ImagenDetalle {
+
+ String get url;/// Para lectores de pantalla. Describe lo que se ve, no la respuesta.
+ String? get alt;/// Se muestra tal cual debajo: «Fuente: PTB-XL (PhysioNet), CC BY 4.0».
+ String? get credito;/// Píxeles del original. Sin ellos, 16:9.
+ int? get ancho; int? get alto;
+/// Create a copy of ImagenDetalle
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ImagenDetalleCopyWith<ImagenDetalle> get copyWith => _$ImagenDetalleCopyWithImpl<ImagenDetalle>(this as ImagenDetalle, _$identity);
+
+  /// Serializes this ImagenDetalle to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImagenDetalle&&(identical(other.url, url) || other.url == url)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.credito, credito) || other.credito == credito)&&(identical(other.ancho, ancho) || other.ancho == ancho)&&(identical(other.alto, alto) || other.alto == alto));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,url,alt,credito,ancho,alto);
+
+@override
+String toString() {
+  return 'ImagenDetalle(url: $url, alt: $alt, credito: $credito, ancho: $ancho, alto: $alto)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ImagenDetalleCopyWith<$Res>  {
+  factory $ImagenDetalleCopyWith(ImagenDetalle value, $Res Function(ImagenDetalle) _then) = _$ImagenDetalleCopyWithImpl;
+@useResult
+$Res call({
+ String url, String? alt, String? credito, int? ancho, int? alto
+});
+
+
+
+
+}
+/// @nodoc
+class _$ImagenDetalleCopyWithImpl<$Res>
+    implements $ImagenDetalleCopyWith<$Res> {
+  _$ImagenDetalleCopyWithImpl(this._self, this._then);
+
+  final ImagenDetalle _self;
+  final $Res Function(ImagenDetalle) _then;
+
+/// Create a copy of ImagenDetalle
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? url = null,Object? alt = freezed,Object? credito = freezed,Object? ancho = freezed,Object? alto = freezed,}) {
+  return _then(_self.copyWith(
+url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,alt: freezed == alt ? _self.alt : alt // ignore: cast_nullable_to_non_nullable
+as String?,credito: freezed == credito ? _self.credito : credito // ignore: cast_nullable_to_non_nullable
+as String?,ancho: freezed == ancho ? _self.ancho : ancho // ignore: cast_nullable_to_non_nullable
+as int?,alto: freezed == alto ? _self.alto : alto // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ImagenDetalle].
+extension ImagenDetallePatterns on ImagenDetalle {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ImagenDetalle value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ImagenDetalle() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ImagenDetalle value)  $default,){
+final _that = this;
+switch (_that) {
+case _ImagenDetalle():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ImagenDetalle value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ImagenDetalle() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String url,  String? alt,  String? credito,  int? ancho,  int? alto)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ImagenDetalle() when $default != null:
+return $default(_that.url,_that.alt,_that.credito,_that.ancho,_that.alto);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String url,  String? alt,  String? credito,  int? ancho,  int? alto)  $default,) {final _that = this;
+switch (_that) {
+case _ImagenDetalle():
+return $default(_that.url,_that.alt,_that.credito,_that.ancho,_that.alto);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String url,  String? alt,  String? credito,  int? ancho,  int? alto)?  $default,) {final _that = this;
+switch (_that) {
+case _ImagenDetalle() when $default != null:
+return $default(_that.url,_that.alt,_that.credito,_that.ancho,_that.alto);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ImagenDetalle extends ImagenDetalle {
+  const _ImagenDetalle({required this.url, this.alt, this.credito, this.ancho, this.alto}): super._();
+  factory _ImagenDetalle.fromJson(Map<String, dynamic> json) => _$ImagenDetalleFromJson(json);
+
+@override final  String url;
+/// Para lectores de pantalla. Describe lo que se ve, no la respuesta.
+@override final  String? alt;
+/// Se muestra tal cual debajo: «Fuente: PTB-XL (PhysioNet), CC BY 4.0».
+@override final  String? credito;
+/// Píxeles del original. Sin ellos, 16:9.
+@override final  int? ancho;
+@override final  int? alto;
+
+/// Create a copy of ImagenDetalle
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ImagenDetalleCopyWith<_ImagenDetalle> get copyWith => __$ImagenDetalleCopyWithImpl<_ImagenDetalle>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ImagenDetalleToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ImagenDetalle&&(identical(other.url, url) || other.url == url)&&(identical(other.alt, alt) || other.alt == alt)&&(identical(other.credito, credito) || other.credito == credito)&&(identical(other.ancho, ancho) || other.ancho == ancho)&&(identical(other.alto, alto) || other.alto == alto));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,url,alt,credito,ancho,alto);
+
+@override
+String toString() {
+  return 'ImagenDetalle(url: $url, alt: $alt, credito: $credito, ancho: $ancho, alto: $alto)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ImagenDetalleCopyWith<$Res> implements $ImagenDetalleCopyWith<$Res> {
+  factory _$ImagenDetalleCopyWith(_ImagenDetalle value, $Res Function(_ImagenDetalle) _then) = __$ImagenDetalleCopyWithImpl;
+@override @useResult
+$Res call({
+ String url, String? alt, String? credito, int? ancho, int? alto
+});
+
+
+
+
+}
+/// @nodoc
+class __$ImagenDetalleCopyWithImpl<$Res>
+    implements _$ImagenDetalleCopyWith<$Res> {
+  __$ImagenDetalleCopyWithImpl(this._self, this._then);
+
+  final _ImagenDetalle _self;
+  final $Res Function(_ImagenDetalle) _then;
+
+/// Create a copy of ImagenDetalle
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? url = null,Object? alt = freezed,Object? credito = freezed,Object? ancho = freezed,Object? alto = freezed,}) {
+  return _then(_ImagenDetalle(
+url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,alt: freezed == alt ? _self.alt : alt // ignore: cast_nullable_to_non_nullable
+as String?,credito: freezed == credito ? _self.credito : credito // ignore: cast_nullable_to_non_nullable
+as String?,ancho: freezed == ancho ? _self.ancho : ancho // ignore: cast_nullable_to_non_nullable
+as int?,alto: freezed == alto ? _self.alto : alto // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$Question {
 
  String get id; String get enunciado; List<QuestionOption> get opciones;/// Clasificación de la pregunta.
@@ -300,8 +581,10 @@ mixin _$Question {
 /// pista. Se revelan recién al cerrar la sesión.
  String? get areaId; String? get subtemaId; QuestionType get tipo;/// Dificultad de 1 a 3 (RF-07).
  int get dificultad;/// Año o edición del ENAM de la que proviene. `null` si es de autoría propia.
- int? get origenAnio;/// Imágenes: radiografías, EKG, tablas (RF-10).
- List<String> get imagenes;/// Explicación de la clave. Llega tras responder.
+ int? get origenAnio;/// Imágenes: radiografías, EKG, tablas (RF-10). Solo las direcciones; lo
+/// que manda un servidor anterior a [imagenesDetalle].
+ List<String> get imagenes;/// Las mismas imágenes, con texto alternativo, crédito y tamaño.
+ List<ImagenDetalle> get imagenesDetalle;/// Explicación de la clave. Llega tras responder.
  String? get explicacion;/// % de acierto global de esta pregunta (RF-13). Se muestra al dar feedback.
  double? get porcentajeAciertoGlobal;
 /// Create a copy of Question
@@ -316,16 +599,16 @@ $QuestionCopyWith<Question> get copyWith => _$QuestionCopyWithImpl<Question>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Question&&(identical(other.id, id) || other.id == id)&&(identical(other.enunciado, enunciado) || other.enunciado == enunciado)&&const DeepCollectionEquality().equals(other.opciones, opciones)&&(identical(other.areaId, areaId) || other.areaId == areaId)&&(identical(other.subtemaId, subtemaId) || other.subtemaId == subtemaId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.dificultad, dificultad) || other.dificultad == dificultad)&&(identical(other.origenAnio, origenAnio) || other.origenAnio == origenAnio)&&const DeepCollectionEquality().equals(other.imagenes, imagenes)&&(identical(other.explicacion, explicacion) || other.explicacion == explicacion)&&(identical(other.porcentajeAciertoGlobal, porcentajeAciertoGlobal) || other.porcentajeAciertoGlobal == porcentajeAciertoGlobal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Question&&(identical(other.id, id) || other.id == id)&&(identical(other.enunciado, enunciado) || other.enunciado == enunciado)&&const DeepCollectionEquality().equals(other.opciones, opciones)&&(identical(other.areaId, areaId) || other.areaId == areaId)&&(identical(other.subtemaId, subtemaId) || other.subtemaId == subtemaId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.dificultad, dificultad) || other.dificultad == dificultad)&&(identical(other.origenAnio, origenAnio) || other.origenAnio == origenAnio)&&const DeepCollectionEquality().equals(other.imagenes, imagenes)&&const DeepCollectionEquality().equals(other.imagenesDetalle, imagenesDetalle)&&(identical(other.explicacion, explicacion) || other.explicacion == explicacion)&&(identical(other.porcentajeAciertoGlobal, porcentajeAciertoGlobal) || other.porcentajeAciertoGlobal == porcentajeAciertoGlobal));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,enunciado,const DeepCollectionEquality().hash(opciones),areaId,subtemaId,tipo,dificultad,origenAnio,const DeepCollectionEquality().hash(imagenes),explicacion,porcentajeAciertoGlobal);
+int get hashCode => Object.hash(runtimeType,id,enunciado,const DeepCollectionEquality().hash(opciones),areaId,subtemaId,tipo,dificultad,origenAnio,const DeepCollectionEquality().hash(imagenes),const DeepCollectionEquality().hash(imagenesDetalle),explicacion,porcentajeAciertoGlobal);
 
 @override
 String toString() {
-  return 'Question(id: $id, enunciado: $enunciado, opciones: $opciones, areaId: $areaId, subtemaId: $subtemaId, tipo: $tipo, dificultad: $dificultad, origenAnio: $origenAnio, imagenes: $imagenes, explicacion: $explicacion, porcentajeAciertoGlobal: $porcentajeAciertoGlobal)';
+  return 'Question(id: $id, enunciado: $enunciado, opciones: $opciones, areaId: $areaId, subtemaId: $subtemaId, tipo: $tipo, dificultad: $dificultad, origenAnio: $origenAnio, imagenes: $imagenes, imagenesDetalle: $imagenesDetalle, explicacion: $explicacion, porcentajeAciertoGlobal: $porcentajeAciertoGlobal)';
 }
 
 
@@ -336,7 +619,7 @@ abstract mixin class $QuestionCopyWith<$Res>  {
   factory $QuestionCopyWith(Question value, $Res Function(Question) _then) = _$QuestionCopyWithImpl;
 @useResult
 $Res call({
- String id, String enunciado, List<QuestionOption> opciones, String? areaId, String? subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, String? explicacion, double? porcentajeAciertoGlobal
+ String id, String enunciado, List<QuestionOption> opciones, String? areaId, String? subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, List<ImagenDetalle> imagenesDetalle, String? explicacion, double? porcentajeAciertoGlobal
 });
 
 
@@ -353,7 +636,7 @@ class _$QuestionCopyWithImpl<$Res>
 
 /// Create a copy of Question
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = freezed,Object? subtemaId = freezed,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = freezed,Object? subtemaId = freezed,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? imagenesDetalle = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,enunciado: null == enunciado ? _self.enunciado : enunciado // ignore: cast_nullable_to_non_nullable
@@ -364,7 +647,8 @@ as String?,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_no
 as QuestionType,dificultad: null == dificultad ? _self.dificultad : dificultad // ignore: cast_nullable_to_non_nullable
 as int,origenAnio: freezed == origenAnio ? _self.origenAnio : origenAnio // ignore: cast_nullable_to_non_nullable
 as int?,imagenes: null == imagenes ? _self.imagenes : imagenes // ignore: cast_nullable_to_non_nullable
-as List<String>,explicacion: freezed == explicacion ? _self.explicacion : explicacion // ignore: cast_nullable_to_non_nullable
+as List<String>,imagenesDetalle: null == imagenesDetalle ? _self.imagenesDetalle : imagenesDetalle // ignore: cast_nullable_to_non_nullable
+as List<ImagenDetalle>,explicacion: freezed == explicacion ? _self.explicacion : explicacion // ignore: cast_nullable_to_non_nullable
 as String?,porcentajeAciertoGlobal: freezed == porcentajeAciertoGlobal ? _self.porcentajeAciertoGlobal : porcentajeAciertoGlobal // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -451,10 +735,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  List<ImagenDetalle> imagenesDetalle,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Question() when $default != null:
-return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
+return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.imagenesDetalle,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
   return orElse();
 
 }
@@ -472,10 +756,10 @@ return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subte
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  List<ImagenDetalle> imagenesDetalle,  String? explicacion,  double? porcentajeAciertoGlobal)  $default,) {final _that = this;
 switch (_that) {
 case _Question():
-return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
+return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.imagenesDetalle,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -492,10 +776,10 @@ return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subte
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String enunciado,  List<QuestionOption> opciones,  String? areaId,  String? subtemaId,  QuestionType tipo,  int dificultad,  int? origenAnio,  List<String> imagenes,  List<ImagenDetalle> imagenesDetalle,  String? explicacion,  double? porcentajeAciertoGlobal)?  $default,) {final _that = this;
 switch (_that) {
 case _Question() when $default != null:
-return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
+return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subtemaId,_that.tipo,_that.dificultad,_that.origenAnio,_that.imagenes,_that.imagenesDetalle,_that.explicacion,_that.porcentajeAciertoGlobal);case _:
   return null;
 
 }
@@ -506,8 +790,8 @@ return $default(_that.id,_that.enunciado,_that.opciones,_that.areaId,_that.subte
 /// @nodoc
 @JsonSerializable()
 
-class _Question implements Question {
-  const _Question({required this.id, required this.enunciado, required final  List<QuestionOption> opciones, this.areaId, this.subtemaId, this.tipo = QuestionType.casoClinico, this.dificultad = 2, this.origenAnio, final  List<String> imagenes = const [], this.explicacion, this.porcentajeAciertoGlobal}): _opciones = opciones,_imagenes = imagenes;
+class _Question extends Question {
+  const _Question({required this.id, required this.enunciado, required final  List<QuestionOption> opciones, this.areaId, this.subtemaId, this.tipo = QuestionType.casoClinico, this.dificultad = 2, this.origenAnio, final  List<String> imagenes = const [], final  List<ImagenDetalle> imagenesDetalle = const [], this.explicacion, this.porcentajeAciertoGlobal}): _opciones = opciones,_imagenes = imagenes,_imagenesDetalle = imagenesDetalle,super._();
   factory _Question.fromJson(Map<String, dynamic> json) => _$QuestionFromJson(json);
 
 @override final  String id;
@@ -531,13 +815,24 @@ class _Question implements Question {
 @override@JsonKey() final  int dificultad;
 /// Año o edición del ENAM de la que proviene. `null` si es de autoría propia.
 @override final  int? origenAnio;
-/// Imágenes: radiografías, EKG, tablas (RF-10).
+/// Imágenes: radiografías, EKG, tablas (RF-10). Solo las direcciones; lo
+/// que manda un servidor anterior a [imagenesDetalle].
  final  List<String> _imagenes;
-/// Imágenes: radiografías, EKG, tablas (RF-10).
+/// Imágenes: radiografías, EKG, tablas (RF-10). Solo las direcciones; lo
+/// que manda un servidor anterior a [imagenesDetalle].
 @override@JsonKey() List<String> get imagenes {
   if (_imagenes is EqualUnmodifiableListView) return _imagenes;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_imagenes);
+}
+
+/// Las mismas imágenes, con texto alternativo, crédito y tamaño.
+ final  List<ImagenDetalle> _imagenesDetalle;
+/// Las mismas imágenes, con texto alternativo, crédito y tamaño.
+@override@JsonKey() List<ImagenDetalle> get imagenesDetalle {
+  if (_imagenesDetalle is EqualUnmodifiableListView) return _imagenesDetalle;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_imagenesDetalle);
 }
 
 /// Explicación de la clave. Llega tras responder.
@@ -558,16 +853,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Question&&(identical(other.id, id) || other.id == id)&&(identical(other.enunciado, enunciado) || other.enunciado == enunciado)&&const DeepCollectionEquality().equals(other._opciones, _opciones)&&(identical(other.areaId, areaId) || other.areaId == areaId)&&(identical(other.subtemaId, subtemaId) || other.subtemaId == subtemaId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.dificultad, dificultad) || other.dificultad == dificultad)&&(identical(other.origenAnio, origenAnio) || other.origenAnio == origenAnio)&&const DeepCollectionEquality().equals(other._imagenes, _imagenes)&&(identical(other.explicacion, explicacion) || other.explicacion == explicacion)&&(identical(other.porcentajeAciertoGlobal, porcentajeAciertoGlobal) || other.porcentajeAciertoGlobal == porcentajeAciertoGlobal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Question&&(identical(other.id, id) || other.id == id)&&(identical(other.enunciado, enunciado) || other.enunciado == enunciado)&&const DeepCollectionEquality().equals(other._opciones, _opciones)&&(identical(other.areaId, areaId) || other.areaId == areaId)&&(identical(other.subtemaId, subtemaId) || other.subtemaId == subtemaId)&&(identical(other.tipo, tipo) || other.tipo == tipo)&&(identical(other.dificultad, dificultad) || other.dificultad == dificultad)&&(identical(other.origenAnio, origenAnio) || other.origenAnio == origenAnio)&&const DeepCollectionEquality().equals(other._imagenes, _imagenes)&&const DeepCollectionEquality().equals(other._imagenesDetalle, _imagenesDetalle)&&(identical(other.explicacion, explicacion) || other.explicacion == explicacion)&&(identical(other.porcentajeAciertoGlobal, porcentajeAciertoGlobal) || other.porcentajeAciertoGlobal == porcentajeAciertoGlobal));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,enunciado,const DeepCollectionEquality().hash(_opciones),areaId,subtemaId,tipo,dificultad,origenAnio,const DeepCollectionEquality().hash(_imagenes),explicacion,porcentajeAciertoGlobal);
+int get hashCode => Object.hash(runtimeType,id,enunciado,const DeepCollectionEquality().hash(_opciones),areaId,subtemaId,tipo,dificultad,origenAnio,const DeepCollectionEquality().hash(_imagenes),const DeepCollectionEquality().hash(_imagenesDetalle),explicacion,porcentajeAciertoGlobal);
 
 @override
 String toString() {
-  return 'Question(id: $id, enunciado: $enunciado, opciones: $opciones, areaId: $areaId, subtemaId: $subtemaId, tipo: $tipo, dificultad: $dificultad, origenAnio: $origenAnio, imagenes: $imagenes, explicacion: $explicacion, porcentajeAciertoGlobal: $porcentajeAciertoGlobal)';
+  return 'Question(id: $id, enunciado: $enunciado, opciones: $opciones, areaId: $areaId, subtemaId: $subtemaId, tipo: $tipo, dificultad: $dificultad, origenAnio: $origenAnio, imagenes: $imagenes, imagenesDetalle: $imagenesDetalle, explicacion: $explicacion, porcentajeAciertoGlobal: $porcentajeAciertoGlobal)';
 }
 
 
@@ -578,7 +873,7 @@ abstract mixin class _$QuestionCopyWith<$Res> implements $QuestionCopyWith<$Res>
   factory _$QuestionCopyWith(_Question value, $Res Function(_Question) _then) = __$QuestionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String enunciado, List<QuestionOption> opciones, String? areaId, String? subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, String? explicacion, double? porcentajeAciertoGlobal
+ String id, String enunciado, List<QuestionOption> opciones, String? areaId, String? subtemaId, QuestionType tipo, int dificultad, int? origenAnio, List<String> imagenes, List<ImagenDetalle> imagenesDetalle, String? explicacion, double? porcentajeAciertoGlobal
 });
 
 
@@ -595,7 +890,7 @@ class __$QuestionCopyWithImpl<$Res>
 
 /// Create a copy of Question
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = freezed,Object? subtemaId = freezed,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? enunciado = null,Object? opciones = null,Object? areaId = freezed,Object? subtemaId = freezed,Object? tipo = null,Object? dificultad = null,Object? origenAnio = freezed,Object? imagenes = null,Object? imagenesDetalle = null,Object? explicacion = freezed,Object? porcentajeAciertoGlobal = freezed,}) {
   return _then(_Question(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,enunciado: null == enunciado ? _self.enunciado : enunciado // ignore: cast_nullable_to_non_nullable
@@ -606,7 +901,8 @@ as String?,tipo: null == tipo ? _self.tipo : tipo // ignore: cast_nullable_to_no
 as QuestionType,dificultad: null == dificultad ? _self.dificultad : dificultad // ignore: cast_nullable_to_non_nullable
 as int,origenAnio: freezed == origenAnio ? _self.origenAnio : origenAnio // ignore: cast_nullable_to_non_nullable
 as int?,imagenes: null == imagenes ? _self._imagenes : imagenes // ignore: cast_nullable_to_non_nullable
-as List<String>,explicacion: freezed == explicacion ? _self.explicacion : explicacion // ignore: cast_nullable_to_non_nullable
+as List<String>,imagenesDetalle: null == imagenesDetalle ? _self._imagenesDetalle : imagenesDetalle // ignore: cast_nullable_to_non_nullable
+as List<ImagenDetalle>,explicacion: freezed == explicacion ? _self.explicacion : explicacion // ignore: cast_nullable_to_non_nullable
 as String?,porcentajeAciertoGlobal: freezed == porcentajeAciertoGlobal ? _self.porcentajeAciertoGlobal : porcentajeAciertoGlobal // ignore: cast_nullable_to_non_nullable
 as double?,
   ));

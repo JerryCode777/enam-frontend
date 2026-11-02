@@ -2,7 +2,7 @@ name: enam_app
 description: "ENAM Prep — Preparación para el Examen Nacional de Medicina del Perú"
 publish_to: 'none'
 
-version: 1.1.10+19
+version: 1.1.11+20
 
 environment:
   sdk: ^3.12.2
@@ -48,6 +48,9 @@ dependencies:
 
   # ---------- UI ----------
   cached_network_image: ^3.4.1
+  # La misma caché que usa cached_network_image: con ella se dejan en el disco
+  # las imágenes de las preguntas de un área descargada, para verlas sin red.
+  flutter_cache_manager: ^3.4.1
 
   # Las clases del aula: MP4 H.264 por rango desde CloudFront, con ExoPlayer en
   # Android y AVPlayer en iOS. Los controles y los subtítulos VTT son nuestros

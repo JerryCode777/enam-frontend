@@ -21,6 +21,7 @@ import '../../subscription/domain/acceso.dart';
 import '../../subscription/presentation/muro_de_venta_screen.dart';
 import 'session_controller.dart';
 import 'widgets/exam_grid.dart';
+import 'widgets/imagenes_de_pregunta.dart';
 import 'widgets/option_card.dart';
 import 'widgets/watermark.dart';
 
@@ -194,9 +195,24 @@ class _SimulacroScreenState extends ConsumerState<SimulacroScreen> {
                                 DesignTokens.space4 + 2,
                               ),
                               // El mismo estilo clínico que la práctica: 17/1,6.
-                              child: Text(
-                                pregunta.enunciado,
-                                style: AppTheme.clinicalCase(context),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    pregunta.enunciado,
+                                    style: AppTheme.clinicalCase(context),
+                                  ),
+                                  // Una imagen no delata área ni tema: va
+                                  // también con el simulacro en curso.
+                                  if (pregunta.imagenesAMostrar.isNotEmpty) ...[
+                                    const SizedBox(
+                                      height: DesignTokens.space3 + 2,
+                                    ),
+                                    ImagenesDePregunta(
+                                      imagenes: pregunta.imagenesAMostrar,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ),

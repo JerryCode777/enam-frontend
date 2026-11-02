@@ -46,10 +46,16 @@ class ServicioOffline {
     required OfflineRepository remoto,
     required SessionRepository sesiones,
     required String usuarioId,
+    Future<void> Function(Iterable<Question>)? guardarImagenes,
   }) : _almacen = almacen,
        _remoto = remoto,
        _sesiones = sesiones,
-       _usuario = usuarioId;
+       _usuario = usuarioId,
+       _guardarImagenes = guardarImagenes;
+
+  /// Deja en el disco las imágenes del área (ECG, radiografías) para verlas
+  /// sin red. Nula en las pruebas.
+  final Future<void> Function(Iterable<Question>)? _guardarImagenes;
 
   final AlmacenOffline _almacen;
   final OfflineRepository _remoto;
@@ -83,6 +89,12 @@ class ServicioOffline {
       cancelar: cancelar,
     );
     await _almacen.guardarPaquete(_usuario, paquete);
+    // Las imágenes, sin hacer fallar la descarga si alguna no baja.
+    if (_guardarImagenes case final guardar?) {
+      try {
+        await guardar(paquete.preguntas);
+      } catch (_) {}
+    }
 
     if (reservar && !await tieneReservaDe(areaId)) {
       try {
