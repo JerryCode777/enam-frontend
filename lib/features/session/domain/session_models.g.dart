@@ -22,6 +22,24 @@ Map<String, dynamic> _$QuestionOptionToJson(_QuestionOption instance) =>
       'explicacion': instance.explicacion,
     };
 
+_ImagenDetalle _$ImagenDetalleFromJson(Map<String, dynamic> json) =>
+    _ImagenDetalle(
+      url: json['url'] as String,
+      alt: json['alt'] as String?,
+      credito: json['credito'] as String?,
+      ancho: (json['ancho'] as num?)?.toInt(),
+      alto: (json['alto'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$ImagenDetalleToJson(_ImagenDetalle instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+      'alt': instance.alt,
+      'credito': instance.credito,
+      'ancho': instance.ancho,
+      'alto': instance.alto,
+    };
+
 _Question _$QuestionFromJson(Map<String, dynamic> json) => _Question(
   id: json['id'] as String,
   enunciado: json['enunciado'] as String,
@@ -38,6 +56,11 @@ _Question _$QuestionFromJson(Map<String, dynamic> json) => _Question(
   imagenes:
       (json['imagenes'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
+  imagenesDetalle:
+      (json['imagenesDetalle'] as List<dynamic>?)
+          ?.map((e) => ImagenDetalle.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   explicacion: json['explicacion'] as String?,
   porcentajeAciertoGlobal: (json['porcentajeAciertoGlobal'] as num?)
       ?.toDouble(),
@@ -53,6 +76,7 @@ Map<String, dynamic> _$QuestionToJson(_Question instance) => <String, dynamic>{
   'dificultad': instance.dificultad,
   'origenAnio': instance.origenAnio,
   'imagenes': instance.imagenes,
+  'imagenesDetalle': instance.imagenesDetalle,
   'explicacion': instance.explicacion,
   'porcentajeAciertoGlobal': instance.porcentajeAciertoGlobal,
 };

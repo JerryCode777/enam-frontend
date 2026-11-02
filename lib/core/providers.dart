@@ -18,6 +18,7 @@ import '../features/session/data/reportes_repository.dart';
 import '../features/session/data/session_repository.dart';
 import '../features/session/data/session_repository_offline.dart';
 import '../features/session/domain/session_models.dart';
+import '../features/session/presentation/widgets/imagenes_de_pregunta.dart';
 import '../features/stats/data/stats_repository.dart';
 import '../features/stats/domain/stats_models.dart';
 import '../features/subscription/data/apple_iap_service.dart';
@@ -248,6 +249,7 @@ final servicioOfflineProvider = Provider<ServicioOffline?>((ref) {
     remoto: ref.watch(offlineRepositoryProvider),
     sesiones: ref.watch(sessionRepositoryRemotoProvider),
     usuarioId: usuario.id,
+    guardarImagenes: guardarImagenesDePreguntas,
   );
 });
 

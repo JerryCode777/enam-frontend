@@ -9,6 +9,7 @@ import '../../../shared/widgets/animations.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../domain/session_models.dart';
 import 'session_controller.dart';
+import 'widgets/imagenes_de_pregunta.dart';
 import 'widgets/option_card.dart';
 
 /// Qué preguntas mostrar en la revisión.
@@ -259,6 +260,12 @@ class _TarjetaRevisionState extends State<_TarjetaRevision> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (widget.pregunta.imagenesAMostrar.isNotEmpty) ...[
+                      ImagenesDePregunta(
+                        imagenes: widget.pregunta.imagenesAMostrar,
+                      ),
+                      const SizedBox(height: DesignTokens.space3),
+                    ],
                     for (var i = 0; i < widget.pregunta.opciones.length; i++)
                       Padding(
                         padding: const EdgeInsets.only(

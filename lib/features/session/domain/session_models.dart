@@ -69,6 +69,37 @@ abstract class QuestionOption with _$QuestionOption {
       _$QuestionOptionFromJson(json);
 }
 
+/// Una imagen de una pregunta, con lo que hace falta para mostrarla bien:
+/// texto para el lector de pantalla, el crédito y su tamaño original (para
+/// reservar el hueco con la proporción exacta y que nada salte al cargar).
+@freezed
+abstract class ImagenDetalle with _$ImagenDetalle {
+  const factory ImagenDetalle({
+    required String url,
+
+    /// Para lectores de pantalla. Describe lo que se ve, no la respuesta.
+    String? alt,
+
+    /// Se muestra tal cual debajo: «Fuente: PTB-XL (PhysioNet), CC BY 4.0».
+    String? credito,
+
+    /// Píxeles del original. Sin ellos, 16:9.
+    int? ancho,
+    int? alto,
+  }) = _ImagenDetalle;
+
+  const ImagenDetalle._();
+
+  factory ImagenDetalle.fromJson(Map<String, dynamic> json) =>
+      _$ImagenDetalleFromJson(json);
+
+  /// Ancho entre alto, si se sabe y tiene sentido.
+  double? get proporcion => switch ((ancho, alto)) {
+    (final a?, final h?) when a > 0 && h > 0 => a / h,
+    _ => null,
+  };
+}
+
 @freezed
 abstract class Question with _$Question {
   const factory Question({
@@ -91,8 +122,12 @@ abstract class Question with _$Question {
     /// Año o edición del ENAM de la que proviene. `null` si es de autoría propia.
     int? origenAnio,
 
-    /// Imágenes: radiografías, EKG, tablas (RF-10).
+    /// Imágenes: radiografías, EKG, tablas (RF-10). Solo las direcciones; lo
+    /// que manda un servidor anterior a [imagenesDetalle].
     @Default([]) List<String> imagenes,
+
+    /// Las mismas imágenes, con texto alternativo, crédito y tamaño.
+    @Default([]) List<ImagenDetalle> imagenesDetalle,
 
     /// Explicación de la clave. Llega tras responder.
     String? explicacion,
@@ -101,8 +136,15 @@ abstract class Question with _$Question {
     double? porcentajeAciertoGlobal,
   }) = _Question;
 
+  const Question._();
+
   factory Question.fromJson(Map<String, dynamic> json) =>
       _$QuestionFromJson(json);
+
+  /// Lo que se muestra: el detalle si llegó; si no, solo las direcciones.
+  List<ImagenDetalle> get imagenesAMostrar => imagenesDetalle.isNotEmpty
+      ? imagenesDetalle
+      : [for (final url in imagenes) ImagenDetalle(url: url)];
 }
 
 /// Respuesta del usuario a una pregunta.
