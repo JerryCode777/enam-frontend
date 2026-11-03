@@ -513,6 +513,7 @@ final List<RouteBase> _routes = [
         cantidadInicial: int.tryParse(
           state.uri.queryParameters['cantidad'] ?? '',
         ),
+        conImagenInicial: state.uri.queryParameters['conImagen'] == '1',
       ),
       state: state,
     ),
@@ -605,8 +606,12 @@ final List<RouteBase> _routes = [
   // GlobalKey que el ya montado, y la app muere con pantalla roja.
   GoRoute(
     path: Routes.practiceAreas,
-    pageBuilder: (context, state) =>
-        modalPage(child: const AreaPickerScreen(), state: state),
+    pageBuilder: (context, state) => modalPage(
+      child: AreaPickerScreen(
+        soloConImagen: state.uri.queryParameters['conImagen'] == '1',
+      ),
+      state: state,
+    ),
   ),
   GoRoute(
     path: Routes.markedQuestions,

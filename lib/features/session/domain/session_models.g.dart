@@ -120,6 +120,7 @@ _PracticeConfig _$PracticeConfigFromJson(Map<String, dynamic> json) =>
       origen:
           $enumDecodeNullable(_$QuestionSourceEnumMap, json['origen']) ??
           QuestionSource.todas,
+      conImagen: json['conImagen'] as bool?,
     );
 
 Map<String, dynamic> _$PracticeConfigToJson(_PracticeConfig instance) =>
@@ -128,6 +129,7 @@ Map<String, dynamic> _$PracticeConfigToJson(_PracticeConfig instance) =>
       'subtemaIds': instance.subtemaIds,
       'cantidadPreguntas': instance.cantidadPreguntas,
       'origen': _$QuestionSourceEnumMap[instance.origen]!,
+      'conImagen': ?instance.conImagen,
     };
 
 const _$QuestionSourceEnumMap = {

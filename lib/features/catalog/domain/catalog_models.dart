@@ -60,6 +60,10 @@ abstract class CatalogNode with _$CatalogNode {
     /// "aún no disponible", no mostrar una lista vacía sin explicación.
     @Default(0) int preguntasDisponibles,
 
+    /// De esas, las que traen imagen (ECG, radiografías, fotos clínicas): la
+    /// práctica «Preguntas con imagen». 0 si el servidor aún no lo manda.
+    @Default(0) int preguntasConImagen,
+
     /// Preguntas de este nodo que el usuario ya vio.
     @Default(0) int preguntasVistas,
 

@@ -1203,7 +1203,9 @@ as bool,
 /// @nodoc
 mixin _$PracticeConfig {
 
- List<String> get areaIds; List<String> get subtemaIds; int get cantidadPreguntas; QuestionSource get origen;
+ List<String> get areaIds; List<String> get subtemaIds; int get cantidadPreguntas; QuestionSource get origen;/// Solo preguntas con imagen. Se manda solo si es `true`: así una práctica
+/// normal sale igual que antes.
+@JsonKey(includeIfNull: false) bool? get conImagen;
 /// Create a copy of PracticeConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1216,16 +1218,16 @@ $PracticeConfigCopyWith<PracticeConfig> get copyWith => _$PracticeConfigCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PracticeConfig&&const DeepCollectionEquality().equals(other.areaIds, areaIds)&&const DeepCollectionEquality().equals(other.subtemaIds, subtemaIds)&&(identical(other.cantidadPreguntas, cantidadPreguntas) || other.cantidadPreguntas == cantidadPreguntas)&&(identical(other.origen, origen) || other.origen == origen));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PracticeConfig&&const DeepCollectionEquality().equals(other.areaIds, areaIds)&&const DeepCollectionEquality().equals(other.subtemaIds, subtemaIds)&&(identical(other.cantidadPreguntas, cantidadPreguntas) || other.cantidadPreguntas == cantidadPreguntas)&&(identical(other.origen, origen) || other.origen == origen)&&(identical(other.conImagen, conImagen) || other.conImagen == conImagen));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(areaIds),const DeepCollectionEquality().hash(subtemaIds),cantidadPreguntas,origen);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(areaIds),const DeepCollectionEquality().hash(subtemaIds),cantidadPreguntas,origen,conImagen);
 
 @override
 String toString() {
-  return 'PracticeConfig(areaIds: $areaIds, subtemaIds: $subtemaIds, cantidadPreguntas: $cantidadPreguntas, origen: $origen)';
+  return 'PracticeConfig(areaIds: $areaIds, subtemaIds: $subtemaIds, cantidadPreguntas: $cantidadPreguntas, origen: $origen, conImagen: $conImagen)';
 }
 
 
@@ -1236,7 +1238,7 @@ abstract mixin class $PracticeConfigCopyWith<$Res>  {
   factory $PracticeConfigCopyWith(PracticeConfig value, $Res Function(PracticeConfig) _then) = _$PracticeConfigCopyWithImpl;
 @useResult
 $Res call({
- List<String> areaIds, List<String> subtemaIds, int cantidadPreguntas, QuestionSource origen
+ List<String> areaIds, List<String> subtemaIds, int cantidadPreguntas, QuestionSource origen,@JsonKey(includeIfNull: false) bool? conImagen
 });
 
 
@@ -1253,13 +1255,14 @@ class _$PracticeConfigCopyWithImpl<$Res>
 
 /// Create a copy of PracticeConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? areaIds = null,Object? subtemaIds = null,Object? cantidadPreguntas = null,Object? origen = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? areaIds = null,Object? subtemaIds = null,Object? cantidadPreguntas = null,Object? origen = null,Object? conImagen = freezed,}) {
   return _then(_self.copyWith(
 areaIds: null == areaIds ? _self.areaIds : areaIds // ignore: cast_nullable_to_non_nullable
 as List<String>,subtemaIds: null == subtemaIds ? _self.subtemaIds : subtemaIds // ignore: cast_nullable_to_non_nullable
 as List<String>,cantidadPreguntas: null == cantidadPreguntas ? _self.cantidadPreguntas : cantidadPreguntas // ignore: cast_nullable_to_non_nullable
 as int,origen: null == origen ? _self.origen : origen // ignore: cast_nullable_to_non_nullable
-as QuestionSource,
+as QuestionSource,conImagen: freezed == conImagen ? _self.conImagen : conImagen // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -1344,10 +1347,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> areaIds,  List<String> subtemaIds,  int cantidadPreguntas,  QuestionSource origen)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> areaIds,  List<String> subtemaIds,  int cantidadPreguntas,  QuestionSource origen, @JsonKey(includeIfNull: false)  bool? conImagen)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PracticeConfig() when $default != null:
-return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.origen);case _:
+return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.origen,_that.conImagen);case _:
   return orElse();
 
 }
@@ -1365,10 +1368,10 @@ return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.ori
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> areaIds,  List<String> subtemaIds,  int cantidadPreguntas,  QuestionSource origen)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> areaIds,  List<String> subtemaIds,  int cantidadPreguntas,  QuestionSource origen, @JsonKey(includeIfNull: false)  bool? conImagen)  $default,) {final _that = this;
 switch (_that) {
 case _PracticeConfig():
-return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.origen);case _:
+return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.origen,_that.conImagen);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1385,10 +1388,10 @@ return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.ori
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> areaIds,  List<String> subtemaIds,  int cantidadPreguntas,  QuestionSource origen)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> areaIds,  List<String> subtemaIds,  int cantidadPreguntas,  QuestionSource origen, @JsonKey(includeIfNull: false)  bool? conImagen)?  $default,) {final _that = this;
 switch (_that) {
 case _PracticeConfig() when $default != null:
-return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.origen);case _:
+return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.origen,_that.conImagen);case _:
   return null;
 
 }
@@ -1400,7 +1403,7 @@ return $default(_that.areaIds,_that.subtemaIds,_that.cantidadPreguntas,_that.ori
 @JsonSerializable()
 
 class _PracticeConfig implements PracticeConfig {
-  const _PracticeConfig({final  List<String> areaIds = const [], final  List<String> subtemaIds = const [], this.cantidadPreguntas = 20, this.origen = QuestionSource.todas}): _areaIds = areaIds,_subtemaIds = subtemaIds;
+  const _PracticeConfig({final  List<String> areaIds = const [], final  List<String> subtemaIds = const [], this.cantidadPreguntas = 20, this.origen = QuestionSource.todas, @JsonKey(includeIfNull: false) this.conImagen}): _areaIds = areaIds,_subtemaIds = subtemaIds;
   factory _PracticeConfig.fromJson(Map<String, dynamic> json) => _$PracticeConfigFromJson(json);
 
  final  List<String> _areaIds;
@@ -1419,6 +1422,9 @@ class _PracticeConfig implements PracticeConfig {
 
 @override@JsonKey() final  int cantidadPreguntas;
 @override@JsonKey() final  QuestionSource origen;
+/// Solo preguntas con imagen. Se manda solo si es `true`: así una práctica
+/// normal sale igual que antes.
+@override@JsonKey(includeIfNull: false) final  bool? conImagen;
 
 /// Create a copy of PracticeConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -1433,16 +1439,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PracticeConfig&&const DeepCollectionEquality().equals(other._areaIds, _areaIds)&&const DeepCollectionEquality().equals(other._subtemaIds, _subtemaIds)&&(identical(other.cantidadPreguntas, cantidadPreguntas) || other.cantidadPreguntas == cantidadPreguntas)&&(identical(other.origen, origen) || other.origen == origen));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PracticeConfig&&const DeepCollectionEquality().equals(other._areaIds, _areaIds)&&const DeepCollectionEquality().equals(other._subtemaIds, _subtemaIds)&&(identical(other.cantidadPreguntas, cantidadPreguntas) || other.cantidadPreguntas == cantidadPreguntas)&&(identical(other.origen, origen) || other.origen == origen)&&(identical(other.conImagen, conImagen) || other.conImagen == conImagen));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_areaIds),const DeepCollectionEquality().hash(_subtemaIds),cantidadPreguntas,origen);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_areaIds),const DeepCollectionEquality().hash(_subtemaIds),cantidadPreguntas,origen,conImagen);
 
 @override
 String toString() {
-  return 'PracticeConfig(areaIds: $areaIds, subtemaIds: $subtemaIds, cantidadPreguntas: $cantidadPreguntas, origen: $origen)';
+  return 'PracticeConfig(areaIds: $areaIds, subtemaIds: $subtemaIds, cantidadPreguntas: $cantidadPreguntas, origen: $origen, conImagen: $conImagen)';
 }
 
 
@@ -1453,7 +1459,7 @@ abstract mixin class _$PracticeConfigCopyWith<$Res> implements $PracticeConfigCo
   factory _$PracticeConfigCopyWith(_PracticeConfig value, $Res Function(_PracticeConfig) _then) = __$PracticeConfigCopyWithImpl;
 @override @useResult
 $Res call({
- List<String> areaIds, List<String> subtemaIds, int cantidadPreguntas, QuestionSource origen
+ List<String> areaIds, List<String> subtemaIds, int cantidadPreguntas, QuestionSource origen,@JsonKey(includeIfNull: false) bool? conImagen
 });
 
 
@@ -1470,13 +1476,14 @@ class __$PracticeConfigCopyWithImpl<$Res>
 
 /// Create a copy of PracticeConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? areaIds = null,Object? subtemaIds = null,Object? cantidadPreguntas = null,Object? origen = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? areaIds = null,Object? subtemaIds = null,Object? cantidadPreguntas = null,Object? origen = null,Object? conImagen = freezed,}) {
   return _then(_PracticeConfig(
 areaIds: null == areaIds ? _self._areaIds : areaIds // ignore: cast_nullable_to_non_nullable
 as List<String>,subtemaIds: null == subtemaIds ? _self._subtemaIds : subtemaIds // ignore: cast_nullable_to_non_nullable
 as List<String>,cantidadPreguntas: null == cantidadPreguntas ? _self.cantidadPreguntas : cantidadPreguntas // ignore: cast_nullable_to_non_nullable
 as int,origen: null == origen ? _self.origen : origen // ignore: cast_nullable_to_non_nullable
-as QuestionSource,
+as QuestionSource,conImagen: freezed == conImagen ? _self.conImagen : conImagen // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 

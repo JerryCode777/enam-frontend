@@ -67,6 +67,16 @@ class SessionRepositoryConRespaldo implements SessionRepository {
   /// descargada y después la app decía «no tienes prácticas listas» teniendo
   /// las 480 preguntas del área guardadas en el teléfono.
   Future<StudySession> _practicarSinSenal(PracticeConfig config) async {
+    // Las reservas son prácticas que el servidor armó sin ese filtro: con
+    // imagen se arma siempre en el teléfono.
+    if (config.conImagen ?? false) {
+      return _offline.practicarConLoDescargado(
+        areasPreferidas: config.areaIds,
+        subtemasPreferidos: config.subtemaIds,
+        cantidad: config.cantidadPreguntas,
+        soloConImagen: true,
+      );
+    }
     try {
       return await _offline.tomarReserva(areasPreferidas: config.areaIds);
     } on SinDescargasFailure {

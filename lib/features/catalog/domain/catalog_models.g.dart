@@ -18,6 +18,7 @@ _CatalogNode _$CatalogNodeFromJson(Map<String, dynamic> json) => _CatalogNode(
           .toList() ??
       const [],
   preguntasDisponibles: (json['preguntasDisponibles'] as num?)?.toInt() ?? 0,
+  preguntasConImagen: (json['preguntasConImagen'] as num?)?.toInt() ?? 0,
   preguntasVistas: (json['preguntasVistas'] as num?)?.toInt() ?? 0,
   respuestasTotales: (json['respuestasTotales'] as num?)?.toInt() ?? 0,
   respuestasCorrectas: (json['respuestasCorrectas'] as num?)?.toInt() ?? 0,
@@ -32,6 +33,7 @@ Map<String, dynamic> _$CatalogNodeToJson(_CatalogNode instance) =>
       'grupo': instance.grupo,
       'hijos': instance.hijos,
       'preguntasDisponibles': instance.preguntasDisponibles,
+      'preguntasConImagen': instance.preguntasConImagen,
       'preguntasVistas': instance.preguntasVistas,
       'respuestasTotales': instance.respuestasTotales,
       'respuestasCorrectas': instance.respuestasCorrectas,

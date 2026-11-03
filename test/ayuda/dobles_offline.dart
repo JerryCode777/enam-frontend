@@ -38,6 +38,9 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
   /// Preguntas que devuelve un paquete descargado.
   int preguntasPorPaquete = 40;
 
+  /// Qué preguntas del paquete (de 1 en adelante) traen imagen.
+  Set<int> conImagen = const {};
+
   /// Si está puesto, la descarga de un paquete espera a que se complete: deja
   /// probar lo que pasa mientras baja, como cancelarla.
   Completer<void>? retenerDescarga;
@@ -68,7 +71,13 @@ class ServidorFalso implements SessionRepository, OfflineRepository {
       generadoEn: DateTime(2026, 7, 20),
       preguntas: [
         for (var i = 1; i <= preguntasPorPaquete; i++)
-          preguntaDePrueba('$areaId-p$i'),
+          conImagen.contains(i)
+              ? preguntaDePrueba('$areaId-p$i').copyWith(
+                  imagenesDetalle: [
+                    ImagenDetalle(url: 'https://x.pe/img/$areaId-$i.webp'),
+                  ],
+                )
+              : preguntaDePrueba('$areaId-p$i'),
       ],
       total: preguntasPorPaquete,
     );
