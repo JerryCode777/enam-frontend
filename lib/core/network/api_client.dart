@@ -74,6 +74,10 @@ class ApiClient {
       // Con qué versión habla el servidor: así puede pedirle a una vieja que
       // se actualice (sin Play Billing antes de la 1.1.3, por ejemplo).
       'X-Version-App': ?VersionDeLaApp.instalada,
+      // Esta app muestra las imágenes de las preguntas. A las que no lo dicen
+      // (la 1.1.10 y anteriores, que solo pintaban un ícono) el servidor no
+      // les manda preguntas con imagen.
+      'X-Soporta-Imagenes': '1',
     },
     // Manejamos los códigos de error nosotros, en _toFailure.
     validateStatus: (status) => status != null && status < 400,
