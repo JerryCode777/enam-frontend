@@ -23,7 +23,9 @@ mixin _$CatalogNode {
 /// Puede ser 0: el banco se carga de forma progresiva, así que durante un
 /// tiempo habrá partes del temario sin preguntas todavía. La UI debe decir
 /// "aún no disponible", no mostrar una lista vacía sin explicación.
- int get preguntasDisponibles;/// Preguntas de este nodo que el usuario ya vio.
+ int get preguntasDisponibles;/// De esas, las que traen imagen (ECG, radiografías, fotos clínicas): la
+/// práctica «Preguntas con imagen». 0 si el servidor aún no lo manda.
+ int get preguntasConImagen;/// Preguntas de este nodo que el usuario ya vio.
  int get preguntasVistas;/// Respuestas del usuario en este nodo.
  int get respuestasTotales; int get respuestasCorrectas;
 /// Create a copy of CatalogNode
@@ -38,16 +40,16 @@ $CatalogNodeCopyWith<CatalogNode> get copyWith => _$CatalogNodeCopyWithImpl<Cata
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CatalogNode&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.nivel, nivel) || other.nivel == nivel)&&(identical(other.peso, peso) || other.peso == peso)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&const DeepCollectionEquality().equals(other.hijos, hijos)&&(identical(other.preguntasDisponibles, preguntasDisponibles) || other.preguntasDisponibles == preguntasDisponibles)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CatalogNode&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.nivel, nivel) || other.nivel == nivel)&&(identical(other.peso, peso) || other.peso == peso)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&const DeepCollectionEquality().equals(other.hijos, hijos)&&(identical(other.preguntasDisponibles, preguntasDisponibles) || other.preguntasDisponibles == preguntasDisponibles)&&(identical(other.preguntasConImagen, preguntasConImagen) || other.preguntasConImagen == preguntasConImagen)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,nivel,peso,grupo,const DeepCollectionEquality().hash(hijos),preguntasDisponibles,preguntasVistas,respuestasTotales,respuestasCorrectas);
+int get hashCode => Object.hash(runtimeType,id,nombre,nivel,peso,grupo,const DeepCollectionEquality().hash(hijos),preguntasDisponibles,preguntasConImagen,preguntasVistas,respuestasTotales,respuestasCorrectas);
 
 @override
 String toString() {
-  return 'CatalogNode(id: $id, nombre: $nombre, nivel: $nivel, peso: $peso, grupo: $grupo, hijos: $hijos, preguntasDisponibles: $preguntasDisponibles, preguntasVistas: $preguntasVistas, respuestasTotales: $respuestasTotales, respuestasCorrectas: $respuestasCorrectas)';
+  return 'CatalogNode(id: $id, nombre: $nombre, nivel: $nivel, peso: $peso, grupo: $grupo, hijos: $hijos, preguntasDisponibles: $preguntasDisponibles, preguntasConImagen: $preguntasConImagen, preguntasVistas: $preguntasVistas, respuestasTotales: $respuestasTotales, respuestasCorrectas: $respuestasCorrectas)';
 }
 
 
@@ -58,7 +60,7 @@ abstract mixin class $CatalogNodeCopyWith<$Res>  {
   factory $CatalogNodeCopyWith(CatalogNode value, $Res Function(CatalogNode) _then) = _$CatalogNodeCopyWithImpl;
 @useResult
 $Res call({
- String id, String nombre, String nivel, int? peso, String? grupo, List<CatalogNode> hijos, int preguntasDisponibles, int preguntasVistas, int respuestasTotales, int respuestasCorrectas
+ String id, String nombre, String nivel, int? peso, String? grupo, List<CatalogNode> hijos, int preguntasDisponibles, int preguntasConImagen, int preguntasVistas, int respuestasTotales, int respuestasCorrectas
 });
 
 
@@ -75,7 +77,7 @@ class _$CatalogNodeCopyWithImpl<$Res>
 
 /// Create a copy of CatalogNode
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? nivel = null,Object? peso = freezed,Object? grupo = freezed,Object? hijos = null,Object? preguntasDisponibles = null,Object? preguntasVistas = null,Object? respuestasTotales = null,Object? respuestasCorrectas = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nombre = null,Object? nivel = null,Object? peso = freezed,Object? grupo = freezed,Object? hijos = null,Object? preguntasDisponibles = null,Object? preguntasConImagen = null,Object? preguntasVistas = null,Object? respuestasTotales = null,Object? respuestasCorrectas = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
@@ -84,6 +86,7 @@ as String,peso: freezed == peso ? _self.peso : peso // ignore: cast_nullable_to_
 as int?,grupo: freezed == grupo ? _self.grupo : grupo // ignore: cast_nullable_to_non_nullable
 as String?,hijos: null == hijos ? _self.hijos : hijos // ignore: cast_nullable_to_non_nullable
 as List<CatalogNode>,preguntasDisponibles: null == preguntasDisponibles ? _self.preguntasDisponibles : preguntasDisponibles // ignore: cast_nullable_to_non_nullable
+as int,preguntasConImagen: null == preguntasConImagen ? _self.preguntasConImagen : preguntasConImagen // ignore: cast_nullable_to_non_nullable
 as int,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,respuestasTotales: null == respuestasTotales ? _self.respuestasTotales : respuestasTotales // ignore: cast_nullable_to_non_nullable
 as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable
@@ -172,10 +175,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasConImagen,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CatalogNode() when $default != null:
-return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
+return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasConImagen,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
   return orElse();
 
 }
@@ -193,10 +196,10 @@ return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.h
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasConImagen,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)  $default,) {final _that = this;
 switch (_that) {
 case _CatalogNode():
-return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
+return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasConImagen,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -213,10 +216,10 @@ return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.h
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nombre,  String nivel,  int? peso,  String? grupo,  List<CatalogNode> hijos,  int preguntasDisponibles,  int preguntasConImagen,  int preguntasVistas,  int respuestasTotales,  int respuestasCorrectas)?  $default,) {final _that = this;
 switch (_that) {
 case _CatalogNode() when $default != null:
-return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
+return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.hijos,_that.preguntasDisponibles,_that.preguntasConImagen,_that.preguntasVistas,_that.respuestasTotales,_that.respuestasCorrectas);case _:
   return null;
 
 }
@@ -228,7 +231,7 @@ return $default(_that.id,_that.nombre,_that.nivel,_that.peso,_that.grupo,_that.h
 @JsonSerializable()
 
 class _CatalogNode extends CatalogNode {
-  const _CatalogNode({required this.id, required this.nombre, required this.nivel, this.peso, this.grupo, final  List<CatalogNode> hijos = const [], this.preguntasDisponibles = 0, this.preguntasVistas = 0, this.respuestasTotales = 0, this.respuestasCorrectas = 0}): _hijos = hijos,super._();
+  const _CatalogNode({required this.id, required this.nombre, required this.nivel, this.peso, this.grupo, final  List<CatalogNode> hijos = const [], this.preguntasDisponibles = 0, this.preguntasConImagen = 0, this.preguntasVistas = 0, this.respuestasTotales = 0, this.respuestasCorrectas = 0}): _hijos = hijos,super._();
   factory _CatalogNode.fromJson(Map<String, dynamic> json) => _$CatalogNodeFromJson(json);
 
 @override final  String id;
@@ -252,6 +255,9 @@ class _CatalogNode extends CatalogNode {
 /// tiempo habrá partes del temario sin preguntas todavía. La UI debe decir
 /// "aún no disponible", no mostrar una lista vacía sin explicación.
 @override@JsonKey() final  int preguntasDisponibles;
+/// De esas, las que traen imagen (ECG, radiografías, fotos clínicas): la
+/// práctica «Preguntas con imagen». 0 si el servidor aún no lo manda.
+@override@JsonKey() final  int preguntasConImagen;
 /// Preguntas de este nodo que el usuario ya vio.
 @override@JsonKey() final  int preguntasVistas;
 /// Respuestas del usuario en este nodo.
@@ -271,16 +277,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CatalogNode&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.nivel, nivel) || other.nivel == nivel)&&(identical(other.peso, peso) || other.peso == peso)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&const DeepCollectionEquality().equals(other._hijos, _hijos)&&(identical(other.preguntasDisponibles, preguntasDisponibles) || other.preguntasDisponibles == preguntasDisponibles)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CatalogNode&&(identical(other.id, id) || other.id == id)&&(identical(other.nombre, nombre) || other.nombre == nombre)&&(identical(other.nivel, nivel) || other.nivel == nivel)&&(identical(other.peso, peso) || other.peso == peso)&&(identical(other.grupo, grupo) || other.grupo == grupo)&&const DeepCollectionEquality().equals(other._hijos, _hijos)&&(identical(other.preguntasDisponibles, preguntasDisponibles) || other.preguntasDisponibles == preguntasDisponibles)&&(identical(other.preguntasConImagen, preguntasConImagen) || other.preguntasConImagen == preguntasConImagen)&&(identical(other.preguntasVistas, preguntasVistas) || other.preguntasVistas == preguntasVistas)&&(identical(other.respuestasTotales, respuestasTotales) || other.respuestasTotales == respuestasTotales)&&(identical(other.respuestasCorrectas, respuestasCorrectas) || other.respuestasCorrectas == respuestasCorrectas));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nombre,nivel,peso,grupo,const DeepCollectionEquality().hash(_hijos),preguntasDisponibles,preguntasVistas,respuestasTotales,respuestasCorrectas);
+int get hashCode => Object.hash(runtimeType,id,nombre,nivel,peso,grupo,const DeepCollectionEquality().hash(_hijos),preguntasDisponibles,preguntasConImagen,preguntasVistas,respuestasTotales,respuestasCorrectas);
 
 @override
 String toString() {
-  return 'CatalogNode(id: $id, nombre: $nombre, nivel: $nivel, peso: $peso, grupo: $grupo, hijos: $hijos, preguntasDisponibles: $preguntasDisponibles, preguntasVistas: $preguntasVistas, respuestasTotales: $respuestasTotales, respuestasCorrectas: $respuestasCorrectas)';
+  return 'CatalogNode(id: $id, nombre: $nombre, nivel: $nivel, peso: $peso, grupo: $grupo, hijos: $hijos, preguntasDisponibles: $preguntasDisponibles, preguntasConImagen: $preguntasConImagen, preguntasVistas: $preguntasVistas, respuestasTotales: $respuestasTotales, respuestasCorrectas: $respuestasCorrectas)';
 }
 
 
@@ -291,7 +297,7 @@ abstract mixin class _$CatalogNodeCopyWith<$Res> implements $CatalogNodeCopyWith
   factory _$CatalogNodeCopyWith(_CatalogNode value, $Res Function(_CatalogNode) _then) = __$CatalogNodeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String nombre, String nivel, int? peso, String? grupo, List<CatalogNode> hijos, int preguntasDisponibles, int preguntasVistas, int respuestasTotales, int respuestasCorrectas
+ String id, String nombre, String nivel, int? peso, String? grupo, List<CatalogNode> hijos, int preguntasDisponibles, int preguntasConImagen, int preguntasVistas, int respuestasTotales, int respuestasCorrectas
 });
 
 
@@ -308,7 +314,7 @@ class __$CatalogNodeCopyWithImpl<$Res>
 
 /// Create a copy of CatalogNode
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? nivel = null,Object? peso = freezed,Object? grupo = freezed,Object? hijos = null,Object? preguntasDisponibles = null,Object? preguntasVistas = null,Object? respuestasTotales = null,Object? respuestasCorrectas = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nombre = null,Object? nivel = null,Object? peso = freezed,Object? grupo = freezed,Object? hijos = null,Object? preguntasDisponibles = null,Object? preguntasConImagen = null,Object? preguntasVistas = null,Object? respuestasTotales = null,Object? respuestasCorrectas = null,}) {
   return _then(_CatalogNode(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nombre: null == nombre ? _self.nombre : nombre // ignore: cast_nullable_to_non_nullable
@@ -317,6 +323,7 @@ as String,peso: freezed == peso ? _self.peso : peso // ignore: cast_nullable_to_
 as int?,grupo: freezed == grupo ? _self.grupo : grupo // ignore: cast_nullable_to_non_nullable
 as String?,hijos: null == hijos ? _self._hijos : hijos // ignore: cast_nullable_to_non_nullable
 as List<CatalogNode>,preguntasDisponibles: null == preguntasDisponibles ? _self.preguntasDisponibles : preguntasDisponibles // ignore: cast_nullable_to_non_nullable
+as int,preguntasConImagen: null == preguntasConImagen ? _self.preguntasConImagen : preguntasConImagen // ignore: cast_nullable_to_non_nullable
 as int,preguntasVistas: null == preguntasVistas ? _self.preguntasVistas : preguntasVistas // ignore: cast_nullable_to_non_nullable
 as int,respuestasTotales: null == respuestasTotales ? _self.respuestasTotales : respuestasTotales // ignore: cast_nullable_to_non_nullable
 as int,respuestasCorrectas: null == respuestasCorrectas ? _self.respuestasCorrectas : respuestasCorrectas // ignore: cast_nullable_to_non_nullable

@@ -179,6 +179,10 @@ abstract class PracticeConfig with _$PracticeConfig {
     @Default([]) List<String> subtemaIds,
     @Default(20) int cantidadPreguntas,
     @Default(QuestionSource.todas) QuestionSource origen,
+
+    /// Solo preguntas con imagen. Se manda solo si es `true`: así una práctica
+    /// normal sale igual que antes.
+    @JsonKey(includeIfNull: false) bool? conImagen,
   }) = _PracticeConfig;
 
   factory PracticeConfig.fromJson(Map<String, dynamic> json) =>

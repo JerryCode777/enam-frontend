@@ -253,6 +253,7 @@ class ServicioOffline {
     List<String> areasPreferidas = const [],
     List<String> subtemasPreferidos = const [],
     int cantidad = preguntasPorReserva,
+    bool soloConImagen = false,
   }) async {
     final descargadas = await _almacen.resumenes(_usuario);
     if (descargadas.isEmpty) throw const SinDescargasFailure();
@@ -272,7 +273,7 @@ class ServicioOffline {
     if (todas.isEmpty) throw const SinDescargasFailure();
 
     final sinFiltro = areasPreferidas.isEmpty && subtemasPreferidos.isEmpty;
-    final disponibles = sinFiltro
+    final delNodo = sinFiltro
         ? todas
         : [
             for (final p in todas)
@@ -280,11 +281,20 @@ class ServicioOffline {
                   subtemasPreferidos.contains(p.subtemaId))
                 p,
           ];
+    final disponibles = soloConImagen
+        ? [
+            for (final p in delNodo)
+              if (p.imagenesAMostrar.isNotEmpty) p,
+          ]
+        : delNodo;
 
     if (disponibles.isEmpty) {
-      throw const SinDescargasFailure(
-        'Eso no está descargado. Bájalo cuando tengas internet y podrás '
-        'practicarlo sin conexión.',
+      throw SinDescargasFailure(
+        soloConImagen && delNodo.isNotEmpty
+            ? 'Lo que descargaste de aquí no tiene preguntas con imagen. '
+                  'Con internet puedes practicar todas las que hay.'
+            : 'Eso no está descargado. Bájalo cuando tengas internet y '
+                  'podrás practicarlo sin conexión.',
       );
     }
 
