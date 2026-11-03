@@ -39,6 +39,9 @@ abstract final class Routes {
   static const practiceAreas = '/practica/areas';
   static const markedQuestions = '/practica/marcadas';
 
+  /// «Imágenes clínicas»: práctica solo con preguntas con imagen.
+  static const imagenes = '/practica/imagenes';
+
   /// Sesión de práctica en curso. Recibe el id de sesión.
   static const practiceSession = '/practica/sesion/:id';
   static String practiceSessionOf(String id) => '/practica/sesion/$id';

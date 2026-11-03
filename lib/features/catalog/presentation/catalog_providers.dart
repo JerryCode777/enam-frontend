@@ -225,3 +225,8 @@ final areaInfoProvider = Provider.family<({String nombre, int peso})?, String>((
   }
   return null;
 });
+
+/// Preguntas con imagen en todo el temario. 0 sin catálogo o si el servidor
+/// todavía no las cuenta.
+int totalConImagen(List<CatalogNode>? areas) =>
+    areas?.fold<int>(0, (suma, a) => suma + a.preguntasConImagen) ?? 0;

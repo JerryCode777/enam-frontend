@@ -23,11 +23,7 @@ import '../../offline/presentation/offline_providers.dart';
 /// perdía la configuración que estaba armando. Aquí elige y vuelve con el nodo
 /// puesto.
 class AreaPickerScreen extends ConsumerWidget {
-  const AreaPickerScreen({this.soloConImagen = false, super.key});
-
-  /// Para la práctica «Preguntas con imagen»: solo se ofrece lo que tiene
-  /// alguna, y cada opción dice cuántas.
-  final bool soloConImagen;
+  const AreaPickerScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,10 +58,7 @@ class AreaPickerScreen extends ConsumerWidget {
           ),
         ),
         data: (areas) => _Lista(
-          areas: soloConImagen
-              ? areas.where((a) => a.preguntasConImagen > 0).toList()
-              : areas,
-          soloConImagen: soloConImagen,
+          areas: areas,
           soloDescargadas: !hayRed,
           descargadas: descargadas,
         ),
@@ -79,11 +72,9 @@ class _Lista extends StatelessWidget {
     required this.areas,
     required this.soloDescargadas,
     required this.descargadas,
-    this.soloConImagen = false,
   });
 
   final List<CatalogNode> areas;
-  final bool soloConImagen;
 
   /// Sin conexión: lo que no esté en el teléfono va con candado.
   final bool soloDescargadas;
@@ -115,9 +106,7 @@ class _Lista extends StatelessWidget {
           icono: Symbols.shuffle,
           color: context.states.info.onTint,
           titulo: soloDescargadas ? 'Todo lo descargado' : 'Todo el temario',
-          detalle: soloConImagen
-              ? 'Preguntas con imagen de todas las áreas'
-              : soloDescargadas
+          detalle: soloDescargadas
               ? 'Preguntas de las áreas que tienes en el teléfono'
               : 'Preguntas de todas las áreas, mezcladas',
           onTap: soloDescargadas && descargadas.isEmpty
@@ -139,7 +128,6 @@ class _Lista extends StatelessWidget {
           _Area(
             area: area,
             bloqueada: soloDescargadas && !descargadas.contains(area.id),
-            soloConImagen: soloConImagen,
           ),
           const SizedBox(height: DesignTokens.space2 + 1),
         ],
@@ -158,14 +146,9 @@ class _SinNodo {
 /// El peso va visible: 40 preguntas y 2 preguntas no pueden verse igual a la
 /// hora de decidir dónde invertir el tiempo.
 class _Area extends StatelessWidget {
-  const _Area({
-    required this.area,
-    this.bloqueada = false,
-    this.soloConImagen = false,
-  });
+  const _Area({required this.area, this.bloqueada = false});
 
   final CatalogNode area;
-  final bool soloConImagen;
 
   /// Sin conexión y sin descargar: se ve, pero no se puede elegir.
   ///
@@ -179,16 +162,8 @@ class _Area extends StatelessWidget {
     final color = AreaColors.of(area.id, Theme.of(context).brightness);
     final hijos = bloqueada
         ? const <CatalogNode>[]
-        : area.hijos
-              .where(
-                (h) => soloConImagen
-                    ? h.preguntasConImagen > 0
-                    : h.preguntasDisponibles > 0,
-              )
-              .toList();
+        : area.hijos.where((h) => h.preguntasDisponibles > 0).toList();
     final sinPreguntas = area.preguntasDisponibles == 0 || bloqueada;
-    String detalle(CatalogNode n) =>
-        soloConImagen ? _conImagen(n) : _enElEnam(n);
 
     final cabecera = Row(
       children: [
@@ -230,7 +205,7 @@ class _Area extends StatelessWidget {
                     ? 'Descárgala para practicarla sin conexión'
                     : sinPreguntas
                     ? 'Aún no disponible'
-                    : detalle(area),
+                    : _enElEnam(area),
                 style: context.texts.bodySmall?.copyWith(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -276,13 +251,13 @@ class _Area extends StatelessWidget {
             _SubArea(
               nodo: area,
               titulo: 'Toda el área',
-              detalle: detalle(area),
+              detalle: _enElEnam(area),
             ),
             for (final hijo in hijos)
               _SubArea(
                 nodo: hijo,
                 titulo: hijo.nombre,
-                detalle: detalle(hijo),
+                detalle: _enElEnam(hijo),
               ),
           ],
         ),
@@ -422,8 +397,3 @@ String _enElEnam(CatalogNode nodo) => switch (nodo.peso) {
     '$peso de ${Blueprint.totalQuestions} en el ENAM',
   _ => '',
 };
-
-/// En la práctica con imagen sí se dice cuántas hay: es lo que se elige.
-String _conImagen(CatalogNode nodo) => nodo.preguntasConImagen == 1
-    ? '1 pregunta con imagen'
-    : '${nodo.preguntasConImagen} preguntas con imagen';

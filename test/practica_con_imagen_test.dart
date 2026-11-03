@@ -3,14 +3,16 @@ import 'package:enam_app/core/providers.dart';
 import 'package:enam_app/core/theme/app_theme.dart';
 import 'package:enam_app/features/auth/domain/auth_models.dart';
 import 'package:enam_app/features/catalog/domain/catalog_models.dart';
+import 'package:enam_app/features/catalog/presentation/catalog_providers.dart';
 import 'package:enam_app/features/offline/data/servicio_offline.dart';
 import 'package:enam_app/features/session/data/session_repository.dart';
 import 'package:enam_app/features/session/data/session_repository_offline.dart';
 import 'package:enam_app/features/session/domain/session_models.dart';
-import 'package:enam_app/features/session/presentation/area_picker_screen.dart';
+import 'package:enam_app/features/session/presentation/imagenes_clinicas_screen.dart';
 import 'package:enam_app/features/session/presentation/practice_config_screen.dart';
 import 'package:enam_app/features/subscription/domain/acceso.dart';
 import 'package:enam_app/features/subscription/domain/subscription_models.dart';
+import 'package:enam_app/features/subscription/presentation/widgets/etiqueta_premium.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,8 +21,8 @@ import 'package:go_router/go_router.dart';
 import 'ayuda/dobles_offline.dart';
 import 'ayuda/offline.dart';
 
-/// «Preguntas con imagen»: practicar solo las que traen un ECG, una
-/// radiografía o una foto clínica (`conImagen` en el POST de práctica).
+/// «Imágenes clínicas»: practicar solo las que traen un ECG, una radiografía o
+/// una foto clínica (`conImagen` en el POST de práctica), en su propia sección.
 void main() {
   const catalogo = [
     CatalogNode(
@@ -90,134 +92,130 @@ void main() {
     });
   });
 
-  group('la pantalla de práctica', () {
-    testWidgets('Premium: se activa y se combina con el área', (tester) async {
+  group('Imágenes clínicas', () {
+    testWidgets('el total, las áreas con imágenes y su cifra', (tester) async {
+      await _montar(
+        tester,
+        const ImagenesClinicasScreen(),
+        catalogo: catalogo,
+      );
+      expect(find.text('12 preguntas con imagen'), findsOneWidget);
+      expect(find.text('Medicina'), findsOneWidget);
+      // Sin imágenes, ni se ofrece.
+      expect(find.text('Pediatría'), findsNothing);
+
+      await tester.tap(find.text('Medicina'));
+      await _asentar(tester);
+      expect(find.text('Cardiovascular'), findsOneWidget);
+      expect(find.text('Respiratorio'), findsNothing);
+    });
+
+    testWidgets('Premium: con un tema, la cantidad se topa en lo que hay', (
+      tester,
+    ) async {
       final repo = _Sesiones();
       await _montar(
         tester,
-        const PracticeConfigScreen(nodoId: 'medicina-cardiovascular'),
+        const ImagenesClinicasScreen(),
         catalogo: catalogo,
         repo: repo,
       );
-
-      expect(find.text('Preguntas con imagen (12)'), findsOneWidget);
-      await tester.tap(find.byType(Switch));
+      await tester.tap(find.text('Medicina'));
+      await _asentar(tester);
+      await tester.tap(find.text('Cardiovascular'));
       await _asentar(tester);
 
-      // Hay 12: pedir 20 diría una cosa y haría otra.
       await tester.tap(find.text('Empezar · 12 preguntas'));
       await _asentar(tester);
 
       final pedido = repo.pedidos.single;
       expect(pedido.conImagen, isTrue);
       expect(pedido.subtemaIds, ['medicina-cardiovascular']);
+      expect(pedido.areaIds, isEmpty);
       expect(pedido.cantidadPreguntas, 12);
+      expect(find.textContaining('sesion '), findsOneWidget);
     });
 
-    testWidgets('sin tocarlo, la práctica es la de siempre', (tester) async {
+    testWidgets('un área entera va en areaIds', (tester) async {
       final repo = _Sesiones();
       await _montar(
         tester,
-        const PracticeConfigScreen(),
+        const ImagenesClinicasScreen(),
         catalogo: catalogo,
         repo: repo,
       );
-      // Sin área: cuenta las de todo el temario.
-      expect(find.text('Preguntas con imagen (12)'), findsOneWidget);
-
-      await tester.tap(find.text('Empezar · 20 preguntas'));
+      await tester.tap(find.text('Medicina'));
       await _asentar(tester);
-      expect(repo.pedidos.single.conImagen, isNull);
+      await tester.tap(find.text('Toda el área'));
+      await _asentar(tester);
+      await tester.tap(find.textContaining('Empezar'));
+      await _asentar(tester);
+      expect(repo.pedidos.single.areaIds, ['medicina']);
     });
 
-    testWidgets('un área sin imágenes no lo deja activar', (tester) async {
-      await _montar(
-        tester,
-        const PracticeConfigScreen(nodoId: 'medicina-respiratorio'),
-        catalogo: catalogo,
-      );
-      expect(find.text('Preguntas con imagen'), findsOneWidget);
-      expect(find.textContaining('todavía no tiene'), findsOneWidget);
-      expect(tester.widget<Switch>(find.byType(Switch)).onChanged, isNull);
-    });
-
-    testWidgets('si el servidor no las cuenta, ni aparece', (tester) async {
-      await _montar(
-        tester,
-        const PracticeConfigScreen(),
-        catalogo: [for (final a in catalogo) a.copyWith(preguntasConImagen: 0)],
-      );
-      expect(find.byType(InterruptorConImagen), findsNothing);
-    });
-
-    testWidgets('gratis: entra en el cupo del día, sin muro', (tester) async {
+    testWidgets('gratis: todas las áreas, dentro del cupo del día', (
+      tester,
+    ) async {
       final repo = _Sesiones();
       await _montar(
         tester,
-        const PracticeConfigScreen(),
+        const ImagenesClinicasScreen(),
         catalogo: catalogo,
         repo: repo,
         gratis: const AccesoGratis(preguntasPorDia: 12, restantesHoy: 6),
       );
-      await tester.tap(find.byType(Switch));
-      await _asentar(tester);
+      expect(find.byType(EtiquetaPremium), findsOneWidget);
       await tester.tap(find.text('Empezar · 6 preguntas'));
       await _asentar(tester);
 
       final pedido = repo.pedidos.single;
       expect(pedido.conImagen, isTrue);
       expect(pedido.areaIds, isEmpty);
+      expect(pedido.subtemaIds, isEmpty);
       expect(pedido.cantidadPreguntas, 6);
     });
 
-    testWidgets('llega con el modo puesto desde la ruta', (tester) async {
+    testWidgets('gratis sin cupo: Premium y no crea nada', (tester) async {
+      final repo = _Sesiones();
       await _montar(
         tester,
-        const PracticeConfigScreen(conImagenInicial: true),
+        const ImagenesClinicasScreen(),
+        catalogo: catalogo,
+        repo: repo,
+        gratis: const AccesoGratis(preguntasPorDia: 12, restantesHoy: 0),
+      );
+      expect(find.text('Ver Premium'), findsOneWidget);
+      expect(find.textContaining('Empezar'), findsNothing);
+      expect(repo.pedidos, isEmpty);
+    });
+
+    testWidgets('sin preguntas con imagen, lo dice y no ofrece empezar', (
+      tester,
+    ) async {
+      await _montar(
+        tester,
+        const ImagenesClinicasScreen(),
+        catalogo: [
+          for (final a in catalogo) a.copyWith(preguntasConImagen: 0),
+        ],
+      );
+      expect(find.textContaining('Todavía no hay'), findsOneWidget);
+      expect(find.textContaining('Empezar'), findsNothing);
+    });
+
+    testWidgets('«Practicar» ya no tiene el interruptor', (tester) async {
+      await _montar(
+        tester,
+        const PracticeConfigScreen(),
         catalogo: catalogo,
       );
-      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
-      expect(find.text('Empezar · 12 preguntas'), findsOneWidget);
-    });
-  });
-
-  group('elegir el área', () {
-    Widget picker({required bool soloConImagen}) => ProviderScope(
-      overrides: [
-        catalogProvider.overrideWith((_) async => catalogo),
-        servicioOfflineProvider.overrideWithValue(
-          ServicioOffline(
-            almacen: AlmacenEnMemoria(),
-            remoto: ServidorFalso(),
-            sesiones: ServidorFalso(),
-            usuarioId: 'u1',
-          ),
-        ),
-        conectividadProvider.overrideWithValue(ConectividadFalsa()),
-        hayRedProvider.overrideWith((_) => Stream.value(true)),
-      ],
-      child: MaterialApp(home: AreaPickerScreen(soloConImagen: soloConImagen)),
-    );
-
-    testWidgets('solo se ofrece lo que tiene imágenes', (tester) async {
-      await tester.pumpWidget(picker(soloConImagen: true));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Medicina'), findsOneWidget);
-      expect(find.text('Pediatría'), findsNothing);
-      expect(find.text('12 preguntas con imagen'), findsOneWidget);
-
-      await tester.tap(find.text('Medicina'));
-      await tester.pumpAndSettle();
-      expect(find.text('Cardiovascular'), findsOneWidget);
-      expect(find.text('Respiratorio'), findsNothing);
-    });
-
-    testWidgets('sin el modo, todo como siempre', (tester) async {
-      await tester.pumpWidget(picker(soloConImagen: false));
-      await tester.pumpAndSettle();
-      expect(find.text('Pediatría'), findsOneWidget);
+      expect(find.byType(Switch), findsNothing);
       expect(find.textContaining('con imagen'), findsNothing);
+    });
+
+    test('el total suma las áreas', () {
+      expect(totalConImagen(catalogo), 12);
+      expect(totalConImagen(null), 0);
     });
   });
 

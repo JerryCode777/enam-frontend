@@ -17,7 +17,6 @@ import 'package:enam_app/features/stats/presentation/progress_screen.dart';
 import 'package:enam_app/features/subscription/presentation/access_ended_screen.dart';
 import 'package:enam_app/features/subscription/presentation/my_subscription_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -82,13 +81,7 @@ void main() {
       >[
         (
           nombre: '4.1-configurar',
-          // Sin catálogo: el de ejemplo sale de un azar con semilla que
-          // comparten las preguntas, y generarlo aquí cambiaba cuál es la
-          // correcta en 4.3. Sin imágenes, la pantalla es la misma.
-          montar: (_, _) async => ProviderScope(
-            overrides: [catalogProvider.overrideWith((_) async => const [])],
-            child: const PracticeConfigScreen(),
-          ),
+          montar: (_, _) async => const PracticeConfigScreen(),
           despues: null,
         ),
         (
