@@ -28,6 +28,7 @@ import '../../features/profile/presentation/help_screen.dart';
 import '../../features/profile/presentation/legal_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/session/presentation/area_picker_screen.dart';
+import '../../features/session/presentation/imagenes_clinicas_screen.dart';
 import '../../features/session/presentation/marked_questions_screen.dart';
 import '../../features/session/presentation/national_mock_screen.dart';
 import '../../features/session/presentation/past_exams_screen.dart';
@@ -513,7 +514,6 @@ final List<RouteBase> _routes = [
         cantidadInicial: int.tryParse(
           state.uri.queryParameters['cantidad'] ?? '',
         ),
-        conImagenInicial: state.uri.queryParameters['conImagen'] == '1',
       ),
       state: state,
     ),
@@ -606,17 +606,18 @@ final List<RouteBase> _routes = [
   // GlobalKey que el ya montado, y la app muere con pantalla roja.
   GoRoute(
     path: Routes.practiceAreas,
-    pageBuilder: (context, state) => modalPage(
-      child: AreaPickerScreen(
-        soloConImagen: state.uri.queryParameters['conImagen'] == '1',
-      ),
-      state: state,
-    ),
+    pageBuilder: (context, state) =>
+        modalPage(child: const AreaPickerScreen(), state: state),
   ),
   GoRoute(
     path: Routes.markedQuestions,
     pageBuilder: (context, state) =>
         slidePage(child: const MarkedQuestionsScreen(), state: state),
+  ),
+  GoRoute(
+    path: Routes.imagenes,
+    pageBuilder: (context, state) =>
+        slidePage(child: const ImagenesClinicasScreen(), state: state),
   ),
 
   // ==================== SUSCRIPCIÓN (Módulo 6) ====================

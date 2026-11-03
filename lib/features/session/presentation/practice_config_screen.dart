@@ -34,7 +34,6 @@ class PracticeConfigScreen extends ConsumerStatefulWidget {
     this.nodoId,
     this.origenInicial,
     this.cantidadInicial,
-    this.conImagenInicial = false,
     super.key,
   });
 
@@ -48,9 +47,6 @@ class PracticeConfigScreen extends ConsumerStatefulWidget {
   /// todavía no ha practicado nunca: una primera práctica corta. Sigue siendo
   /// editable.
   final int? cantidadInicial;
-
-  /// Llega con «Preguntas con imagen» ya puesto.
-  final bool conImagenInicial;
 
   @override
   ConsumerState<PracticeConfigScreen> createState() =>
@@ -71,26 +67,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
   /// el temario (RF-38) y cambia si el usuario elige otro.
   late String? _nodoId = widget.nodoId;
 
-  /// «Preguntas con imagen»: solo las que traen ECG, radiografía o foto.
-  late bool _conImagen = widget.conImagenInicial;
-
   bool _creando = false;
-
-  /// Cuántas preguntas con imagen hay en el nodo elegido, o en todo el
-  /// temario. `null` mientras carga el catálogo.
-  int? _conImagenDisponibles(CatalogNode? nodo) {
-    if (nodo != null) return nodo.preguntasConImagen;
-    final areas = ref.watch(catalogProvider).value;
-    if (areas == null) return null;
-    return areas.fold<int>(0, (suma, a) => suma + a.preguntasConImagen);
-  }
-
-  /// Hay preguntas con imagen en algún lado: si no, el modo ni se enseña
-  /// (un servidor que todavía no las cuenta da 0 en todo).
-  bool get _hayConImagen {
-    final areas = ref.watch(catalogProvider).value ?? const [];
-    return areas.any((a) => a.preguntasConImagen > 0);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,12 +82,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
     // 06/10/2026), y una barra que se acorta lo diría igual. Si el nodo tiene
     // menos, el servidor crea la sesión con las que hay.
     const tope = Blueprint.practiceMaxQuestions;
-    final conImagen = _conImagenDisponibles(nodo?.nodo);
-    // Un nodo sin imágenes no se practica en este modo: se apaga solo.
-    final modoConImagen = _conImagen && (conImagen ?? 1) > 0;
-    final cantidadEfectiva = modoConImagen && conImagen != null
-        ? _cantidadEfectiva(tope).clamp(1, conImagen)
-        : _cantidadEfectiva(tope);
+    final cantidadEfectiva = _cantidadEfectiva(tope);
 
     return Scaffold(
       body: Column(
@@ -133,15 +105,6 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
                     onElegir: _elegirNodo,
                   ),
                 ),
-                if (_hayConImagen) ...[
-                  const SizedBox(height: DesignTokens.space3),
-                  InterruptorConImagen(
-                    activo: modoConImagen,
-                    disponibles: conImagen,
-                    enUnTema: nodo != null,
-                    onChanged: (v) => setState(() => _conImagen = v),
-                  ),
-                ],
                 const SizedBox(height: DesignTokens.space5),
                 _Seccion(
                   titulo: 'CANTIDAD',
@@ -177,8 +140,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
           _BarraEmpezar(
             etiqueta: 'Empezar · $cantidadEfectiva preguntas',
             creando: _creando,
-            onEmpezar: () =>
-                _empezar(cantidadEfectiva, conImagen: modoConImagen),
+            onEmpezar: () => _empezar(cantidadEfectiva),
           ),
         ],
       ),
@@ -191,13 +153,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
   /// evita prometer una práctica que no va a crear.
   Widget _enGratis(AccesoGratis gratis) {
     final porDia = gratis.preguntasPorDia;
-    final conImagen = _conImagenDisponibles(null);
-    final modoConImagen = _conImagen && (conImagen ?? 1) > 0;
-    final restantes = gratis.restantesHoy.clamp(0, porDia);
-    // Con imagen entra en el mismo cupo del día: no es una función Premium.
-    final cantidad = modoConImagen && conImagen != null
-        ? restantes.clamp(0, conImagen)
-        : restantes;
+    final cantidad = gratis.restantesHoy.clamp(0, porDia);
     void aPremium() => abrirMuro(
       context,
       ref,
@@ -240,15 +196,6 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
                     onTap: aPremium,
                   ),
                 ),
-                if (_hayConImagen) ...[
-                  const SizedBox(height: DesignTokens.space3),
-                  InterruptorConImagen(
-                    activo: modoConImagen,
-                    disponibles: conImagen,
-                    enUnTema: false,
-                    onChanged: (v) => setState(() => _conImagen = v),
-                  ),
-                ],
                 const SizedBox(height: DesignTokens.space5),
                 _Seccion(
                   titulo: 'CANTIDAD',
@@ -291,8 +238,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
             _BarraEmpezar(
               etiqueta: 'Empezar · $cantidad preguntas',
               creando: _creando,
-              onEmpezar: () =>
-                  _empezar(cantidad, gratis: true, conImagen: modoConImagen),
+              onEmpezar: () => _empezar(cantidad, gratis: true),
             ),
         ],
       ),
@@ -306,7 +252,7 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
   /// Navigator con la misma GlobalKey — pantalla roja y sin vuelta atrás.
   Future<void> _elegirNodo() async {
     final elegido = await context.irAPorUnResultado<Object?>(
-      _conImagen ? '${Routes.practiceAreas}?conImagen=1' : Routes.practiceAreas,
+      Routes.practiceAreas,
     );
     if (!mounted || elegido == null) return;
 
@@ -322,33 +268,24 @@ class _PracticeConfigScreenState extends ConsumerState<PracticeConfigScreen> {
       _cantidad.clamp(Blueprint.practiceMinQuestions, tope);
 
   /// [gratis]: sin área ni filtro, que en gratis son Premium.
-  Future<void> _empezar(
-    int cantidad, {
-    bool gratis = false,
-    bool conImagen = false,
-  }) async {
+  Future<void> _empezar(int cantidad, {bool gratis = false}) async {
     if (_creando) return;
     setState(() => _creando = true);
 
     try {
       final nodoId = gratis ? null : _nodoId;
-      final session = await ref
-          .read(sessionRepositoryProvider)
-          .startPractice(
-            PracticeConfig(
-              // El nodo puede ser área, sub área o tema; el servidor resuelve el
-              // subárbol. Se manda en `subtemaIds` salvo que sea un área.
-              areaIds: nodoId != null && !nodoId.contains('-')
-                  ? [nodoId]
-                  : const [],
-              subtemaIds: nodoId != null && nodoId.contains('-')
-                  ? [nodoId]
-                  : const [],
-              cantidadPreguntas: cantidad,
-              origen: gratis ? QuestionSource.todas : _origen,
-              conImagen: conImagen ? true : null,
-            ),
-          );
+      final session = await ref.read(sessionRepositoryProvider).startPractice(
+        PracticeConfig(
+          // El nodo puede ser área, sub área o tema; el servidor resuelve el
+          // subárbol. Se manda en `subtemaIds` salvo que sea un área.
+          areaIds: nodoId != null && !nodoId.contains('-') ? [nodoId] : const [],
+          subtemaIds: nodoId != null && nodoId.contains('-')
+              ? [nodoId]
+              : const [],
+          cantidadPreguntas: cantidad,
+          origen: gratis ? QuestionSource.todas : _origen,
+        ),
+      );
 
       // Hay una sesión abierta nueva: el inicio tiene que poder ofrecerla.
       ref.invalidate(sesionesAbiertasProvider);
@@ -731,96 +668,6 @@ class _FilaPremium extends StatelessWidget {
               ),
               const SizedBox(width: DesignTokens.space2),
               const EtiquetaPremium(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// «Preguntas con imagen (N)»: practicar solo las que traen un ECG, una
-/// radiografía o una foto clínica. Se combina con el área o el tema elegidos.
-///
-/// Aquí sí se dice cuántas hay (a diferencia del banco entero): es lo que hace
-/// que valga la pena tocarlo.
-@visibleForTesting
-class InterruptorConImagen extends StatelessWidget {
-  const InterruptorConImagen({
-    required this.activo,
-    required this.disponibles,
-    required this.enUnTema,
-    required this.onChanged,
-    super.key,
-  });
-
-  final bool activo;
-
-  /// `null` mientras carga el catálogo.
-  final int? disponibles;
-
-  /// Si [disponibles] es de un área o tema elegido, y no de todo el temario.
-  final bool enUnTema;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final n = disponibles;
-    final sinNinguna = n == 0;
-    final titulo = n == null || sinNinguna
-        ? 'Preguntas con imagen'
-        : 'Preguntas con imagen ($n)';
-    final detalle = sinNinguna
-        ? 'Lo que elegiste todavía no tiene. Cambia de área o practica todo '
-              'el temario.'
-        : 'Solo preguntas con ECG, radiografías o fotos clínicas'
-              '${enUnTema ? ' de lo que elegiste' : ''}.';
-
-    return Card(
-      child: InkWell(
-        onTap: sinNinguna ? null : () => onChanged(!activo),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space4,
-            DesignTokens.space3,
-            DesignTokens.space3,
-            DesignTokens.space3,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Symbols.image,
-                size: 24,
-                fill: activo ? 1 : 0,
-                color: sinNinguna
-                    ? context.scheme.onSurfaceVariant
-                    : context.states.info.onTint,
-              ),
-              const SizedBox(width: DesignTokens.space3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: context.texts.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: sinNinguna
-                            ? context.scheme.onSurfaceVariant
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      detalle,
-                      style: context.texts.bodySmall?.copyWith(fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: DesignTokens.space2),
-              Switch(value: activo, onChanged: sinNinguna ? null : onChanged),
             ],
           ),
         ),

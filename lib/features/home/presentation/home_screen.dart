@@ -478,6 +478,7 @@ class _Estudiar extends ConsumerWidget {
         .watch(cursosProvider)
         .value
         ?.any((c) => !c.proximamente);
+    final conImagen = totalConImagen(ref.watch(catalogProvider).value);
 
     final filas = [
       _Fila(
@@ -488,6 +489,15 @@ class _Estudiar extends ConsumerWidget {
             : '${gratis.preguntasPorDia} preguntas al día, de todas las áreas',
         onTap: () => context.irA(Routes.practiceConfig),
       ),
+      // Aparte de «Practicar»: el ENAM no trae imágenes. Sin ninguna en el
+      // banco (o un servidor que no las cuenta), no se ofrece.
+      if (conImagen > 0)
+        _Fila(
+          icono: Symbols.image,
+          titulo: 'Imágenes clínicas',
+          detalle: '$conImagen preguntas con ECG, radiografías y fotos',
+          onTap: () => context.irA(Routes.imagenes),
+        ),
       // Como «Cursos» en «Más formas de estudiar» de la web: «Muy pronto»
       // mientras ningún curso tiene clases, y «Nuevo» cuando ya hay.
       _Fila(
