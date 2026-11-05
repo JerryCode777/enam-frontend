@@ -158,11 +158,13 @@ void main() {
         'premium_mensual',
         'premium_trimestral',
         'premium_semestral',
+        'premium_anual',
       ]);
       expect(productosGooglePlay.map(planIdDeGooglePlay), [
         'mensual',
         'intensivo',
         'semestral',
+        'anual',
       ]);
     });
 

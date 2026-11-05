@@ -3,8 +3,12 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart'
+    show AppStoreProduct2Details;
+import 'package:in_app_purchase_storekit/store_kit_2_wrappers.dart';
 
 import 'fallo_de_tienda.dart';
+import 'oferta_de_tienda.dart';
 
 /// Los identificadores de los productos, tal como están en App Store Connect.
 ///
@@ -14,6 +18,7 @@ const productosApple = <String>[
   'pe.jakstech.enamApp.mensual',
   'pe.jakstech.enamApp.trimestral',
   'pe.jakstech.enamApp.semestral',
+  'pe.jakstech.enamApp.anual',
 ];
 
 /// El `plan_id` del servidor para cada producto de App Store. Explícito, como
@@ -23,6 +28,7 @@ String? planIdDeApple(String productId) => switch (productId) {
   'pe.jakstech.enamApp.mensual' => 'mensual',
   'pe.jakstech.enamApp.trimestral' => 'intensivo',
   'pe.jakstech.enamApp.semestral' => 'semestral',
+  'pe.jakstech.enamApp.anual' => 'anual',
   _ => null,
 };
 
@@ -87,10 +93,14 @@ abstract interface class AppleIapService {
 const sinProductosDeStoreKit = 'storekit_no_response';
 
 class AppleIapServiceImpl implements AppleIapService {
-  AppleIapServiceImpl({InAppPurchase? tienda})
-    : _tienda = tienda ?? InAppPurchase.instance;
+  AppleIapServiceImpl({
+    InAppPurchase? tienda,
+    Future<bool> Function(String productId)? esElegible,
+  }) : _tienda = tienda ?? InAppPurchase.instance,
+       _esElegible = esElegible ?? SK2Product.isIntroductoryOfferEligible;
 
   final InAppPurchase _tienda;
+  final Future<bool> Function(String productId) _esElegible;
 
   /// Lo que devolvió App Store en la última consulta, para [diagnostico].
   ({int productos, int noEncontrados})? _ultima;
@@ -129,15 +139,42 @@ class AppleIapServiceImpl implements AppleIapService {
     // producto nuevo todavía no está aprobado, y esconder uno es mucho mejor
     // que dejar la pantalla vacía por él.
     final porId = {for (final p in respuesta.productDetails) p.id: p};
-    return [for (final id in productosApple) ?porId[id]];
+    return Future.wait([
+      for (final id in productosApple)
+        if (porId[id] case final p?) _conOferta(p),
+    ]);
+  }
+
+  /// [producto] con su oferta introductoria, si StoreKit dice que esta persona
+  /// es elegible. Si no responde, el precio normal: la hoja de compra de Apple
+  /// dirá lo que corresponda, y los planes se ven igual.
+  Future<ProductDetails> _conOferta(ProductDetails producto) async {
+    if (producto is! AppStoreProduct2Details) return producto;
+    final oferta = ofertaIntroductoria(producto.sk2Product);
+    if (oferta == null) return producto;
+    try {
+      final elegible = await _esElegible(
+        producto.id,
+      ).timeout(const Duration(seconds: 3));
+      return elegible ? ProductoConOferta(producto, oferta) : producto;
+    } catch (_) {
+      return producto;
+    }
   }
 
   @override
   Future<void> comprar(ProductDetails producto) async {
     // `buyNonConsumable` y no `buyConsumable`: una suscripción no se gasta al
     // usarla, y con el consumible Apple no la restauraría nunca.
+    //
+    // La oferta introductoria no se pasa: App Store la aplica sola a quien es
+    // elegible.
     await _tienda.buyNonConsumable(
-      purchaseParam: PurchaseParam(productDetails: producto),
+      purchaseParam: PurchaseParam(
+        productDetails: producto is ProductoConOferta
+            ? producto.original
+            : producto,
+      ),
     );
   }
 
@@ -171,6 +208,43 @@ class AppleIapServiceImpl implements AppleIapService {
     );
   }
 }
+
+/// La oferta introductoria de [producto], sin mirar si la persona es elegible.
+///
+/// Solo una que se entienda igual en la pantalla y en la hoja de Apple: un pago
+/// por adelantado del primer periodo, con descuento. Lo demás no está creado, y
+/// antes de decir un precio que no es se queda el normal.
+OfertaDeTienda? ofertaIntroductoria(SK2Product producto) {
+  final suscripcion = producto.subscription;
+  if (suscripcion == null) return null;
+  for (final o in suscripcion.promotionalOffers) {
+    if (o.type == SK2SubscriptionOfferType.introductory &&
+        o.paymentMode == SK2SubscriptionOfferPaymentMode.payUpFront &&
+        o.periodCount == 1 &&
+        o.price > 0 &&
+        o.price < producto.price) {
+      final meses = _meses(o.period);
+      return OfertaDeTienda(
+        precio: precioConElFormatoDe(producto.displayPrice, o.price),
+        precioNormal: producto.displayPrice,
+        equivalenteMensual: equivalenteMensualDe(
+          producto.displayPrice,
+          o.price,
+          meses,
+        ),
+        mesesDeOferta: meses,
+        mesesDeRenovacion: _meses(suscripcion.subscriptionPeriod),
+      );
+    }
+  }
+  return null;
+}
+
+int? _meses(SK2SubscriptionPeriod periodo) => switch (periodo.unit) {
+  SK2SubscriptionPeriodUnit.month => periodo.value,
+  SK2SubscriptionPeriodUnit.year => periodo.value * 12,
+  _ => null,
+};
 
 /// El país de App Store en dos letras minúsculas, como pide el contrato.
 ///
@@ -215,7 +289,7 @@ const _alfa3 = {
 
 /// Tienda de mentira, para recorrer la pantalla de planes sin App Store.
 ///
-/// Devuelve los tres productos con los precios reales escritos a mano. No es
+/// Devuelve los productos con los precios reales escritos a mano. No es
 /// duplicar la fuente de verdad: son datos de ejemplo para pintar una pantalla,
 /// y en cuanto se apagan los mocks vienen de StoreKit. Lo único que no se puede
 /// simular es la compra, que no hace nada: comprar de verdad exige un iPhone y
@@ -233,30 +307,41 @@ class MockAppleIapService implements AppleIapService {
   Future<List<ProductDetails>> productos() async {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     return [
-      ProductDetails(
-        id: 'pe.jakstech.enamApp.mensual',
-        title: 'ENAM Prep · 1 mes',
-        description: 'Acceso completo a ENAM Prep durante un mes.',
-        price: 'S/ 59.00',
-        rawPrice: 59,
-        currencyCode: 'PEN',
-      ),
-      ProductDetails(
-        id: 'pe.jakstech.enamApp.trimestral',
-        title: 'ENAM Prep · 3 meses',
-        description: 'Acceso completo a ENAM Prep durante tres meses.',
-        price: 'S/ 129.00',
-        rawPrice: 129,
-        currencyCode: 'PEN',
-      ),
-      ProductDetails(
-        id: 'pe.jakstech.enamApp.semestral',
-        title: 'ENAM Prep · 6 meses',
-        description: 'Acceso completo a ENAM Prep durante seis meses.',
-        price: 'S/ 229.00',
-        rawPrice: 229,
-        currencyCode: 'PEN',
-      ),
+      for (final p in [
+        ProductDetails(
+          id: 'pe.jakstech.enamApp.mensual',
+          title: 'ENAM Prep · 1 mes',
+          description: 'Acceso completo a ENAM Prep durante un mes.',
+          price: 'S/ 59.00',
+          rawPrice: 59,
+          currencyCode: 'PEN',
+        ),
+        ProductDetails(
+          id: 'pe.jakstech.enamApp.trimestral',
+          title: 'ENAM Prep · 3 meses',
+          description: 'Acceso completo a ENAM Prep durante tres meses.',
+          price: 'S/ 129.00',
+          rawPrice: 129,
+          currencyCode: 'PEN',
+        ),
+        ProductDetails(
+          id: 'pe.jakstech.enamApp.semestral',
+          title: 'ENAM Prep · 6 meses',
+          description: 'Acceso completo a ENAM Prep durante seis meses.',
+          price: 'S/ 229.00',
+          rawPrice: 229,
+          currencyCode: 'PEN',
+        ),
+        ProductDetails(
+          id: 'pe.jakstech.enamApp.anual',
+          title: 'ENAM Prep · 1 año',
+          description: 'Acceso completo a ENAM Prep durante un año.',
+          price: 'S/ 399.00',
+          rawPrice: 399,
+          currencyCode: 'PEN',
+        ),
+      ])
+        ProductoConOferta(p, ofertaDeEjemplo(p.id)),
     ];
   }
 

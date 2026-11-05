@@ -1,9 +1,12 @@
 {
   "$comentario": "Contrato normativo de eventos de ENAM Prep. Fuente única para backend, web, portada y app. Lo que no está aquí no se acepta. Explicación en contrato/EVENTOS.md.",
   "version_contrato": 1,
-  "version_catalogo": 40,
-  "actualizado": "2026-10-29",
+  "version_catalogo": 43,
+  "actualizado": "2026-11-05",
   "historial_catalogo": {
+    "43": "Plan anual, pedido de Jerry (05/11; id confirmado por enam-backend-55): plan_id suma anual en sus 19 eventos, checkout_resultado incluido, porque se vende en la web y en las tiendas. La promo de lanzamiento se distingue por oferta_origen y fecha: oferta_porcentaje va por plan (EVENTOS.md §53). Sin SQL: plan_id no está en ningún CHECK.",
+    "42": "oferta_vista y oferta_clic suman la plataforma landing (pedido de enam-prep-web-react-e0 por encargo de Jerry, web PR #189): la promo del Mensual a S/ 49 en la portada, anónima, con oferta_origen lanzamiento y porcentaje 17. La nota de oferta_origen recoge ese segundo uso de lanzamiento. Sin SQL: el tipo y la plataforma ya están en los CHECK.",
+    "41": "Yape dentro de Culqi (backend #144, detrás de CULQI_YAPE_ACTIVO; pedido de enamprep-3f para separarlo en BI): checkout_started, payment_confirmed y payment_failed suman metodo (tarjeta|yape), opcional, solo con medio culqi. medio sigue en culqi y pago_ref en cq:. El yape de medio sigue siendo el QR con revisión manual (catálogo 28), otra cosa. requiere_3ds solo con metodo tarjeta. Sin SQL: son propiedades.",
     "40": "checkout_resultado (pedido de enamprep-3f vía enam-frontend-0c: 10 checkouts de la app en 30 días sin resultado visible): un evento de cliente (ios, android) por cada resultado de una compra en la tienda. completado, cancelado, pendiente o error, y con error la etapa (tienda o servidor), que separa «no pudo pagar» de «pagó y no lo activamos». intento compra|reintento (se llama intento y no origen, porque origen es la clave cliente/servidor del contrato). Sin texto libre: no hay mensaje_corto. Un tipo en el CHECK, sin índices.",
     "39": "Culqi: tarjeta en la web (pedido de enam-backend-55 por decisión de Jerry vía enamprep-3f, porque Mercado Pago rechaza tarjetas como high_risk; detrás de CULQI_ACTIVO). medio y origen_acceso suman culqi en checkout_started (solo web), payment_confirmed, payment_failed, access_granted, access_expired y correo_bienvenida_premium_enviado; los pago_ref y concesion_ref suman el prefijo cq: (también codigo_aplicado). payment_failed.detalle lleva el decline_code de Culqi o abandonado. payment_confirmed y payment_failed suman requiere_3ds (opcional, solo con culqi). Sin SQL: son propiedades; pagos.medio es del backend. Los recordatorios de pago siguen siendo solo de Mercado Pago.",
     "38": "Notificaciones locales de la app, fase 1 (pedido de enam-frontend-0c para la 1.1.10, por decisión de Jerry vía enamprep-3f; sin servidor): notif_permiso (la decisión sobre el permiso, con la pre-pantalla propia o desde Ajustes), notif_programada (la persona enciende o cambia la hora del recordatorio diario, o se programa el aviso de cupo renovado) y notif_abierta (tocó una notificación). Sin texto, sin ids y sin más hora que la elegida. Tres tipos en el CHECK, sin índices.",
@@ -89,7 +92,7 @@
   "enumeraciones": {
     "oferta_origen": {
       "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"],
-      "nota": "prueba = oferta de las 24 h de prueba (alternancia 50/0); regreso = oferta de 24 h para quien venció la prueba antes del cobro web. Son poblaciones distintas y no se mezclan en ninguna comparación. lanzamiento (catálogo 7) = 50 % hasta el 11/10 23:59 Lima para toda cuenta sin premium pagado; precedencia en EVENTOS.md §17. codigo (catálogo 14) = un código de descuento dirigido, enviado por correo a un segmento. bienvenida (catálogo 24) = 30 % automático y sin código, por 48 h desde el correo, una vez por persona, para quien terminó su día gratis sin comprar y aceptó ofertas (campaña bienvenida-30)."
+      "nota": "prueba = oferta de las 24 h de prueba (alternancia 50/0); regreso = oferta de 24 h para quien venció la prueba antes del cobro web. Son poblaciones distintas y no se mezclan en ninguna comparación. lanzamiento (catálogo 7) = 50 % hasta el 11/10 23:59 Lima para toda cuenta sin premium pagado; precedencia en EVENTOS.md §17. Desde noviembre, también la promo pública (EVENTOS.md §52 y §53): se separa de la de octubre por la fecha, y oferta_porcentaje depende del plan. codigo (catálogo 14) = un código de descuento dirigido, enviado por correo a un segmento. bienvenida (catálogo 24) = 30 % automático y sin código, por 48 h desde el correo, una vez por persona, para quien terminó su día gratis sin comprar y aceptó ofertas (campaña bienvenida-30)."
     },
     "minutos_restantes": {
       "valores": ["antes_de_prueba", "menos_60", "60_179", "180_359", "360_719", "720_1440", "mas_1440"],
@@ -259,19 +262,20 @@
       "cuando": "Se pulsa pagar: web antes de redirigir a Mercado Pago; iOS al abrir la hoja de compra de App Store; Android (catálogo 18) al abrir la hoja de compra de Google Play.",
       "unicidad": "Ninguna: cada intento cuenta.",
       "propiedades": {
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia", "culqi"], "obligatoria": true, "nota": "google_play desde el catálogo 18, solo en android. yape (catálogo 28), solo en la web: al elegir Yape y mostrarse el QR, una vez por apertura de esa pantalla; desde el catálogo 30, al primer gesto de intención sobre el bloque de Yape en /pago («Copiar número», «Guardar el QR» o «Ya pagué»), una vez por visita a /pago y por plan_id; si entra directo a /pago/yape sin gesto previo, al abrirla, y no se repite si ya salió en /pago. transferencia (catálogo 29), solo en la web: al primer gesto de intención sobre el bloque de la transferencia (copiar el número de cuenta o el CCI, o «Ya pagué»), una vez por visita a /pago y por plan_id; si entra directo a la pantalla de la transferencia sin gesto previo, al abrirla. «Ya pagué» lo emite antes de enviar si todavía no salió en esa visita. culqi (catálogo 39): tarjeta por Culqi, solo en la web, al abrir el formulario de tarjeta de Culqi." },
         "con_oferta": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 2, "nota": "true si el precio que se va a cobrar es el de una oferta (de prueba o de regreso). Solo web." },
-        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4, "nota": "Ausente con con_oferta true = 'prueba' (clientes anteriores al catálogo 4)." }
+        "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4, "nota": "Ausente con con_oferta true = 'prueba' (clientes anteriores al catálogo 4)." },
+        "metodo": { "tipo": "enum", "valores": ["tarjeta", "yape"], "obligatoria": false, "desde_catalogo": 41, "nota": "Solo con medio culqi, solo en la web: el botón de Culqi que abrió (tarjeta o Yape dentro de Culqi). Ausente con los demás medios." }
       }
     },
 
     "oferta_vista": {
       "origen": "cliente",
-      "plataformas": ["web"],
+      "plataformas": ["web", "landing"],
       "desde_catalogo": 2,
-      "cuando": "Se muestra la franja superior de la oferta (de prueba o de regreso).",
-      "unicidad": "Una por sesión de navegador y origen de oferta (sessionStorage), aunque la franja se vuelva a pintar al navegar.",
+      "cuando": "Web: se muestra la franja superior de la oferta (de prueba o de regreso). Portada (catálogo 42): se pinta la promo del Mensual.",
+      "unicidad": "Portada (catálogo 42): una por página y pestaña. Web: una por sesión de navegador y origen de oferta (sessionStorage), aunque la franja se vuelva a pintar al navegar.",
       "propiedades": {
         "porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": true },
         "minutos_restantes": { "tipo": "enum", "enumeracion": "minutos_restantes", "valores": ["antes_de_prueba", "menos_60", "60_179", "180_359", "360_719", "720_1440", "mas_1440"], "obligatoria": true },
@@ -281,9 +285,9 @@
 
     "oferta_clic": {
       "origen": "cliente",
-      "plataformas": ["web"],
+      "plataformas": ["web", "landing"],
       "desde_catalogo": 2,
-      "cuando": "Clic en «Aprovechar» de la franja, que lleva a /planes.",
+      "cuando": "Web: clic en «Aprovechar» de la franja, que lleva a /planes. Portada (catálogo 42): clic en «Ver la promo» o en «Comprar» del Mensual.",
       "unicidad": "Ninguna: cada clic cuenta.",
       "propiedades": {
         "porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": true },
@@ -300,7 +304,7 @@
       "unicidad": "Ninguna: cada clic cuenta.",
       "propiedades": {
         "pantalla": { "tipo": "enum", "valores": ["planes", "pago"], "obligatoria": true },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false, "nota": "Va en Pago (el plan elegido) y en Planes solo si el botón está dentro de la tarjeta de un plan." }
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": false, "nota": "Va en Pago (el plan elegido) y en Planes solo si el botón está dentro de la tarjeta de un plan." }
       }
     },
 
@@ -313,7 +317,7 @@
       "propiedades": {
         "segundos": { "tipo": "enum", "enumeracion": "segundos_en_pantalla", "valores": ["menos_10", "10_29", "30_59", "60_179", "180_o_mas"], "obligatoria": true },
         "salida": { "tipo": "enum", "valores": ["eligio_plan", "whatsapp", "cerro", "abandono"], "obligatoria": true, "nota": "abandono = la página se ocultó o se descargó sin ninguna de las otras tres. Se envía con keepalive o sendBeacon, porque si no se pierde." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false, "obligatoria_si": { "salida": "eligio_plan" }, "nota": "El plan elegido. Solo con salida eligio_plan." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": false, "obligatoria_si": { "salida": "eligio_plan" }, "nota": "El plan elegido. Solo con salida eligio_plan." },
         "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "Planes mostraba una oferta vigente." }
       }
     },
@@ -408,7 +412,7 @@
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|yp|tb|cq):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<id de transacción>, gp:<orderId de Google Play> (GPA.…; renovaciones GPA.….0, ..1), (catálogo 28) yp:<pagos.id> de Yape o (catálogo 29) tb:<pagos.id> de la transferencia bancaria. (catálogo 39) cq:<pagos.id> de Culqi." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia", "culqi"], "obligatoria": true, "nota": "yape (catálogo 28): Yape con QR y revisión manual; transferencia (catálogo 29): transferencia bancaria BCP con revisión manual. Las dos salen al aprobarse la revisión. culqi (catálogo 39): tarjeta por Culqi en la web (detrás de CULQI_ACTIVO)." },
         "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": false, "nota": "Obligatorio con Mercado Pago y con Yape (catálogo 28). Con Apple y Google Play la base no conoce el monto cobrado (impuestos, ofertas de la tienda, moneda): no va. También obligatorio con Culqi (catálogo 39)." },
         "moneda": { "tipo": "enum", "valores": ["PEN", "USD"], "obligatoria": false },
@@ -417,7 +421,8 @@
         "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4 },
         "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": false, "obligatoria_si": { "oferta_origen": "codigo" }, "desde_catalogo": 14, "nota": "Id interno del código de descuento aplicado (no el texto que escribe la persona). Solo con oferta_origen = codigo." },
         "descuento_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": false, "obligatoria_si": { "oferta_origen": "codigo" }, "desde_catalogo": 14, "nota": "Lo que se descontó del precio de lista, en céntimos. Con el código es la verdad del descuento; sirve para medir el margen regalado. Con un código de monto fijo, oferta_porcentaje = max(1, round(descuento_centimos × 100 / precio de lista en céntimos))." },
-        "requiere_3ds": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 39, "nota": "Solo con medio culqi: el cargo pidió autenticación 3DS. Ausente con los demás medios." }
+        "requiere_3ds": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 39, "nota": "Solo con medio culqi y metodo tarjeta: el cargo pidió autenticación 3DS. Ausente con los demás medios y con metodo yape." },
+        "metodo": { "tipo": "enum", "valores": ["tarjeta", "yape"], "obligatoria": false, "desde_catalogo": 41, "nota": "Solo con medio culqi, ausente con los demás medios: tarjeta o Yape dentro de Culqi (CULQI_YAPE_ACTIVO). No es el yape de medio, que es el QR con revisión manual. Mandarlo siempre con culqi." }
       }
     },
 
@@ -428,13 +433,14 @@
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^((mp|apple|yp|tb|cq):[A-Za-z0-9._-]{1,80}|gp:[A-Za-z0-9._-]{1,80}(:(gracia|retenida))?)$", "obligatoria": true, "nota": "Como en payment_confirmed. Google Play: gp:<orderId del último cobro bueno>:gracia o :retenida, para no chocar con el payment_confirmed de ese orderId." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "medio": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia", "culqi"], "obligatoria": true },
         "estado": { "tipo": "enum", "valores": ["fallido", "cancelado", "rechazado"], "obligatoria": true, "nota": "rechazado (catálogo 28) solo con medio yape o (catálogo 29) transferencia: el equipo rechazó la solicitud en la revisión (pagos.estado = rechazado). Con Yape y transferencia, detalle es el motivo: monto_distinto, no_encontrada, captura_ilegible u otro." },
         "detalle": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": false, "nota": "status_detail de la pasarela (p. ej. cc_rejected_insufficient_amount). Código de máquina, no mensaje. Google Play: gracia (IN_GRACE_PERIOD, conserva el acceso) o retenida (ON_HOLD, se corta). Culqi (catálogo 39): el decline_code de Culqi (p. ej. insufficient_funds, stolen_card, fraudulent, incorrect_cvv) o abandonado; estado fallido o cancelado." },
         "con_oferta": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 2 },
         "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "ausente_si": { "con_oferta": false }, "desde_catalogo": 4 },
-        "requiere_3ds": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 39, "nota": "Solo con medio culqi: el cargo pidió autenticación 3DS. Ausente con los demás medios." }
+        "requiere_3ds": { "tipo": "booleano", "obligatoria": false, "desde_catalogo": 39, "nota": "Solo con medio culqi y metodo tarjeta: el cargo pidió autenticación 3DS. Ausente con los demás medios y con metodo yape." },
+        "metodo": { "tipo": "enum", "valores": ["tarjeta", "yape"], "obligatoria": false, "desde_catalogo": 41, "nota": "Solo con medio culqi, ausente con los demás medios: tarjeta o Yape dentro de Culqi (CULQI_YAPE_ACTIVO). No es el yape de medio, que es el QR con revisión manual. Mandarlo siempre con culqi." }
       }
     },
 
@@ -445,7 +451,7 @@
       "clave_unicidad": ["concesion_ref"],
       "propiedades": {
         "concesion_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|yp|tb|cq|manual):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "mp:<pagos.id>, apple:<transacción>, gp:<orderId de Google Play>, yp:<pagos.id> (Yape), tb:<pagos.id> (transferencia, catálogo 29) o manual:<uuid generado al activar>. (catálogo 39) cq:<pagos.id> de Culqi." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam", "trial"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam", "trial"], "obligatoria": true },
         "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia", "culqi", "manual"], "obligatoria": true },
         "dias": { "tipo": "entero", "min": 1, "max": 400, "obligatoria": true },
         "desde_prueba": { "tipo": "booleano", "obligatoria": true, "nota": "true si la cuenta estaba en su prueba (sin empezar, en curso o vencida) y nunca había pagado." },
@@ -461,7 +467,7 @@
       "unicidad": "Una por cuenta y vencimiento.",
       "clave_unicidad": ["usuario_id", "vencimiento"],
       "propiedades": {
-        "plan_id": { "tipo": "enum", "valores": ["trial", "mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["trial", "mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "origen_acceso": { "tipo": "enum", "valores": ["sistema", "mercadopago", "apple", "google_play", "yape", "transferencia", "culqi", "manual"], "obligatoria": true },
         "vencimiento": { "tipo": "fecha", "obligatoria": true },
         "motivo": { "tipo": "enum", "valores": ["vencimiento", "reembolso"], "obligatoria": false, "desde_catalogo": 18, "nota": "reembolso = el pago se devolvió o se revocó y el acceso se cortó antes de tiempo. Ausente = vencimiento (los eventos anteriores al catálogo 18)." }
@@ -490,7 +496,7 @@
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^yp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "yp:<pagos.id>: el mismo de payment_confirmed o payment_failed al resolverse." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "El precio que se pidió pagar (la misma función de precio que Mercado Pago, con ofertas y códigos). Nunca el monto que dice la captura." },
         "con_oferta": { "tipo": "booleano", "obligatoria": true },
         "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
@@ -506,7 +512,7 @@
       "unicidad": "Ninguna: cada intento cuenta.",
       "propiedades": {
         "motivo": { "tipo": "enum", "valores": ["captura_pesada", "formato", "operacion_repetida", "ya_en_revision", "red", "otro"], "obligatoria": true, "nota": "formato = falta la captura o no es una imagen válida, o el número de operación no tiene el formato. Nunca la captura, el número de operación ni el monto." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false }
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": false }
       }
     },
 
@@ -519,7 +525,7 @@
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^tb:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "tb:<pagos.id>: el mismo de payment_confirmed o payment_failed al resolverse." },
         "tipo_transferencia": { "tipo": "enum", "valores": ["bcp", "otro_banco_inmediata", "otro_banco_diferida"], "obligatoria": true, "nota": "El que eligió la persona en el formulario (pagos_manuales.tipo_transferencia). Define el plazo de la revisión: 12 h con bcp y otro_banco_inmediata; con otro_banco_diferida, el siguiente día hábil + 12 h." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "monto_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "El precio que se pidió pagar (la misma función de precio que Mercado Pago, con ofertas y códigos). Nunca el monto que dice la captura." },
         "con_oferta": { "tipo": "booleano", "obligatoria": true },
         "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
@@ -535,7 +541,7 @@
       "unicidad": "Ninguna: cada intento cuenta.",
       "propiedades": {
         "motivo": { "tipo": "enum", "valores": ["captura_pesada", "formato", "operacion_repetida", "ya_en_revision", "red", "otro"], "obligatoria": true, "nota": "Como en yape_solicitud_fallida. Nunca la captura, el número de operación, la cuenta de origen ni el monto." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false }
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": false }
       }
     },
 
@@ -654,7 +660,7 @@
       "unicidad": "Ninguna: cada resultado cuenta. Un pendiente que después se completa manda dos (pendiente y luego completado, con intento reintento si fue al arrancar).",
       "propiedades": {
         "medio": { "tipo": "enum", "valores": ["apple", "google_play"], "obligatoria": true, "nota": "apple en iOS y google_play en Android." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral"], "obligatoria": false, "nota": "El plan del producto comprado. Ausente si la app no sabe a qué producto corresponde (p. ej. un reintento sin el producto guardado)." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual"], "obligatoria": false, "nota": "El plan del producto comprado. Ausente si la app no sabe a qué producto corresponde (p. ej. un reintento sin el producto guardado)." },
         "resultado": { "tipo": "enum", "valores": ["completado", "cancelado", "pendiente", "error"], "obligatoria": true, "nota": "completado = NUESTRO servidor la registró (200) y la app cerró la transacción. cancelado = la persona cerró la hoja de la tienda. pendiente = pago diferido (PENDING de Play, Ask to Buy de iOS o 202 del servidor). error = falló en la tienda o en el servidor (ver etapa)." },
         "etapa": { "tipo": "enum", "valores": ["tienda", "servidor"], "obligatoria": false, "obligatoria_si": { "resultado": "error" }, "nota": "Solo con error, ausente con los demás resultados. tienda = Play o StoreKit devolvió un error (no pudo pagar). servidor = la tienda cobró y nuestra verificación falló (pagó y no lo activamos)." },
         "codigo": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": false, "nota": "Solo con error, en minúsculas y nunca el mensaje. etapa tienda: BillingResponseCode de Play (item_already_owned, service_unavailable, developer_error…) o el código de SKError / StoreKit 2. etapa servidor: la clase HTTP o el código del backend (red, timeout, http_409, compra_de_otra_cuenta…)." },
@@ -753,7 +759,7 @@
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^mp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_confirmed y payment_failed (solo Mercado Pago)." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "con_oferta": { "tipo": "booleano", "obligatoria": true, "nota": "El correo muestra el precio con oferta. Solo si la oferta sigue vigente al enviar; si ya venció, no se promete." },
         "oferta_porcentaje": { "tipo": "entero", "min": 1, "max": 90, "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
         "oferta_origen": { "tipo": "enum", "enumeracion": "oferta_origen", "valores": ["prueba", "regreso", "lanzamiento", "codigo", "bienvenida"], "obligatoria": false, "obligatoria_si": { "con_oferta": true }, "ausente_si": { "con_oferta": false } },
@@ -828,7 +834,7 @@
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^(mp|apple|gp|yp|tb|cq):[A-Za-z0-9._-]{1,80}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_confirmed: mp:<pagos.id>, apple:<id de transacción> o gp:<orderId>." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "origen_acceso": { "tipo": "enum", "valores": ["mercadopago", "apple", "google_play", "yape", "transferencia", "culqi"], "obligatoria": true, "nota": "Como en access_granted, sin 'manual': la activación manual no manda este correo." },
         "minutos_desde_pago": { "tipo": "entero", "min": 0, "max": 2880, "obligatoria": true, "nota": "Minutos de la aprobación del pago al envío. Suele ser 0; con reintentos, hasta 48 h." }
       }
@@ -843,7 +849,7 @@
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^(mp|yp|tb|cq):[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El pago (checkout) creado con el código: el mismo pago_ref de payment_confirmed. Con Yape (catálogo 28), yp:<pagos.id>, y con transferencia (catálogo 29), tb:<pagos.id>, al enviar la solicitud. (catálogo 39) cq:<pagos.id> de Culqi." },
         "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "Id interno del código, no su texto." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "descuento_centimos": { "tipo": "entero", "min": 1, "max": 1000000, "obligatoria": true, "nota": "La verdad del descuento, sea el código de % o de monto." },
         "tipo_codigo": { "tipo": "enum", "valores": ["porcentaje", "monto"], "obligatoria": true, "nota": "porcentaje = el código descuenta un %; monto = descuenta un monto fijo." },
         "campana": { "tipo": "codigo", "patron": "^[a-z0-9._~-]{1,100}$", "obligatoria": false, "nota": "La campaña que repartió el código (el mismo valor que campana_envios.campana y utm_campaign), si tiene una." },
@@ -859,7 +865,7 @@
       "propiedades": {
         "motivo": { "tipo": "enum", "valores": ["vencido", "agotado", "ya_usado", "no_vale_para_este_plan", "no_valido"], "obligatoria": true, "nota": "no_valido = el código no existe; entonces no hay codigo_id." },
         "codigo_id": { "tipo": "codigo", "patron": "^[A-Za-z0-9_-]{1,64}$", "obligatoria": false, "ausente_si": { "motivo": "no_valido" }, "nota": "Solo si el código existe." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": false, "nota": "El plan para el que se intentó, si ya estaba elegido." }
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": false, "nota": "El plan para el que se intentó, si ya estaba elegido." }
       }
     },
 
@@ -894,7 +900,7 @@
       "cuando": "Se muestra la tarjeta destacada del plan recomendado (hoy «Hasta tu ENAM»). Una vez por aparición en pantalla, no por cada re-render.",
       "unicidad": "Ninguna: cada aparición cuenta.",
       "propiedades": {
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true, "nota": "El plan de la tarjeta destacada." },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true, "nota": "El plan de la tarjeta destacada." },
         "lugar": { "tipo": "enum", "valores": ["planes", "muro", "cupo_agotado", "primera_practica", "resultado_practica"], "obligatoria": true, "nota": "planes = la página /planes; muro = los muros de venta del gratis limitado, salvo el del cupo agotado (simulacro, cursos, etc.); cupo_agotado = la tarjeta dentro del muro cuando se agotan las preguntas del día; primera_practica = el resultado de la primera práctica terminada de la cuenta; resultado_practica = el resultado de cualquier otra práctica terminada de una cuenta gratis." }
       }
     },
@@ -906,7 +912,7 @@
       "cuando": "La persona toca el botón de la tarjeta destacada (lleva al pago de ese plan o a /planes).",
       "unicidad": "Ninguna: cada clic cuenta.",
       "propiedades": {
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "lugar": { "tipo": "enum", "valores": ["planes", "muro", "cupo_agotado", "primera_practica", "resultado_practica"], "obligatoria": true }
       }
     },
@@ -1019,7 +1025,7 @@
       "clave_unicidad": ["pago_ref"],
       "propiedades": {
         "pago_ref": { "tipo": "codigo", "patron": "^mp:[A-Za-z0-9_-]{1,64}$", "obligatoria": true, "nota": "El mismo pago_ref de payment_failed y recordatorio_pago_enviado (solo Mercado Pago)." },
-        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "hasta-enam"], "obligatoria": true },
+        "plan_id": { "tipo": "enum", "valores": ["mensual", "intensivo", "semestral", "anual", "hasta-enam"], "obligatoria": true },
         "mp_status": { "tipo": "enum", "valores": ["action_required", "failed"], "obligatoria": true, "nota": "Estado de la order de Mercado Pago al enviar (pagos.mp_status)." },
         "mp_status_detail": { "tipo": "codigo", "patron": "^[a-z0-9_]{1,64}$", "obligatoria": true, "nota": "status_detail de Mercado Pago tal cual (pagos.mp_status_detail), p. ej. waiting_retry, high_risk o rejected_by_issuer. Código de máquina, no mensaje." },
         "minutos_desde_rechazo": { "tipo": "entero", "min": 15, "max": 2880, "obligatoria": true, "nota": "Minutos desde que el backend vio el rechazo hasta el envío." }

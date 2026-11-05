@@ -160,6 +160,7 @@ void main() {
         diaGratis,
       );
 
+      await tester.scrollUntilVisible(find.text('Ahora no'), 300);
       expect(
         find.text(
           'Tu día gratis incluye práctica sin límite, simulacros y '
@@ -181,6 +182,7 @@ void main() {
       );
 
       expect(find.text('Se acabaron tus 20 preguntas de hoy'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Ahora no'), 300);
       expect(
         find.textContaining('Tu cuenta gratis sigue: 20 preguntas al día'),
         findsOneWidget,
@@ -197,6 +199,7 @@ void main() {
       );
 
       expect(find.text('Se acabaron tus preguntas de hoy'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Ahora no'), 300);
       expect(
         find.textContaining('Tu cuenta gratis sigue: preguntas cada día'),
         findsOneWidget,

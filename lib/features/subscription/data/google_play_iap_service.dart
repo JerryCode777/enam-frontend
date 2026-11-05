@@ -7,6 +7,7 @@ import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'fallo_de_tienda.dart';
+import 'oferta_de_tienda.dart';
 
 export 'fallo_de_tienda.dart' show DiagnosticoDeTienda, FalloDeTienda;
 
@@ -16,11 +17,12 @@ const paqueteGooglePlay = 'pe.jakstech.enam_app';
 /// Los `productId` de Play Console, los del servidor (`enam-backend`,
 /// `GOOGLE-PLAY.md` §2).
 ///
-/// Las tres son suscripciones, en el orden de la pantalla.
+/// Las cuatro son suscripciones, en el orden de la pantalla.
 const productosGooglePlay = <String>[
   'premium_mensual',
   'premium_trimestral',
   'premium_semestral',
+  'premium_anual',
 ];
 
 /// El `plan_id` del servidor para cada producto de Google Play. Explícito, como
@@ -30,6 +32,7 @@ String? planIdDeGooglePlay(String productId) => switch (productId) {
   'premium_mensual' => 'mensual',
   'premium_trimestral' => 'intensivo',
   'premium_semestral' => 'semestral',
+  'premium_anual' => 'anual',
   _ => null,
 };
 
@@ -162,10 +165,16 @@ class GooglePlayIapServiceImpl implements GooglePlayIapService {
     // `applicationUserName` llega a Play como `obfuscatedAccountId`. El
     // servidor lo compara con quien verifica: si no coincide, 409. Es el UUID
     // de la cuenta, nunca el correo.
+    //
+    // `offerToken` es lo que decide qué se cobra: el del plan base o el de la
+    // oferta que [elegirUnoPorProducto] dejó en el producto.
     await _tienda.buyNonConsumable(
       purchaseParam: GooglePlayPurchaseParam(
         productDetails: producto,
         applicationUserName: cuentaId,
+        offerToken: producto is GooglePlayProductDetails
+            ? producto.offerToken
+            : null,
       ),
     );
   }
@@ -219,19 +228,25 @@ class GooglePlayIapServiceImpl implements GooglePlayIapService {
 /// Uno por `productId`, en el orden de [productosGooglePlay].
 ///
 /// Play devuelve una entrada por cada oferta de una suscripción: el plan base
-/// y, si algún día se crean, las promociones. Se queda el plan base (la oferta
-/// sin `offerId`): es el precio de siempre, el que dice la pantalla. Los que
-/// Play no devuelve se descartan sin ruido, como en iOS.
+/// y las promociones **para las que esa cuenta es elegible**. Se queda la
+/// promoción más barata si hay (ver [ofertaDe]) y, si no, el plan base (la
+/// oferta sin `offerId`). Los que Play no devuelve se descartan sin ruido, como
+/// en iOS.
 @visibleForTesting
 List<ProductDetails> elegirUnoPorProducto(List<ProductDetails> todos) {
   final porId = <String, ProductDetails>{};
   for (final p in todos) {
     final anterior = porId[p.id];
-    if (anterior == null || (!_esPlanBase(anterior) && _esPlanBase(p))) {
-      porId[p.id] = p;
-    }
+    if (anterior == null || _convieneMas(p, anterior)) porId[p.id] = p;
   }
   return [for (final id in productosGooglePlay) ?porId[id]];
+}
+
+bool _convieneMas(ProductDetails p, ProductDetails anterior) {
+  final (oferta, otra) = (ofertaDe(p), ofertaDe(anterior));
+  if (oferta != null && otra != null) return p.rawPrice < anterior.rawPrice;
+  if (oferta != null || otra != null) return oferta != null;
+  return !_esPlanBase(anterior) && _esPlanBase(p);
 }
 
 bool _esPlanBase(ProductDetails p) {
@@ -244,9 +259,9 @@ bool _esPlanBase(ProductDetails p) {
 
 /// Tienda de mentira, para recorrer la pantalla de planes sin Play.
 ///
-/// Devuelve los tres productos con los precios de Play escritos a mano:
-/// son datos de ejemplo para pintar la pantalla, y en cuanto se apagan los
-/// mocks vienen de Play. La compra no hace nada.
+/// Devuelve los productos con los precios de Play escritos a mano: son datos
+/// de ejemplo para pintar la pantalla, y en cuanto se apagan los mocks vienen
+/// de Play. La compra no hace nada.
 class MockGooglePlayIapService implements GooglePlayIapService {
   // Nunca emite nada: con mocks no hay compras que entregar.
   // ignore: close_sinks
@@ -259,30 +274,41 @@ class MockGooglePlayIapService implements GooglePlayIapService {
   Future<List<ProductDetails>> productos() async {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     return [
-      ProductDetails(
-        id: 'premium_mensual',
-        title: 'Premium mensual',
-        description: 'Acceso completo a ENAM Prep durante un mes.',
-        price: 'S/ 69.00',
-        rawPrice: 69,
-        currencyCode: 'PEN',
-      ),
-      ProductDetails(
-        id: 'premium_trimestral',
-        title: 'Premium trimestral',
-        description: 'Acceso completo a ENAM Prep durante tres meses.',
-        price: 'S/ 149.00',
-        rawPrice: 149,
-        currencyCode: 'PEN',
-      ),
-      ProductDetails(
-        id: 'premium_semestral',
-        title: 'Premium semestral',
-        description: 'Acceso completo a ENAM Prep durante seis meses.',
-        price: 'S/ 259.00',
-        rawPrice: 259,
-        currencyCode: 'PEN',
-      ),
+      for (final p in [
+        ProductDetails(
+          id: 'premium_mensual',
+          title: 'Premium mensual',
+          description: 'Acceso completo a ENAM Prep durante un mes.',
+          price: 'S/ 59.00',
+          rawPrice: 59,
+          currencyCode: 'PEN',
+        ),
+        ProductDetails(
+          id: 'premium_trimestral',
+          title: 'Premium trimestral',
+          description: 'Acceso completo a ENAM Prep durante tres meses.',
+          price: 'S/ 129.00',
+          rawPrice: 129,
+          currencyCode: 'PEN',
+        ),
+        ProductDetails(
+          id: 'premium_semestral',
+          title: 'Premium semestral',
+          description: 'Acceso completo a ENAM Prep durante seis meses.',
+          price: 'S/ 229.00',
+          rawPrice: 229,
+          currencyCode: 'PEN',
+        ),
+        ProductDetails(
+          id: 'premium_anual',
+          title: 'Premium anual',
+          description: 'Acceso completo a ENAM Prep durante un año.',
+          price: 'S/ 399.00',
+          rawPrice: 399,
+          currencyCode: 'PEN',
+        ),
+      ])
+        ProductoConOferta(p, ofertaDeEjemplo(p.id)),
     ];
   }
 

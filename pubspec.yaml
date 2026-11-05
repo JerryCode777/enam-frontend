@@ -2,7 +2,7 @@ name: enam_app
 description: "ENAM Prep — Preparación para el Examen Nacional de Medicina del Perú"
 publish_to: 'none'
 
-version: 1.1.12+23
+version: 1.1.12+24
 
 environment:
   sdk: ^3.12.2
@@ -73,6 +73,7 @@ dependencies:
   # Lo propio de Play Billing: el `offerToken` del plan base de cada
   # suscripción y `GooglePlayPurchaseParam`. Ya venía de forma transitiva.
   in_app_purchase_android: ^0.5.4
+  in_app_purchase_storekit: ^0.4.11
   in_app_review: ^2.0.12
   # Actualizar desde dentro de la app (Play In-App Updates): flexible cuando hay
   # una versión nueva y obligatoria cuando el servidor dice que la instalada ya

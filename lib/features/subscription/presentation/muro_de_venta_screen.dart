@@ -26,8 +26,8 @@ import 'widgets/opciones_de_pago.dart';
 ///
 /// - **Primero qué hay detrás**, luego el botón. Quien toca un candado quiere
 ///   saber qué es antes de que le hablen de pagar (RP-02).
-/// - **Sin ofertas.** El descuento es solo de la web, por las normas de las
-///   tiendas; aquí no se muestra ni se menciona.
+/// - **Solo las ofertas de la tienda.** Las que App Store o Google Play le dan
+///   a esa persona, en `OpcionesDePago`; ninguna otra se muestra ni se menciona.
 /// - **Compacto**: el encabezado, lo que incluye y los planes caben en una
 ///   pantalla de teléfono, con el botón de comprar a la vista sin desplazarse
 ///   (pedido de Jerry, 25/10/2026).
@@ -133,10 +133,10 @@ class _MuroDeVentaScreenState extends ConsumerState<MuroDeVentaScreen> {
             _Encabezado(icono: icono, titular: titular, bajada: bajada),
             const SizedBox(height: DesignTokens.space4),
             const _QueIncluye(),
-            const SizedBox(height: DesignTokens.space3),
-            _GratisSigue(porDia: porDia, diaGratis: diaGratis),
             const SizedBox(height: DesignTokens.space4),
             const OpcionesDePago(),
+            const SizedBox(height: DesignTokens.space3),
+            _GratisSigue(porDia: porDia, diaGratis: diaGratis),
             const SizedBox(height: DesignTokens.space2),
             Center(
               child: TextButton(

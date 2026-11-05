@@ -204,8 +204,10 @@ void main() {
           find.text('Se acabaron tus 10 preguntas de hoy'),
           findsOneWidget,
         );
+        // Va debajo de los planes.
+        await tester.scrollUntilVisible(find.text('Ahora no'), 300);
         expect(find.textContaining('Tu cuenta gratis sigue'), findsOneWidget);
-        // Solo web, por las normas de las tiendas.
+        // Si la tienda no da una oferta, no se habla de ninguna.
         for (final palabra in ['%', 'descuento', 'oferta', 'Oferta']) {
           expect(find.textContaining(palabra), findsNothing, reason: palabra);
         }
@@ -213,9 +215,6 @@ void main() {
         // Android, Google Play.
         expect(find.text('Continuar en el navegador'), findsNothing);
         expect(find.textContaining('web'), findsNothing);
-        if (!ios) {
-          await tester.scrollUntilVisible(find.text('Ahora no'), 300);
-        }
         debugDefaultTargetPlatformOverride = null;
       });
     }

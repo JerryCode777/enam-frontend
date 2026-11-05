@@ -92,7 +92,7 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
     'pantalla': {'planes', 'acceso_terminado', 'perfil', 'otra'},
   },
   Evento.checkoutStarted: {
-    'plan_id': {'mensual', 'intensivo', 'semestral'},
+    'plan_id': {'mensual', 'intensivo', 'semestral', 'anual'},
     'medio': {'apple', 'google_play'},
   },
   Evento.planesNoDisponibles: {
@@ -159,7 +159,7 @@ const propiedadesDe = <Evento, Map<String, Set<String>>>{
   },
   Evento.checkoutResultado: {
     'medio': {'apple', 'google_play'},
-    'plan_id': {'mensual', 'intensivo', 'semestral'},
+    'plan_id': {'mensual', 'intensivo', 'semestral', 'anual'},
     'resultado': {'completado', 'cancelado', 'pendiente', 'error'},
     'etapa': {'tienda', 'servidor'},
     'intento': {'compra', 'reintento'},
