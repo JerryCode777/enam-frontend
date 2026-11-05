@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/config/contacto.dart';
@@ -50,26 +50,17 @@ class OpcionesDePago extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (enTiendaApple) {
-      return const Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // El cobro dentro de la app va PRIMERO. Es lo que Apple exige —su
-          // sistema de pago no puede quedar por detrás de otra vía— y además es
-          // lo más cómodo: se paga con el Face ID y sin salir de aquí.
-          PlanesDeApple(),
-          SizedBox(height: DesignTokens.space4),
-          BotonWhatsApp(),
-        ],
-      );
-    }
-
-    return const Column(
+    // La ayuda va arriba (pedido de Jerry, 05/11/2026): no es otra vía de pago,
+    // y la única forma de pagar sigue siendo la tienda.
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PlanesDeGooglePlay(),
-        SizedBox(height: DesignTokens.space4),
-        BotonWhatsApp(),
+        const BotonWhatsApp(),
+        const SizedBox(height: DesignTokens.space3),
+        if (enTiendaApple)
+          const PlanesDeApple()
+        else
+          const PlanesDeGooglePlay(),
       ],
     );
   }
@@ -104,10 +95,15 @@ class BotonWhatsApp extends StatelessWidget {
           );
         }
       },
-      icon: const Icon(Symbols.chat, size: 20, fill: 1),
+      icon: SvgPicture.asset(
+        'assets/images/whatsapp_logo.svg',
+        width: 20,
+        height: 20,
+        excludeFromSemantics: true,
+      ),
       label: const Text('Escríbenos si necesitas ayuda'),
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: const Size.fromHeight(44),
         foregroundColor: scheme.onSurface,
         side: BorderSide(color: scheme.outlineVariant),
         shape: RoundedRectangleBorder(

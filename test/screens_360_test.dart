@@ -1,4 +1,5 @@
 import 'package:enam_app/features/aula/data/mock_aula_repository.dart';
+import 'package:enam_app/features/subscription/data/oferta_de_tienda.dart';
 import 'package:enam_app/features/subscription/data/google_play_iap_service.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:enam_app/features/aula/presentation/aula_providers.dart';
@@ -307,17 +308,21 @@ class _PlayInstantanea extends MockGooglePlayIapService {
   @override
   Future<List<ProductDetails>> productos() async => [
     for (final (id, titulo, precio) in const [
-      ('premium_mensual', 'Premium mensual', 'S/ 69.00'),
-      ('premium_trimestral', 'Premium trimestral', 'S/ 149.00'),
-      ('premium_semestral', 'Premium semestral', 'S/ 259.00'),
+      ('premium_mensual', 'Premium mensual', 'S/ 59.00'),
+      ('premium_trimestral', 'Premium trimestral', 'S/ 129.00'),
+      ('premium_semestral', 'Premium semestral', 'S/ 229.00'),
+      ('premium_anual', 'Premium anual', 'S/ 399.00'),
     ])
-      ProductDetails(
-        id: id,
-        title: titulo,
-        description: 'Acceso completo a ENAM Prep.',
-        price: precio,
-        rawPrice: 1,
-        currencyCode: 'PEN',
+      ProductoConOferta(
+        ProductDetails(
+          id: id,
+          title: titulo,
+          description: 'Acceso completo a ENAM Prep.',
+          price: precio,
+          rawPrice: 1,
+          currencyCode: 'PEN',
+        ),
+        ofertaDeEjemplo(id),
       ),
   ];
 }

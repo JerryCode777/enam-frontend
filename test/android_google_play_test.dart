@@ -8,6 +8,7 @@ import 'package:enam_app/features/auth/domain/auth_models.dart';
 import 'package:enam_app/features/consentimiento/data/consentimiento_repository.dart';
 import 'package:enam_app/features/duelo/domain/duelo_models.dart';
 import 'package:enam_app/features/profile/presentation/help_screen.dart';
+import 'package:enam_app/features/subscription/data/oferta_de_tienda.dart';
 import 'package:enam_app/features/subscription/data/google_play_iap_service.dart';
 import 'package:enam_app/features/subscription/data/subscription_repository.dart';
 import 'package:enam_app/features/subscription/domain/acceso.dart';
@@ -23,6 +24,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
+import 'golden/_comun.dart';
 
 /// En Android se compra con Google Play Billing, y **solo** con él.
 ///
@@ -131,7 +134,7 @@ void main() {
       );
     });
 
-    testWidgets('en el muro, los tres planes y el botón caben sin desplazarse', (
+    testWidgets('en el muro, los cuatro planes y el botón caben sin desplazarse', (
       tester,
     ) async {
       // Un teléfono Android común (412 × 915). Antes había que bajar mucho para
@@ -153,6 +156,7 @@ void main() {
         'Premium mensual',
         'Premium trimestral',
         'Premium semestral',
+        'Premium anual',
         'Suscribirme',
       ]) {
         expect(
@@ -163,7 +167,7 @@ void main() {
       }
     });
 
-    testWidgets('solo las tres suscripciones, sin «(ENAM Prep)»', (
+    testWidgets('solo las cuatro suscripciones, sin «(ENAM Prep)»', (
       tester,
     ) async {
       final t = _Montaje(sub: _expirada);
@@ -173,6 +177,8 @@ void main() {
       expect(find.text('Premium mensual'), findsOneWidget);
       expect(find.text('Premium trimestral'), findsOneWidget);
       expect(find.text('Premium semestral'), findsOneWidget);
+      expect(find.text('Premium anual'), findsOneWidget);
+      expect(find.text('Mejor opción'), findsOneWidget);
       expect(find.textContaining('(ENAM Prep)'), findsNothing);
       expect(find.textContaining('Hasta tu ENAM'), findsNothing);
     });
@@ -186,6 +192,58 @@ void main() {
 
       expect(find.text('Ya tienes Premium.'), findsOneWidget);
       expect(find.text('Suscribirme'), findsNothing);
+    });
+  });
+
+  group('con la oferta', () {
+    // Con la fuente de verdad: la de las pruebas es mucho más ancha y las filas
+    // no medirían lo que miden.
+    setUpAll(cargarFuentes);
+
+    testWidgets('con la oferta también caben, y dicen lo que se renueva', (
+      tester,
+    ) async {
+      tester.view
+        ..devicePixelRatio = 2.625
+        ..physicalSize = const Size(412, 915) * 2.625;
+      addTearDown(tester.view.reset);
+
+      final t = _Montaje(
+        sub: _expirada,
+        productos: [
+          for (final p in _productosDePlay)
+            ProductoConOferta(p, ofertaDeEjemplo(p.id)),
+        ],
+      );
+      await tester.pumpWidget(
+        t.montar(
+          const MuroDeVentaScreen(motivo: FuncionDePago(FuncionPremium.cursos)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.text('Suscribirme')).bottom,
+        lessThanOrEqualTo(915),
+      );
+      expect(
+        find.text('Primer mes a S/ 49.00. Luego S/ 59.00 al mes.'),
+        findsOneWidget,
+      );
+
+      // La leyenda es la del plan elegido.
+      await tester.tap(find.text('Premium anual'));
+      await tester.pump();
+      expect(
+        find.text(
+          'Primer año a S/ 179.00 (S/ 14.92 al mes). Luego S/ 399.00 al año.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getRect(find.text('Suscribirme')).bottom,
+        lessThanOrEqualTo(915),
+      );
     });
   });
 
@@ -214,7 +272,7 @@ void main() {
       // Con el diagnóstico (catálogo 37): país, lo que dio Play e instalador.
       expect(t.analitica.registrados, [
         'planes_no_disponibles medio=google_play motivo=vacio '
-            'pais_tienda=us productos_tienda=0 no_encontrados=3 '
+            'pais_tienda=us productos_tienda=0 no_encontrados=4 '
             'instalador=play',
       ]);
     });
@@ -267,7 +325,7 @@ void main() {
       sinPagoFueraDePlay(tester);
       expect(t.analitica.registrados, [
         'planes_no_disponibles medio=google_play motivo=error '
-            'codigo=billing_unavailable pais_tienda=us productos_tienda=3 '
+            'codigo=billing_unavailable pais_tienda=us productos_tienda=4 '
             'no_encontrados=0 instalador=play',
       ]);
     });
@@ -425,7 +483,7 @@ void main() {
   });
 }
 
-/// [OpcionesDePago] con sitio para desplazarse: son tres planes.
+/// [OpcionesDePago] con sitio para desplazarse: son cuatro planes.
 class _Opciones extends StatelessWidget {
   const _Opciones();
 
@@ -448,6 +506,7 @@ final _productosDePlay = [
   _producto('premium_mensual', 'Premium mensual', 'S/ 59.00'),
   _producto('premium_trimestral', 'Premium trimestral', 'S/ 129.00'),
   _producto('premium_semestral', 'Premium semestral', 'S/ 229.00'),
+  _producto('premium_anual', 'Premium anual', 'S/ 399.00'),
 ];
 
 class _Montaje {

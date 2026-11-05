@@ -15,6 +15,8 @@ import '../../../../shared/widgets/state_banner.dart';
 import '../../data/apple_iap_service.dart' show planIdDeApple;
 import '../../data/compras_apple_controller.dart';
 import '../../data/fallo_de_tienda.dart';
+import '../../data/oferta_de_tienda.dart';
+import 'precio_de_plan.dart';
 import 'sin_planes.dart';
 
 /// Los planes, comprables con el sistema de pagos de Apple.
@@ -192,7 +194,7 @@ class _PlanesDeAppleState extends ConsumerState<PlanesDeApple> {
           const SizedBox(height: DesignTokens.space3),
         ],
 
-        const _LetraPequena(),
+        _LetraPequena(conOferta: productos.any((p) => ofertaDe(p) != null)),
 
         TextButton(
           onPressed: _ocupado ? null : () => unawaited(_compras.restaurar()),
@@ -217,18 +219,31 @@ class _Plan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.scheme;
+    final oferta = ofertaDe(producto);
+    final destacado = esMejorOpcion(producto.id);
 
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
         color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg + 2),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(
+          color: destacado ? scheme.primary : scheme.outlineVariant,
+          width: destacado ? 2 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (destacado) ...[
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: EtiquetaMejorOpcion(),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+          ],
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
@@ -241,16 +256,17 @@ class _Plan extends StatelessWidget {
                 ),
               ),
               // El precio, tal cual lo formatea Apple para el país de la cuenta.
-              Text(
-                producto.price,
-                style: context.texts.bodyLarge?.copyWith(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: scheme.onSurface,
-                ),
+              PrecioDePlan(
+                precio: producto.price,
+                oferta: oferta,
+                tamano: 17,
               ),
             ],
           ),
+          if (oferta != null) ...[
+            const SizedBox(height: 2),
+            LeyendaDeOferta(oferta),
+          ],
           const SizedBox(height: 2),
           Text(
             producto.description,
@@ -273,7 +289,10 @@ class _Plan extends StatelessWidget {
 
 /// Lo que App Store exige leer junto al botón, sin desplegar nada.
 class _LetraPequena extends StatelessWidget {
-  const _LetraPequena();
+  const _LetraPequena({required this.conOferta});
+
+  /// Con oferta, la renovación no es «al mismo precio» que se acaba de pagar.
+  final bool conOferta;
 
   static const _terminos = 'https://enamprep.com/terminos';
 
@@ -293,7 +312,9 @@ class _LetraPequena extends StatelessWidget {
         children: [
           Text(
             'El pago se carga a tu cuenta de Apple al confirmar. La suscripción '
-            'se renueva sola por el mismo periodo y al mismo precio, salvo que '
+            'se renueva sola por el mismo periodo y '
+            '${conOferta ? 'al precio normal de cada plan' : 'al mismo precio'}, '
+            'salvo que '
             'la canceles al menos 24 horas antes de que termine. Puedes '
             'cancelarla cuando quieras desde Ajustes de tu iPhone → tu nombre → '
             'Suscripciones.',

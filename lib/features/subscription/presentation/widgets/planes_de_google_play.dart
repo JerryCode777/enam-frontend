@@ -19,13 +19,15 @@ import '../../data/compras_google_play_controller.dart';
 import '../../data/fallo_de_tienda.dart';
 import '../../data/google_play_iap_service.dart'
     show DiagnosticoDePlay, planIdDeGooglePlay;
+import '../../data/oferta_de_tienda.dart';
 import '../../domain/acceso.dart';
 import '../../domain/subscription_models.dart';
+import 'precio_de_plan.dart';
 import 'sin_planes.dart';
 
 /// Los planes, comprables con Google Play Billing. Solo en Android.
 ///
-/// Compactos a propósito (pedido de Jerry, 25/10/2026): los tres planes en
+/// Compactos a propósito (pedido de Jerry, 25/10/2026): los planes en
 /// filas que se eligen y **un solo** botón, para que quepan en una pantalla de
 /// teléfono sin desplazarse. Con una tarjeta y un botón por plan había que
 /// bajar mucho para ver el semestral.
@@ -259,6 +261,12 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
           ),
           const SizedBox(height: DesignTokens.space2),
         ],
+        // Una sola, la del plan elegido, justo antes del botón: una por fila no
+        // cabría en la pantalla.
+        if (ofertaDe(elegido) case final oferta?) ...[
+          LeyendaDeOferta(oferta),
+          const SizedBox(height: DesignTokens.space2),
+        ],
         const SizedBox(height: DesignTokens.space1),
         EnamButton(
           label: 'Suscribirme',
@@ -279,7 +287,7 @@ class _PlanesDeGooglePlayState extends ConsumerState<PlanesDeGooglePlay> {
           const SizedBox(height: DesignTokens.space3),
         ],
 
-        const _LetraPequena(),
+        _LetraPequena(conOferta: productos.any((p) => ofertaDe(p) != null)),
 
         TextButton(
           onPressed: _ocupado ? null : () => unawaited(_compras.restaurar()),
@@ -316,6 +324,8 @@ class _FilaPlan extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.scheme;
     final radio = BorderRadius.circular(DesignTokens.radiusMd);
+    final oferta = ofertaDe(producto);
+    final destacado = esMejorOpcion(producto.id);
 
     return Semantics(
       button: true,
@@ -334,7 +344,9 @@ class _FilaPlan extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: radio,
               border: Border.all(
-                color: elegido ? scheme.primary : scheme.outlineVariant,
+                color: elegido || destacado
+                    ? scheme.primary
+                    : scheme.outlineVariant,
                 width: elegido ? 2 : 1,
               ),
             ),
@@ -350,26 +362,32 @@ class _FilaPlan extends StatelessWidget {
                 ),
                 const SizedBox(width: DesignTokens.space2 + 2),
                 Expanded(
-                  child: Text(
-                    _titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.texts.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: scheme.onSurface,
-                    ),
+                  child: Wrap(
+                    spacing: DesignTokens.space2,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        _titulo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.texts.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: scheme.onSurface,
+                        ),
+                      ),
+                      if (destacado) const EtiquetaMejorOpcion(),
+                    ],
                   ),
                 ),
                 const SizedBox(width: DesignTokens.space2),
                 // El precio, tal cual lo formatea Play para el país de la
                 // cuenta.
-                Text(
-                  producto.price,
-                  style: context.texts.bodyLarge?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: scheme.onSurface,
-                  ),
+                PrecioDePlan(
+                  precio: producto.price,
+                  oferta: oferta,
+                  tamano: 15,
+                  enLinea: true,
                 ),
               ],
             ),
@@ -449,7 +467,10 @@ class _CasillaDeNovedades extends StatelessWidget {
 
 /// Cómo se cobra, se renueva y se cancela, junto al botón.
 class _LetraPequena extends StatelessWidget {
-  const _LetraPequena();
+  const _LetraPequena({required this.conOferta});
+
+  /// Con oferta, la renovación no es «al mismo precio» que se acaba de pagar.
+  final bool conOferta;
 
   static const _terminos = 'https://enamprep.com/terminos';
 
@@ -469,8 +490,9 @@ class _LetraPequena extends StatelessWidget {
         children: [
           Text(
             'El pago se carga a tu cuenta de Google Play al confirmar. Las '
-            'suscripciones se renuevan solas por el mismo periodo y al mismo '
-            'precio hasta que las canceles, cuando quieras, en Play Store → '
+            'suscripciones se renuevan solas por el mismo periodo y '
+            '${conOferta ? 'al precio normal de cada plan' : 'al mismo precio'} '
+            'hasta que las canceles, cuando quieras, en Play Store → '
             'Pagos y suscripciones → Suscripciones.',
             style: estilo,
           ),

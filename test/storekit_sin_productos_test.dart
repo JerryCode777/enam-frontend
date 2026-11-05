@@ -35,7 +35,7 @@ void main() {
       expect(d.propiedades, {
         'pais_tienda': 'pe',
         'productos_tienda': '0',
-        'no_encontrados': '3',
+        'no_encontrados': '4',
       });
     });
 
@@ -123,7 +123,7 @@ void main() {
         'motivo': 'vacio',
         'pais_tienda': 'pe',
         'productos_tienda': '0',
-        'no_encontrados': '3',
+        'no_encontrados': '4',
       }, plataforma: 'ios'),
       isNotNull,
     );
