@@ -231,6 +231,32 @@ void main() {
       expect(analitica.registrados, ['notif_programada tipo=cupo']);
     });
 
+    test(
+      'si el sistema no acepta programar, no se mide como programado',
+      () async {
+        // Lo que pasó en Android hasta la 1.1.12: el icono no estaba en el
+        // build y el plugin fallaba con «invalid_icon».
+        notificador
+          ..concede = true
+          ..falla = true;
+        expect(await control().activar(OrigenDelPermiso.prePantalla), isTrue);
+        await control().cupoAgotado(ahora: ahora);
+        await control().cambiarHora(21, 0);
+        expect(analitica.registrados, [
+          'notif_permiso respuesta=concedido origen=pre_pantalla',
+        ]);
+      },
+    );
+
+    test('cambiar la hora vuelve a programar y se mide', () async {
+      notificador.concede = true;
+      await control().activar(OrigenDelPermiso.ajustes);
+      analitica.registrados.clear();
+      await control().cambiarHora(21, 30);
+      expect(notificador.programados.first.cuando.hour, 21);
+      expect(analitica.registrados, ['notif_programada tipo=diario hora=21']);
+    });
+
     test('apagar borra lo programado', () async {
       notificador.concede = true;
       await control().activar(OrigenDelPermiso.ajustes);
@@ -301,6 +327,7 @@ void main() {
 
 class _Notificador implements Notificador {
   bool concede = false;
+  bool falla = false;
   var pedidos = 0;
   List<AvisoProgramado> programados = const [];
 
@@ -322,8 +349,10 @@ class _Notificador implements Notificador {
   Future<bool> permitidos() async => concede;
 
   @override
-  Future<void> reemplazar(List<AvisoProgramado> avisos) async =>
-      programados = avisos;
+  Future<void> reemplazar(List<AvisoProgramado> avisos) async {
+    if (falla) throw Exception('invalid_icon');
+    programados = avisos;
+  }
 }
 
 class _Analitica implements Analitica {
