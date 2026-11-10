@@ -34,6 +34,11 @@ abstract interface class Notificador {
 class NotificadorLocal implements Notificador {
   final _plugin = FlutterLocalNotificationsPlugin();
 
+  /// Si el aviso que abrió la app ya llegó por `alTocar`. Android lo entrega
+  /// por los dos lados al arrancar desde cerrada, y atenderlo dos veces sería
+  /// medir dos aperturas y navegar dos veces.
+  var _yaTocado = false;
+
   static const _canal = AndroidNotificationDetails(
     'recordatorios',
     'Recordatorios de estudio',
@@ -75,7 +80,10 @@ class NotificadorLocal implements Notificador {
         ),
       ),
       onDidReceiveNotificationResponse: (r) {
-        if (r.payload case final p? when p.isNotEmpty) alTocar(p);
+        if (r.payload case final p? when p.isNotEmpty) {
+          _yaTocado = true;
+          alTocar(p);
+        }
       },
     );
   }
@@ -83,7 +91,7 @@ class NotificadorLocal implements Notificador {
   @override
   Future<String?> payloadDeArranque() async {
     final detalles = await _plugin.getNotificationAppLaunchDetails();
-    if (detalles?.didNotificationLaunchApp != true) return null;
+    if (_yaTocado || detalles?.didNotificationLaunchApp != true) return null;
     return detalles?.notificationResponse?.payload;
   }
 
