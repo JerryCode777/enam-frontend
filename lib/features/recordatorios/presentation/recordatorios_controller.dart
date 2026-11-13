@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -117,8 +118,7 @@ class RecordatoriosController extends AsyncNotifier<EstadoDeRecordatorios> {
     state = AsyncData(
       EstadoDeRecordatorios(ajustes: ajustes, permitidos: true),
     );
-    _registrarDiario(ajustes);
-    await reprogramar();
+    if (await reprogramar()) _registrarDiario(ajustes);
     return true;
   }
 
@@ -158,10 +158,7 @@ class RecordatoriosController extends AsyncNotifier<EstadoDeRecordatorios> {
     state = AsyncData(
       EstadoDeRecordatorios(ajustes: ajustes, permitidos: estado.permitidos),
     );
-    if (estado.encendido) {
-      _registrarDiario(ajustes);
-      await reprogramar();
-    }
+    if (estado.encendido && await reprogramar()) _registrarDiario(ajustes);
   }
 
   /// Terminó una sesión: hoy ya practicó, así que hoy no se le recuerda.
@@ -186,18 +183,19 @@ class RecordatoriosController extends AsyncNotifier<EstadoDeRecordatorios> {
     final yaHoy =
         antes != null &&
         _mismoDia(DateTime.fromMillisecondsSinceEpoch(antes), momento);
-    if (!yaHoy) {
+    if (await reprogramar(ahora: momento) && !yaHoy) {
       _analitica.registrar(
         Evento.notifProgramada,
         propiedades: {'tipo': TipoDeAviso.cupo.codigo},
       );
     }
-    await reprogramar(ahora: momento);
   }
 
   /// Vuelve a calcular y programar los avisos. Se llama al abrir la app, al
   /// volver a ella, al terminar una sesión y al cambiar algo en Ajustes.
-  Future<void> reprogramar({DateTime? ahora}) async {
+  ///
+  /// `true` si quedaron programados: `notif_programada` solo se mide entonces.
+  Future<bool> reprogramar({DateTime? ahora}) async {
     final estado = await future;
     final permitidos = await _permitidos();
     if (permitidos != estado.permitidos) {
@@ -207,7 +205,7 @@ class RecordatoriosController extends AsyncNotifier<EstadoDeRecordatorios> {
     }
     if (!estado.ajustes.activo || !permitidos) {
       await _reemplazar(const []);
-      return;
+      return false;
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -216,7 +214,7 @@ class RecordatoriosController extends AsyncNotifier<EstadoDeRecordatorios> {
       null => null,
     };
 
-    await _reemplazar(
+    return _reemplazar(
       planDeAvisos(
         ahora: ahora ?? DateTime.now(),
         ajustes: estado.ajustes,
@@ -229,11 +227,16 @@ class RecordatoriosController extends AsyncNotifier<EstadoDeRecordatorios> {
     );
   }
 
-  Future<void> _reemplazar(List<AvisoProgramado> avisos) async {
+  /// `false` si el sistema no los aceptó.
+  Future<bool> _reemplazar(List<AvisoProgramado> avisos) async {
     try {
       await _notificador.reemplazar(avisos);
-    } catch (_) {
-      // Un fallo del sistema al programar no puede romper la pantalla.
+      return true;
+    } catch (error) {
+      // Un fallo del sistema al programar no puede romper la pantalla, pero
+      // tampoco puede pasar a ciegas: así se perdió el icono en Android.
+      debugPrint('recordatorios: no se pudieron programar: $error');
+      return false;
     }
   }
 

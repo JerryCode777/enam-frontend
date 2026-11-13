@@ -105,8 +105,10 @@ class _EnamAppState extends ConsumerState<EnamApp> with WidgetsBindingObserver {
       await notificador.iniciar(alTocar: tocado.tocado);
       if (await notificador.payloadDeArranque() case final p?) tocado.tocado(p);
       await ref.read(recordatoriosProvider.notifier).reprogramar();
-    } catch (_) {
+    } catch (error) {
       // Sin recordatorios la app sigue igual: no es motivo para no arrancar.
+      // Pero queda en el registro: así se perdió el icono en Android.
+      debugPrint('recordatorios: no se pudieron iniciar: $error');
     }
   }
 
