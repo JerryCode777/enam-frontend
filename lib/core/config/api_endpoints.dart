@@ -34,6 +34,11 @@ abstract final class ApiEndpoints {
   /// ese manda un correo de recuperación de contraseña.
   static const String resendVerification = '/auth/resend-verification';
 
+  /// Corrige el correo de una cuenta **sin verificar** (`gmail.con`) y manda
+  /// el código al nuevo. Público: la prueba de que la cuenta es suya es la
+  /// contraseña.
+  static const String changeEmail = '/auth/change-email';
+
   // ---------- Perfil ----------
   //
   // El mismo camino sirve para leer (GET), editar (PATCH) y eliminar (DELETE,

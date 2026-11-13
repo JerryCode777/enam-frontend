@@ -6,12 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../core/domain/correo.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/motion.dart';
+import '../../../core/theme/state_colors.dart';
 import '../../../shared/widgets/enam_button.dart';
+import '../../../shared/widgets/enam_text_field.dart';
 import '../../../shared/widgets/fondo_claro.dart';
 import '../../../shared/widgets/state_banner.dart';
 import 'eventos_de_registro.dart';
@@ -21,10 +24,18 @@ import 'eventos_de_registro.dart';
 /// volver desde el login con un registro a medias, cuando el código pudo
 /// vencer y el reenvío tiene que estar a mano).
 class CodigoPorVerificar {
-  const CodigoPorVerificar(this.email, {this.recienEnviado = true});
+  const CodigoPorVerificar(
+    this.email, {
+    this.recienEnviado = true,
+    this.password,
+  });
 
   final String email;
   final bool recienEnviado;
+
+  /// La que acaba de escribir en el registro o el login, si la hay: así
+  /// corregir el correo no le pide escribirla otra vez. Solo en memoria.
+  final String? password;
 }
 
 /// Deja solo los dígitos del código y corta en [largo].
@@ -66,6 +77,7 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({
     this.email,
     this.codigoRecienEnviado = true,
+    this.password,
     super.key,
   });
 
@@ -75,6 +87,9 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
   /// Si el código acaba de salir. Si no, «Reenviar código» está disponible
   /// desde el principio, sin esperar el minuto.
   final bool codigoRecienEnviado;
+
+  /// Ver [CodigoPorVerificar.password].
+  final String? password;
 
   @override
   ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -94,9 +109,17 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   bool _verificando = false;
   String? _codigoError;
 
+  /// El correo al que se mandó el código: cambia si lo corrige aquí.
+  String? _correo;
+  String? _password;
+
+  String get _email =>
+      _correo ?? widget.email ?? ref.read(currentUserProvider)?.email ?? '';
+
   @override
   void initState() {
     super.initState();
+    _password = widget.password;
     if (widget.codigoRecienEnviado) _startCooldown();
   }
 
@@ -180,9 +203,54 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     });
   }
 
+  /// «¿Correo equivocado? Cámbialo»: el código va al correo nuevo, en la
+  /// misma cuenta. Antes este botón llevaba al registro, y la persona creaba
+  /// una cuenta nueva dejando la otra con el correo malo.
+  Future<void> _cambiarCorreo({String? sugerido}) async {
+    final actual = _email;
+    if (actual.isEmpty) return;
+    final cambio = await showModalBottomSheet<_Cambio>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _HojaCambiarCorreo(
+        actual: actual,
+        sugerido: sugerido ?? sugerenciaDeCorreo(actual),
+        password: _password,
+      ),
+    );
+    if (cambio == null || !mounted) return;
+
+    final prefs = ref.read(appPrefsProvider);
+    switch (cambio) {
+      case _Cambiado(:final email, :final password):
+        await prefs.guardarVerificacionPendiente(email);
+        if (!mounted) return;
+        setState(() {
+          _correo = email;
+          _password = password;
+          _codigo.clear();
+          _codigoError = null;
+        });
+        _startCooldown();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Te enviamos un código nuevo a $email.')),
+        );
+      case _YaVerificada():
+        await prefs.olvidarVerificacionPendiente();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tu cuenta ya estaba verificada. Ingresa con ella.'),
+          ),
+        );
+        context.go(Routes.login);
+    }
+  }
+
   Future<void> _reenviar() async {
-    final email = widget.email ?? ref.read(currentUserProvider)?.email;
-    if (email == null || _enviando) return;
+    final email = _email;
+    if (email.isEmpty || _enviando) return;
 
     setState(() => _enviando = true);
     try {
@@ -216,7 +284,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = widget.email ?? ref.watch(currentUserProvider)?.email ?? '';
+    final email =
+        _correo ?? widget.email ?? ref.watch(currentUserProvider)?.email ?? '';
+    final sugerido = sugerenciaDeCorreo(email);
     final puedeReenviar = _restante == 0 && !_enviando;
 
     // Sin tarjeta flotante, a diferencia del resto del bloque: aquí no hay
@@ -270,6 +340,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    if (sugerido != null) ...[
+                      const SizedBox(height: DesignTokens.space3),
+                      _AvisoDeCorreo(
+                        sugerido: sugerido,
+                        onCorregir: () => _cambiarCorreo(sugerido: sugerido),
+                      ),
+                    ],
                     const SizedBox(height: DesignTokens.space5),
                     _CampoCodigo(
                       controller: _codigo,
@@ -310,9 +387,11 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     TextButton(
-                      onPressed: () => context.go(Routes.register),
+                      onPressed: _enviando || _verificando
+                          ? null
+                          : _cambiarCorreo,
                       child: const Text(
-                        'Cambiar el correo',
+                        '¿Correo equivocado? Cámbialo',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -476,6 +555,249 @@ class _CampoCodigo extends StatelessWidget {
           StateBanner(kind: BannerKind.error, message: error!),
         ],
       ],
+    );
+  }
+}
+
+/// «¿Quisiste decir …@gmail.com?» bajo el correo, cuando el dominio parece
+/// mal escrito: es la razón más común de que el código no llegue.
+class _AvisoDeCorreo extends StatelessWidget {
+  const _AvisoDeCorreo({required this.sugerido, required this.onCorregir});
+
+  final String sugerido;
+  final VoidCallback onCorregir;
+
+  @override
+  Widget build(BuildContext context) {
+    final aviso = context.states.warning;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space3,
+        DesignTokens.space2,
+        DesignTokens.space1,
+        DesignTokens.space2,
+      ),
+      decoration: BoxDecoration(
+        color: aviso.tint,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: '¿Quisiste decir '),
+                  TextSpan(
+                    text: sugerido,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const TextSpan(text: '?'),
+                ],
+              ),
+              style: TextStyle(fontSize: 14, height: 1.4, color: aviso.onTint),
+            ),
+          ),
+          TextButton(onPressed: onCorregir, child: const Text('Corregir')),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lo que devuelve la hoja de cambiar el correo.
+sealed class _Cambio {
+  const _Cambio();
+}
+
+final class _Cambiado extends _Cambio {
+  const _Cambiado(this.email, this.password);
+
+  final String email;
+  final String password;
+}
+
+final class _YaVerificada extends _Cambio {
+  const _YaVerificada();
+}
+
+/// El correo nuevo y, si no se tiene de antes, la contraseña: es la prueba de
+/// que la cuenta es suya (aquí no hay sesión).
+class _HojaCambiarCorreo extends ConsumerStatefulWidget {
+  const _HojaCambiarCorreo({
+    required this.actual,
+    this.sugerido,
+    this.password,
+  });
+
+  final String actual;
+  final String? sugerido;
+  final String? password;
+
+  @override
+  ConsumerState<_HojaCambiarCorreo> createState() => _HojaCambiarCorreoState();
+}
+
+class _HojaCambiarCorreoState extends ConsumerState<_HojaCambiarCorreo> {
+  late final _correo = TextEditingController(
+    text: widget.sugerido ?? widget.actual,
+  );
+  final _clave = TextEditingController();
+
+  /// Se pide si no llegó, o si la que llegó no sirvió.
+  late bool _pedirClave = widget.password == null;
+  String? _correoError;
+  String? _claveError;
+  String? _error;
+  bool _enviando = false;
+
+  @override
+  void dispose() {
+    _correo.dispose();
+    _clave.dispose();
+    super.dispose();
+  }
+
+  Future<void> _enviar() async {
+    if (_enviando) return;
+    final nuevo = _correo.text.trim();
+    final password = _pedirClave ? _clave.text : widget.password!;
+    setState(() {
+      _correoError = switch (nuevo) {
+        '' => 'Ingresa tu correo.',
+        _ when !nuevo.contains('@') || !nuevo.contains('.') =>
+          'Ese correo no parece válido.',
+        _ when nuevo.toLowerCase() == widget.actual.toLowerCase() =>
+          'Es el mismo correo de ahora.',
+        _ => null,
+      };
+      _claveError = password.isEmpty ? 'Ingresa tu contraseña.' : null;
+      _error = null;
+    });
+    if (_correoError != null || _claveError != null) return;
+
+    setState(() => _enviando = true);
+    try {
+      final quedo = await ref
+          .read(authRepositoryProvider)
+          .cambiarCorreo(
+            email: widget.actual,
+            password: password,
+            emailNuevo: nuevo,
+          );
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pop(quedo == null ? const _YaVerificada() : _Cambiado(quedo, password));
+    } on UnauthorizedFailure catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _pedirClave = true;
+        _clave.clear();
+        _claveError = e.message;
+      });
+    } on ValidationFailure catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _correoError =
+            e.fieldErrors['emailNuevo'] ??
+            (e.code == 'EMAIL_TAKEN'
+                ? 'Ese correo ya tiene una cuenta. Ingresa con él.'
+                : e.message),
+      );
+    } on Failure catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        DesignTokens.space6,
+        0,
+        DesignTokens.space6,
+        DesignTokens.space6 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Cambia tu correo',
+              style: context.texts.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: 'Ahora es '),
+                  TextSpan(
+                    text: widget.actual,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const TextSpan(
+                    text:
+                        '. Te mandaremos un código nuevo al correo que '
+                        'escribas, en la misma cuenta.',
+                  ),
+                ],
+              ),
+              style: context.texts.bodyMedium?.copyWith(
+                color: context.scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space4),
+            EnamTextField(
+              label: 'Correo correcto',
+              controller: _correo,
+              error: _correoError,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: _pedirClave
+                  ? TextInputAction.next
+                  : TextInputAction.done,
+              autofillHints: const [AutofillHints.email],
+              enabled: !_enviando,
+              onSubmitted: _pedirClave ? null : (_) => _enviar(),
+              onChanged: (_) {
+                if (_correoError != null) setState(() => _correoError = null);
+              },
+            ),
+            if (_pedirClave) ...[
+              const SizedBox(height: DesignTokens.space3),
+              EnamTextField(
+                label: 'Tu contraseña',
+                helper: 'La que pusiste al crear la cuenta.',
+                controller: _clave,
+                error: _claveError,
+                obscure: true,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.password],
+                enabled: !_enviando,
+                onSubmitted: (_) => _enviar(),
+                onChanged: (_) {
+                  if (_claveError != null) setState(() => _claveError = null);
+                },
+              ),
+            ],
+            if (_error case final error?) ...[
+              const SizedBox(height: DesignTokens.space3),
+              Text(error, style: TextStyle(color: context.states.error.base)),
+            ],
+            const SizedBox(height: DesignTokens.space4),
+            EnamButton(
+              label: 'Enviar el código ahí',
+              loading: _enviando,
+              onPressed: _enviar,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

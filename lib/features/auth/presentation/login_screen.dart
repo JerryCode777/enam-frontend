@@ -179,7 +179,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final email = _email.text.trim();
         await ref.read(appPrefsProvider).guardarVerificacionPendiente(email);
         if (mounted) {
-          context.go(Routes.verifyEmail, extra: CodigoPorVerificar(email));
+          context.go(
+            Routes.verifyEmail,
+            extra: CodigoPorVerificar(email, password: _password.text),
+          );
         }
         return;
       }

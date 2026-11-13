@@ -351,8 +351,16 @@ final List<RouteBase> _routes = [
     // directo, la pantalla lo lee del usuario en sesión.
     builder: (context, state) => SiempreClaro(
       child: switch (state.extra) {
-        CodigoPorVerificar(:final email, :final recienEnviado) =>
-          VerifyEmailScreen(email: email, codigoRecienEnviado: recienEnviado),
+        CodigoPorVerificar(
+          :final email,
+          :final recienEnviado,
+          :final password,
+        ) =>
+          VerifyEmailScreen(
+            email: email,
+            codigoRecienEnviado: recienEnviado,
+            password: password,
+          ),
         final String email => VerifyEmailScreen(email: email),
         _ => const VerifyEmailScreen(),
       },

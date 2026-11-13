@@ -75,6 +75,7 @@ class AuthInterceptor extends Interceptor {
     // tenido una. El servidor no llegaba a enterarse del intento.
     ApiEndpoints.verifyCode,
     ApiEndpoints.resendVerification,
+    ApiEndpoints.changeEmail,
 
     // Pedir el enlace de activación por correo: el correo va en el cuerpo y el
     // servidor no mira el token. NO confundir con `activationLinkDirect`, que

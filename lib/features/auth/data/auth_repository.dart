@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart' show DioException;
+
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/network/api_client.dart';
@@ -86,6 +88,18 @@ abstract interface class AuthRepository {
   /// así que no hay token del que sacar la dirección. Llamarlo sin cuerpo
   /// devuelve 422.
   Future<void> reenviarVerificacion(String email);
+
+  /// Cambia el correo de una cuenta sin verificar y manda un código nuevo
+  /// **solo** al correo nuevo; los códigos del anterior dejan de valer.
+  ///
+  /// Para quien escribió `gmail.con`: antes solo podía registrarse otra vez,
+  /// y quedaba una cuenta huérfana con el correo malo. Devuelve el correo
+  /// como quedó, o `null` si la cuenta ya estaba verificada (toca el login).
+  Future<String?> cambiarCorreo({
+    required String email,
+    required String password,
+    required String emailNuevo,
+  });
 
   /// Cambia la contraseña con el código que llegó por correo (RF-03).
   ///
@@ -320,6 +334,29 @@ class ApiAuthRepository implements AuthRepository {
       ApiEndpoints.resendVerification,
       data: {'email': email},
     );
+  }
+
+  @override
+  Future<String?> cambiarCorreo({
+    required String email,
+    required String password,
+    required String emailNuevo,
+  }) async {
+    try {
+      final data = await _client.post<Map<String, dynamic>>(
+        ApiEndpoints.changeEmail,
+        data: {'email': email, 'password': password, 'emailNuevo': emailNuevo},
+      );
+      return data['email'] as String? ?? emailNuevo;
+    } on UnknownFailure catch (e) {
+      // El 409 no tiene clase propia en `ApiClient`.
+      if (e.details case DioException(
+        :final response?,
+      ) when response.statusCode == 409) {
+        return null;
+      }
+      rethrow;
+    }
   }
 
   @override
