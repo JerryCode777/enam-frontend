@@ -72,6 +72,13 @@ class _AuthListo implements AuthRepository {
   Future<void> reenviarVerificacion(String email) async {}
 
   @override
+  Future<String?> cambiarCorreo({
+    required String email,
+    required String password,
+    required String emailNuevo,
+  }) async => emailNuevo;
+
+  @override
   Future<void> resetPassword({
     required String email,
     required String codigo,

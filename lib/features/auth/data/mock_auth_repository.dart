@@ -166,6 +166,23 @@ class MockAuthRepository implements AuthRepository {
   Future<void> reenviarVerificacion(String email) => Future<void>.delayed(_delay);
 
   @override
+  Future<String?> cambiarCorreo({
+    required String email,
+    required String password,
+    required String emailNuevo,
+  }) async {
+    await Future<void>.delayed(_delay);
+    if (emailNuevo == 'existente@enam.pe') {
+      throw const ValidationFailure(
+        'Ese correo ya está registrado.',
+        code: 'EMAIL_TAKEN',
+        fieldErrors: {'emailNuevo': 'Ese correo ya está registrado.'},
+      );
+    }
+    return emailNuevo;
+  }
+
+  @override
   Future<void> resetPassword({
     required String email,
     required String codigo,

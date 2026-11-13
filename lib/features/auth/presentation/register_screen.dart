@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/correo.dart';
 import '../../../core/domain/password_rules.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/analitica/analitica.dart';
@@ -47,6 +48,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   /// cortó, o el correo del código no salió—: se ofrece ir al código.
   bool _correoEnUso = false;
 
+  /// «¿Quisiste decir …@gmail.com?», cuando el dominio parece mal escrito. Se
+  /// pregunta al pulsar «Crear cuenta», una vez por correo: con `gmail.con` el
+  /// código nunca llega y la persona se registra de nuevo con otro.
+  String? _sugerencia;
+
+  /// El correo que la persona dijo que está bien así: no se vuelve a sugerir.
+  String? _correoConfirmado;
+
   @override
   void initState() {
     super.initState();
@@ -86,6 +95,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _submit() async {
     if (_loading || !_acepta || !_validate()) return;
+    final email = _email.text.trim();
+    if (email != _correoConfirmado) {
+      if (sugerenciaDeCorreo(email) case final sugerida?) {
+        setState(() => _sugerencia = sugerida);
+        return;
+      }
+    }
 
     setState(() => _loading = true);
     ref
@@ -116,7 +132,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           .read(appPrefsProvider)
           .guardarVerificacionPendiente(_email.text.trim());
       if (mounted) {
-        context.go(Routes.verifyEmail, extra: _email.text.trim());
+        context.go(
+          Routes.verifyEmail,
+          extra: CodigoPorVerificar(
+            _email.text.trim(),
+            password: _password.text,
+          ),
+        );
       }
     } on ValidationFailure catch (e) {
       if (!mounted) return;
@@ -180,14 +202,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           autofillHints: const [AutofillHints.email],
           enabled: !_loading,
           onChanged: (_) {
-            if (_emailError != null || _correoEnUso) {
+            if (_emailError != null || _correoEnUso || _sugerencia != null) {
               setState(() {
                 _emailError = null;
                 _correoEnUso = false;
+                _sugerencia = null;
               });
             }
           },
         ),
+        if (_sugerencia case final sugerida?)
+          _QuisisteDecir(
+            sugerida: sugerida,
+            onCorregir: () {
+              _email.text = sugerida;
+              setState(() => _sugerencia = null);
+              _submit();
+            },
+            onEsCorrecto: () {
+              setState(() {
+                _correoConfirmado = _email.text.trim();
+                _sugerencia = null;
+              });
+              _submit();
+            },
+          ),
         if (_correoEnUso)
           Align(
             alignment: Alignment.centerLeft,
@@ -245,6 +284,71 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// La sugerencia de correo, con las dos salidas a la vista: corregir o
+/// seguir con el que escribió. Las dos siguen con el registro.
+class _QuisisteDecir extends StatelessWidget {
+  const _QuisisteDecir({
+    required this.sugerida,
+    required this.onCorregir,
+    required this.onEsCorrecto,
+  });
+
+  final String sugerida;
+  final VoidCallback onCorregir;
+  final VoidCallback onEsCorrecto;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.scheme;
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.space3),
+      decoration: BoxDecoration(
+        color: context.states.warning.tint,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '¿Quisiste decir '),
+                TextSpan(
+                  text: sugerida,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const TextSpan(text: '?'),
+              ],
+            ),
+            style: context.texts.bodyMedium?.copyWith(
+              color: context.states.warning.onTint,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space2),
+          Wrap(
+            spacing: DesignTokens.space2,
+            runSpacing: DesignTokens.space1,
+            alignment: WrapAlignment.end,
+            children: [
+              TextButton(
+                onPressed: onEsCorrecto,
+                child: Text(
+                  'No, está bien',
+                  style: TextStyle(color: scheme.onSurfaceVariant),
+                ),
+              ),
+              FilledButton(
+                onPressed: onCorregir,
+                child: const Text('Sí, corregir'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
